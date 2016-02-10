@@ -97,10 +97,7 @@ namespace Toggl.Joey.UI.Fragments
         {
             base.OnViewCreated (view, savedInstanceState);
             ViewModel = await NewProjectViewModel.Init (WorkspaceId);
-
             clientBinding = this.SetBinding (() => ViewModel.ClientName, () => SelectClientBit.TextField.Text);
-            nameBinding = this.SetBinding (() => ViewModel.ProjectName, () => ProjectBit.TextField.Text, BindingMode.TwoWay);
-            colorBinding = this.SetBinding (() => ViewModel.ProjectColor, () => ColorPicker.Adapter.SelectedColor, BindingMode.TwoWay).UpdateTargetTrigger ("SelectedColorChanged");
         }
 
         public override void OnDestroyView ()
@@ -122,27 +119,35 @@ namespace Toggl.Joey.UI.Fragments
 
         private async void SaveButtonHandler (object sender, EventArgs e)
         {
-            var result = await ViewModel.SaveProjectModel ();
-
-            switch (result) {
-            case NewProjectViewModel.SaveProjectResult.NameIsEmpty:
+            // TODO: Deactivate Save btn.
+            // If name is empty.
+            var projectName = ProjectBit.TextField.Text;
+            if (string.IsNullOrEmpty (projectName)) {
                 new AlertDialog.Builder (Activity)
                 .SetTitle (Resource.String.NewProjectEmptyDialogTitle)
                 .SetMessage (Resource.String.NewProjectEmptyDialogMessage)
                 .SetPositiveButton (Resource.String.NewProjectEmptyDialogPositiveButtonTitle, (EventHandler<DialogClickEventArgs>)null)
                 .Show ();
-                break;
-            case NewProjectViewModel.SaveProjectResult.NameExists:
+                return;
+            }
+
+            // If name exists.
+            var existsName = await ViewModel.ExistProjectWithName (projectName);
+            if (existsName) {
                 new AlertDialog.Builder (Activity)
                 .SetTitle (Resource.String.NewProjectDuplicateDialogTitle)
                 .SetMessage (Resource.String.NewProjectDuplicateDialogMessage)
                 .SetPositiveButton (Resource.String.NewProjectEmptyDialogPositiveButtonTitle, (EventHandler<DialogClickEventArgs>)null)
                 .Show ();
-                break;
-            case NewProjectViewModel.SaveProjectResult.SaveOk:
-                FinishActivity (true);
-                break;
+                return;
             }
+
+            // Save project and send result.
+            var newProjectData = await ViewModel.SaveProject (projectName, ColorPicker.Adapter.SelectedColor);
+            var resultIntent = new Intent ();
+            resultIntent.PutExtra (BaseActivity.IntentProjectIdArgument, newProjectData.Id.ToString ());
+            Activity.SetResult (Result.Ok, resultIntent);
+            Activity.Finish();
         }
 
         private async void SelectClientBitClickedHandler (object sender, EventArgs e)
@@ -175,19 +180,13 @@ namespace Toggl.Joey.UI.Fragments
         public override bool OnOptionsItemSelected (IMenuItem item)
         {
             if (item.ItemId == Android.Resource.Id.Home) {
-                FinishActivity (false);
+                var resultIntent = new Intent ();
+                Activity.SetResult (Result.Canceled, resultIntent);
+                Activity.Finish();
             } else {
                 SaveButtonHandler (this, null);
             }
             return base.OnOptionsItemSelected (item);
-        }
-
-        private void FinishActivity (bool isProjectCreated)
-        {
-            var resultIntent = new Intent ();
-            resultIntent.PutExtra (BaseActivity.IntentProjectIdArgument, ViewModel.ProjectId.ToString ());
-            Activity.SetResult (isProjectCreated ? Result.Ok : Result.Canceled, resultIntent);
-            Activity.Finish();
         }
     }
 }

@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 using Android.App;
 using Android.Content;
 using Android.OS;
-using Android.Support.V4.App;
 using Android.Views;
 using Android.Widget;
 using GalaSoft.MvvmLight.Helpers;
@@ -20,7 +19,6 @@ using XPlatUtils;
 using ActionBar = Android.Support.V7.App.ActionBar;
 using Activity = Android.Support.V7.App.AppCompatActivity;
 using Fragment = Android.Support.V4.App.Fragment;
-using MeasureSpec = Android.Views.View.MeasureSpec;
 using Toolbar = Android.Support.V7.Widget.Toolbar;
 
 namespace Toggl.Joey.UI.Fragments
@@ -28,7 +26,7 @@ namespace Toggl.Joey.UI.Fragments
     public class EditTimeEntryFragment : Fragment,
         ChangeTimeEntryDurationDialogFragment.IChangeDuration,
         ChangeDateTimeDialogFragment.IChangeDateTime,
-        IUpdateTagList
+        IOnTagSelectedHandler
     {
         private static readonly string TimeEntryIdArgument = "com.toggl.timer.time_entry_id";
 
@@ -134,10 +132,15 @@ namespace Toggl.Joey.UI.Fragments
                 ViewModel.IsBillable = BillableCheckBox.Checked;
             };
 
-            DurationTextView.Click += (sender, e) =>
-                                      ChangeTimeEntryDurationDialogFragment.NewInstance (ViewModel.StopDate, ViewModel.StartDate)
-                                      .SetChangeDurationHandler (this)
-                                      .Show (FragmentManager, "duration_dialog");
+            DurationTextView.Click += (sender, e) => {
+                // TODO: Don't edit duration if Time entry is running?
+                if (ViewModel.IsRunning) {
+                    return;
+                }
+                ChangeTimeEntryDurationDialogFragment.NewInstance (ViewModel.StopDate, ViewModel.StartDate)
+                .SetChangeDurationHandler (this)
+                .Show (FragmentManager, "duration_dialog");
+            };
 
             StartTimeEditText.Click += (sender, e) => {
                 var title = GetString (Resource.String.ChangeTimeEntryStartTimeDialogTitle);

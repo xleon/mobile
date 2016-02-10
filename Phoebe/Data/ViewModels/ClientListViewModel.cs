@@ -9,6 +9,11 @@ using XPlatUtils;
 
 namespace Toggl.Phoebe.Data.ViewModels
 {
+    public interface IOnClientSelectedHandler
+    {
+        void OnClientSelected (ClientData data);
+    }
+
     public class ClientListViewModel : IDisposable
     {
         public static async Task<bool> ContainsClients (Guid workspaceId)

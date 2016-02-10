@@ -15,20 +15,13 @@ using Toggl.Phoebe.Data.ViewModels;
 
 namespace Toggl.Joey.UI.Fragments
 {
-    public interface IUpdateTagList
-    {
-        void OnCreateNewTag (TagData newTagData);
-
-        void OnModifyTagList (List<TagData> newTagList);
-    }
-
     public class ChooseTimeEntryTagsDialogFragment : BaseDialogFragment
     {
         private static readonly string SelectedTagNamesArgument = "com.toggl.timer.selected_tag_names";
         private static readonly string WorkspaceIdArgument = "com.toggl.timer.workspace_id";
         private ListView listView;
         private TagListViewModel viewModel;
-        private IUpdateTagList updateTagHandler;
+        private IOnTagSelectedHandler updateTagHandler;
 
         private Guid WorkspaceId
         {
@@ -108,7 +101,7 @@ namespace Toggl.Joey.UI.Fragments
             return dia;
         }
 
-        public ChooseTimeEntryTagsDialogFragment SetOnModifyTagListHandler (IUpdateTagList handler)
+        public ChooseTimeEntryTagsDialogFragment SetOnModifyTagListHandler (IOnTagSelectedHandler handler)
         {
             updateTagHandler = handler;
             return this;

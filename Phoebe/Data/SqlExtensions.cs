@@ -107,15 +107,21 @@ namespace Toggl.Phoebe.Data
 
         public async static Task<List<TagData>> GetTimeEntryTags (this IDataStore ds, Guid timeEntryId)
         {
+            /* TODO: Review why this query is not working.
             var tagTbl = await ds.GetTableNameAsync<TagData>();
             var timeEntryTagTbl = await ds.GetTableNameAsync<TimeEntryTagData>();
-            var q = String.Concat (
+            var q = string.Concat (
                         "SELECT t.* FROM ", tagTbl, " AS t ",
                         "INNER JOIN ", timeEntryTagTbl, " AS tet ON tet.TagId = t.Id ",
                         "WHERE t.DeletedAt IS NULL AND tet.DeletedAt IS NULL ",
                         "ORDER BY t.Name ",
-                        "AND tet.TimeEntryId=?");
-            return await ds.QueryAsync<TagData> (q, timeEntryId);
+                "AND tet.TimeEntryId=?");
+            */
+
+            var tags = await ds.Table<TagData> ().ToListAsync ();
+            var tagRelations = await ds.Table<TimeEntryTagData> ().Where ((arg) => arg.TimeEntryId == timeEntryId).ToListAsync ();
+            var tagList = tagRelations.Select (r => tags.FirstOrDefault (tag => tag.Id == r.TagId));
+            return tagList.ToList ();
         }
 
         public static Task ResetAllModificationTimes (this IDataStore ds)

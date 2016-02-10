@@ -194,8 +194,6 @@
       <DependentUpon>Style.cs</DependentUpon>
     </Compile>
     <Compile Include="ViewControllers\LogViewController.cs" />
-    <Compile Include="DataSources\PlainDataViewSource.cs" />
-    <Compile Include="DataSources\GroupedDataViewSource.cs" />
     <Compile Include="Theme\Color.cs" />
     <Compile Include="Views\TableViewHeaderView.cs" />
     <Compile Include="Views\UINavigationBarExtensions.cs" />
@@ -204,7 +202,6 @@
       <DependentUpon>Style.cs</DependentUpon>
     </Compile>
     <Compile Include="Theme\UIColorExtensions.cs" />
-    <Compile Include="ViewControllers\TimerNavigationController.cs" />
     <Compile Include="Theme\Style.NavTimer.cs">
       <DependentUpon>Style.cs</DependentUpon>
     </Compile>
@@ -213,7 +210,6 @@
     <Compile Include="Views\ModelTableViewCell.cs" />
     <Compile Include="Views\PasswordTextField.cs" />
     <Compile Include="Views\BindableTableViewCell.cs" />
-    <Compile Include="ViewControllers\NavigationMenuController.cs" />
     <Compile Include="Theme\Style.NavMenu.cs">
       <DependentUpon>Style.cs</DependentUpon>
     </Compile>
@@ -276,7 +272,6 @@
     </Compile>
     <Compile Include="Net\NetworkPresence.cs" />
     <Compile Include="TogglWindow.cs" />
-    <Compile Include="DataSources\ChangesResolver.cs" />
     <Compile Include="Theme\Style.Feedback.cs">
       <DependentUpon>Style.cs</DependentUpon>
     </Compile>

@@ -1,215 +1,116 @@
 using System;
 using System.Collections.Generic;
 using CoreGraphics;
-using System.Linq;
-using System.Threading.Tasks;
 using Foundation;
 using UIKit;
-using Toggl.Phoebe.Analytics;
-using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.DataObjects;
-using Toggl.Phoebe.Data.Models;
-using Toggl.Phoebe.Data.Views;
-using XPlatUtils;
-using Toggl.Ross.DataSources;
 using Toggl.Ross.Theme;
-using Toggl.Ross.Views;
+using Toggl.Phoebe.Data.ViewModels;
+using GalaSoft.MvvmLight.Helpers;
+using System.Linq;
 
 namespace Toggl.Ross.ViewControllers
 {
-    public class TagSelectionViewController : UITableViewController
+    public class TagSelectionViewController : ObservableTableViewController<TagData>
     {
-        private const float CellSpacing = 4f;
-        private readonly TimeEntryModel model;
-        private List<TimeEntryTagData> modelTags;
-        private Source source;
-        private bool isSaving;
+        private TagListViewModel viewModel;
+        private Guid workspaceId;
+        private List<TagData> previousSelectedTags;
+        private IOnTagSelectedHandler handler;
 
-        public TagSelectionViewController (TimeEntryModel model) : base (UITableViewStyle.Plain)
+        public TagSelectionViewController (Guid workspaceId, List<TagData> previousSelectedTags, IOnTagSelectedHandler handler) : base (UITableViewStyle.Plain)
         {
-            this.model = model;
-
             Title = "TagTitle".Tr ();
-
-            LoadTags ();
+            this.workspaceId = workspaceId;
+            this.previousSelectedTags = previousSelectedTags;
+            this.handler = handler;
         }
 
-        private async void LoadTags ()
-        {
-            var dataStore = ServiceContainer.Resolve<IDataStore> ();
-            modelTags = await dataStore.Table<TimeEntryTagData> ()
-                        .Where (r => r.TimeEntryId == model.Id && r.DeletedAt == null)
-                        .ToListAsync ();
-            SetupDataSource ();
-        }
-
-        private void SetupDataSource ()
-        {
-            var modelTagsReady = modelTags != null;
-
-            if (source != null || !modelTagsReady || !IsViewLoaded) {
-                return;
-            }
-
-            // Attach source
-            source = new Source (this, modelTags.Select (data => data.TagId));
-            source.Attach ();
-        }
-
-        public override void ViewDidLoad ()
+        public async override void ViewDidLoad ()
         {
             base.ViewDidLoad ();
 
             View.Apply (Style.Screen);
             EdgesForExtendedLayout = UIRectEdge.None;
-            SetupDataSource ();
 
-            NavigationItem.RightBarButtonItem = new UIBarButtonItem (
-                "TagSet".Tr (), UIBarButtonItemStyle.Plain, OnNavigationBarSetClicked)
-            .Apply (Style.NavLabelButton);
+            viewModel = await TagListViewModel.Init (workspaceId, previousSelectedTags.Select (t => t.Id).ToList ());
+
+            // Set ObservableTableViewController settings
+            // ObservableTableViewController is a helper class
+            // from Mvvm light package.
+
+            TableView.RowHeight = 60f;
+            TableView.SeparatorStyle = UITableViewCellSeparatorStyle.None;
+            CreateCellDelegate = CreateTagCell;
+            BindCellDelegate = BindCell;
+            DataSource = viewModel.TagCollection;
+
+            var addBtn = new UIBarButtonItem (UIBarButtonSystemItem.Add, OnAddNewTag);
+            var saveBtn = new UIBarButtonItem ("TagSet".Tr (), UIBarButtonItemStyle.Plain, OnSaveBtn).Apply (Style.NavLabelButton);
+            NavigationItem.RightBarButtonItems = new [] { saveBtn, addBtn};
         }
 
-        public override void ViewDidAppear (bool animated)
+        public override void ViewWillUnload ()
         {
-            base.ViewDidAppear (animated);
-
-            ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Select Tags";
+            viewModel.Dispose ();
+            base.ViewDidUnload ();
         }
 
-        private async void OnNavigationBarSetClicked (object s, EventArgs e)
+        private UITableViewCell CreateTagCell (NSString cellIdentifier)
         {
-            if (isSaving) {
-                return;
-            }
-
-            isSaving = true;
-            try {
-                var tags = source.SelectedTags.ToList ();
-
-                // Delete unused tag relations:
-                var deleteTasks = modelTags
-                                  .Where (oldTag => !tags.Any (newTag => newTag.Id == oldTag.TagId))
-                                  .Select (data => new TimeEntryTagModel (data).DeleteAsync ()).ToList();
-
-                // Create new tag relations:
-                var createTasks = tags
-                                  .Where (newTag => !modelTags.Any (oldTag => oldTag.TagId == newTag.Id))
-                .Select (data => new TimeEntryTagModel () { TimeEntry = model, Tag = new TagModel (data) } .SaveAsync ()).ToList();
-
-                await Task.WhenAll (deleteTasks.Concat (createTasks));
-
-                if (deleteTasks.Count > 0 || createTasks.Count > 0) {
-                    model.Touch ();
-                    await model.SaveAsync ();
-                }
-
-                NavigationController.PopViewController (true);
-            } finally {
-                isSaving = false;
-            }
+            return new TagCell (cellIdentifier);
         }
 
-        private class Source : PlainDataViewSource<TagData>
+        private void BindCell (UITableViewCell cell, TagData tagData, NSIndexPath path)
         {
-            private readonly static NSString TagCellId = new NSString ("EntryCellId");
-            private readonly TagSelectionViewController controller;
-            private readonly HashSet<Guid> selectedTags;
-            private UIButton newTagButton;
-
-            public Source (TagSelectionViewController controller, IEnumerable<Guid> selectedTagIds)
-            : base (controller.TableView, new WorkspaceTagsView (controller.model.Workspace.Id))
-            {
-                this.controller = controller;
-                this.selectedTags = new HashSet<Guid> (selectedTagIds);
-            }
-
-            public override void Attach ()
-            {
-                base.Attach ();
-
-                controller.TableView.RegisterClassForCellReuse (typeof (TagCell), TagCellId);
-                controller.TableView.SeparatorStyle = UITableViewCellSeparatorStyle.None;
-            }
-
-            public override nfloat EstimatedHeight (UITableView tableView, NSIndexPath indexPath)
-            {
-                return 60f;
-            }
-
-            public override nfloat GetHeightForRow (UITableView tableView, NSIndexPath indexPath)
-            {
-                return EstimatedHeight (tableView, indexPath);
-            }
-
-            public override UITableViewCell GetCell (UITableView tableView, NSIndexPath indexPath)
-            {
-                var cell = (TagCell)tableView.DequeueReusableCell (TagCellId, indexPath);
-                cell.Bind ((TagModel)GetRow (indexPath));
-                cell.Checked = selectedTags.Contains (cell.TagId);
-                return cell;
-            }
-
-            public override void RowSelected (UITableView tableView, NSIndexPath indexPath)
-            {
-                var cell = tableView.CellAt (indexPath) as TagCell;
-                if (cell != null) {
-                    if (selectedTags.Remove (cell.TagId)) {
-                        cell.Checked = false;
-                    } else if (selectedTags.Add (cell.TagId)) {
-                        cell.Checked = true;
-                    }
-                }
-
-                tableView.DeselectRow (indexPath, false);
-            }
-
-            public IEnumerable<TagData> SelectedTags
-            {
-                get {
-                    return DataView.Data.Where (data => selectedTags.Contains (data.Id));
-                }
-            }
-
-            private void RefreshSelected()
-            {
-                foreach (var cell in TableView.VisibleCells) {
-                    var tagCell = cell as TagCell;
-                    if (tagCell != null) {
-                        tagCell.Checked = selectedTags.Contains (tagCell.TagId);
-                    }
-                }
-            }
-
-            protected override void UpdateFooter ()
-            {
-                base.UpdateFooter ();
-
-                if (TableView.TableFooterView == null) {
-                    if (newTagButton == null) {
-                        newTagButton = new UIButton (new CGRect (0, 0, 200, 60)).Apply (Style.TagList.NewTagButton);
-                        newTagButton.SetTitle ("TagNewTag".Tr(), UIControlState.Normal);
-                        newTagButton.TouchUpInside += delegate {
-                            var vc = new NewTagViewController (controller.model.Workspace);
-                            vc.TagCreated = (tag) => {
-                                selectedTags.Add (tag.Id);
-                                RefreshSelected();
-
-                                controller.NavigationController.PopToViewController (controller, true);
-                            };
-                            controller.NavigationController.PushViewController (vc, true);
-                        };
-                    }
-
-                    TableView.TableFooterView = newTagButton;
-                }
-            }
+            // Set selected tags.
+            var isSelected = previousSelectedTags.Exists (tag => tag.Id == tagData.Id);
+            ((TagCell)cell).Bind (tagData.Name, isSelected);
         }
 
-        private class TagCell : ModelTableViewCell<TagModel>
+        protected override void OnRowSelected (object item, NSIndexPath indexPath)
         {
-            private readonly UILabel nameLabel;
+            base.OnRowSelected (item, indexPath);
+
+            var cell = (TagCell)TableView.CellAt (indexPath);
+            cell.Checked = !cell.Checked;
+
+            if (cell.Checked) {
+                previousSelectedTags.Add ((TagData)item);
+            } else {
+                previousSelectedTags.RemoveAll (t => t.Id == ((TagData)item).Id);
+            }
+
+            TableView.DeselectRow (indexPath, true);
+        }
+
+        private void OnAddNewTag (object sender, EventArgs evnt)
+        {
+            var vc = new NewTagViewController (workspaceId, handler);
+            NavigationController.PushViewController (vc, true);
+        }
+
+        private void OnSaveBtn (object s, EventArgs e)
+        {
+            handler.OnModifyTagList (previousSelectedTags);
+        }
+
+        private class TagCell : UITableViewCell
+        {
+            private const float CellSpacing = 4f;
+            private UILabel nameLabel;
+
+            public TagCell (NSString cellIdentifier) : base (UITableViewCellStyle.Default, cellIdentifier)
+            {
+                InitView ();
+            }
 
             public TagCell (IntPtr handle) : base (handle)
+            {
+                InitView ();
+            }
+
+            void InitView()
             {
                 this.Apply (Style.Screen);
                 ContentView.Add (nameLabel = new UILabel ().Apply (Style.TagList.NameLabel));
@@ -235,37 +136,15 @@ namespace Toggl.Ross.ViewControllers
                 nameLabel.Frame = contentFrame;
             }
 
-            protected override void ResetTrackedObservables ()
+            public void Bind (string labelString, bool isChecked)
             {
-                Tracker.MarkAllStale ();
-
-                if (DataSource != null) {
-                    Tracker.Add (DataSource, HandleTagPropertyChanged);
-                }
-
-                Tracker.ClearStale ();
-            }
-
-            private void HandleTagPropertyChanged (string prop)
-            {
-                if (prop == TagModel.PropertyName) {
-                    Rebind ();
-                }
-            }
-
-            protected override void Rebind ()
-            {
-                ResetTrackedObservables ();
-
-                if (DataSource == null) {
-                    return;
-                }
-
-                if (String.IsNullOrWhiteSpace (DataSource.Name)) {
+                if (string.IsNullOrWhiteSpace (labelString)) {
                     nameLabel.Text = "TagNoNameTag".Tr ();
                 } else {
-                    nameLabel.Text = DataSource.Name;
+                    nameLabel.Text = labelString;
                 }
+
+                Checked = isChecked;
             }
 
             public bool Checked
@@ -274,16 +153,6 @@ namespace Toggl.Ross.ViewControllers
                 set {
                     Accessory = value ? UITableViewCellAccessory.Checkmark : UITableViewCellAccessory.None;
                     SetNeedsLayout ();
-                }
-            }
-
-            public Guid TagId
-            {
-                get {
-                    if (DataSource != null) {
-                        return DataSource.Id;
-                    }
-                    return Guid.Empty;
                 }
             }
         }

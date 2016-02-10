@@ -3,7 +3,6 @@ using CoreGraphics;
 using Foundation;
 using GalaSoft.MvvmLight.Helpers;
 using Toggl.Phoebe.Data.DataObjects;
-using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.ViewModels;
 using Toggl.Ross.Theme;
 using UIKit;
@@ -12,12 +11,14 @@ namespace Toggl.Ross.ViewControllers
 {
     public class ClientSelectionViewController : ObservableTableViewController<ClientData>
     {
-        private readonly WorkspaceModel workspace;
         private ClientListViewModel viewModel;
+        private readonly IOnClientSelectedHandler handler;
+        private readonly Guid workspaceId;
 
-        public ClientSelectionViewController (WorkspaceModel workspace) : base (UITableViewStyle.Plain)
+        public ClientSelectionViewController (Guid workspaceId, IOnClientSelectedHandler handler) : base (UITableViewStyle.Plain)
         {
-            this.workspace = workspace;
+            this.handler = handler;
+            this.workspaceId = workspaceId;
             Title = "ClientTitle".Tr ();
         }
 
@@ -27,7 +28,7 @@ namespace Toggl.Ross.ViewControllers
 
             View.Apply (Style.Screen);
             EdgesForExtendedLayout = UIRectEdge.None;
-            viewModel = await ClientListViewModel.Init (workspace.Id);
+            viewModel = await ClientListViewModel.Init (workspaceId);
 
             // Set ObservableTableViewController settings
             // ObservableTableViewController is a helper class
@@ -39,27 +40,27 @@ namespace Toggl.Ross.ViewControllers
             BindCellDelegate = BindCell;
             DataSource = viewModel.ClientDataCollection;
 
+            // TODO: Keep previous version calling
+            // a handler. Later it can be changed.
             PropertyChanged += (sender, e) => {
-                if (e.PropertyName == SelectedItemPropertyName && ClientSelected != null)
-
-                    // TODO: Keep previous version calling
-                    // a handler. Later it can be changed.
-                {
-                    ClientSelected.Invoke (SelectedItem);
+                if (e.PropertyName == SelectedItemPropertyName) {
+                    handler.OnClientSelected (SelectedItem);
                 }
             };
 
-            NavigationItem.RightBarButtonItem = new UIBarButtonItem (
-                "ClientNewClient".Tr (), UIBarButtonItemStyle.Plain, OnNavigationBarAddClicked)
-            .Apply (Style.NavLabelButton);
+            NavigationItem.RightBarButtonItem = new UIBarButtonItem (UIBarButtonSystemItem.Add, OnAddBtnPressed);
         }
 
-        private void OnNavigationBarAddClicked (object sender, EventArgs e)
+        public override void ViewWillUnload ()
+        {
+            viewModel.Dispose ();
+            base.ViewWillUnload();
+        }
+
+        private void OnAddBtnPressed (object sender, EventArgs e)
         {
             // Show create client screen
-            var next = new NewClientViewController (workspace) {
-                ClientCreated = ClientSelected,
-            };
+            var next = new NewClientViewController (workspaceId, handler);
             NavigationController.PushViewController (next, true);
         }
 
@@ -72,8 +73,6 @@ namespace Toggl.Ross.ViewControllers
         {
             ((ClientCell)cell).Bind (clientData.Name);
         }
-
-        public Action<ClientData> ClientSelected { get; set; }
 
         private class ClientCell : UITableViewCell
         {
@@ -113,7 +112,7 @@ namespace Toggl.Ross.ViewControllers
 
             public void Bind (string labelString)
             {
-                if (String.IsNullOrWhiteSpace (labelString)) {
+                if (string.IsNullOrWhiteSpace (labelString)) {
                     nameLabel.Text = "ClientNoNameClient".Tr ();
                 } else {
                     nameLabel.Text = labelString;

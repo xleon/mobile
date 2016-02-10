@@ -6,13 +6,17 @@ using GalaSoft.MvvmLight;
 using PropertyChanged;
 using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data.DataObjects;
-using Toggl.Phoebe.Data.ViewModels;
 using Toggl.Phoebe.Data.Views;
 using Toggl.Phoebe.Logging;
 using XPlatUtils;
 
 namespace Toggl.Phoebe.Data.ViewModels
 {
+    public interface IOnProjectSelectedHandler
+    {
+        void OnProjectSelected (Guid projectId, Guid taskId);
+    }
+
     [ImplementPropertyChanged]
     public class ProjectListViewModel : ViewModelBase, IDisposable
     {

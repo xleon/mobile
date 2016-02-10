@@ -8,8 +8,6 @@ using PropertyChanged;
 using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
-using Toggl.Phoebe.Data.ViewModels;
-using Toggl.Phoebe.Data.Views;
 using XPlatUtils;
 
 namespace Toggl.Phoebe.Data.ViewModels
@@ -67,6 +65,12 @@ namespace Toggl.Phoebe.Data.ViewModels
             return new EditTimeEntryViewModel (data, tagList);
         }
 
+        public static async Task<EditTimeEntryViewModel> Init (TimeEntryData timeEntryData)
+        {
+            var tagList = await ServiceContainer.Resolve<IDataStore> ().GetTimeEntryTags (timeEntryData.Id);
+            return new EditTimeEntryViewModel (timeEntryData, tagList);
+        }
+
         public void Dispose ()
         {
             durationTimer.Elapsed -= DurationTimerCallback;
@@ -87,6 +91,10 @@ namespace Toggl.Phoebe.Data.ViewModels
         public DateTime StopDate { get; private set; }
 
         public string ProjectName { get; private set; }
+
+        public string TaskName { get; private set; }
+
+        public string ProjectColorHex { get; private set; }
 
         public string ClientName { get; private set; }
 
@@ -131,9 +139,23 @@ namespace Toggl.Phoebe.Data.ViewModels
             ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Change Start Time";
         }
 
+        public void ChangeTimeEntryStart (DateTime newStartTime)
+        {
+            data = TimeEntryModel.ChangeStartTime (data, newStartTime);
+            UpdateView ();
+            ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Change Start Time";
+        }
+
         public void ChangeTimeEntryStop (TimeSpan diffTime)
         {
             data = TimeEntryModel.ChangeStoptime (data, data.StopTime + diffTime);
+            UpdateView ();
+            ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Change Stop Time";
+        }
+
+        public void ChangeTimeEntryStop (DateTime newStopTime)
+        {
+            data = TimeEntryModel.ChangeStoptime (data, newStopTime);
             UpdateView ();
             ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Change Stop Time";
         }
@@ -169,6 +191,11 @@ namespace Toggl.Phoebe.Data.ViewModels
             }
         }
 
+        public async Task DeleteAsync ()
+        {
+            await TimeEntryModel.DeleteTimeEntryDataAsync (data);
+        }
+
         public async Task SaveManualAsync ()
         {
             IsManual = false;
@@ -181,11 +208,12 @@ namespace Toggl.Phoebe.Data.ViewModels
             ServiceContainer.Resolve<IPlatformUtils> ().DispatchOnUIThread (() => {
 
                 StartDate = data.StartTime == DateTime.MinValue ? DateTime.UtcNow.AddMinutes (-1).ToLocalTime () : data.StartTime.ToLocalTime ();
-                StopDate = data.StopTime.HasValue ? data.StopTime.Value.ToLocalTime () : DateTime.UtcNow.ToLocalTime ();
+                StopDate = data.StopTime.HasValue ? data.StopTime.Value.ToLocalTime () : DateTime.MaxValue;
                 var duration = TimeEntryModel.GetDuration (data, Time.UtcNow);
                 Duration = TimeSpan.FromSeconds (duration.TotalSeconds).ToString ().Substring (0, 8); // TODO: check substring function for long times
                 Description = data.Description;
                 WorkspaceId = data.WorkspaceId;
+                IsBillable = data.IsBillable;
 
                 if (data.State == TimeEntryState.Running && !IsRunning) {
                     IsRunning = true;
@@ -204,6 +232,8 @@ namespace Toggl.Phoebe.Data.ViewModels
             // Ensure that this content runs in UI thread
             ServiceContainer.Resolve<IPlatformUtils> ().DispatchOnUIThread (async () => {
 
+                var workspace = await TimeEntryModel.GetWorkspaceDataAsync (data.WorkspaceId);
+
                 if (projectId != Guid.Empty) {
                     data.ProjectId = projectId;
                 } else {
@@ -213,6 +243,8 @@ namespace Toggl.Phoebe.Data.ViewModels
                 if (data.ProjectId.HasValue) {
                     var project = await TimeEntryModel.GetProjectDataAsync (data.ProjectId.Value);
                     ProjectName = project.Name;
+                    ProjectColorHex = ProjectModel.HexColors [project.Color % ProjectModel.HexColors.Length];
+
                     if (project.ClientId.HasValue) {
                         var client = await TimeEntryModel.GetClientDataAsync (project.ClientId.Value);
                         ClientName = client.Name;
@@ -220,18 +252,27 @@ namespace Toggl.Phoebe.Data.ViewModels
                         ClientName = string.Empty;
                     }
 
-                    // TODO: Workspace and Billable should change!
-                    data.WorkspaceId = project.WorkspaceId;
-                    data.IsBillable = project.IsBillable;
-                    var workspace = await TimeEntryModel.GetWorkspaceDataAsync (project.WorkspaceId);
-                    IsPremium = workspace.IsPremium;
+                    if (data.TaskId.HasValue) {
+                        var task = await TimeEntryModel.GetTaskDataAsync (data.TaskId.Value);
+                        TaskName = task.Name;
+                    } else {
+                        TaskName = string.Empty;
+                    }
 
-                    WorkspaceId = data.WorkspaceId;
-                    IsBillable = data.IsBillable;
+                    // TODO: Workspace and Billable should change!?
+                    if (data.WorkspaceId != project.WorkspaceId) {
+                        data.WorkspaceId = project.WorkspaceId;
+                        workspace = await TimeEntryModel.GetWorkspaceDataAsync (project.WorkspaceId);
+                    }
                 } else {
                     ProjectName = string.Empty;
                     ClientName = string.Empty;
+                    TaskName = string.Empty;
+                    ProjectColorHex = ProjectModel.HexColors [ProjectModel.DefaultColor];
                 }
+
+                WorkspaceId = data.WorkspaceId;
+                IsPremium = workspace.IsPremium;
             });
         }
 

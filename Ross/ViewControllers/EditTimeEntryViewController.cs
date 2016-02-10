@@ -3,16 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using Cirrious.FluentLayouts.Touch;
 using CoreAnimation;
-using CoreFoundation;
 using CoreGraphics;
 using Foundation;
+using GalaSoft.MvvmLight.Helpers;
 using Toggl.Phoebe;
-using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
-using Toggl.Phoebe.Data.Utils;
-using Toggl.Phoebe.Data.Views;
-using Toggl.Ross.DataSources;
+using Toggl.Phoebe.Data.ViewModels;
 using Toggl.Ross.Theme;
 using Toggl.Ross.Views;
 using UIKit;
@@ -20,509 +17,107 @@ using XPlatUtils;
 
 namespace Toggl.Ross.ViewControllers
 {
-    public class EditTimeEntryViewController : UIViewController
+    public class EditTimeEntryViewController : UIViewController, DurationChangeViewController.IChangeDuration, IOnTagSelectedHandler, IOnProjectSelectedHandler
     {
-        private enum LayoutVariant {
-            Default,
-            Description
-        }
+        private const string DefaultDurationText = " 00:00:00 ";
 
-        class TGTableView : UITableView
-        {
-            public override UIView TableFooterView
-            {
-                get {
-                    return base.TableFooterView;
-                } set {
-                    base.TableFooterView = value ?? new UIView ();
-                }
-            }
-        }
-
-        private LayoutVariant layoutVariant = LayoutVariant.Default;
-        private readonly TimerNavigationController timerController;
         private NSLayoutConstraint[] trackedWrapperConstraints;
         private UIView wrapper;
-        private StartStopView startStopView;
+        private StartStopView startStopView { get; set; }
+        private ProjectClientTaskButton projectButton { get; set; }
+        private TextField descriptionTextField { get; set; }
+        private LabelSwitchView billableSwitch { get; set; }
         private UIDatePicker datePicker;
-        private ProjectClientTaskButton projectButton;
-        private TextField descriptionTextField;
         private UIButton tagsButton;
-        private LabelSwitchView billableSwitch;
         private UIButton deleteButton;
+        private UIButton durationButton;
         private bool hideDatePicker = true;
         private readonly List<NSObject> notificationObjects = new List<NSObject> ();
-        private readonly TimeEntryModel model;
-        private readonly TimeEntryTagsView tagsView;
-        private PropertyChangeTracker propertyTracker = new PropertyChangeTracker ();
-        private bool descriptionChanging;
-        private bool autoCommitScheduled;
-        private int autoCommitId;
-        private bool shouldRebindOnAppear;
-        private UITableView autoCompletionTableView;
-        private UIBarButtonItem autoCompletionDoneBarButtonItem;
-        private Stack<UIBarButtonItem> barButtonItemsStack = new Stack<UIBarButtonItem> ();
 
-        public EditTimeEntryViewController (TimeEntryModel model)
+        // to avoid weak references to be removed
+        private Binding<string, string> durationBinding, projectBinding, clientBinding, descriptionBinding, taskBinding, projectColorBinding;
+        private Binding<DateTime, DateTime> startTimeBinding;
+        private Binding<DateTime, DateTime> stopTimeBinding;
+        private Binding<List<TagData>, List<TagData>> tagBinding;
+        private Binding<bool, bool> isBillableBinding, billableBinding, isRunningBinding, isPremiumBinding;
+
+        private readonly TimeEntryData data;
+        protected EditTimeEntryViewModel ViewModel { get; set; }
+
+        public EditTimeEntryViewController (TimeEntryData data)
         {
-            this.model = model;
-
-            tagsView = new TimeEntryTagsView (model.Id);
-
-            timerController = new TimerNavigationController (model);
+            this.data = data;
         }
 
         protected override void Dispose (bool disposing)
         {
             base.Dispose (disposing);
-
-            if (disposing) {
-                if (tagsView != null) {
-                    tagsView.Updated -= OnTagsUpdated;
-                }
-                if (propertyTracker != null) {
-                    propertyTracker.Dispose ();
-                    propertyTracker = null;
-                }
-            }
-        }
-
-        private void ScheduleDescriptionChangeAutoCommit ()
-        {
-            if (autoCommitScheduled) {
-                return;
-            }
-
-            var commitId = ++autoCommitId;
-            autoCommitScheduled = true;
-            DispatchQueue.MainQueue.DispatchAfter (TimeSpan.FromSeconds (1), delegate {
-                if (!autoCommitScheduled || commitId != autoCommitId) {
-                    return;
-                }
-
-                autoCommitScheduled = false;
-                CommitDescriptionChanges ();
-            });
-        }
-
-        private void CancelDescriptionChangeAutoCommit ()
-        {
-            autoCommitScheduled = false;
-        }
-
-        private void CommitDescriptionChanges ()
-        {
-            if (descriptionChanging) {
-                model.Description = descriptionTextField.Text;
-                model.SaveAsync ();
-            }
-            descriptionChanging = false;
-            CancelDescriptionChangeAutoCommit ();
-        }
-
-        private void DiscardDescriptionChanges ()
-        {
-            descriptionChanging = false;
-            CancelDescriptionChangeAutoCommit ();
-        }
-
-        private void OnTagsUpdated (object sender, EventArgs args)
-        {
-            RebindTags ();
-        }
-
-        private void ResetTrackedObservables ()
-        {
-            if (propertyTracker == null) {
-                return;
-            }
-
-            propertyTracker.MarkAllStale ();
-
-            if (model != null) {
-                propertyTracker.Add (model, HandleTimeEntryPropertyChanged);
-
-                if (model.Project != null) {
-                    propertyTracker.Add (model.Project, HandleProjectPropertyChanged);
-
-                    if (model.Project.Client != null) {
-                        propertyTracker.Add (model.Project.Client, HandleClientPropertyChanged);
-                    }
-                }
-
-                if (model.Task != null) {
-                    propertyTracker.Add (model.Task, HandleTaskPropertyChanged);
-                }
-            }
-
-            propertyTracker.ClearStale ();
-        }
-
-        private void HandleTimeEntryPropertyChanged (string prop)
-        {
-            if (prop == TimeEntryModel.PropertyProject
-                    || prop == TimeEntryModel.PropertyTask
-                    || prop == TimeEntryModel.PropertyStartTime
-                    || prop == TimeEntryModel.PropertyStopTime
-                    || prop == TimeEntryModel.PropertyState
-                    || prop == TimeEntryModel.PropertyIsBillable
-                    || prop == TimeEntryModel.PropertyDescription) {
-                Rebind ();
-            }
-        }
-
-        private void HandleProjectPropertyChanged (string prop)
-        {
-            if (prop == ProjectModel.PropertyClient
-                    || prop == ProjectModel.PropertyName
-                    || prop == ProjectModel.PropertyColor) {
-                Rebind ();
-            }
-        }
-
-        private void HandleClientPropertyChanged (string prop)
-        {
-            if (prop == ClientModel.PropertyName) {
-                Rebind ();
-            }
-        }
-
-        private void HandleTaskPropertyChanged (string prop)
-        {
-            if (prop == TaskModel.PropertyName) {
-                Rebind ();
-            }
-        }
-
-        private void BindStartStopView (StartStopView v)
-        {
-            v.StartTime = model.StartTime;
-            v.StopTime = model.StopTime;
-        }
-
-        private void BindDatePicker (UIDatePicker v)
-        {
-            if (startStopView == null) {
-                return;
-            }
-
-            var currentValue = v.Date.ToDateTime ().ToUtc ();
-
-            switch (startStopView.Selected) {
-            case TimeKind.Start:
-                if (currentValue != model.StartTime) {
-                    v.SetDate (model.StartTime.ToNSDate (), !v.Hidden);
-                }
-                break;
-            case TimeKind.Stop:
-                if (currentValue != model.StopTime) {
-                    v.SetDate (model.StopTime.Value.ToNSDate (), !v.Hidden);
-                }
-                break;
-            }
-        }
-
-        private void BindProjectButton (ProjectClientTaskButton v)
-        {
-            var projectName = "EditEntryProjectHint".Tr ();
-            var projectColor = Color.White;
-            var clientName = String.Empty;
-            var taskName = String.Empty;
-
-            if (model.Project != null) {
-                projectName = model.Project.Name;
-                projectColor = UIColor.Clear.FromHex (model.Project.GetHexColor ());
-
-                if (model.Project.Client != null) {
-                    clientName = model.Project.Client.Name;
-                }
-
-                if (model.Task != null) {
-                    taskName = model.Task.Name;
-                }
-            }
-
-            v.ProjectColor = projectColor;
-            v.ProjectName = projectName;
-            v.ClientName = clientName;
-            v.TaskName = taskName;
-        }
-
-        private void BindDescriptionField (TextField v)
-        {
-            if (!descriptionChanging && v.Text != model.Description) {
-                v.Text = model.Description;
-            }
-
-        }
-
-        private void BindTagsButton (UIButton v)
-        {
-            if (tagsView == null) {
-                return;
-            }
-
-            // Construct tags attributed strings:
-            NSMutableAttributedString text = null;
-            foreach (var tag in tagsView.Data) {
-                if (String.IsNullOrWhiteSpace (tag)) {
-                    continue;
-                }
-
-                var chip = NSAttributedString.CreateFrom (new NSTextAttachment () {
-                    Image = ServiceContainer.Resolve<TagChipCache> ().Get (tag, v),
-                });
-
-                if (text == null) {
-                    text = new NSMutableAttributedString (chip);
-                } else {
-                    text.Append (new NSAttributedString (" ", Style.EditTimeEntry.WithTags));
-                    text.Append (chip);
-                }
-            }
-
-            if (text == null) {
-                v.SetAttributedTitle (new NSAttributedString ("EditEntryTagsHint".Tr (), Style.EditTimeEntry.NoTags), UIControlState.Normal);
-            } else {
-                v.SetAttributedTitle (text, UIControlState.Normal);
-            }
-        }
-
-        private void BindBillableSwitch (LabelSwitchView v)
-        {
-            v.Hidden = model.Workspace == null || !model.Workspace.IsPremium;
-            v.Switch.On = model.IsBillable;
-        }
-
-        private Source autocompletionTableViewSource;
-
-        private void BindAutocompletionTableView (UITableView v)
-        {
-            autocompletionTableViewSource = new Source (this, v);
-            autocompletionTableViewSource.Attach ();
-        }
-
-        private void BindAutoCompletionDoneBarButtonItem (UINavigationItem v)
-        {
-            autoCompletionDoneBarButtonItem = new UIBarButtonItem (UIBarButtonSystemItem.Done);
-            autoCompletionDoneBarButtonItem.Clicked += (object sender, EventArgs e) => {
-                DescriptionSuggestionsMode = false;
-            };
-
-            if (v.RightBarButtonItem != null) {
-                barButtonItemsStack.Push (v.RightBarButtonItem);
-            }
-
-            v.SetRightBarButtonItem (autoCompletionDoneBarButtonItem, true);
-        }
-
-        private void UnBindAutoCompletionDoneBarButtonItem (UINavigationItem v)
-        {
-            if (v.RightBarButtonItem == autoCompletionDoneBarButtonItem) {
-                v.SetRightBarButtonItem (null, true);
-                if (barButtonItemsStack.Count > 0) {
-                    v.SetRightBarButtonItem (barButtonItemsStack.Pop (), true);
-                }
-                autoCompletionDoneBarButtonItem = null;
-            }
-        }
-
-        private void BeginSuggestionMode()
-        {
-            DescriptionSuggestionsMode = true;
-        }
-
-        private class Source : GroupedDataViewSource<TimeEntryData, string, TimeEntryData>
-        {
-            private readonly static NSString EntryCellId = new NSString ("autocompletionCell");
-            private readonly EditTimeEntryViewController controller;
-            private readonly SuggestionEntriesView dataView;
-
-            public Source (EditTimeEntryViewController controller, UITableView tableView) : this (controller, tableView, new SuggestionEntriesView ())
-            {
-            }
-
-            private Source (EditTimeEntryViewController controller, UITableView tableView, SuggestionEntriesView dataView) : base (tableView, dataView)
-            {
-                this.dataView = dataView;
-                this.dataView.Updated += (DataViewUpdated);
-                this.controller = controller;
-                tableView.RegisterClassForCellReuse (typeof (SuggestionTableViewCell), EntryCellId);
-            }
-
-            private void DataViewUpdated (object sender, EventArgs args)
-            {
-                if (sender == dataView && dataView.HasSuggestions) {
-                    controller.BeginSuggestionMode ();
-                }
-            }
-
-            public void UpdateDescription (string descriptionString)
-            {
-                dataView.FilterByInfix (descriptionString);
-            }
-
-            protected override IEnumerable<string> GetSections ()
-            {
-                return new List<string> () { "" };
-            }
-
-            protected override IEnumerable<TimeEntryData> GetRows (string section)
-            {
-                return dataView.Data;
-            }
-
-            public override nfloat EstimatedHeight (UITableView tableView, NSIndexPath indexPath)
-            {
-                return 60f;
-            }
-
-            public override nfloat GetHeightForRow (UITableView tableView, NSIndexPath indexPath)
-            {
-                return EstimatedHeight (tableView, indexPath);
-            }
-
-            public override UITableViewCell GetCell (UITableView tableView, NSIndexPath indexPath)
-            {
-                var cell = (SuggestionTableViewCell)tableView.DequeueReusableCell (EntryCellId, indexPath);
-                cell.Bind ((TimeEntryModel)GetRow (indexPath));
-                return cell;
-            }
-
-            public override void RowSelected (UITableView tableView, NSIndexPath indexPath)
-            {
-                tableView.DeselectRow (indexPath, false);
-                TimeEntryModel selectedModel;
-                selectedModel = (TimeEntryModel)GetRow (indexPath);
-                controller.UpdateModel (selectedModel);
-            }
-        }
-
-        private void Rebind ()
-        {
-            ResetTrackedObservables ();
-
-            var billableHidden = billableSwitch.Hidden;
-
-            startStopView.Apply (BindStartStopView);
-            datePicker.Apply (BindDatePicker);
-            projectButton.Apply (BindProjectButton);
-            descriptionTextField.Apply (BindDescriptionField);
-            billableSwitch.Apply (BindBillableSwitch);
-
-            if (billableHidden != billableSwitch.Hidden) {
-                ResetWrapperConstraints ();
-            }
-        }
-
-
-
-        private void ResetWrapperConstraints()
-        {
-            if (trackedWrapperConstraints != null) {
-                wrapper.RemoveConstraints (trackedWrapperConstraints);
-                trackedWrapperConstraints = null;
-            }
-
-            switch (layoutVariant) {
-            case LayoutVariant.Default:
-                trackedWrapperConstraints = VerticalLinearLayout (wrapper).ToLayoutConstraints ();
-                break;
-            case LayoutVariant.Description:
-                trackedWrapperConstraints = new [] {
-                    descriptionTextField.AtTopOf (wrapper),
-                    descriptionTextField.AtLeftOf (wrapper),
-                    descriptionTextField.AtRightOf (wrapper),
-                    descriptionTextField.Height ().EqualTo (60.0f),
-                    autoCompletionTableView.AtTopOf (wrapper, 65.0f),
-                    autoCompletionTableView.AtLeftOf (wrapper),
-                    autoCompletionTableView.AtRightOf (wrapper),
-                    autoCompletionTableView.AtBottomOf (wrapper)
-                } .ToLayoutConstraints ();
-                break;
-            }
-
-            wrapper.AddConstraints (trackedWrapperConstraints);
-        }
-
-        private void RebindTags ()
-        {
-            tagsButton.Apply (BindTagsButton);
         }
 
         public override void LoadView ()
         {
+            durationButton = new UIButton ().Apply (Style.NavTimer.DurationButton);
+            durationButton.SetTitle (DefaultDurationText, UIControlState.Normal); // Dummy content to use for sizing of the label
+            durationButton.SizeToFit ();
+            durationButton.TouchUpInside += OnDurationButtonTouchUpInside;
+            NavigationItem.TitleView = durationButton;
+
             var scrollView = new UIScrollView ().Apply (Style.Screen);
 
             scrollView.Add (wrapper = new UIView () {
                 TranslatesAutoresizingMaskIntoConstraints = false,
             });
 
-            wrapper.Add (startStopView = new StartStopView () {
+            wrapper.Add (startStopView = new StartStopView {
                 TranslatesAutoresizingMaskIntoConstraints = false,
-                StartTime = model.StartTime,
-                StopTime = model.StopTime,
-            } .Apply (BindStartStopView));
+            });
             startStopView.SelectedChanged += OnStartStopViewSelectedChanged;
 
-            wrapper.Add (datePicker = new UIDatePicker () {
+            wrapper.Add (datePicker = new UIDatePicker {
                 TranslatesAutoresizingMaskIntoConstraints = false,
                 Hidden = DatePickerHidden,
                 Alpha = 0,
-            } .Apply (Style.EditTimeEntry.DatePicker).Apply (BindDatePicker));
+            } .Apply (Style.EditTimeEntry.DatePicker));
             datePicker.ValueChanged += OnDatePickerValueChanged;
 
-            wrapper.Add (projectButton = new ProjectClientTaskButton () {
+            wrapper.Add (projectButton = new ProjectClientTaskButton {
                 TranslatesAutoresizingMaskIntoConstraints = false,
-            } .Apply (BindProjectButton));
+            });
             projectButton.TouchUpInside += OnProjectButtonTouchUpInside;
 
-            wrapper.Add (descriptionTextField = new TextField () {
+            wrapper.Add (descriptionTextField = new TextField {
                 TranslatesAutoresizingMaskIntoConstraints = false,
                 AttributedPlaceholder = new NSAttributedString (
                     "EditEntryDesciptionTimerHint".Tr (),
                     foregroundColor: Color.Gray
                 ),
                 ShouldReturn = tf => tf.ResignFirstResponder (),
-            } .Apply (Style.EditTimeEntry.DescriptionField).Apply (BindDescriptionField));
-            descriptionTextField.EditingChanged += OnDescriptionFieldEditingChanged;
-            descriptionTextField.ShouldChangeCharacters = OnDescriptionFieldShouldChangeCharacters;
-            descriptionTextField.EditingDidEnd += (s, e) => CommitDescriptionChanges ();
+            } .Apply (Style.EditTimeEntry.DescriptionField));
+
             descriptionTextField.ShouldBeginEditing += (s) => {
                 ForceDimissDatePicker();
                 return true;
             };
             descriptionTextField.ShouldEndEditing += s => {
-                DescriptionSuggestionsMode = false;
                 return true;
             };
 
             wrapper.Add (tagsButton = new UIButton () {
                 TranslatesAutoresizingMaskIntoConstraints = false,
-            } .Apply (Style.EditTimeEntry.TagsButton).Apply (BindTagsButton));
+            } .Apply (Style.EditTimeEntry.TagsButton));
             tagsButton.TouchUpInside += OnTagsButtonTouchUpInside;
 
             wrapper.Add (billableSwitch = new LabelSwitchView () {
                 TranslatesAutoresizingMaskIntoConstraints = false,
                 Text = "EditEntryBillable".Tr (),
-            } .Apply (Style.EditTimeEntry.BillableContainer).Apply (BindBillableSwitch));
+            } .Apply (Style.EditTimeEntry.BillableContainer));
             billableSwitch.Label.Apply (Style.EditTimeEntry.BillableLabel);
-            billableSwitch.Switch.ValueChanged += OnBillableSwitchValueChanged;
-
-            wrapper.Add (autoCompletionTableView = new TGTableView() {
-                TranslatesAutoresizingMaskIntoConstraints = false,
-                EstimatedRowHeight = 60.0f,
-                BackgroundColor = UIColor.Clear
-            } .Apply (BindAutocompletionTableView));
-
 
             wrapper.Add (deleteButton = new UIButton () {
                 TranslatesAutoresizingMaskIntoConstraints = false,
             } .Apply (Style.EditTimeEntry.DeleteButton));
             deleteButton.SetTitle ("EditEntryDelete".Tr (), UIControlState.Normal);
             deleteButton.TouchUpInside += OnDeleteButtonTouchUpInside;
-
-
 
             ResetWrapperConstraints ();
             scrollView.AddConstraints (
@@ -536,132 +131,105 @@ namespace Toggl.Ross.ViewControllers
             );
 
             View = scrollView;
-
-            ResetTrackedObservables ();
-
-            DescriptionSuggestionsMode = false;
         }
 
-        public override void ViewDidLoad ()
+        public async override void ViewDidLoad ()
         {
             base.ViewDidLoad ();
-            timerController.Attach (this);
-        }
 
-        private bool descriptionSuggestionsMode__;
-        private bool DescriptionSuggestionsMode
-        {
-            get { return descriptionSuggestionsMode__; }
-            set {
-                if (value == descriptionSuggestionsMode__) {
-                    return;
-                }
+            ViewModel = await EditTimeEntryViewModel.Init (data);
 
-                UIScrollView scrlView = (UIScrollView)View;
-                scrlView.ScrollEnabled = !value;
-                if (value) {
-                    layoutVariant = LayoutVariant.Description;
-                    NavigationItem.Apply (BindAutoCompletionDoneBarButtonItem);
+            // Bindings.
+            durationBinding = this.SetBinding (() => ViewModel.Duration).WhenSourceChanges (() => durationButton.SetTitle (ViewModel.Duration, UIControlState.Normal));
+            startTimeBinding = this.SetBinding (() => ViewModel.StartDate, () => startStopView.StartTime);
+            stopTimeBinding = this.SetBinding (() => ViewModel.StopDate, () => startStopView.StopTime);
+            projectBinding = this.SetBinding (() => ViewModel.ProjectName, () => projectButton.ProjectName);
+            projectColorBinding = this.SetBinding (() => ViewModel.ProjectColorHex, () => projectButton.ProjectColorHex);
+            taskBinding = this.SetBinding (() => ViewModel.TaskName, () => projectButton.TaskName);
+            clientBinding = this.SetBinding (() => ViewModel.ClientName, () => projectButton.ClientName);
+            tagBinding = this.SetBinding (() => ViewModel.TagList).WhenSourceChanges (() => {
+                FeedTags (ViewModel.TagList.Select (tag => tag.Name).ToList (), tagsButton);
+            });
+            descriptionBinding = this.SetBinding (() => ViewModel.Description, () => descriptionTextField.Text).UpdateTargetTrigger (nameof (UITextField.EditingChanged));
+            isPremiumBinding = this.SetBinding (() => ViewModel.IsPremium, () => billableSwitch.Hidden).ConvertSourceToTarget (isPremium => !isPremium);
+            isRunningBinding = this.SetBinding (() => ViewModel.IsRunning).WhenSourceChanges (() => {
+                if (ViewModel.IsRunning) {
+                    startStopView.StopTime = DateTime.MaxValue;
                 } else {
-                    descriptionTextField.ResignFirstResponder ();
-                    layoutVariant = LayoutVariant.Default;
-                    NavigationItem.Apply (UnBindAutoCompletionDoneBarButtonItem);
+                    startStopView.StopTime = ViewModel.StopDate;
                 }
-                ResetWrapperConstraints ();
-                UIView.Animate (0.4f, delegate {
-                    SetEditingModeViewsHidden (value);
-                    wrapper.LayoutIfNeeded();
-                });
-                descriptionSuggestionsMode__ = value;
-            }
+            });
+            isBillableBinding = this.SetBinding (() => ViewModel.IsBillable, () => billableSwitch.Switch.On).UpdateTargetTrigger (nameof (UISwitch.ValueChanged));
         }
 
-        private void SetEditingModeViewsHidden (bool editingMode)
+        public async override void ViewWillDisappear (bool animated)
         {
-            billableSwitch.Alpha = tagsButton.Alpha = startStopView.Alpha = projectButton.Alpha = deleteButton.Alpha = editingMode ? 0 : 1;
-            autoCompletionTableView.Alpha = 1 - tagsButton.Alpha;
+            base.ViewWillDisappear (animated);
+            NSNotificationCenter.DefaultCenter.RemoveObservers (notificationObjects);
+            notificationObjects.Clear ();
+
+            await ViewModel.SaveAsync ();
+            ViewModel.Dispose ();
+        }
+
+        private void FeedTags (List<string> tagNames, UIButton btn)
+        {
+            // Construct tags attributed strings:
+            NSMutableAttributedString text = null;
+            foreach (var tag in tagNames) {
+
+                var chip = NSAttributedString.CreateFrom (new NSTextAttachment {
+                    Image = ServiceContainer.Resolve<TagChipCache> ().Get (tag, btn),
+                });
+
+                if (text == null) {
+                    text = new NSMutableAttributedString (chip);
+                } else {
+                    text.Append (new NSAttributedString (" ", Style.EditTimeEntry.WithTags));
+                    text.Append (chip);
+                }
+            }
+
+            if (text == null) {
+                btn.SetAttributedTitle (new NSAttributedString ("EditEntryTagsHint".Tr (), Style.EditTimeEntry.NoTags), UIControlState.Normal);
+            } else {
+                btn.SetAttributedTitle (text, UIControlState.Normal);
+            }
         }
 
         private void OnDatePickerValueChanged (object sender, EventArgs e)
         {
             switch (startStopView.Selected) {
             case TimeKind.Start:
-                model.StartTime = datePicker.Date.ToDateTime ();
+                ViewModel.ChangeTimeEntryStart (datePicker.Date.ToDateTime ());
                 break;
             case TimeKind.Stop:
-                model.StopTime = datePicker.Date.ToDateTime ();
+                ViewModel.ChangeTimeEntryStop (datePicker.Date.ToDateTime ());
                 break;
             }
-
-            model.SaveAsync ();
         }
 
         private void OnProjectButtonTouchUpInside (object sender, EventArgs e)
         {
-            var controller = new ProjectSelectionViewController (model);
+            var controller = new ProjectSelectionViewController (ViewModel.WorkspaceId, this);
             NavigationController.PushViewController (controller, true);
         }
 
-        public async void UpdateModel (TimeEntryModel updatedModel)
+        private void OnDurationButtonTouchUpInside (object sender, EventArgs e)
         {
-            if (DescriptionSuggestionsMode) {
-                descriptionTextField.Text = updatedModel.Description;
-            }
-            await model.MapMinorsFromModel (updatedModel);
-            Rebind ();
-            DescriptionSuggestionsMode = false;
-        }
-
-        bool shouldUpdateAutocompletionTableViewSource = false;
-        NSTimer autocompletionModeTimeoutTimer;
-
-        private bool OnDescriptionFieldShouldChangeCharacters (UITextField textField, NSRange range, string replacementString)
-        {
-            shouldUpdateAutocompletionTableViewSource = replacementString.Length > 0 && autocompletionTableViewSource != null;
-            return true;
-        }
-
-
-        private void OnDescriptionFieldEditingChanged (object sender, EventArgs e)
-        {
-            autocompletionTableViewSource.UpdateDescription (descriptionTextField.Text);
-
-            // Mark description as changed
-            descriptionChanging = descriptionTextField.Text != model.Description;
-
-            // Make sure that we're commiting 1 second after the user has stopped typing
-            CancelDescriptionChangeAutoCommit ();
-            if (descriptionChanging && !DescriptionSuggestionsMode) {
-                ScheduleDescriptionChangeAutoCommit ();
+            // TODO: This condition is valid or not?
+            if (ViewModel.IsRunning) {
+                return;
             }
 
-            if (shouldUpdateAutocompletionTableViewSource) {
-                autocompletionTableViewSource.UpdateDescription (descriptionTextField.Text);
-            }
-
-            if (autocompletionModeTimeoutTimer != null) {
-                autocompletionModeTimeoutTimer.Invalidate ();
-                autocompletionModeTimeoutTimer = null;
-            }
-
-            if (descriptionTextField.Text.Length == 0) {
-                autocompletionModeTimeoutTimer = NSTimer.CreateScheduledTimer (5.0f, delegate {
-                    DescriptionSuggestionsMode = false;
-                });
-            }
-
+            var controller = new DurationChangeViewController (ViewModel.StopDate, ViewModel.StartDate, this);
+            NavigationController.PushViewController (controller, true);
         }
 
         private void OnTagsButtonTouchUpInside (object sender, EventArgs e)
         {
-            var controller = new TagSelectionViewController (model);
+            var controller = new TagSelectionViewController (ViewModel.WorkspaceId, ViewModel.TagList, this);
             NavigationController.PushViewController (controller, true);
-        }
-
-        private void OnBillableSwitchValueChanged (object sender, EventArgs e)
-        {
-            model.IsBillable = billableSwitch.Switch.On;
-            model.SaveAsync ();
         }
 
         private void OnDeleteButtonTouchUpInside (object sender, EventArgs e)
@@ -674,79 +242,11 @@ namespace Toggl.Ross.ViewControllers
                 "EditEntryConfirmDelete".Tr ());
             alert.Clicked += async (s, ev) => {
                 if (ev.ButtonIndex == 1) {
+                    await ViewModel.DeleteAsync ();
                     NavigationController.PopToRootViewController (true);
-                    await model.DeleteAsync ();
                 }
             };
             alert.Show ();
-        }
-
-        public override void ViewWillAppear (bool animated)
-        {
-            base.ViewWillAppear (animated);
-
-            timerController.Start ();
-
-            ObserveNotification (UIKeyboard.WillHideNotification, (notif) => {
-                OnKeyboardHeightChanged (0);
-            });
-            ObserveNotification (UIKeyboard.WillShowNotification, (notif) => {
-                var val = notif.UserInfo.ObjectForKey (UIKeyboard.FrameEndUserInfoKey) as NSValue;
-                if (val != null) {
-                    OnKeyboardHeightChanged ((int)val.CGRectValue.Height);
-                }
-            });
-            ObserveNotification (UIKeyboard.WillChangeFrameNotification, (notif) => {
-                var val = notif.UserInfo.ObjectForKey (UIKeyboard.FrameEndUserInfoKey) as NSValue;
-                if (val != null) {
-                    OnKeyboardHeightChanged ((int)val.CGRectValue.Height);
-                }
-            });
-
-            if (tagsView != null) {
-                tagsView.Updated += OnTagsUpdated;
-            }
-            RebindTags ();
-
-            if (shouldRebindOnAppear) {
-                Rebind ();
-            } else {
-                shouldRebindOnAppear = true;
-            }
-        }
-
-        private void ObserveNotification (string name, Action<NSNotification> callback)
-        {
-            var obj = NSNotificationCenter.DefaultCenter.AddObserver (new NSString ( name), callback);
-            if (obj != null) {
-                notificationObjects.Add (obj);
-            }
-        }
-
-        public override void ViewDidAppear (bool animated)
-        {
-            base.ViewDidAppear (animated);
-
-            ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Edit Time Entry";
-        }
-
-        public override void ViewWillDisappear (bool animated)
-        {
-            base.ViewWillDisappear (animated);
-
-            if (tagsView != null) {
-                tagsView.Updated -= OnTagsUpdated;
-            }
-
-            NSNotificationCenter.DefaultCenter.RemoveObservers (notificationObjects);
-            notificationObjects.Clear ();
-        }
-
-        public override void ViewDidDisappear (bool animated)
-        {
-            base.ViewDidDisappear (animated);
-
-            timerController.Stop ();
         }
 
         private void OnKeyboardHeightChanged (int height)
@@ -764,7 +264,19 @@ namespace Toggl.Ross.ViewControllers
 
         private void OnStartStopViewSelectedChanged (object sender, EventArgs e)
         {
-            datePicker.Apply (BindDatePicker);
+            var currentValue = datePicker.Date.ToDateTime ().ToUtc ();
+            switch (startStopView.Selected) {
+            case TimeKind.Start:
+                if (currentValue != ViewModel.StartDate) {
+                    datePicker.SetDate (ViewModel.StartDate.ToNSDate (), !datePicker.Hidden);
+                }
+                break;
+            case TimeKind.Stop:
+                if (currentValue != ViewModel.StopDate) {
+                    datePicker.SetDate (ViewModel.StopDate.ToNSDate (), !datePicker.Hidden);
+                }
+                break;
+            }
             DatePickerHidden = startStopView.Selected == TimeKind.None;
         }
 
@@ -774,6 +286,37 @@ namespace Toggl.Ross.ViewControllers
             startStopView.Selected = TimeKind.None;
         }
 
+        #region IProjectSelected implementation
+        public void OnProjectSelected (Guid projectId, Guid taskId)
+        {
+            ViewModel.SetProjectAndTask (projectId, taskId);
+            NavigationController.PopToViewController (this, true);
+        }
+        #endregion
+
+        #region IChangeDuration implementation
+        public void OnChangeDuration (TimeSpan newDuration)
+        {
+            ViewModel.ChangeTimeEntryDuration (newDuration);
+            NavigationController.PopViewController (true);
+        }
+        #endregion
+
+        #region IUpdateTagList implementation
+        public void OnCreateNewTag (TagData newTagData)
+        {
+            ViewModel.AddTag (newTagData);
+            NavigationController.PopToViewController (this, true);
+        }
+
+        public void OnModifyTagList (List<TagData> newTagList)
+        {
+            ViewModel.ChangeTagList (newTagList);
+            NavigationController.PopToViewController (this, true);
+        }
+        #endregion
+
+        #region UI layout helpers
         private bool DatePickerHidden
         {
             get { return hideDatePicker; }
@@ -803,9 +346,7 @@ namespace Toggl.Ross.ViewControllers
                     );
                 } else {
                     descriptionTextField.ResignFirstResponder ();
-
                     datePicker.Hidden = false;
-
                     UIView.AnimateKeyframes (
                         0.4, 0, 0,
                     delegate {
@@ -823,6 +364,18 @@ namespace Toggl.Ross.ViewControllers
                 }
             }
         }
+
+        private void ResetWrapperConstraints()
+        {
+            if (trackedWrapperConstraints != null) {
+                wrapper.RemoveConstraints (trackedWrapperConstraints);
+                trackedWrapperConstraints = null;
+            }
+
+            trackedWrapperConstraints = VerticalLinearLayout (wrapper).ToLayoutConstraints ();
+            wrapper.AddConstraints (trackedWrapperConstraints);
+        }
+
 
         private IEnumerable<FluentLayout> VerticalLinearLayout (UIView container)
         {
@@ -851,7 +404,9 @@ namespace Toggl.Ross.ViewControllers
                 yield return prev.AtBottomOf (container);
             }
         }
+        #endregion
 
+        #region Custom UI components
         private class StartStopView : UIView
         {
             private readonly List<NSLayoutConstraint> trackedConstraints = new List<NSLayoutConstraint>();
@@ -865,7 +420,7 @@ namespace Toggl.Ross.ViewControllers
             private LayoutVariant viewLayout = LayoutVariant.StartOnly;
             private bool stopTimeHidden = true;
             private DateTime startTime;
-            private DateTime? stopTime;
+            private DateTime stopTime;
             private TimeKind selectedTime;
 
             public StartStopView ()
@@ -916,23 +471,24 @@ namespace Toggl.Ross.ViewControllers
                 }
             }
 
-            public DateTime? StopTime
+            public DateTime StopTime
             {
                 get { return stopTime; }
                 set {
+
                     if (stopTime == value) {
                         return;
                     }
-
                     stopTime = value;
-                    if (stopTime.HasValue) {
-                        var time = stopTime.Value.ToLocalTime ();
+
+                    if (stopTime != DateTime.MaxValue) {
+                        var time = stopTime.ToLocalTime ();
                         stopDateLabel.Text = time.ToLocalizedDateString ();
                         stopTimeLabel.Text = time.ToLocalizedTimeString ();
                     }
-                    SetStopTimeHidden (stopTime == null, animate: Superview != null);
+                    SetStopTimeHidden (stopTime == DateTime.MaxValue, Superview != null);
 
-                    if (stopTime == null && Selected == TimeKind.Stop) {
+                    if (stopTime == DateTime.MaxValue && Selected == TimeKind.Stop) {
                         Selected = TimeKind.None;
                     }
                 }
@@ -1085,7 +641,6 @@ namespace Toggl.Ross.ViewControllers
                         stopDateTimeButton.AtBottomOf (this, 10f)
                     } .ToLayoutConstraints());
                     break;
-                case LayoutVariant.BothCenterAll:
                 default:
                     AddSubview (arrowImageView);
                     AddSubview (stopDateTimeButton);
@@ -1250,7 +805,10 @@ namespace Toggl.Ross.ViewControllers
             public string ProjectName
             {
                 get { return projectLabel.Text; }
-                set { projectLabel.Text = value; }
+                set {
+                    var projectName = string.IsNullOrEmpty (value) ? "EditEntryProjectHint".Tr () : value;
+                    projectLabel.Text = projectName;
+                }
             }
 
             public string ClientName
@@ -1261,12 +819,12 @@ namespace Toggl.Ross.ViewControllers
                         return;
                     }
 
-                    var visibilityChanged = String.IsNullOrWhiteSpace (clientLabel.Text) != String.IsNullOrWhiteSpace (value);
+                    var visibilityChanged = string.IsNullOrWhiteSpace (clientLabel.Text) != string.IsNullOrWhiteSpace (value);
                     clientLabel.Text = value;
 
                     if (visibilityChanged) {
                         SetNeedsUpdateConstraints ();
-                        clientLabel.Hidden = String.IsNullOrWhiteSpace (value);
+                        clientLabel.Hidden = string.IsNullOrWhiteSpace (value);
                     }
                 }
             }
@@ -1279,26 +837,28 @@ namespace Toggl.Ross.ViewControllers
                         return;
                     }
 
-                    var visibilityChanged = String.IsNullOrWhiteSpace (taskLabel.Text) != String.IsNullOrWhiteSpace (value);
+                    var visibilityChanged = string.IsNullOrWhiteSpace (taskLabel.Text) != string.IsNullOrWhiteSpace (value);
                     taskLabel.Text = value;
 
                     if (visibilityChanged) {
                         SetNeedsUpdateConstraints ();
-                        taskLabel.Hidden = String.IsNullOrWhiteSpace (value);
+                        taskLabel.Hidden = string.IsNullOrWhiteSpace (value);
                     }
                 }
             }
 
-            public UIColor ProjectColor
+            public string ProjectColorHex
             {
+                get { return "#ffffff"; }
                 set {
-                    if (value == Color.White) {
+                    // If string Hex color is default or null:
+                    if (value == ProjectModel.HexColors [ProjectModel.DefaultColor] || string.IsNullOrEmpty (value)) {
                         projectLabel.Apply (Style.EditTimeEntry.ProjectHintLabel);
                         SetBackgroundImage (Color.White.ToImage (), UIControlState.Normal);
                         SetBackgroundImage (Color.LightestGray.ToImage (), UIControlState.Highlighted);
                     } else {
                         projectLabel.Apply (Style.EditTimeEntry.ProjectLabel);
-                        SetBackgroundImage (value.ToImage (), UIControlState.Normal);
+                        SetBackgroundImage (UIColor.Clear.FromHex (value).ToImage (), UIControlState.Normal);
                         SetBackgroundImage (null, UIControlState.Highlighted);
                     }
                 }
@@ -1310,5 +870,6 @@ namespace Toggl.Ross.ViewControllers
                 return true;
             }
         }
+        #endregion
     }
 }

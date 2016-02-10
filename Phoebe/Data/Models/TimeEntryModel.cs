@@ -537,6 +537,8 @@ namespace Toggl.Phoebe.Data.Models
                         data.StartTime = Time.UtcNow - GetDuration (data, Time.UtcNow);
                         data.StopTime = null;
                     });
+                    var bus = ServiceContainer.Resolve<MessageBus> ();
+                    bus.Send (new StartStopMessage (timeEntryData));
                     return await SaveTimeEntryDataAsync (timeEntryData);
                 }
             }

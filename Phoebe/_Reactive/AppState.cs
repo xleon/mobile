@@ -217,10 +217,16 @@ namespace Toggl.Phoebe._Reactive
         {
             var dic = oldItems.ToDictionary (x => x.Key, x => x.Value);
             foreach (var newItem in newItems.OfType<T> ()) {
-                if (dic.ContainsKey (newItem.Id)) {
-                    dic [newItem.Id] = newItem;
+                if (newItem.DeletedAt != null) {
+                    if (dic.ContainsKey (newItem.Id)) {
+                        dic [newItem.Id] = newItem;
+                    } else {
+                        dic.Add (newItem.Id, newItem);
+                    }
                 } else {
-                    dic.Add (newItem.Id, newItem);
+                    if (dic.ContainsKey (newItem.Id)) {
+                        dic.Remove (newItem.Id);
+                    }
                 }
             }
             return dic;
@@ -235,12 +241,18 @@ namespace Toggl.Phoebe._Reactive
         {
             var dic = TimeEntries.ToDictionary (x => x.Key, x => x.Value);
             foreach (var newItem in newItems.OfType<TimeEntryData> ()) {
-                if (dic.ContainsKey (newItem.Id)) {
-                    dic [newItem.Id] = new RichTimeEntry (
-                        newItem, LoadTimeEntryInfo (newItem));
+                if (newItem.DeletedAt != null) {
+                    if (dic.ContainsKey (newItem.Id)) {
+                        dic [newItem.Id] = new RichTimeEntry (
+                            newItem, LoadTimeEntryInfo (newItem));
+                    } else {
+                        dic.Add (newItem.Id, new RichTimeEntry (
+                                     newItem, LoadTimeEntryInfo (newItem)));
+                    }
                 } else {
-                    dic.Add (newItem.Id, new RichTimeEntry (
-                                 newItem, LoadTimeEntryInfo (newItem)));
+                    if (dic.ContainsKey (newItem.Id)) {
+                        dic.Remove (newItem.Id);
+                    }
                 }
             }
             return dic;

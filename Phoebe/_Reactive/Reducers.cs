@@ -15,6 +15,22 @@ namespace Toggl.Phoebe._Reactive
 {
     public static class Reducers
     {
+        public static Reducer<AppState> Init ()
+        {
+            var tagReducer = new TagCompositeReducer<TimerState> ()
+            .Add (DataTag.AssignRemoteIds, ReceivedFromServer) // TODO: Use a different method?
+            .Add (DataTag.ReceivedFromServer, ReceivedFromServer)
+            .Add (DataTag.TimeEntriesLoad, TimeEntriesLoad)
+
+            .Add (DataTag.TimeEntryContinue, TimeEntryContinue)
+            .Add (DataTag.TimeEntryStop, TimeEntryStop)
+            .Add (DataTag.TimeEntriesRemoveWithUndo, TimeEntriesRemoveWithUndo)
+            .Add (DataTag.TimeEntriesRestoreFromUndo, TimeEntriesRestoreFromUndo)
+            .Add (DataTag.TimeEntriesRemovePermanently, TimeEntriesRemovePermanently);
+
+            return new FieldCompositeReducer<AppState> ()
+                   .Add (x => x.TimerState, tagReducer);
+        }
         static DataSyncMsg<TimerState> TimeEntriesLoad (TimerState state, IDataMsg msg)
         {
             var userId = state.User.Id;
@@ -54,7 +70,7 @@ namespace Toggl.Phoebe._Reactive
                 foreach (var newData in receivedData) {
                     var oldData = ctx.SingleOrDefault (x => x.RemoteId == newData.RemoteId);
                     if (oldData != null) {
-                        if (newData.CompareTo (oldData) > 0) {
+                        if (newData.CompareTo (oldData) >= 0) {
                             newData.Id = oldData.Id;
                             PutOrDelete (ctx, newData);
                         }
@@ -75,6 +91,29 @@ namespace Toggl.Phoebe._Reactive
                            tags: state.Update (state.Tags, updated),
                            timeEntries: state.UpdateTimeEntries (updated)
                        ));
+        }
+
+        static DataSyncMsg<TimerState> TimeEntryContinue (TimerState state, IDataMsg msg)
+        {
+            var entryData = msg.ForceGetData<ITimeEntryData> ();
+            var dataStore = ServiceContainer.Resolve <ISyncDataStore> ();
+
+            if (entryData.State != TimeEntryState.Finished) {
+                throw new InvalidOperationException (
+                    String.Format ("Cannot continue a time entry ({0}) in {1} state.",
+                                   entryData.Id, entryData.State));
+            }
+
+            var updated = dataStore.Update (ctx => {
+                // TODO: Create new entry
+                throw new NotImplementedException ();
+            });
+
+            // TODO: Check updated.Count == 1?
+            return DataSyncMsg.Create (
+                       msg.Tag,
+                       state.With (timeEntries: state.UpdateTimeEntries (updated)),
+                       updated);
         }
 
         static DataSyncMsg<TimerState> TimeEntryStop (TimerState state, IDataMsg msg)
@@ -100,6 +139,25 @@ namespace Toggl.Phoebe._Reactive
                        msg.Tag,
                        state.With (timeEntries: state.UpdateTimeEntries (updated)),
                        updated);
+        }
+
+        static DataSyncMsg<TimerState> TimeEntriesRemoveWithUndo (TimerState state, IDataMsg msg)
+        {
+            var removed = msg.ForceGetData<IEnumerable<ITimeEntryData>> ()
+            .Select (x => new TimeEntryData (x) {
+                DeletedAt = Time.UtcNow
+            });
+
+            // Only update state, don't touch the db, nor send sync messages
+            return DataSyncMsg.Create (msg.Tag, state.With (timeEntries: state.UpdateTimeEntries (removed)));
+        }
+
+        static DataSyncMsg<TimerState> TimeEntriesRestoreFromUndo (TimerState state, IDataMsg msg)
+        {
+            var restored = msg.ForceGetData<IEnumerable<ITimeEntryData>> ();
+
+            // Only update state, don't touch the db, nor send sync messages
+            return DataSyncMsg.Create (msg.Tag, state.With (timeEntries: state.UpdateTimeEntries (restored)));
         }
 
         static DataSyncMsg<TimerState> TimeEntriesRemovePermanently (TimerState state, IDataMsg msg)

@@ -51,10 +51,10 @@ namespace Toggl.Phoebe._Data.Models
                 } else if (this.DeletedAt == null) {
                     return -1;
                 } else {
-                    return this.DeletedAt > other.DeletedAt ? 1 : -1;
+                    return this.DeletedAt.Value.CompareTo (other.DeletedAt);
                 }
             } else {
-                return this.ModifiedAt > other.ModifiedAt ? 1 : -1;
+                return this.ModifiedAt.CompareTo (other.ModifiedAt);
             }
         }
 

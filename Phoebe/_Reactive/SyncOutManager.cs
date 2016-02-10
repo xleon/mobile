@@ -47,7 +47,7 @@ namespace Toggl.Phoebe._Reactive
         {
             // Check internet connection
             var isConnected = networkPresence.IsNetworkPresent;
-            var remoteIds = new List<CommonJson> ();
+            var remoteIds = new List<CommonData> ();
 
             foreach (var msg in syncMsg.SyncData) {
                 bool alreadyQueued = false;
@@ -109,14 +109,14 @@ namespace Toggl.Phoebe._Reactive
             }
         }
 
-        async Task SendMessage (List<CommonJson> remoteIds, CommonJson json)
+        async Task SendMessage (List<CommonData> remoteIds, CommonJson json)
         {
             if (json.DeletedAt == null) {
                 if (json.RemoteId != null) {
                     await client.Update (json);
                 } else {
                     var res = await client.Create (json);
-                    remoteIds.Add (res);
+                    remoteIds.Add (mapper.Map (res));
                 }
             } else {
                 if (json.RemoteId != null) {
@@ -176,13 +176,14 @@ namespace Toggl.Phoebe._Reactive
                     // TODO: Tags
                 }
 
-                RxChain.Send (this.GetType (),
-                              DataTag.ReceivedFromServer,
-                              jsonEntries
-                              .Concat (newWorkspaces)
-                              .Concat (newProjects)
-                              .Concat (newClients)
-                              .Concat (newTasks).ToList ());
+                RxChain.Send (
+                    this.GetType (),
+                    DataTag.ReceivedFromServer,
+                    jsonEntries.Select (mapper.Map<TimeEntryData>).Cast<ICommonData> ()
+                    .Concat (newWorkspaces.Select (mapper.Map<WorkspaceData>).Cast<ICommonData> ())
+                    .Concat (newProjects.Select (mapper.Map<ProjectData>).Cast<ICommonData> ())
+                    .Concat (newClients.Select (mapper.Map<ClientData>).Cast<ICommonData> ())
+                    .Concat (newTasks.Select (mapper.Map<TaskData>).Cast<ICommonData> ()).ToList ());
 
             } catch (Exception exc) {
                 var tag = this.GetType ().Name;

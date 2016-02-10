@@ -27,16 +27,16 @@ namespace Toggl.Phoebe._Reactive
             }
         }
 
-        public static void Init (AppState initState, Reducer<AppState> reducer, InitMode mode = InitMode.Full)
+        public static void Init (AppState initState, InitMode mode = InitMode.Full)
         {
             switch (mode) {
             case InitMode.TestStoreManager:
-                StoreManager.Init (initState, reducer);
+                StoreManager.Init (initState, Reducers.Init ());
                 break;
 
             // Full
             default:
-                StoreManager.Init (initState, reducer);
+                StoreManager.Init (initState, Reducers.Init ());
                 SyncOutManager.Init ();
                 break;
             }
@@ -58,19 +58,6 @@ namespace Toggl.Phoebe._Reactive
         {
             checkSource (source, tag);
             StoreManager.Singleton.Send (DataMsg.Error<T> (tag, exc));
-        }
-    }
-
-    public class ActionNotFoundException : Exception
-    {
-        public DataTag Tag { get; private set; }
-        public Type Register { get; private set; }
-
-        public ActionNotFoundException (DataTag tag, Type register)
-        : base (Enum.GetName (typeof (DataTag), tag) + " not found in " + register.FullName)
-        {
-            Tag = tag;
-            Register = register;
         }
     }
 }

@@ -76,6 +76,36 @@ namespace Toggl.Phoebe._Data.Json
             return mapper.Map<T> (source);
         }
 
+        public CommonData Map (CommonJson source)
+        {
+            Type destinationType = null;
+            Type sourceType = source.GetType ();
+
+            if (sourceType == typeof (ClientJson)) {
+                destinationType = typeof (ClientData);
+            } else if (sourceType == typeof (ProjectJson)) {
+                destinationType = typeof (ProjectData);
+            } else if (sourceType == typeof (TaskJson)) {
+                destinationType = typeof (TaskData);
+            } else if (sourceType == typeof (TimeEntryJson)) {
+                destinationType = typeof (TimeEntryData);
+            } else if (sourceType == typeof (WorkspaceJson)) {
+                destinationType = typeof (WorkspaceData);
+            } else if (sourceType == typeof (UserJson)) {
+                destinationType = typeof (UserData);
+            } else if (sourceType == typeof (TagJson)) {
+                destinationType = typeof (TagData);
+            } else if (sourceType == typeof (WorkspaceUserJson)) {
+                destinationType = typeof (WorkspaceUserData);
+            } else if (sourceType == typeof (ProjectUserJson)) {
+                destinationType = typeof (ProjectUserData);
+            } else {
+                throw new NotSupportedException (string.Format ("Cannot map {0} from JSON", sourceType.FullName));
+            }
+
+            return (CommonData)mapper.Map (source, sourceType, destinationType);
+        }
+
         public CommonJson MapToJson (ICommonData source)
         {
             Type destinationType = null;

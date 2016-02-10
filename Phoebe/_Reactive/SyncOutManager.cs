@@ -45,10 +45,9 @@ namespace Toggl.Phoebe._Reactive
 
         async Task EnqueueOrSend (DataSyncMsg<AppState> syncMsg)
         {
-            // TODO: Limit queue size?
-
             // Check internet connection
             var isConnected = networkPresence.IsNetworkPresent;
+            var remoteIds = new List<CommonJson> ();
 
             foreach (var msg in syncMsg.SyncData) {
                 bool alreadyQueued = false;
@@ -69,14 +68,24 @@ namespace Toggl.Phoebe._Reactive
                         // Send dataStore to server
                         do {
                             var jsonMsg = JsonConvert.DeserializeObject<DataJsonMsg> (json);
-                            await SendMessage (jsonMsg.Data);
+                            await SendMessage (remoteIds, jsonMsg.Data);
 
-                            // If we sent the message successfully, remove it from the dataStore
+                            // If we sent the message successfully, remove it from the queue
                             dataStore.TryDequeue (QueueId, out json);
                         } while (dataStore.TryPeek (QueueId, out json));
                     } else {
                         // If there's no queue, try to send the message directly
-                        await SendMessage (exported);
+                        await SendMessage (remoteIds, exported);
+                    }
+
+                    // Return assigned remoteIds
+                    if (remoteIds.Count > 0) {
+                        RxChain.Send (this.GetType (), DataTag.AssignRemoteIds, remoteIds);
+                    }
+
+                    // Sync if necessary
+                    if (syncMsg.Tag == DataTag.EmptyQueueAndSync) {
+                        DownloadEntries (syncMsg.State.TimerState);
                     }
                 } catch (Exception ex) {
                     if (!alreadyQueued) {
@@ -100,51 +109,95 @@ namespace Toggl.Phoebe._Reactive
             }
         }
 
-        async Task SendMessage (CommonJson json)
+        async Task SendMessage (List<CommonJson> remoteIds, CommonJson json)
         {
             if (json.DeletedAt == null) {
                 if (json.RemoteId != null) {
                     await client.Update (json);
                 } else {
                     var res = await client.Create (json);
-                    // TODO: Store RemoteId
+                    remoteIds.Add (res);
                 }
             } else {
-                // If the entry wasn't synced with the server we don't need to notify
-                // (the entry was already removed in the view at the start of the undo timeout)
                 if (json.RemoteId != null) {
                     await client.Delete (json);
+                } else {
+                    // TODO: Make sure the item has not been assigned a remoteId by a previous item in the queue
                 }
             }
         }
 
-        async void DownloadEntries (DateTime startFrom)
+        async void DownloadEntries (TimerState state)
         {
-            const int daysLoad = Literals.TimeEntryLoadDays;
             try {
                 // Download new Entries
-                var jsonEntries = await client.ListTimeEntries (startFrom, daysLoad);
+                var jsonEntries = await client.ListTimeEntries (state.StartFrom, Literals.TimeEntryLoadDays);
 
-                AppState state = null;
+                var newWorkspaces = new List<CommonJson> ();
+                var newProjects = new List<CommonJson> ();
+                var newClients = new List<CommonJson> ();
+                var newTasks = new List<CommonJson> ();
+
+                // Check the state contains all related objects
                 foreach (var entry in jsonEntries) {
-                    if (!state.TimerState.Projects.Values.Any (p => p.RemoteId == entry.ProjectRemoteId)) {
-                        // Request ProjectData from server
+                    if (state.Workspaces.Values.All (x => x.RemoteId != entry.WorkspaceRemoteId) &&
+                            newWorkspaces.All (x => x.RemoteId != entry.WorkspaceRemoteId)) {
+                        newWorkspaces.Add (await client.Get<WorkspaceJson> (entry.WorkspaceRemoteId));
                     }
+
+                    if (entry.ProjectRemoteId.HasValue) {
+                        long? clientRemoteId = null;
+                        var projectData = state.Projects.Values.FirstOrDefault (x => x.RemoteId == entry.ProjectRemoteId);
+
+                        if (projectData != null) {
+                            clientRemoteId = projectData.ClientRemoteId;
+                        } else {
+                            var projectJson = newProjects.FirstOrDefault (x => x.RemoteId == entry.ProjectRemoteId);
+                            if (projectJson == null) {
+                                projectJson = await client.Get<ProjectJson> (entry.ProjectRemoteId.Value);
+                                newProjects.Add (projectJson);
+                            }
+                            clientRemoteId = projectJson.RemoteId;
+                        }
+
+                        if (state.Clients.Values.All (x => x.RemoteId != clientRemoteId) &&
+                                newClients.All (x => x.RemoteId != clientRemoteId)) {
+                            newClients.Add (await client.Get<ClientJson> (clientRemoteId.Value));
+                        }
+                    }
+
+                    if (entry.TaskRemoteId.HasValue) {
+                        if (state.Tasks.Values.All (x => x.RemoteId != entry.TaskRemoteId) &&
+                                newTasks.All (x => x.RemoteId != entry.TaskRemoteId)) {
+                            newTasks.Add (await client.Get<ClientJson> (entry.TaskRemoteId.Value));
+                        }
+                    }
+
+                    // TODO: Tags
                 }
 
-                RxChain.Send (this.GetType (), DataTag.TimeEntryReceivedFromServer, jsonEntries);
+                RxChain.Send (this.GetType (),
+                              DataTag.ReceivedFromServer,
+                              jsonEntries
+                              .Concat (newWorkspaces)
+                              .Concat (newProjects)
+                              .Concat (newClients)
+                              .Concat (newTasks).ToList ());
+
             } catch (Exception exc) {
                 var tag = this.GetType ().Name;
                 var log = ServiceContainer.Resolve<ILogger> ();
-                const string errorMsg = "Failed to fetch time entries {1} days up to {0}";
+                string errorMsg = string.Format (
+                                      "Failed to fetch time entries {1} days up to {0}",
+                                      state.StartFrom, Literals.TimeEntryLoadDays);
 
                 if (exc.IsNetworkFailure () || exc is TaskCanceledException) {
-                    log.Info (tag, exc, errorMsg, startFrom, daysLoad);
+                    log.Info (tag, exc, errorMsg);
                 } else {
-                    log.Warning (tag, exc, errorMsg, startFrom, daysLoad);
+                    log.Warning (tag, exc, errorMsg);
                 }
 
-                RxChain.SendError<List<TimeEntryJson>> (this.GetType (), DataTag.TimeEntryReceivedFromServer, exc);
+                RxChain.SendError<object> (this.GetType (), DataTag.ReceivedFromServer, exc);
             }
         }
     }

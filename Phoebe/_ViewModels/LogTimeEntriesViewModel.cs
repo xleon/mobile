@@ -129,7 +129,7 @@ namespace Toggl.Phoebe._ViewModels
         {
             HasMoreItems = true;
             HasLoadErrors = false;
-            RxChain.Send (this.GetType (), DataTag.TimeEntryLoad);
+            RxChain.Send (this.GetType (), DataTag.TimeEntriesLoad);
         }
         #endregion
 

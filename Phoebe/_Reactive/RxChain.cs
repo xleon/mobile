@@ -59,9 +59,6 @@ namespace Toggl.Phoebe._Reactive
             checkSource (source, tag);
             StoreManager.Singleton.Send (DataMsg.Error<T> (tag, exc));
         }
-
-        public static IObservable<IDataMsg> PropagateError (Exception ex) =>
-        Observable.Return (DataMsg.Error<object> (DataTag.UncaughtError, ex));
     }
 
     public class ActionNotFoundException : Exception

@@ -76,7 +76,7 @@ Target "android-signalign" (fun () ->
             KeystoreAlias = keyStoreAlias
         }) apkFileInfo
     |> ChangeFileName
-    |> TeamCityHelper.PublishArtifact 
+    |> TeamCityHelper.PublishArtifact
 )
 
 Target "ios-build" (fun () ->
@@ -89,7 +89,7 @@ Target "ios-build" (fun () ->
     iOSBuild (fun defaults ->
         {defaults with
             ProjectPath = "Mobile.iOS.sln"
-            Configuration = "Debug|iPhoneSimulator"
+            Configuration = "Debug"
             Target = "Build"
         })
 )
@@ -113,8 +113,9 @@ Target "ios-adhoc" (fun () ->
     iOSBuild (fun defaults ->
         {defaults with
             ProjectPath = "Mobile.iOS.sln"
-            Configuration = "Ad-Hoc|iPhone"
+            Configuration = "Ad-Hoc"
             Target = "Build"
+            Platform = "iPhone"
         })
 
     let appPath = Directory.EnumerateFiles(Path.Combine("Ross", "bin", "iPhone", "Ad-Hoc"), "*.ipa").First()
@@ -145,8 +146,9 @@ Target "ios-appstore" (fun () ->
     iOSBuild (fun defaults ->
         {defaults with
             ProjectPath = "Mobile.iOS.sln"
-            Configuration = "AppStore|iPhone"
+            Configuration = "AppStore"
             Target = "Build"
+            Platform = "iPhone"
         })
 
     // Zip .app file

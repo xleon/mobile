@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using SQLite.Net.Interop;
 using SQLite.Net.Platform.Generic;
 using Toggl.Phoebe._Data.Models;
+using Toggl.Phoebe._Reactive;
 
 namespace Toggl.Phoebe.Tests.Reactive
 {
@@ -43,6 +44,31 @@ namespace Toggl.Phoebe.Tests.Reactive
                 Description = "Test Entry",
                 State = TimeEntryState.Finished
             };
+        }
+
+        public static AppState GetInitAppState ()
+        {
+            var userData = new UserData { Id = userId };
+            var workspaceData = new WorkspaceData { Id = workspaceId };
+
+            // Set initial pagination Date to the beginning of the next day.
+            // So, we can include all entries created -Today-.
+            var paginationDate = Time.UtcNow.Date.AddDays (1);
+                
+            var timerState =
+                new TimerState (
+                    startFrom: Time.UtcNow,
+                    paginationDate: paginationDate,
+                    user: userData,
+                    workspaces: new Dictionary<Guid, WorkspaceData> { { workspaceId, workspaceData } },
+                    projects: new Dictionary<Guid, ProjectData> (),
+                    clients: new Dictionary<Guid, ClientData> (),
+                    tasks: new Dictionary<Guid, TaskData> (),
+                    tags: new Dictionary<Guid, TagData> (),
+                    timeEntries: new Dictionary<Guid, RichTimeEntry> ()
+                    );
+
+            return new AppState (timerState);
         }
     }
 }

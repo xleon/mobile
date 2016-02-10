@@ -56,6 +56,11 @@ namespace Toggl.Phoebe._Data.Models
             TaskRemoteId = other.TaskRemoteId;
         }
 
+        public object Clone ()
+        {
+            return new TimeEntryData (this);
+        }
+
         public TimeEntryState State { get; set; }
 
         public string Description { get; set; }

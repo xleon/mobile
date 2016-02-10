@@ -21,6 +21,7 @@ namespace Toggl.Phoebe._Data
 
         TimeEntryStop,
         TimeEntryContinue,
+        TimeEntryAdd,
 
         TimeEntriesRemoveWithUndo,
         TimeEntriesRestoreFromUndo,

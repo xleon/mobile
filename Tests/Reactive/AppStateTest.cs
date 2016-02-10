@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.IO;
 using System.Threading.Tasks;
 using NUnit.Framework;
 using Toggl.Phoebe.Tests;
@@ -18,104 +19,91 @@ namespace Toggl.Phoebe.Tests.Reactive
     [TestFixture]
     public class AppStateTest : Test
     {
-        Guid userId = Guid.NewGuid ();
-        Guid workspaceId = Guid.NewGuid ();
-        AppState appState;
-        CompositeUpdater<AppState> updater;
-
         public override void SetUp ()
         {
             base.SetUp ();
 
-            // TODO: Get initial state of application
-            appState = new AppState ();
-            updater = new CompositeUpdater<AppState> ()
-            .Add (x => x.TimerState, TestUpdater);
+            var platformUtils = new PlatformUtils ();
+            var store = new SyncSqliteDataStore (Path.GetTempFileName (), platformUtils.SQLiteInfo);
+
+            ServiceContainer.Register<IPlatformUtils> (platformUtils);
+            ServiceContainer.Register<ISchedulerProvider> (new TestSchedulerProvider ());
+            ServiceContainer.Register<ISyncDataStore> (store);
+
+            RxChain.Init (Util.GetInitAppState (), RxChain.InitMode.TestStoreManager);
         }
 
-        public static TimeEntryInfo LoadTimeEntryInfo (TimerState state, TimeEntryData teData)
-        {
-            // TODO: Check if dictionaries contain ids
-            var projectData = teData.ProjectId != Guid.Empty
-                              ? state.Projects[teData.ProjectId]
-                              : new ProjectData ();
-            var clientData = projectData.ClientId != Guid.Empty
-                             ? state.Clients[projectData.ClientId]
-                             : new ClientData ();
-            var taskData = teData.TaskId != Guid.Empty
-                           ? state.Tasks[teData.TaskId]
-                           : new TaskData ();
-            var color = (projectData.Id != Guid.Empty) ? projectData.Color : -1;
-
-            return new TimeEntryInfo (
-                       projectData,
-                       clientData,
-                       taskData,
-                       color);
-        }
-
-        public void TestUpdater (TimerState state, IDataMsg dataMsg)
-        {
-            var teMsg = dataMsg.GetDataOrDefault<TimeEntryMsg> ();
-            if (teMsg == null) {
-                return;
-            }
-
-//            foreach (var msg in teMsg) {
-//
-//                // TODO: Check this condition
-//                if (msg.Item2.StartTime < state.LowerLimit) {
-//                    continue;
-//                }
-//
-//                RichTimeEntry oldTe;
-//                if (state.TimeEntries.TryGetValue (msg.Item2.Id, out oldTe)) {
-//                    // Remove old time entry
-//                    state.TimeEntries.Remove (msg.Item2.Id);
-//                }
-//
-//                if (msg.Item1 == DataAction.Put) {
-//                    // Load info and insert new entry
-//                    var newTe = new TimeEntryData (msg.Item2); // Protect the reference
-//                  var newInfo = LoadTimeEntryInfo (state, newTe);
-//                    state.TimeEntries.Add (newTe.Id, new RichTimeEntry (newTe, newInfo));
-//                }
-//            }
-        }
-
-        public IAppState GetState ()
-        {
-            return appState;
-        }
-
-        public void SendMessage (TimeEntryData data)
-        {
-            var teMsg = new TimeEntryMsg (DataDir.Outcoming, data);
-            updater.Update (appState, DataMsg.Success (DataTag.TimeEntryLoad, teMsg));
-        }
-
-//        [Test]
+        [Test]
         public void TestAddEntry ()
         {
-            var oldCount = GetState ().TimerState.TimeEntries.Count;
+            IDisposable subscription = null;
             var te = Util.CreateTimeEntryData (DateTime.Now);
-            SendMessage (te);
 
-            var newCount = GetState ().TimerState.TimeEntries.Count;
-            Assert.AreEqual (oldCount + 1, newCount);
+            subscription =
+                StoreManager
+                .Singleton
+                .Observe (state => state.TimerState)
+                .Subscribe (state => {
+                    Assert.True (state.TimeEntries.ContainsKey (te.Id));
+                    subscription.Dispose ();
+                });
+
+            RxChain.Send (this.GetType (), DataTag.TimeEntryAdd, (ITimeEntryData)te);
         }
 
-//        [Test]
+        [Test]
+        public void TestRemoveEntry ()
+        {
+            int step = 0;
+            IDisposable subscription = null;
+            var te = Util.CreateTimeEntryData (DateTime.Now);
+
+            subscription =
+                StoreManager
+                    .Singleton
+                    .Observe (state => state.TimerState)
+                    .Subscribe (state => {
+                        switch (step) {
+                        case 0:
+                            Assert.True (state.TimeEntries.ContainsKey (te.Id));
+                            step++;
+                            break;
+                        case 1:
+                            Assert.False (state.TimeEntries.ContainsKey (te.Id));
+                            subscription.Dispose ();
+                            break;
+                        }
+                    });
+
+            RxChain.Send (this.GetType (), DataTag.TimeEntryAdd, (ITimeEntryData)te);
+
+            RxChain.Send (this.GetType (), DataTag.TimeEntriesRemovePermanently, new List<ITimeEntryData> { (ITimeEntryData)te });
+        }
+
+        [Test]
         public void TestTryModifyEntry ()
         {
             const string oldDescription = "OLD";
             var te = Util.CreateTimeEntryData (DateTime.Now);
             te.Description = oldDescription;
-            SendMessage (te);
+            IDisposable subscription = null;
+            TimerState receivedState = null;
+
+            subscription =
+                StoreManager
+                    .Singleton
+                    .Observe (state => state.TimerState)
+                    .Subscribe (state => {
+                        receivedState = state;
+                        subscription.Dispose ();
+                    });
+
+
+            RxChain.Send (this.GetType (), DataTag.TimeEntryAdd, (ITimeEntryData)te);
 
             // Modifying the entry now shouldn't affect the state
             te.Description = "NEW";
-            var description = GetState ().TimerState.TimeEntries[te.Id].Data.Description;
+            var description = receivedState.TimeEntries[te.Id].Data.Description;
             Assert.AreEqual (oldDescription, description);
         }
     }

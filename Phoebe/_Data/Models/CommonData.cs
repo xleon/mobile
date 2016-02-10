@@ -3,7 +3,7 @@ using SQLite.Net.Attributes;
 
 namespace Toggl.Phoebe._Data.Models
 {
-    public interface ICommonData : IComparable<ICommonData>
+    public interface ICommonData : IComparable<ICommonData>, ICloneable
     {
         Guid Id { get; }
         DateTime ModifiedAt { get; }
@@ -33,6 +33,11 @@ namespace Toggl.Phoebe._Data.Models
             IsDirty = other.IsDirty;
             RemoteId = other.RemoteId;
             RemoteRejected = other.RemoteRejected;
+        }
+
+        public object Clone ()
+        {
+            throw new Exception ("Cannot clone abstract objects");
         }
 
         /// <summary>

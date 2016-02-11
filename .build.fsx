@@ -116,6 +116,7 @@ Target "ios-adhoc" (fun () ->
             Configuration = "Ad-Hoc"
             Target = "Build"
             Platform = "iPhone"
+            BuildIpa = true
         })
 
     let appPath = Directory.EnumerateFiles(Path.Combine("Ross", "bin", "iPhone", "Ad-Hoc"), "*.ipa").First()

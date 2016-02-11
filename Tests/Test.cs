@@ -37,10 +37,10 @@ namespace Toggl.Phoebe.Tests
             ServiceContainer.Register<MessageBus> (new MessageBus ());
             ServiceContainer.Register<ITimeProvider> (() => new DefaultTimeProvider ());
             ServiceContainer.Register<TimeCorrectionManager> ();
-            ServiceContainer.Register<IDataStore> (delegate {
-                databasePath = Path.GetTempFileName ();
-                return new SqliteDataStore (databasePath, new SQLitePlatformGeneric ());
-            });
+//            ServiceContainer.Register<IDataStore> (delegate {
+//                databasePath = Path.GetTempFileName ();
+//                return new SqliteDataStore (databasePath, new SQLitePlatformGeneric ());
+//            });
             ServiceContainer.Register<LogStore> ((LogStore)null);
             ServiceContainer.Register<ILoggerClient> ((ILoggerClient)null);
             ServiceContainer.Register<ILogger> (() => new VoidLogger());
@@ -49,11 +49,11 @@ namespace Toggl.Phoebe.Tests
         [TearDown]
         public virtual void TearDown ()
         {
-            RunAsync (async delegate {
-                // Use an empty transaction to ensure that the SQLiteDataStore has completed all scheduled jobs:
-                await DataStore.ExecuteInTransactionAsync ((ctx) => {
-                });
-            });
+//            RunAsync (async delegate {
+//                // Use an empty transaction to ensure that the SQLiteDataStore has completed all scheduled jobs:
+//                await DataStore.ExecuteInTransactionAsync ((ctx) => {
+//                });
+//            });
 
             // Make sure all of the scheduled actions have been completed
             while (syncContext.Run ()) {
@@ -111,9 +111,9 @@ namespace Toggl.Phoebe.Tests
             get { return ServiceContainer.Resolve<MessageBus> (); }
         }
 
-        protected IDataStore DataStore
-        {
-            get { return ServiceContainer.Resolve<IDataStore> (); }
-        }
+//        protected IDataStore DataStore
+//        {
+//            get { return ServiceContainer.Resolve<IDataStore> (); }
+//        }
     }
 }

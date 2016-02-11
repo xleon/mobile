@@ -240,10 +240,7 @@
     <string name="CreateUserIntroText">Create a user to get the full out of your Toggl app.</string>
     <string name="CreateUserButtonText">Create user</string>
     <string name="CreateUserButtonText">Sign up</string>
-    <string name="IntroSlideTitle1">New to toggl?</string>
-    <string name="IntroSlideTitle2">Sexy Reports</string>
-    <string name="IntroSlideTitle3">Toggl anywhere</string>
-    <string name="IntroSlideTitle4">Ideal for teams</string>
+    <string name="IntroTitle">New to toggl?</string>
     <string name="ReportsDisclaimerTitle">Boost your productivity!</string>
     <string name="ReportsDisclaimerText">Sign up to get access to your reports.</string>
     <string name="FeedbackDisclaimerTitle">Oh no!</string>

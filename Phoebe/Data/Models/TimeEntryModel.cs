@@ -717,26 +717,24 @@ namespace Toggl.Phoebe.Data.Models
         /// </summary>
         public static TimeEntryData GetDraft ()
         {
-            Guid userId = Guid.Empty;
-            Guid workspaceId = Guid.Empty;
-            bool durationOnly = false;
-
+            UserData user = null;
             if (ServiceContainer.Resolve<AuthManager> ().IsAuthenticated) {
-                var user = ServiceContainer.Resolve<AuthManager> ().User;
-                userId = user.Id;
-                workspaceId = user.DefaultWorkspaceId;
-                durationOnly = user.TrackingMode == TrackingMode.Continue;
+                user = ServiceContainer.Resolve<AuthManager> ().User;
+            }
+
+            // TODO: Quick solution for bug #1229, we need to go to the root of the problem
+            // and find why user can be null here
+            if (user == null) {
+                return null;
             }
 
             // Create new draft object
-            var newData = new TimeEntryData {
+            return new TimeEntryData {
                 State = TimeEntryState.New,
-                UserId = userId,
-                WorkspaceId = workspaceId,
-                DurationOnly = durationOnly,
+                UserId = user.Id,
+                WorkspaceId = user.DefaultWorkspaceId,
+                DurationOnly = user.TrackingMode == TrackingMode.Continue,
             };
-
-            return newData;
         }
 
         /// <summary>

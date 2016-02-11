@@ -1,6 +1,7 @@
 using System;
 using Cirrious.FluentLayouts.Touch;
 using Toggl.Phoebe.Analytics;
+using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Logging;
 using Toggl.Phoebe.Net;
 using Toggl.Ross.Theme;
@@ -136,6 +137,17 @@ namespace Toggl.Ross.ViewControllers
 
         private async void TryPasswordAuth ()
         {
+            // Small UI trick to permit OBM testers
+            // interact with the staging API
+            if (emailTextField.Text == "staging") {
+                var isStaging = ServiceContainer.Resolve<ISettingsStore> ().IsStagingMode;
+                ServiceContainer.Resolve<ISettingsStore> ().IsStagingMode = !isStaging;
+                var msg = isStaging ? "You're in Normal Mode" : "You're in Staging Mode";
+                var alertView = new UIAlertView ("Staging Mode", msg + "\nRestart the app to continue.", null, "Ok");
+                alertView.Show ();
+                return;
+            }
+
             if (IsAuthenticating) {
                 return;
             }

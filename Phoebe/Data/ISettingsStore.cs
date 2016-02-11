@@ -21,5 +21,7 @@ namespace Toggl.Phoebe.Data
         bool GroupedTimeEntries { get; set; }
 
         string SortProjectsBy { get; set; }
+
+        bool IsStagingMode { get; set; }
     }
 }

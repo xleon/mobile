@@ -13,6 +13,7 @@ namespace Toggl.Phoebe
         public static readonly Uri ApiUrl = new Uri ("https://toggl.com/api/");
         public static readonly Uri ReportsApiUrl = new Uri ("https://toggl.com/reports/api/");
         #endif
+        public static readonly Uri StagingUrl = new Uri ("https://next.toggl.com/api/");
         public static readonly Uri PrivacyPolicyUrl = new Uri ("https://toggl.com/legal/privacy");
         public static readonly Uri TermsOfServiceUrl = new Uri ("https://toggl.com/legal/terms");
         public static readonly string GoogleAnalyticsId = "UA-XXXXXXXX-X";

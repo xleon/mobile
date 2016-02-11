@@ -51,11 +51,43 @@ namespace Toggl.Phoebe.Tests.Reactive
         }
 
         [Test]
+        public void TestStopEntry ()
+        {
+            int step = 0;
+            IDisposable subscription = null;
+            var te = Util.CreateTimeEntryData (DateTime.Now);
+            te.State = TimeEntryState.Running;
+
+            subscription =
+                StoreManager
+                    .Singleton
+                    .Observe (state => state.TimerState)
+                    .Subscribe (state => {
+                        switch (step) {
+                        case 0:
+                            var te2 = state.TimeEntries[te.Id];
+                            Assert.True (te2.Data.State == TimeEntryState.Running);
+                            step++;
+                            break;
+                        case 1:
+                            var te3 = state.TimeEntries[te.Id];
+                            Assert.True (te3.Data.State == TimeEntryState.Finished);
+                            subscription.Dispose ();
+                            break;
+                        }
+                    });
+
+            RxChain.Send (new DataMsg.TimeEntryAdd (te));
+            RxChain.Send (new DataMsg.TimeEntryStop (te));
+        }
+
+        [Test]
         public void TestRemoveEntry ()
         {
             int step = 0;
             IDisposable subscription = null;
             var te = Util.CreateTimeEntryData (DateTime.Now);
+            var db = ServiceContainer.Resolve<ISyncDataStore> ();
 
             subscription =
                 StoreManager
@@ -69,6 +101,8 @@ namespace Toggl.Phoebe.Tests.Reactive
                     break;
                 case 1:
                     Assert.False (state.TimeEntries.ContainsKey (te.Id));
+                    // The entry should have also been deleted from the db
+                    Assert.False (db.Table<TimeEntryData> ().Any (x => x.Id == te.Id));
                     subscription.Dispose ();
                     break;
                 }
@@ -78,6 +112,49 @@ namespace Toggl.Phoebe.Tests.Reactive
 
             RxChain.Send (new DataMsg.TimeEntriesRemovePermanently (
                               new List<ITimeEntryData> { te }));
+        }
+
+        [Test]
+        public void TestRemoveEntryWithUndo ()
+        {
+            int step = 0;
+            IDisposable subscription = null;
+            var te = Util.CreateTimeEntryData (DateTime.Now);
+            var db = ServiceContainer.Resolve<ISyncDataStore> ();
+
+            subscription =
+                StoreManager
+                    .Singleton
+                    .Observe (state => state.TimerState)
+                    .Subscribe (state => {
+                        switch (step) {
+                        // Add
+                        case 0:
+                            Assert.True (state.TimeEntries.ContainsKey (te.Id));
+                            step++;
+                            break;
+                        // Remove with undo
+                        case 1:
+                            Assert.False (state.TimeEntries.ContainsKey (te.Id));
+                            // The entry shouldn't actually be deleted from the db
+                            Assert.True (db.Table<TimeEntryData> ().Any (x => x.Id == te.Id));
+                            step++;
+                            break;
+                        // Restore from undo
+                        case 2:
+                            Assert.True (state.TimeEntries.ContainsKey (te.Id));
+                            subscription.Dispose ();
+                            break;
+                        }
+                    });
+
+            RxChain.Send (new DataMsg.TimeEntryAdd (te));
+
+            RxChain.Send (new DataMsg.TimeEntriesRemoveWithUndo (
+                new List<ITimeEntryData> { te }));
+
+            RxChain.Send (new DataMsg.TimeEntriesRestoreFromUndo (
+                new List<ITimeEntryData> { te }));
         }
 
         [Test]

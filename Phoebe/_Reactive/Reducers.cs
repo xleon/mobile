@@ -1,14 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
-using Toggl.Phoebe.Logging;
 using Toggl.Phoebe._Data;
-using Toggl.Phoebe._Data.Json;
 using Toggl.Phoebe._Data.Models;
 using Toggl.Phoebe._Helpers;
-using Toggl.Phoebe._Net;
-using Toggl.Phoebe._ViewModels.Timer;
 using XPlatUtils;
 
 namespace Toggl.Phoebe._Reactive
@@ -18,22 +13,20 @@ namespace Toggl.Phoebe._Reactive
         public static Reducer<AppState> Init ()
         {
             var tagReducer = new TagCompositeReducer<TimerState> ()
-            .Add (DataTag.AssignRemoteIds, ReceivedFromServer) // TODO: Use a different method?
-            .Add (DataTag.ReceivedFromServer, ReceivedFromServer)
-            .Add (DataTag.TimeEntriesLoad, TimeEntriesLoad)
-
-            .Add (DataTag.TimeEntryAdd, TimeEntryAdd)
-            .Add (DataTag.TimeEntryContinue, TimeEntryContinue)
-            .Add (DataTag.TimeEntryStop, TimeEntryStop)
-            .Add (DataTag.TimeEntriesRemoveWithUndo, TimeEntriesRemoveWithUndo)
-            .Add (DataTag.TimeEntriesRestoreFromUndo, TimeEntriesRestoreFromUndo)
-            .Add (DataTag.TimeEntriesRemovePermanently, TimeEntriesRemovePermanently);
+            .Add (typeof (DataMsg.ReceivedFromServer), ReceivedFromServer)
+            .Add (typeof (DataMsg.TimeEntriesLoad), TimeEntriesLoad)
+            .Add (typeof (DataMsg.TimeEntryAdd), TimeEntryAdd)
+            .Add (typeof (DataMsg.TimeEntryContinue), TimeEntryContinue)
+            .Add (typeof (DataMsg.TimeEntryStop), TimeEntryStop)
+            .Add (typeof (DataMsg.TimeEntriesRemoveWithUndo), TimeEntriesRemoveWithUndo)
+            .Add (typeof (DataMsg.TimeEntriesRestoreFromUndo), TimeEntriesRestoreFromUndo)
+            .Add (typeof (DataMsg.TimeEntriesRemovePermanently), TimeEntriesRemovePermanently);
 
             return new PropertyCompositeReducer<AppState> ()
                    .Add (x => x.TimerState, tagReducer);
         }
 
-        static DataSyncMsg<TimerState> TimeEntriesLoad (TimerState state, IDataMsg msg)
+        static DataSyncMsg<TimerState> TimeEntriesLoad (TimerState state, DataMsg msg)
         {
             var userId = state.User.Id;
             var paginationDate = state.PaginationDate;
@@ -52,20 +45,19 @@ namespace Toggl.Phoebe._Reactive
                             .ToList ();
 
             // Try to update with latest data from server with old paginationDate to get the same data
-            RxChain.Send (typeof (Reducers), DataTag.EmptyQueueAndSync, paginationDate);
+            RxChain.Send (new DataMsg.EmptyQueueAndSync (paginationDate));
             paginationDate = dbEntries.Count > 0 ? startDate : paginationDate;
 
             return DataSyncMsg.Create (
-                       msg.Tag,
                        state.With (
                            paginationDate: paginationDate,
                            timeEntries: state.UpdateTimeEntries (dbEntries)));
         }
 
-        static DataSyncMsg<TimerState> ReceivedFromServer (TimerState state, IDataMsg msg)
+        static DataSyncMsg<TimerState> ReceivedFromServer (TimerState state, DataMsg msg)
         {
             // TODO: Check if there had been errors
-            var receivedData = msg.ForceGetData<IReadOnlyList<CommonData>> ();
+            var receivedData = (msg as DataMsg.ReceivedFromServer).Data.ForceLeft ();
             var dataStore = ServiceContainer.Resolve <ISyncDataStore> ();
 
             var updated = dataStore.Update (ctx => {
@@ -84,7 +76,6 @@ namespace Toggl.Phoebe._Reactive
             });
 
             return DataSyncMsg.Create (
-                       msg.Tag,
                        state.With (
                            workspaces: state.Update (state.Workspaces, updated),
                            projects: state.Update (state.Projects, updated),
@@ -95,9 +86,9 @@ namespace Toggl.Phoebe._Reactive
                        ));
         }
 
-        static DataSyncMsg<TimerState> TimeEntryAdd (TimerState state, IDataMsg msg)
+        static DataSyncMsg<TimerState> TimeEntryAdd (TimerState state, DataMsg msg)
         {
-            var entryData = msg.ForceGetData<ITimeEntryData> ();
+            var entryData = (msg as DataMsg.TimeEntryAdd).Data.ForceLeft ();
             var dataStore = ServiceContainer.Resolve <ISyncDataStore> ();
 
             // TODO: Entry sanity check
@@ -105,14 +96,13 @@ namespace Toggl.Phoebe._Reactive
 
             // TODO: Check updated.Count == 1?
             return DataSyncMsg.Create (
-                msg.Tag,
-                state.With (timeEntries: state.UpdateTimeEntries (updated)),
-                updated);
+                       state.With (timeEntries: state.UpdateTimeEntries (updated)),
+                       updated);
         }
 
-        static DataSyncMsg<TimerState> TimeEntryContinue (TimerState state, IDataMsg msg)
+        static DataSyncMsg<TimerState> TimeEntryContinue (TimerState state, DataMsg msg)
         {
-            var entryData = msg.ForceGetData<ITimeEntryData> ();
+            var entryData = (msg as DataMsg.TimeEntryContinue).Data.ForceLeft ();
             var dataStore = ServiceContainer.Resolve <ISyncDataStore> ();
 
             if (entryData.State != TimeEntryState.Finished) {
@@ -128,14 +118,13 @@ namespace Toggl.Phoebe._Reactive
 
             // TODO: Check updated.Count == 1?
             return DataSyncMsg.Create (
-                       msg.Tag,
                        state.With (timeEntries: state.UpdateTimeEntries (updated)),
                        updated);
         }
 
-        static DataSyncMsg<TimerState> TimeEntryStop (TimerState state, IDataMsg msg)
+        static DataSyncMsg<TimerState> TimeEntryStop (TimerState state, DataMsg msg)
         {
-            var entryData = msg.ForceGetData<ITimeEntryData> ();
+            var entryData = (msg as DataMsg.TimeEntryStop).Data.ForceLeft ();
             var dataStore = ServiceContainer.Resolve <ISyncDataStore> ();
 
             if (entryData.State != TimeEntryState.Running) {
@@ -144,42 +133,39 @@ namespace Toggl.Phoebe._Reactive
                                    entryData.Id, entryData.State));
             }
 
-            var updated = dataStore.Update (ctx => {
-                ctx.Put (new TimeEntryData (entryData) {
-                    State = TimeEntryState.Finished,
-                    StopTime = Time.UtcNow
-                });
-            });
+            var updated = dataStore.Update (ctx => ctx.Put (new TimeEntryData (entryData) {
+                State = TimeEntryState.Finished,
+                StopTime = Time.UtcNow
+            }));
 
             // TODO: Check updated.Count == 1?
             return DataSyncMsg.Create (
-                       msg.Tag,
                        state.With (timeEntries: state.UpdateTimeEntries (updated)),
                        updated);
         }
 
-        static DataSyncMsg<TimerState> TimeEntriesRemoveWithUndo (TimerState state, IDataMsg msg)
+        static DataSyncMsg<TimerState> TimeEntriesRemoveWithUndo (TimerState state, DataMsg msg)
         {
-            var removed = msg.ForceGetData<IEnumerable<ITimeEntryData>> ()
+            var removed = (msg as DataMsg.TimeEntriesRemoveWithUndo).Data.ForceLeft ()
             .Select (x => new TimeEntryData (x) {
                 DeletedAt = Time.UtcNow
             });
 
             // Only update state, don't touch the db, nor send sync messages
-            return DataSyncMsg.Create (msg.Tag, state.With (timeEntries: state.UpdateTimeEntries (removed)));
+            return DataSyncMsg.Create (state.With (timeEntries: state.UpdateTimeEntries (removed)));
         }
 
-        static DataSyncMsg<TimerState> TimeEntriesRestoreFromUndo (TimerState state, IDataMsg msg)
+        static DataSyncMsg<TimerState> TimeEntriesRestoreFromUndo (TimerState state, DataMsg msg)
         {
-            var restored = msg.ForceGetData<IEnumerable<ITimeEntryData>> ();
+            var restored = (msg as DataMsg.TimeEntriesRestoreFromUndo).Data.ForceLeft ();
 
             // Only update state, don't touch the db, nor send sync messages
-            return DataSyncMsg.Create (msg.Tag, state.With (timeEntries: state.UpdateTimeEntries (restored)));
+            return DataSyncMsg.Create (state.With (timeEntries: state.UpdateTimeEntries (restored)));
         }
 
-        static DataSyncMsg<TimerState> TimeEntriesRemovePermanently (TimerState state, IDataMsg msg)
+        static DataSyncMsg<TimerState> TimeEntriesRemovePermanently (TimerState state, DataMsg msg)
         {
-            var entryMsg = msg.ForceGetData<List<ITimeEntryData>> ();
+            var entryMsg = (msg as DataMsg.TimeEntriesRemovePermanently).Data.ForceLeft ();
             var dataStore = ServiceContainer.Resolve <ISyncDataStore> ();
 
             var removed = dataStore.Update (ctx => {
@@ -192,7 +178,6 @@ namespace Toggl.Phoebe._Reactive
 
             // TODO: Check removed.Count?
             return DataSyncMsg.Create (
-                       msg.Tag,
                        state.With (timeEntries: state.UpdateTimeEntries (removed)),
                        removed);
         }

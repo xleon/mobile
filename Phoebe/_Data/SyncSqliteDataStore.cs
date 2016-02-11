@@ -41,14 +41,18 @@ namespace Toggl.Phoebe._Data
 
         internal static List<Type> DiscoverDataModels ()
         {
-            var dataType = typeof (TimeEntryData);
-            return dataType
-                   .Assembly
-                   .GetTypes ()
-                   .Where (t =>
-                           t.Namespace == dataType.Namespace &&
-                           t.CustomAttributes.Any (att => att.AttributeType.Name == "TableAttribute"))
-                   .ToList ();
+            return new List<Type> () {
+                typeof (UserData),
+                       typeof (WorkspaceData),
+                       typeof (WorkspaceUserData),
+                       typeof (ProjectData),
+                       typeof (ProjectUserData),
+                       typeof (ClientData),
+                       typeof (TaskData),
+                       typeof (TagData),
+                       typeof (TimeEntryTagData),
+                       typeof (TimeEntryData)
+            };
         }
 
         public TableQuery<T> Table<T> () where T : CommonData, new()

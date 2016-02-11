@@ -13,65 +13,158 @@ using XPlatUtils;
 
 namespace Toggl.Phoebe._Data
 {
-    public enum DataTag {
-        AssignRemoteIds,
-        ReceivedFromServer,
-
-        TimeEntriesLoad,
-
-        TimeEntryStop,
-        TimeEntryContinue,
-        TimeEntryAdd,
-
-        TimeEntriesRemoveWithUndo,
-        TimeEntriesRestoreFromUndo,
-        TimeEntriesRemovePermanently,
-
-        // Launch this message when connection has been recovered after a while
-        EmptyQueueAndSync
-    }
-
-    public interface IDataMsg
+    public abstract class DataMsg
     {
-        DataTag Tag { get; }
-        Type DataType { get; }
-        Either<object, Exception> RawData { get; }
-    }
+        protected Either<object, Exception> RawData { get; set; }
 
-    public class DataMsg<T> : IDataMsg
-    {
-        public DataTag Tag { get; private set; }
-        public Type DataType { get { return typeof (T); } }
-        public Either<T, Exception> Data { get; private set; }
-
-        public Either<object, Exception> RawData
+        protected DataMsg ()
         {
-            get {
-                return Data.Match (
-                           x => Either<object, Exception>.Left (x),
-                           e => Either<object, Exception>.Right (e)
-                       );
+            RawData = Either<object, Exception>.Left (null);
+        }
+
+        public sealed class ReceivedFromServer : DataMsg
+        {
+            public Either<IEnumerable<CommonData>, Exception> Data
+            {
+                get { return RawData.CastLeft<IEnumerable<CommonData>> (); }
+                set { RawData = value.CastLeft<object> (); }
+            }
+
+            public ReceivedFromServer (Exception ex)
+            {
+                Data = Either<IEnumerable<CommonData>, Exception>.Right (ex);
+            }
+
+            public ReceivedFromServer (IEnumerable<CommonData> data)
+            {
+                Data = Either<IEnumerable<CommonData>, Exception>.Left (data);
             }
         }
 
-        internal DataMsg (DataTag tag, Either<T, Exception> data)
+        public sealed class TimeEntriesLoad : DataMsg
         {
-            Data = data;
-            Tag = tag;
+            public Either<object, Exception> Data
+            {
+                get { return RawData; }
+                set { RawData = value; }
+            }
+        }
+
+        public sealed class TimeEntryStop : DataMsg
+        {
+            public Either<ITimeEntryData, Exception> Data
+            {
+                get { return RawData.CastLeft<ITimeEntryData> (); }
+                set { RawData = value.CastLeft<object> (); }
+            }
+
+            public TimeEntryStop (ITimeEntryData data)
+            {
+                Data = Either<ITimeEntryData, Exception>.Left (data);
+            }
+        }
+
+        public sealed class TimeEntryContinue : DataMsg
+        {
+            public Either<ITimeEntryData, Exception> Data
+            {
+                get { return RawData.CastLeft<ITimeEntryData> (); }
+                set { RawData = value.CastLeft<object> (); }
+            }
+
+            public TimeEntryContinue (ITimeEntryData data)
+            {
+                Data = Either<ITimeEntryData, Exception>.Left (data);
+            }
+        }
+
+        public sealed class TimeEntryAdd : DataMsg
+        {
+            public Either<ITimeEntryData, Exception> Data
+            {
+                get { return RawData.CastLeft<ITimeEntryData> (); }
+                set { RawData = value.CastLeft<object> (); }
+            }
+
+            public TimeEntryAdd (ITimeEntryData data)
+            {
+                Data = Either<ITimeEntryData, Exception>.Left (data);
+            }
+        }
+        public sealed class TimeEntriesRemoveWithUndo : DataMsg
+        {
+            public Either<IEnumerable<ITimeEntryData>, Exception> Data
+            {
+                get { return RawData.CastLeft<IEnumerable<ITimeEntryData>> (); }
+                set { RawData = value.CastLeft<object> (); }
+            }
+
+            public TimeEntriesRemoveWithUndo (IEnumerable<ITimeEntryData> data)
+            {
+                Data = Either<IEnumerable<ITimeEntryData>, Exception>.Left (data);
+            }
+        }
+        public sealed class TimeEntriesRestoreFromUndo : DataMsg
+        {
+            public Either<IEnumerable<ITimeEntryData>, Exception> Data
+            {
+                get { return RawData.CastLeft<IEnumerable<ITimeEntryData>> (); }
+                set { RawData = value.CastLeft<object> (); }
+            }
+
+            public TimeEntriesRestoreFromUndo (IEnumerable<ITimeEntryData> data)
+            {
+                Data = Either<IEnumerable<ITimeEntryData>, Exception>.Left (data);
+            }
+        }
+
+        public sealed class TimeEntriesRemovePermanently : DataMsg
+        {
+            public Either<IEnumerable<ITimeEntryData>, Exception> Data
+            {
+                get { return RawData.CastLeft<IEnumerable<ITimeEntryData>> (); }
+                set { RawData = value.CastLeft<object> (); }
+            }
+
+            public TimeEntriesRemovePermanently (IEnumerable<ITimeEntryData> data)
+            {
+                Data = Either<IEnumerable<ITimeEntryData>, Exception>.Left (data);
+            }
+        }
+
+        // Launch this message when connection has been recovered after a while
+        public sealed class EmptyQueueAndSync : DataMsg
+        {
+            public Either<DateTime, Exception> Data
+            {
+                get { return RawData.CastLeft<DateTime> (); }
+                set { RawData = value.CastLeft<object> (); }
+            }
+
+            public EmptyQueueAndSync (DateTime data)
+            {
+                Data = Either<DateTime, Exception>.Left (data);
+            }
         }
     }
 
     public class DataSyncMsg<T>
     {
         public T State { get; private set; }
-        public DataTag Tag { get; private set; }
         public IReadOnlyList<ICommonData> SyncData { get; private set; }
 
-        public DataSyncMsg (DataTag tag, T state, IEnumerable<ICommonData> syncData = null)
+        public DataSyncMsg (T state, IEnumerable<ICommonData> syncData = null)
         {
-            Tag = tag;
             State = state;
             SyncData = syncData != null ? syncData.ToList () : new List<ICommonData> ();
+        }
+    }
+
+    public static class DataSyncMsg
+    {
+        static public DataSyncMsg<T> Create<T> (T state, IEnumerable<ICommonData> syncData = null)
+        {
+            return new DataSyncMsg<T> (state, syncData);
         }
     }
 
@@ -86,7 +179,7 @@ namespace Toggl.Phoebe._Data
         public CommonJson Data
         {
             get {
-                Type type = null;
+                Type type;
                 if (!typeCache.TryGetValue (TypeName, out type)) {
                     type = Assembly.GetExecutingAssembly ().GetType (TypeName);
                     typeCache.Add (TypeName, type);
@@ -107,67 +200,5 @@ namespace Toggl.Phoebe._Data
             TypeName = json.GetType ().FullName;
         }
     }
-
-    #region Util
-    public static class DataMsg
-    {
-        public static U MatchData<T,U> (this IDataMsg msg, Func<T,U> left, Func<Exception,U> right)
-        {
-            var typedMsg = msg as DataMsg<T>;
-            if (typedMsg == null) {
-                right (new InvalidCastException (typeof (T).FullName));
-            }
-            return typedMsg.Data.Match (left, right);
-        }
-
-        public static Task<U> MatchDataAsync<T,U> (this IDataMsg msg, Func<T,Task<U>> left, Func<Exception,U> right)
-        {
-            var typedMsg = msg as DataMsg<T>;
-            if (typedMsg == null) {
-                right (new InvalidCastException (typeof (T).FullName));
-            }
-            return typedMsg.Data.Match (left, ex => Task.Run (() => right (ex)));
-        }
-
-        public static T GetDataOrDefault<T> (this IDataMsg msg)
-        {
-            var typedMsg = msg as DataMsg<T>;
-            if (typedMsg == null) {
-                return default (T);
-            }
-
-            return typedMsg.Data.Match (x => x, e => default (T));
-        }
-
-        public static T ForceGetData<T> (this IDataMsg msg)
-        {
-            var typedMsg = msg as DataMsg<T>;
-            if (typedMsg == null) {
-                throw new InvalidCastException (typeof (T).FullName);
-            }
-
-            return typedMsg.Data.Match (x => x, e => { throw e; });
-        }
-
-        public static IDataMsg Success<T> (DataTag tag, T data)
-        {
-            return new DataMsg<T> (tag, Either<T, Exception>.Left (data));
-        }
-
-        public static IDataMsg Error<T> (DataTag tag, Exception ex)
-        {
-            ServiceContainer.Resolve<ILogger> ().Error (Util.GetName (tag), ex, ex.Message);
-            return new DataMsg<T> (tag, Either<T, Exception>.Right (ex));
-        }
-    }
-
-    public static class DataSyncMsg
-    {
-        static public DataSyncMsg<T> Create<T> (DataTag tag, T state, IEnumerable<ICommonData> syncData = null)
-        {
-            return new DataSyncMsg<T> (tag, state, syncData);
-        }
-    }
-    #endregion
 }
 

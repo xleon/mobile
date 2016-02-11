@@ -27,7 +27,6 @@ namespace Toggl.Phoebe.Tests.Reactive
             var store = new SyncSqliteDataStore (Path.GetTempFileName (), platformUtils.SQLiteInfo);
 
             ServiceContainer.Register<IPlatformUtils> (platformUtils);
-            ServiceContainer.Register<ISchedulerProvider> (new TestSchedulerProvider ());
             ServiceContainer.Register<ISyncDataStore> (store);
 
             RxChain.Init (Util.GetInitAppState (), RxChain.InitMode.TestStoreManager);
@@ -43,12 +42,12 @@ namespace Toggl.Phoebe.Tests.Reactive
                 StoreManager
                 .Singleton
                 .Observe (state => state.TimerState)
-                .Subscribe (state => {
-                    Assert.True (state.TimeEntries.ContainsKey (te.Id));
-                    subscription.Dispose ();
-                });
+            .Subscribe (state => {
+                Assert.True (state.TimeEntries.ContainsKey (te.Id));
+                subscription.Dispose ();
+            });
 
-            RxChain.Send (this.GetType (), DataTag.TimeEntryAdd, (ITimeEntryData)te);
+            RxChain.Send (new DataMsg.TimeEntryAdd (te));
         }
 
         [Test]
@@ -60,24 +59,25 @@ namespace Toggl.Phoebe.Tests.Reactive
 
             subscription =
                 StoreManager
-                    .Singleton
-                    .Observe (state => state.TimerState)
-                    .Subscribe (state => {
-                        switch (step) {
-                        case 0:
-                            Assert.True (state.TimeEntries.ContainsKey (te.Id));
-                            step++;
-                            break;
-                        case 1:
-                            Assert.False (state.TimeEntries.ContainsKey (te.Id));
-                            subscription.Dispose ();
-                            break;
-                        }
-                    });
+                .Singleton
+                .Observe (state => state.TimerState)
+            .Subscribe (state => {
+                switch (step) {
+                case 0:
+                    Assert.True (state.TimeEntries.ContainsKey (te.Id));
+                    step++;
+                    break;
+                case 1:
+                    Assert.False (state.TimeEntries.ContainsKey (te.Id));
+                    subscription.Dispose ();
+                    break;
+                }
+            });
 
-            RxChain.Send (this.GetType (), DataTag.TimeEntryAdd, (ITimeEntryData)te);
+            RxChain.Send (new DataMsg.TimeEntryAdd (te));
 
-            RxChain.Send (this.GetType (), DataTag.TimeEntriesRemovePermanently, new List<ITimeEntryData> { (ITimeEntryData)te });
+            RxChain.Send (new DataMsg.TimeEntriesRemovePermanently (
+                              new List<ITimeEntryData> { te }));
         }
 
         [Test]
@@ -91,15 +91,15 @@ namespace Toggl.Phoebe.Tests.Reactive
 
             subscription =
                 StoreManager
-                    .Singleton
-                    .Observe (state => state.TimerState)
-                    .Subscribe (state => {
-                        receivedState = state;
-                        subscription.Dispose ();
-                    });
+                .Singleton
+                .Observe (state => state.TimerState)
+            .Subscribe (state => {
+                receivedState = state;
+                subscription.Dispose ();
+            });
 
 
-            RxChain.Send (this.GetType (), DataTag.TimeEntryAdd, (ITimeEntryData)te);
+            RxChain.Send (new DataMsg.TimeEntryAdd (te));
 
             // Modifying the entry now shouldn't affect the state
             te.Description = "NEW";

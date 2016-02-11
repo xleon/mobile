@@ -38,7 +38,7 @@ namespace Toggl.Phoebe.Tests.Reactive
 //            var te = Util.CreateTimeEntryData (DateTime.Now);
 //            te.State = TimeEntryState.Running;
 //
-//            RxChain.Send (sender, DataTag.TimeEntryUpdate, msg (te));
+//            RxChain.Send (sender, new DataMsg.TimeEntryUpdate (), msg (te));
 //
 //            var newCount = store.Table<TimeEntryData> ().Count ();
 //            Assert.AreEqual (oldCount + 1, newCount);
@@ -51,7 +51,7 @@ namespace Toggl.Phoebe.Tests.Reactive
 //            var te = Util.CreateTimeEntryData (DateTime.Now);
 //            te.State = TimeEntryState.Running;
 //
-//            RxChain.Send (sender, DataTag.TimeEntryUpdate, msg (te));
+//            RxChain.Send (sender, new DataMsg.TimeEntryUpdate (), msg (te));
 //
 //            var newCount = store.Table<TimeEntryData> ().Count ();
 //            Assert.AreEqual (oldCount + 1, newCount);
@@ -68,7 +68,7 @@ namespace Toggl.Phoebe.Tests.Reactive
 //            var te = Util.CreateTimeEntryData (DateTime.Now);
 //            te.State = TimeEntryState.Running;
 //
-//            RxChain.Send (sender, DataTag.TimeEntryUpdate, te);
+//            RxChain.Send (sender, new DataMsg.TimeEntryUpdate (), te);
 //            var newCount = store.Table<TimeEntryData> ().Count ();
 //            Assert.AreEqual (oldCount + 1, newCount);
 //

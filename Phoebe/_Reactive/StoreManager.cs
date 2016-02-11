@@ -12,21 +12,20 @@ namespace Toggl.Phoebe._Reactive
     {
         public static StoreManager Singleton { get; private set; }
 
-        public static void Init (AppState initState, Reducer<AppState> reducer)
+        public static void Init (AppState initState, Reducer<AppState> reducer, ISchedulerProvider schedulerProvider)
         {
-            Singleton = Singleton ?? new StoreManager (initState, reducer);
+            Singleton = Singleton ?? new StoreManager (initState, reducer, schedulerProvider);
         }
 
-        readonly Subject<IDataMsg> subject1 = new Subject<IDataMsg> ();
+        readonly Subject<DataMsg> subject1 = new Subject<DataMsg> ();
         readonly Subject<DataSyncMsg<AppState>> subject2 = new Subject<DataSyncMsg<AppState>> ();
 
-        StoreManager (AppState initState, Reducer<AppState> reducer)
+        StoreManager (AppState initState, Reducer<AppState> reducer, ISchedulerProvider schedulerProvider)
         {
-            var scheduler = ServiceContainer.Resolve<ISchedulerProvider> ().GetScheduler ();
-            var initSyncMsg = DataSyncMsg.Create (DataTag.EmptyQueueAndSync, initState);
+            var initSyncMsg = DataSyncMsg.Create (initState);
 
             subject1
-            .Synchronize (scheduler)
+            .Synchronize (schedulerProvider.GetScheduler ())
             .Scan (initSyncMsg, (acc, msg) => {
                 try {
                     return reducer.Reduce (acc.State, msg);
@@ -39,7 +38,7 @@ namespace Toggl.Phoebe._Reactive
             .Subscribe (subject2.OnNext);
         }
 
-        public void Send (IDataMsg msg)
+        public void Send (DataMsg msg)
         {
             subject1.OnNext (msg);
         }
@@ -52,8 +51,7 @@ namespace Toggl.Phoebe._Reactive
         public IObservable<T> Observe<T> (Func<AppState, T> selector)
         {
             return subject2.AsObservable ()
-                   .Select (syncMsg => selector (syncMsg.State))
-                   .DistinctUntilChanged ();
+                   .Select (syncMsg => selector (syncMsg.State));
         }
     }
 }

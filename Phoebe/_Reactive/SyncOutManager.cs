@@ -80,13 +80,13 @@ namespace Toggl.Phoebe._Reactive
 
                     // Return assigned remoteIds
                     if (remoteIds.Count > 0) {
-                        RxChain.Send (this.GetType (), DataTag.AssignRemoteIds, remoteIds);
+                        RxChain.Send (new DataMsg.ReceivedFromServer (remoteIds));
                     }
 
-                    // Sync if necessary
-                    if (syncMsg.Tag == DataTag.EmptyQueueAndSync) {
-                        DownloadEntries (syncMsg.State.TimerState);
-                    }
+                    // TODO: Sync if necessary
+//                    if (syncMsg.Msg is DataMsg.EmptyQueueAndSync) {
+//                        DownloadEntries (syncMsg.State.TimerState);
+//                    }
                 } catch (Exception ex) {
                     if (!alreadyQueued) {
                         Enqueue (exported);
@@ -176,14 +176,12 @@ namespace Toggl.Phoebe._Reactive
                     // TODO: Tags
                 }
 
-                RxChain.Send (
-                    this.GetType (),
-                    DataTag.ReceivedFromServer,
-                    jsonEntries.Select (mapper.Map<TimeEntryData>).Cast<ICommonData> ()
-                    .Concat (newWorkspaces.Select (mapper.Map<WorkspaceData>).Cast<ICommonData> ())
-                    .Concat (newProjects.Select (mapper.Map<ProjectData>).Cast<ICommonData> ())
-                    .Concat (newClients.Select (mapper.Map<ClientData>).Cast<ICommonData> ())
-                    .Concat (newTasks.Select (mapper.Map<TaskData>).Cast<ICommonData> ()).ToList ());
+                RxChain.Send (new DataMsg.ReceivedFromServer (
+                                  jsonEntries.Select (mapper.Map<TimeEntryData>).Cast<CommonData> ()
+                                  .Concat (newWorkspaces.Select (mapper.Map<WorkspaceData>).Cast<CommonData> ())
+                                  .Concat (newProjects.Select (mapper.Map<ProjectData>).Cast<CommonData> ())
+                                  .Concat (newClients.Select (mapper.Map<ClientData>).Cast<CommonData> ())
+                                  .Concat (newTasks.Select (mapper.Map<TaskData>).Cast<CommonData> ()).ToList ()));
 
             } catch (Exception exc) {
                 var tag = this.GetType ().Name;
@@ -198,7 +196,7 @@ namespace Toggl.Phoebe._Reactive
                     log.Warning (tag, exc, errorMsg);
                 }
 
-                RxChain.SendError<object> (this.GetType (), DataTag.ReceivedFromServer, exc);
+                RxChain.Send (new DataMsg.ReceivedFromServer (exc));
             }
         }
     }

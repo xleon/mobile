@@ -17,27 +17,27 @@ namespace Toggl.Phoebe._Reactive
 
     public interface IReducer
     {
-        DataSyncMsg<object> Reduce (object state, IDataMsg msg);
+        DataSyncMsg<object> Reduce (object state, DataMsg msg);
     }
 
     public class Reducer<T> : IReducer
     {
-        readonly Func<T, IDataMsg, DataSyncMsg<T>> reducer;
+        readonly Func<T, DataMsg, DataSyncMsg<T>> reducer;
 
-        public virtual DataSyncMsg<T> Reduce (T state, IDataMsg msg)
+        public virtual DataSyncMsg<T> Reduce (T state, DataMsg msg)
         {
             return reducer (state, msg);
         }
 
-        DataSyncMsg<object> IReducer.Reduce (object state, IDataMsg msg)
+        DataSyncMsg<object> IReducer.Reduce (object state, DataMsg msg)
         {
             var res = Reduce ((T)state, msg);
-            return DataSyncMsg.Create (res.Tag, (object)res.State, res.SyncData);
+            return DataSyncMsg.Create ((object)res.State, res.SyncData);
         }
 
         protected Reducer () { }
 
-        public Reducer (Func<T, IDataMsg, DataSyncMsg<T>> reducer)
+        public Reducer (Func<T, DataMsg, DataSyncMsg<T>> reducer)
         {
             this.reducer = reducer;
         }
@@ -45,33 +45,33 @@ namespace Toggl.Phoebe._Reactive
 
     public class TagCompositeReducer<T> : Reducer<T>, IReducer
     {
-        readonly Dictionary<DataTag, Reducer<T>> reducers = new Dictionary<DataTag, Reducer<T>> ();
+        readonly Dictionary<Type, Reducer<T>> reducers = new Dictionary<Type, Reducer<T>> ();
 
-        public TagCompositeReducer<T> Add (DataTag tag, Func<T, IDataMsg, DataSyncMsg<T>> reducer)
+        public TagCompositeReducer<T> Add (Type msgType, Func<T, DataMsg, DataSyncMsg<T>> reducer)
         {
-            return Add (tag, new Reducer<T> (reducer));
+            return Add (msgType, new Reducer<T> (reducer));
         }
 
-        public TagCompositeReducer<T> Add (DataTag tag, Reducer<T> reducer)
+        public TagCompositeReducer<T> Add (Type msgType, Reducer<T> reducer)
         {
-            reducers.Add (tag, reducer);
+            reducers.Add (msgType, reducer);
             return this;
         }
 
-        public override DataSyncMsg<T> Reduce (T state, IDataMsg msg)
+        public override DataSyncMsg<T> Reduce (T state, DataMsg msg)
         {
             Reducer<T> reducer;
-            if (reducers.TryGetValue (msg.Tag, out reducer)) {
+            if (reducers.TryGetValue (msg.GetType (), out reducer)) {
                 return reducer.Reduce (state, msg);
             } else {
-                return DataSyncMsg.Create (msg.Tag, state);
+                return DataSyncMsg.Create (state);
             }
         }
 
-        DataSyncMsg<object> IReducer.Reduce (object state, IDataMsg msg)
+        DataSyncMsg<object> IReducer.Reduce (object state, DataMsg msg)
         {
             var res = Reduce ((T)state, msg);
-            return DataSyncMsg.Create (res.Tag, (object)res.State, res.SyncData);
+            return DataSyncMsg.Create ((object)res.State, res.SyncData);
         }
     }
 
@@ -82,7 +82,7 @@ namespace Toggl.Phoebe._Reactive
 
         public PropertyCompositeReducer<T> Add<TPart> (
             Expression<Func<T,TPart>> selector,
-            Func<TPart, IDataMsg, DataSyncMsg<TPart>> reducer)
+            Func<TPart, DataMsg, DataSyncMsg<TPart>> reducer)
         {
             return Add (selector, new Reducer<TPart> (reducer));
         }
@@ -105,7 +105,7 @@ namespace Toggl.Phoebe._Reactive
             return this;
         }
 
-        public override DataSyncMsg<T> Reduce (T state, IDataMsg msg)
+        public override DataSyncMsg<T> Reduce (T state, DataMsg msg)
         {
             var syncData = new List<ICommonData> ();
             var dic = new Dictionary<string, object> ();
@@ -118,13 +118,13 @@ namespace Toggl.Phoebe._Reactive
                 syncData.AddRange (res.SyncData);
             }
 
-            return new DataSyncMsg<T> (msg.Tag, state.WithDictionary (dic), syncData);
+            return new DataSyncMsg<T> (state.WithDictionary (dic), syncData);
         }
 
-        DataSyncMsg<object> IReducer.Reduce (object state, IDataMsg msg)
+        DataSyncMsg<object> IReducer.Reduce (object state, DataMsg msg)
         {
             var res = Reduce ((T)state, msg);
-            return DataSyncMsg.Create (res.Tag, (object)res.State, res.SyncData);
+            return DataSyncMsg.Create ((object)res.State, res.SyncData);
         }
     }
 
@@ -259,7 +259,7 @@ namespace Toggl.Phoebe._Reactive
                             newItem, LoadTimeEntryInfo (newItem));
                     } else {
                         dic.Add (newItem.Id, new RichTimeEntry (
-                            newItem, LoadTimeEntryInfo (newItem)));
+                                     newItem, LoadTimeEntryInfo (newItem)));
                     }
                 } else {
                     if (dic.ContainsKey (newItem.Id)) {

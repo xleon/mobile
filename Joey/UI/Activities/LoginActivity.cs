@@ -17,6 +17,7 @@ using Android.Widget;
 using Toggl.Joey.UI.Utils;
 using Toggl.Joey.UI.Views;
 using Toggl.Phoebe.Analytics;
+using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Logging;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
@@ -274,6 +275,21 @@ namespace Toggl.Joey.UI.Activities
 
         private async void OnLoginButtonClick (object sender, EventArgs e)
         {
+            // Small UI trick to permit OBM testers
+            // interact with the staging API
+            if (EmailEditText.Text == "staging") {
+                var isStaging = !ServiceContainer.Resolve<ISettingsStore> ().IsStagingMode;
+                ServiceContainer.Resolve<ISettingsStore> ().IsStagingMode = isStaging;
+                var msg = !isStaging ? "You're in Normal Mode" : "You're in Staging Mode";
+                new AlertDialog.Builder (this)
+                .SetTitle ("Staging Mode")
+                .SetMessage (msg + "\nRestart the app to continue.")
+                .SetPositiveButton ("Ok", (EventHandler<DialogClickEventArgs>)null)
+                .Show ();
+                return;
+
+            }
+
             if (CurrentMode == Mode.Login) {
                 await TryLoginPasswordAsync ();
             } else {

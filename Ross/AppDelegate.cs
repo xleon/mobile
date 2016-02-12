@@ -139,6 +139,8 @@ namespace Toggl.Ross
         {
             // Register platform info first.
             ServiceContainer.Register<IPlatformUtils> (this);
+            ServiceContainer.Register<SettingsStore> ();
+            ServiceContainer.Register<ISettingsStore> (() => ServiceContainer.Resolve<SettingsStore> ());
 
             // Register Phoebe services
             Services.Register ();
@@ -148,8 +150,6 @@ namespace Toggl.Ross
 
             // Register Ross components:
             ServiceContainer.Register<ILogger> (() => new Logger ());
-            ServiceContainer.Register<SettingsStore> ();
-            ServiceContainer.Register<ISettingsStore> (() => ServiceContainer.Resolve<SettingsStore> ());
             if (systemVersion > minVersionWidget) {
                 ServiceContainer.Register<WidgetUpdateService> (() => new WidgetUpdateService());
                 ServiceContainer.Register<IWidgetUpdateService> (() => ServiceContainer.Resolve<WidgetUpdateService> ());

@@ -24,6 +24,7 @@ namespace Toggl.Ross.Data
         private const string RossReadDurOnlyNoticeKey = "rossReadDurOnlyNotice";
         private const string RossIgnoreSyncErrorsUntilKey = "rossIgnoreSyncErrorsUntil";
         private const string PhoebeProjectSortKey = "projectSortKey";
+        private const string PhoebeIsStagingKey = "isStagingKey";
 
         private static string GetPropertyName<T> (Expression<Func<SettingsStore, T>> expr)
         {
@@ -257,6 +258,17 @@ namespace Toggl.Ross.Data
             get { return (GetString (PhoebeProjectSortKey)); }
             set {
                 SetString (PhoebeProjectSortKey, value);
+            }
+        }
+
+        public static readonly string PropertyIsStagingMode = GetPropertyName (s => s.IsStagingMode);
+
+        public bool IsStagingMode
+        {
+            get { return GetInt (PhoebeIsStagingKey) == 1; }
+            set {
+                SetInt (PhoebeIsStagingKey, value ? 1 : 0);
+                OnSettingChanged (PropertyIsStagingMode);
             }
         }
     }

@@ -27,7 +27,8 @@ namespace Toggl.Phoebe
             ServiceContainer.Register<TimeCorrectionManager> ();
 
             // Core services that are most likelly to be overriden by UI code:
-            ServiceContainer.Register<ITogglClient> (() => new TogglRestClient (Build.ApiUrl));
+            var restApiUrl = ServiceContainer.Resolve<ISettingsStore> ().IsStagingMode ? Build.StagingUrl : Build.ApiUrl;
+            ServiceContainer.Register<ITogglClient> (() => new TogglRestClient (restApiUrl));
             ServiceContainer.Register<IReportsClient> (() => new ReportsRestClient (Build.ReportsApiUrl));
 
             RegisterJsonConverters ();

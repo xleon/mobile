@@ -129,6 +129,8 @@ namespace Toggl.Phoebe.Tests
             public bool GroupedTimeEntries { get; set; }
 
             public string SortProjectsBy { get; set; }
+
+            public bool IsStagingMode { get; set; }
         }
     }
 }

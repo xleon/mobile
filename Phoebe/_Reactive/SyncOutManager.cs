@@ -43,29 +43,58 @@ namespace Toggl.Phoebe._Reactive
             .Subscribe ();
         }
 
+        void log (Exception ex)
+        {
+            var log = ServiceContainer.Resolve<ILogger> ();
+            log.Error (typeof (SyncOutManager).Name, ex, "Failed to send data to server");
+        }
+
         async Task EnqueueOrSend (DataSyncMsg<AppState> syncMsg)
         {
             // Check internet connection
             var isConnected = networkPresence.IsNetworkPresent;
             var remoteIds = new List<CommonData> ();
 
+            // Try to empty queue first
+            bool queueEmpty = await tryEmptyQueue (remoteIds, isConnected);
+
+            // Deal with messages
             foreach (var msg in syncMsg.SyncData) {
                 bool alreadyQueued = false;
                 var exported = mapper.MapToJson (msg);
 
-                // If there's no connection, just enqueue the message
-                if (!isConnected) {
-                    Enqueue (exported);
-                    continue;
-                }
-
-                try {
-                    string json = null;
-                    if (dataStore.TryPeek (QueueId, out json)) {
+                if (queueEmpty && isConnected) {
+                    try {
+                        await SendMessage (remoteIds, exported);
+                    } catch (Exception ex) {
+                        log (ex);
                         Enqueue (exported);
-                        alreadyQueued = true;
+                        queueEmpty = false;
+                    }
+                } else {
+                    Enqueue (exported);
+                    queueEmpty = false;
+                }
+            }
 
-                        // Send dataStore to server
+            // TODO: Try to empty queue again?
+
+            // Return assigned remoteIds
+            if (remoteIds.Count > 0) {
+                RxChain.Send (new DataMsg.ReceivedFromServer (remoteIds));
+            }
+
+            if (syncMsg.IsSyncRequested) {
+                DownloadEntries (syncMsg.State.TimerState);
+            }
+        }
+
+        async Task<bool> tryEmptyQueue (List<CommonData> remoteIds, bool isConnected)
+        {
+            string json = null;
+            if (dataStore.TryPeek (QueueId, out json)) {
+                if (isConnected) {
+                    try {
                         do {
                             var jsonMsg = JsonConvert.DeserializeObject<DataJsonMsg> (json);
                             await SendMessage (remoteIds, jsonMsg.Data);
@@ -73,27 +102,16 @@ namespace Toggl.Phoebe._Reactive
                             // If we sent the message successfully, remove it from the queue
                             dataStore.TryDequeue (QueueId, out json);
                         } while (dataStore.TryPeek (QueueId, out json));
-                    } else {
-                        // If there's no queue, try to send the message directly
-                        await SendMessage (remoteIds, exported);
+                        return true;
+                    } catch (Exception ex) {
+                        log (ex);
+                        return false;
                     }
-
-                    // Return assigned remoteIds
-                    if (remoteIds.Count > 0) {
-                        RxChain.Send (new DataMsg.ReceivedFromServer (remoteIds));
-                    }
-
-                    // TODO: Sync if necessary
-//                    if (syncMsg.Msg is DataMsg.EmptyQueueAndSync) {
-//                        DownloadEntries (syncMsg.State.TimerState);
-//                    }
-                } catch (Exception ex) {
-                    if (!alreadyQueued) {
-                        Enqueue (exported);
-                    }
-                    var log = ServiceContainer.Resolve<ILogger> ();
-                    log.Error (typeof (SyncOutManager).Name, ex, "Failed to send data to server");
+                } else {
+                    return false;
                 }
+            } else {
+                return true;
             }
         }
 
@@ -129,9 +147,12 @@ namespace Toggl.Phoebe._Reactive
 
         async void DownloadEntries (TimerState state)
         {
+            var startDate = state.DownloadInfo.DownloadFrom;
+            var endDate = Literals.TimeEntryLoadDays;
+
             try {
+                var jsonEntries = await client.ListTimeEntries (startDate, endDate);
                 // Download new Entries
-                var jsonEntries = await client.ListTimeEntries (state.StartFrom, Literals.TimeEntryLoadDays);
 
                 var newWorkspaces = new List<CommonJson> ();
                 var newProjects = new List<CommonJson> ();
@@ -188,7 +209,7 @@ namespace Toggl.Phoebe._Reactive
                 var log = ServiceContainer.Resolve<ILogger> ();
                 string errorMsg = string.Format (
                                       "Failed to fetch time entries {1} days up to {0}",
-                                      state.StartFrom, Literals.TimeEntryLoadDays);
+                                      startDate, endDate);
 
                 if (exc.IsNetworkFailure () || exc is TaskCanceledException) {
                     log.Info (tag, exc, errorMsg);

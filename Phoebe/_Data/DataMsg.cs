@@ -151,20 +151,22 @@ namespace Toggl.Phoebe._Data
     public class DataSyncMsg<T>
     {
         public T State { get; private set; }
+        public bool IsSyncRequested { get; private set; }
         public IReadOnlyList<ICommonData> SyncData { get; private set; }
 
-        public DataSyncMsg (T state, IEnumerable<ICommonData> syncData = null)
+        public DataSyncMsg (T state, IEnumerable<ICommonData> syncData = null, bool isSyncRequested = false)
         {
             State = state;
+            IsSyncRequested = isSyncRequested;
             SyncData = syncData != null ? syncData.ToList () : new List<ICommonData> ();
         }
     }
 
     public static class DataSyncMsg
     {
-        static public DataSyncMsg<T> Create<T> (T state, IEnumerable<ICommonData> syncData = null)
+        static public DataSyncMsg<T> Create<T> (T state, IEnumerable<ICommonData> syncData = null, bool isSyncRequested = false)
         {
-            return new DataSyncMsg<T> (state, syncData);
+            return new DataSyncMsg<T> (state, syncData, isSyncRequested);
         }
     }
 

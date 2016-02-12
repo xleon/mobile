@@ -28,62 +28,72 @@ namespace Toggl.Phoebe._Reactive
 
         static DataSyncMsg<TimerState> TimeEntriesLoad (TimerState state, DataMsg msg)
         {
-            var userId = state.User.Id;
-            var paginationDate = state.PaginationDate;
             var dataStore = ServiceContainer.Resolve <ISyncDataStore> ();
-            var startDate = GetDatesByDays (dataStore, paginationDate, Literals.TimeEntryLoadDays);
+            var endDate = state.DownloadInfo.NextDownloadFrom;
+            var startDate = GetDatesByDays (dataStore, endDate, Literals.TimeEntryLoadDays);
 
             var dbEntries = dataStore
                             .Table<TimeEntryData> ()
                             .Where (r =>
                                     r.State != TimeEntryState.New &&
-                                    r.StartTime >= startDate && r.StartTime < paginationDate &&
+                                    r.StartTime >= startDate && r.StartTime < endDate &&
                                     r.DeletedAt == null &&
-                                    r.UserId == userId)
+                                    r.UserId == state.User.Id)
                             .Take (Literals.TimeEntryLoadMaxInit)
                             .OrderByDescending (r => r.StartTime)
                             .ToList ();
 
-            // Try to update with latest data from server with old paginationDate to get the same data
-            RxChain.Send (new DataMsg.EmptyQueueAndSync (paginationDate));
-            paginationDate = dbEntries.Count > 0 ? startDate : paginationDate;
+            var downloadInfo =
+                state.DownloadInfo.With (
+                    downloadFrom: endDate,
+                    nextDownloadFrom: dbEntries.Any ()
+                    ? dbEntries.Min (x => x.StartTime)
+                    : endDate);
 
             return DataSyncMsg.Create (
                        state.With (
-                           paginationDate: paginationDate,
-                           timeEntries: state.UpdateTimeEntries (dbEntries)));
+                           downloadInfo: downloadInfo,
+                           timeEntries: state.UpdateTimeEntries (dbEntries)),
+                       isSyncRequested: true);
         }
 
         static DataSyncMsg<TimerState> ReceivedFromServer (TimerState state, DataMsg msg)
         {
-            // TODO: Check if there had been errors
-            var receivedData = (msg as DataMsg.ReceivedFromServer).Data.ForceLeft ();
-            var dataStore = ServiceContainer.Resolve <ISyncDataStore> ();
+            return (msg as DataMsg.ReceivedFromServer).Data.Match (
+            receivedData => {
+                var dataStore = ServiceContainer.Resolve <ISyncDataStore> ();
 
-            var updated = dataStore.Update (ctx => {
-                foreach (var newData in receivedData) {
-                    var oldData = ctx.SingleOrDefault (x => x.RemoteId == newData.RemoteId);
-                    if (oldData != null) {
-                        if (newData.CompareTo (oldData) >= 0) {
-                            newData.Id = oldData.Id;
+                var updated = dataStore.Update (ctx => {
+                    foreach (var newData in receivedData) {
+                        var oldData = ctx.SingleOrDefault (x => x.RemoteId == newData.RemoteId);
+                        if (oldData != null) {
+                            if (newData.CompareTo (oldData) >= 0) {
+                                newData.Id = oldData.Id;
+                                PutOrDelete (ctx, newData);
+                            }
+                        } else {
+                            newData.Id = Guid.NewGuid (); // Assign new Id
                             PutOrDelete (ctx, newData);
                         }
-                    } else {
-                        newData.Id = Guid.NewGuid (); // Assign new Id
-                        PutOrDelete (ctx, newData);
                     }
-                }
-            });
+                });
 
-            return DataSyncMsg.Create (
-                       state.With (
-                           workspaces: state.Update (state.Workspaces, updated),
-                           projects: state.Update (state.Projects, updated),
-                           clients: state.Update (state.Clients, updated),
-                           tasks: state.Update (state.Tasks, updated),
-                           tags: state.Update (state.Tags, updated),
-                           timeEntries: state.UpdateTimeEntries (updated)
-                       ));
+                var hasMore = receivedData.OfType<TimeEntryData> ().Any ();
+
+                return DataSyncMsg.Create (
+                           state.With (
+                               downloadInfo: state.DownloadInfo.With (hasMore: hasMore, hadErrors: false),
+                               workspaces: state.Update (state.Workspaces, updated),
+                               projects: state.Update (state.Projects, updated),
+                               clients: state.Update (state.Clients, updated),
+                               tasks: state.Update (state.Tasks, updated),
+                               tags: state.Update (state.Tags, updated),
+                               timeEntries: state.UpdateTimeEntries (updated)
+                           ));
+            },
+            ex => DataSyncMsg.Create (
+                state.With (downloadInfo: state.DownloadInfo.With (hadErrors: true)))
+                   );
         }
 
         static DataSyncMsg<TimerState> TimeEntryAdd (TimerState state, DataMsg msg)

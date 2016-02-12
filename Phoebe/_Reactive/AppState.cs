@@ -107,6 +107,7 @@ namespace Toggl.Phoebe._Reactive
 
         public override DataSyncMsg<T> Reduce (T state, DataMsg msg)
         {
+            var isSyncRequested = false;
             var syncData = new List<ICommonData> ();
             var dic = new Dictionary<string, object> ();
 
@@ -114,11 +115,12 @@ namespace Toggl.Phoebe._Reactive
                 var propValue = reducer.Item1.GetValue (state);
                 var res = reducer.Item2.Reduce (propValue, msg);
 
+                isSyncRequested = isSyncRequested || res.IsSyncRequested;
                 dic.Add (reducer.Item1.Name, res.State);
                 syncData.AddRange (res.SyncData);
             }
 
-            return new DataSyncMsg<T> (state.WithDictionary (dic), syncData);
+            return new DataSyncMsg<T> (state.WithDictionary (dic), syncData, isSyncRequested);
         }
 
         DataSyncMsg<object> IReducer.Reduce (object state, DataMsg msg)
@@ -157,14 +159,43 @@ namespace Toggl.Phoebe._Reactive
         }
     }
 
+    public class DownloadInfo
+    {
+        public bool HasMore { get; private set; }
+        public bool HadErrors { get; private set; }
+        public DateTime DownloadFrom { get; private set; }
+        public DateTime NextDownloadFrom { get; private set; }
+
+        public DownloadInfo (
+            bool hasMore, bool hadErrors,
+            DateTime downloadFrom, DateTime nextDownloadFrom)
+        {
+            HasMore = hasMore;
+            HadErrors = hadErrors;
+            DownloadFrom = downloadFrom;
+            NextDownloadFrom = nextDownloadFrom;
+        }
+
+        public DownloadInfo With (
+            bool? hasMore = null,
+            bool? hadErrors = null,
+            DateTime? downloadFrom = null,
+            DateTime? nextDownloadFrom = null)
+        {
+            return new DownloadInfo (
+                       hasMore.HasValue ? hasMore.Value : this.HasMore,
+                       hadErrors.HasValue ? hadErrors.Value : this.HadErrors,
+                       downloadFrom.HasValue ? downloadFrom.Value : this.DownloadFrom,
+                       nextDownloadFrom.HasValue ? nextDownloadFrom.Value : this.NextDownloadFrom);
+        }
+    }
+
     public class TimerState
     {
         // Set initial pagination Date to the beginning of the next day.
         // So, we can include all entries created -Today-.
         // PaginationDate = Time.UtcNow.Date.AddDays (1);
-
-        public DateTime StartFrom { get; private set; }
-        public DateTime PaginationDate { get; private set; }
+        public DownloadInfo DownloadInfo { get; private set; }
 
         public UserData User { get; private set; }
         public IReadOnlyDictionary<Guid, WorkspaceData> Workspaces { get; private set; }
@@ -175,8 +206,7 @@ namespace Toggl.Phoebe._Reactive
         public IReadOnlyDictionary<Guid, RichTimeEntry> TimeEntries { get; private set; }
 
         public TimerState (
-            DateTime startFrom,
-            DateTime paginationDate,
+            DownloadInfo downloadInfo,
             UserData user,
             IReadOnlyDictionary<Guid, WorkspaceData> workspaces,
             IReadOnlyDictionary<Guid, ProjectData> projects,
@@ -185,8 +215,7 @@ namespace Toggl.Phoebe._Reactive
             IReadOnlyDictionary<Guid, TagData> tags,
             IReadOnlyDictionary<Guid, RichTimeEntry> timeEntries)
         {
-            StartFrom = startFrom;
-            PaginationDate = paginationDate;
+            DownloadInfo = downloadInfo;
             User = user;
             Workspaces = workspaces;
             Projects = projects;
@@ -197,8 +226,7 @@ namespace Toggl.Phoebe._Reactive
         }
 
         public TimerState With (
-            DateTime startFrom = default (DateTime),
-            DateTime paginationDate = default (DateTime),
+            DownloadInfo downloadInfo = null,
             UserData user = null,
             IReadOnlyDictionary<Guid, WorkspaceData> workspaces = null,
             IReadOnlyDictionary<Guid, ProjectData> projects = null,
@@ -208,8 +236,7 @@ namespace Toggl.Phoebe._Reactive
             IReadOnlyDictionary<Guid, RichTimeEntry> timeEntries = null)
         {
             return new TimerState (
-                       startFrom == default (DateTime) ? this.StartFrom : startFrom,
-                       paginationDate == default (DateTime) ? this.PaginationDate : paginationDate,
+                       downloadInfo == null ? this.DownloadInfo : downloadInfo,
                        user ?? this.User,
                        workspaces ?? this.Workspaces,
                        projects ?? this.Projects,

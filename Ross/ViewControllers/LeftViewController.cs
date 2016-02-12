@@ -133,9 +133,18 @@ namespace Toggl.Ross.ViewControllers
             usernameLabel.Text = userData.Name;
             emailLabel.Text = userData.Email;
 
-            var url = new NSUrl (userData.ImageUrl);
-            var data = NSData.FromUrl (url);
-            var image = UIImage.LoadFromData (data);
+            UIImage image;
+
+            // Try to download the image from server
+            // if user doesn't have image configured or
+            // there is not connection, use a local image.
+            try {
+                var url = new NSUrl (userData.ImageUrl);
+                var data = NSData.FromUrl (url);
+                image = UIImage.LoadFromData (data);
+            } catch (Exception ex) {
+                image = UIImage.FromFile ("profile.png");
+            }
             userAvatarImage.Image = image;
         }
 

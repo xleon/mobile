@@ -55,6 +55,8 @@ namespace Toggl.Phoebe.Data.ViewModels
             List<TagData> tagList;
 
             if (timeEntryId == Guid.Empty) {
+                // TODO: Hack, make sure user is authenticated before calling GetDraft
+                await Util.AwaitPredicate (() => ServiceContainer.Resolve<Toggl.Phoebe.Net.AuthManager> ().IsAuthenticated);
                 data = TimeEntryModel.GetDraft ();
                 tagList = await GetDefaultTagList (data.WorkspaceId);
             } else {

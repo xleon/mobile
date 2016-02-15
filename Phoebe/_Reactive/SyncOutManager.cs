@@ -35,12 +35,26 @@ namespace Toggl.Phoebe._Reactive
         readonly ITogglClient client =
             ServiceContainer.Resolve<ITogglClient> ();
 
+        #if DEBUG
+        readonly System.Reactive.Subjects.Subject<System.Reactive.Unit> subject =
+            new System.Reactive.Subjects.Subject<System.Reactive.Unit> ();
+
+        public IObservable<System.Reactive.Unit> Observable {
+            get { return subject; }
+        }       
+        #endif
+
         SyncOutManager ()
         {
             StoreManager.Singleton
             .Observe ()
             .SelectAsync (EnqueueOrSend)
+            #if DEBUG
+            .Subscribe (subject.OnNext);
+            #endif
+            #if RELEASE
             .Subscribe ();
+            #endif
         }
 
         void log (Exception ex)

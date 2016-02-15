@@ -11,7 +11,7 @@ namespace Toggl.Phoebe._Data
         TableQuery<T> Table<T> () where T : CommonData, new();
         IReadOnlyList<ICommonData> Update (Action<ISyncDataStoreContext> worker);
 
-        int GetSize (string queueId);
+        int GetQueueSize (string queueId);
         bool TryEnqueue (string queueId, string json);
         bool TryDequeue (string queueId, out string json);
         bool TryPeek (string queueId, out string json);

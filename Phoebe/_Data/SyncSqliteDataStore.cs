@@ -92,10 +92,10 @@ namespace Toggl.Phoebe._Data
             cnn.Execute (string.Format (QueueCreateSql, queueId));
         }
 
-        public int GetSize (string queueId)
+        public int GetQueueSize (string queueId)
         {
             CreateQueueTable (queueId);
-            return cnn.ExecuteScalar<int> (QueueCountSql);
+            return cnn.ExecuteScalar<int> (string.Format (QueueCountSql, queueId));
         }
 
         public bool TryEnqueue (string queueId, string json)

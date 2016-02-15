@@ -189,6 +189,39 @@ namespace Toggl.Phoebe.Data
             .ToList ();
         }
 
+        public static IList<DiffSection<T>> SortRemoveEvents<T,V> (IList<DiffSection<T>> diffs)
+        where T : IDiffComparable where V : IDiffComparable
+        {
+            if (diffs.Count < 2) {
+                return diffs;
+            }
+
+            // Get old item indexes.
+            var oldIndexes = diffs.Select (d => d.OldIndex).ToList ();
+            // Get consecutive groups of operations.
+            var consecutiveGroups = oldIndexes.GroupWhile ((x, y) => y - x == 1)
+            .Select (x => new {start = oldIndexes.IndexOf (x.First ()), len = x.Count()  })
+            .Where (grp => grp.len > 1)
+            .ToList();
+
+            foreach (var grp in consecutiveGroups) {
+                // Get only Remove operations
+                var removeDiffs = diffs.Skip (grp.start).Take (grp.len).TakeWhile (d => d.Type == DiffType.Remove).ToList ();
+                if (removeDiffs.Count > 1) {
+                    if (removeDiffs.First ().OldItem is V && ! (removeDiffs.Last ().OldItem is V)) {
+                        // Swap operations and update NewIndex field.
+                        removeDiffs = removeDiffs.Reverse<DiffSection<T>> ().ToList ();
+                        removeDiffs.ForEach (d => d.NewIndex = d.OldIndex);
+                    }
+                    // Set values again into Diff array
+                    for (var i = 0; i < removeDiffs.Count; i++) {
+                        diffs [grp.start + i] = removeDiffs [i];
+                    }
+                }
+            }
+            return diffs;
+        }
+
         private static IEnumerable<DiffSection<T>> Calculate<T> (
             IList<T> listA, IList<T> listB, int startA, int endA, int startB, int endB, DiffComparison update, DiffCache cache)
         where T : IDiffComparable
@@ -282,5 +315,23 @@ namespace Toggl.Phoebe.Data
             }
             return length;
         }
+
+        private static IEnumerable<IEnumerable<T>> GroupWhile<T> (this IEnumerable<T> seq, Func<T,T,bool> condition)
+        {
+            T prev = seq.First();
+            var list = new List<T> { prev };
+
+            foreach (T item in seq.Skip (1)) {
+                if (condition (prev,item)==false) {
+                    yield return list;
+                    list = new List<T>();
+                }
+                list.Add (item);
+                prev = item;
+            }
+
+            yield return list;
+        }
+
     }
 }

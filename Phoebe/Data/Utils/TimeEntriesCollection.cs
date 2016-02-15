@@ -66,6 +66,10 @@ namespace Toggl.Phoebe.Data.Utils
             // 4. Check diffs, modify ItemCollection and notify changes
             var diffs = Diff.Calculate (Items, newItemCollection);
 
+            // 5. Swap remove events to delete normal items before headers.
+            // iOS requierement.
+            diffs = Diff.SortRemoveEvents<IHolder,DateHolder> (diffs);
+
             // CollectionChanged events must be fired on UI thread
             ServiceContainer.Resolve<IPlatformUtils>().DispatchOnUIThread (() => {
                 foreach (var diff in diffs) {

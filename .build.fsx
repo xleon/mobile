@@ -17,8 +17,12 @@ Target "clean" (fun _ ->
 Target "core-build" (fun () ->
     RestorePackages "Phoebe/packages.config"
     RestorePackages "Tests/packages.config"
-    MSBuild "Phoebe/bin/Desktop/Debug" "Build" [ ("Configuration", "Debug"); ("Platform", "Any CPU") ] [ "Phoebe/Phoebe.Desktop.csproj" ] |> ignore
-    MSBuild "Tests/bin/Debug" "Build" [ ("Configuration", "Debug"); ("Platform", "Any CPU") ] [ "Tests/Tests.csproj" ] |> ignore
+    MSBuild "Phoebe/bin/Desktop/Debug" "Build"
+        [ ("Configuration", "Debug"); ("Platform", "Any CPU"); ("DefineConstants", "DEBUG") ]
+        [ "Phoebe/Phoebe.Desktop.csproj" ] |> ignore
+    MSBuild "Tests/bin/Debug" "Build"
+        [ ("Configuration", "Debug"); ("Platform", "Any CPU") ]
+        [ "Tests/Tests.csproj" ] |> ignore
 )
 
 Target "core-tests" (fun () ->

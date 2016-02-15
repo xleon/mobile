@@ -82,7 +82,7 @@ namespace Toggl.Phoebe.Data
                          .ToListAsync ();
 
             ActiveTimeEntry = teList.Any () ? teList.FirstOrDefault () : TimeEntryModel.GetDraft ();
-            IsRunning = ActiveTimeEntry?.State == TimeEntryState.Running;
+            IsRunning = ActiveTimeEntry.State == TimeEntryState.Running;
 
         }
 

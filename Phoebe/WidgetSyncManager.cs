@@ -68,14 +68,11 @@ namespace Toggl.Phoebe
                 await TimeEntryModel.StopAsync (activeTimeEntryManager.ActiveTimeEntry);
                 ServiceContainer.Resolve<ITracker>().SendTimerStopEvent (TimerStopSource.Widget);
             } else {
-                var draft = TimeEntryModel.GetDraft ();
-                if (draft != null) {
-                    var startedEntry = await TimeEntryModel.StartAsync (draft);
+                var startedEntry = await TimeEntryModel.StartAsync (TimeEntryModel.GetDraft ());
 
-                    // Show new screen on platform
-                    widgetUpdateService.ShowNewTimeEntryScreen (new TimeEntryModel (startedEntry));
-                    ServiceContainer.Resolve<ITracker> ().SendTimerStartEvent (TimerStartSource.WidgetNew);
-                }
+                // Show new screen on platform
+                widgetUpdateService.ShowNewTimeEntryScreen (new TimeEntryModel (startedEntry));
+                ServiceContainer.Resolve<ITracker>().SendTimerStartEvent (TimerStartSource.WidgetNew);
             }
         }
 

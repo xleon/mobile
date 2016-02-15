@@ -100,7 +100,17 @@ namespace Toggl.Phoebe.Data.ViewModels
 
         public string ClientName { get; private set; }
 
-        public string Description { get; set; }
+        private string description;
+
+        public string Description
+        {
+            get {
+                return description;
+            } set {
+                description = value;
+                Task.Run (async () => await SaveAsync ()); // otherwise this can get overwritten
+            }
+        }
 
         public List<TagData> TagList { get; private set; }
 

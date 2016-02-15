@@ -1,17 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.IO;
-using System.Threading.Tasks;
+using System.Linq;
 using NUnit.Framework;
 using Toggl.Phoebe.Tests;
 using Toggl.Phoebe._Data;
-using Toggl.Phoebe._Data.Json;
 using Toggl.Phoebe._Data.Models;
-using Toggl.Phoebe._Helpers;
-using Toggl.Phoebe._Net;
 using Toggl.Phoebe._Reactive;
-using Toggl.Phoebe._ViewModels.Timer;
 using XPlatUtils;
 
 namespace Toggl.Phoebe.Tests.Reactive

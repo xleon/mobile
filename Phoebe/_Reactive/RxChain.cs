@@ -10,7 +10,8 @@ namespace Toggl.Phoebe._Reactive
     {
         public enum InitMode {
             Full,
-            TestStoreManager
+            TestStoreManager,
+            TestSyncManager
         }
 
         public static void Init (AppState initState, InitMode mode = InitMode.Full)
@@ -18,6 +19,11 @@ namespace Toggl.Phoebe._Reactive
             switch (mode) {
             case InitMode.TestStoreManager:
                 StoreManager.Init (initState, Reducers.Init (), new TestSchedulerProvider ());
+                break;
+
+            case InitMode.TestSyncManager:
+                StoreManager.Init (initState, Reducers.Init (), new TestSchedulerProvider ());
+                SyncOutManager.Init ();
                 break;
 
             // Full

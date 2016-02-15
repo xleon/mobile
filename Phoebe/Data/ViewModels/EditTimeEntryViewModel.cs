@@ -100,17 +100,7 @@ namespace Toggl.Phoebe.Data.ViewModels
 
         public string ClientName { get; private set; }
 
-        private string description;
-
-        public string Description
-        {
-            get {
-                return description;
-            } set {
-                description = value;
-                Task.Run (async () => await SaveAsync ()); // otherwise this can get overwritten
-            }
-        }
+        public string Description { get; private set; }
 
         public List<TagData> TagList { get; private set; }
 
@@ -178,6 +168,16 @@ namespace Toggl.Phoebe.Data.ViewModels
             RaisePropertyChanged (() => TagList);
         }
 
+        public void ChangeDescription (string description)
+        {
+            data.Description = description;
+        }
+
+        public void ChangeBillable (bool billable)
+        {
+            data.IsBillable = IsBillable = billable;
+        }
+
         public void AddTag (TagData tagData)
         {
             TagList.Add (tagData);
@@ -189,9 +189,6 @@ namespace Toggl.Phoebe.Data.ViewModels
             if (IsManual) {
                 return;
             }
-
-            data.IsBillable = IsBillable;
-            data.Description = Description;
 
             if (!data.PublicInstancePropertiesEqual (initialState)) {
                 data = await TimeEntryModel.PrepareForSync (data);

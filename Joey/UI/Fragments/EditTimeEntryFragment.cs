@@ -129,7 +129,11 @@ namespace Toggl.Joey.UI.Fragments
             // the event "CheckedChange" isn't found when
             // the app is compiled for release. Investigate!
             BillableCheckBox.CheckedChange += (sender, e) => {
-                ViewModel.IsBillable = BillableCheckBox.Checked;
+                ViewModel.ChangeBillable (BillableCheckBox.Checked);
+            };
+
+            DescriptionField.TextField.TextChanged += (sender, e) => {
+                ViewModel.ChangeDescription (DescriptionField.TextField.Text);
             };
 
             DurationTextView.Click += (sender, e) => {
@@ -169,7 +173,7 @@ namespace Toggl.Joey.UI.Fragments
             clientBinding = this.SetBinding (() => ViewModel.ClientName, () => ProjectField.AssistViewTitle);
             tagBinding = this.SetBinding (() => ViewModel.TagList, () => TagsField.TagNames)
                          .ConvertSourceToTarget (tagList => tagList.Select (tag => tag.Name).ToList ());
-            descriptionBinding = this.SetBinding (() => ViewModel.Description, () => DescriptionField.TextField.Text, BindingMode.TwoWay);
+            descriptionBinding = this.SetBinding (() => ViewModel.Description, () => DescriptionField.TextField.Text);
             isPremiumBinding = this.SetBinding (() => ViewModel.IsPremium, () => BillableCheckBox.Visibility)
                                .ConvertSourceToTarget (isVisible => isVisible ? ViewStates.Visible : ViewStates.Gone);
             isRunningBinding = this.SetBinding (() => ViewModel.IsRunning).WhenSourceChanges (() => {

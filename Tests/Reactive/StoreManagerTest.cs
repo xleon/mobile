@@ -14,17 +14,20 @@ namespace Toggl.Phoebe.Tests.Reactive
     [TestFixture]
     public class AppStateTest : Test
     {
-        public override void SetUp ()
+        public override void Init ()
         {
-            base.SetUp ();
+            base.Init ();
 
             var platformUtils = new PlatformUtils ();
-            var store = new SyncSqliteDataStore (Path.GetTempFileName (), platformUtils.SQLiteInfo);
-
-            ServiceContainer.Register<IPlatformUtils> (platformUtils);
-            ServiceContainer.Register<ISyncDataStore> (store);
+            ServiceContainer.RegisterScoped<IPlatformUtils> (platformUtils);
 
             RxChain.Init (Util.GetInitAppState (), RxChain.InitMode.TestStoreManager);
+        }
+
+        public override void Cleanup ()
+        {
+            base.Cleanup ();
+            RxChain.Cleanup ();
         }
 
         [Test]
@@ -178,6 +181,49 @@ namespace Toggl.Phoebe.Tests.Reactive
             var description = receivedState.TimeEntries[te.Id].Data.Description;
             Assert.AreEqual (oldDescription, description);
         }
+
+        [Test]
+        public void TestSeveralSuscriptors ()
+        {
+            int step = 0;
+            IDisposable subscription1 = null, subscription2 = null;
+            var te = Util.CreateTimeEntryData (DateTime.Now);
+            var db = ServiceContainer.Resolve<ISyncDataStore> ();
+
+            subscription1 =
+                StoreManager
+                    .Singleton
+                    .Observe (state => state.TimerState)
+                    .Subscribe (state => {
+                        Assert.True (state.TimeEntries.ContainsKey (te.Id));
+                        subscription1.Dispose ();
+                    });
+
+            subscription2 =
+                StoreManager
+                    .Singleton
+                    .Observe (state => state.TimerState)
+                    .Subscribe (state => {
+                        switch (step) {
+                        case 0:
+                            Assert.True (state.TimeEntries.ContainsKey (te.Id));
+                            step++;
+                            break;
+                        case 1:
+                            Assert.False (state.TimeEntries.ContainsKey (te.Id));
+                            // The entry should have also been deleted from the db
+                            Assert.False (db.Table<TimeEntryData> ().Any (x => x.Id == te.Id));
+                            subscription2.Dispose ();
+                            break;
+                        }
+                    });
+
+            RxChain.Send (new DataMsg.TimeEntryAdd (te));
+
+            RxChain.Send (new DataMsg.TimeEntriesRemovePermanently (
+                new List<ITimeEntryData> { te }));
+        }
+
     }
 }
 

@@ -1,6 +1,8 @@
 ﻿using System;
-using System.Linq;
 using System.Collections.Generic;
+using System.Linq;
+using System.Reactive.Linq;
+using System.Reactive.Subjects;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Toggl.Phoebe.Logging;
@@ -23,63 +25,68 @@ namespace Toggl.Phoebe._Reactive
             Singleton = Singleton ?? new SyncOutManager ();
         }
 
-        readonly JsonMapper mapper =
-            new JsonMapper ();
+        public static void Cleanup ()
+        {
+            Singleton = null;
+        }
 
-        readonly Toggl.Phoebe.Net.INetworkPresence networkPresence =
-            ServiceContainer.Resolve<Toggl.Phoebe.Net.INetworkPresence> ();
-
-        readonly ISyncDataStore dataStore =
-            ServiceContainer.Resolve<ISyncDataStore> ();
-
-        readonly ITogglClient client =
-            ServiceContainer.Resolve<ITogglClient> ();
+        readonly JsonMapper mapper;
+        readonly Toggl.Phoebe.Net.INetworkPresence networkPresence;
+        readonly ISyncDataStore dataStore;
+        readonly ITogglClient client;
 
         #if DEBUG
-        readonly System.Reactive.Subjects.Subject<System.Reactive.Unit> subject =
-            new System.Reactive.Subjects.Subject<System.Reactive.Unit> ();
+        readonly Subject<List<CommonData>> subject = new Subject<List<CommonData>> ();
 
-        public IObservable<System.Reactive.Unit> Observable {
-            get { return subject; }
+        public IObservable<List<CommonData>> Observe ()
+        {
+            return subject.AsObservable ();
         }       
         #endif
 
         SyncOutManager ()
         {
+            mapper = new JsonMapper ();
+            networkPresence = ServiceContainer.Resolve<Toggl.Phoebe.Net.INetworkPresence> ();
+            dataStore = ServiceContainer.Resolve<ISyncDataStore> ();
+            client = ServiceContainer.Resolve<ITogglClient> ();
+
             StoreManager.Singleton
             .Observe ()
             .SelectAsync (EnqueueOrSend)
+            .Catch ((Exception ex) => {
+                log(ex, "Uncaught error");
+                return Observable.Return<List<CommonData>> (new List<CommonData> ());
+            })
             #if DEBUG
             .Subscribe (subject.OnNext);
-            #endif
-            #if RELEASE
+            #elif
             .Subscribe ();
             #endif
         }
 
-        void log (Exception ex)
+        void log (Exception ex, string msg = "Failed to send data to server")
         {
-            var log = ServiceContainer.Resolve<ILogger> ();
-            log.Error (typeof (SyncOutManager).Name, ex, "Failed to send data to server");
+            var logger = ServiceContainer.Resolve<ILogger> ();
+            logger.Error (typeof (SyncOutManager).Name, ex, msg);
         }
 
-        async Task EnqueueOrSend (DataSyncMsg<AppState> syncMsg)
+        async Task<List<CommonData>> EnqueueOrSend (DataSyncMsg<AppState> syncMsg)
         {
             // Check internet connection
             var isConnected = networkPresence.IsNetworkPresent;
-            var remoteIds = new List<CommonData> ();
+            var remoteObjects = new List<CommonData> ();
 
             // Try to empty queue first
-            bool queueEmpty = await tryEmptyQueue (remoteIds, isConnected);
+            bool queueEmpty = await tryEmptyQueue (remoteObjects, isConnected);
 
             // Deal with messages
             foreach (var msg in syncMsg.SyncData) {
-                bool alreadyQueued = false;
                 var exported = mapper.MapToJson (msg);
 
                 if (queueEmpty && isConnected) {
                     try {
-                        await SendMessage (remoteIds, exported);
+                        await SendMessage (remoteObjects, exported);
                     } catch (Exception ex) {
                         log (ex);
                         Enqueue (exported);
@@ -93,17 +100,19 @@ namespace Toggl.Phoebe._Reactive
 
             // TODO: Try to empty queue again?
 
-            // Return assigned remoteIds
-            if (remoteIds.Count > 0) {
-                RxChain.Send (new DataMsg.ReceivedFromServer (remoteIds));
+            // Return remote objects
+            if (remoteObjects.Count > 0) {
+                RxChain.Send (new DataMsg.ReceivedFromServer (remoteObjects));
             }
 
             if (syncMsg.IsSyncRequested) {
                 DownloadEntries (syncMsg.State.TimerState);
             }
+
+            return remoteObjects;
         }
 
-        async Task<bool> tryEmptyQueue (List<CommonData> remoteIds, bool isConnected)
+        async Task<bool> tryEmptyQueue (List<CommonData> remoteObjects, bool isConnected)
         {
             string json = null;
             if (dataStore.TryPeek (QueueId, out json)) {
@@ -111,7 +120,7 @@ namespace Toggl.Phoebe._Reactive
                     try {
                         do {
                             var jsonMsg = JsonConvert.DeserializeObject<DataJsonMsg> (json);
-                            await SendMessage (remoteIds, jsonMsg.Data);
+                            await SendMessage (remoteObjects, jsonMsg.Data);
 
                             // If we sent the message successfully, remove it from the queue
                             dataStore.TryDequeue (QueueId, out json);
@@ -136,19 +145,21 @@ namespace Toggl.Phoebe._Reactive
                 dataStore.TryEnqueue (QueueId, serialized);
             } catch (Exception ex) {
                 // TODO: Retry?
-                var log = ServiceContainer.Resolve<ILogger> ();
-                log.Error (typeof (SyncOutManager).Name, ex, "Failed to queue message");
+                log (ex, "Failed to queue message");
             }
         }
 
-        async Task SendMessage (List<CommonData> remoteIds, CommonJson json)
+        async Task SendMessage (List<CommonData> remoteObjects, CommonJson json)
         {
             if (json.DeletedAt == null) {
                 if (json.RemoteId != null) {
+                    // TODO: Save the response to remoteObjects here too?
                     await client.Update (json);
                 } else {
+                    // TODO: Can the response be null?
+                    // TODO: Must we assign Id to response?
                     var res = await client.Create (json);
-                    remoteIds.Add (mapper.Map (res));
+                    remoteObjects.Add (mapper.Map (res));
                 }
             } else {
                 if (json.RemoteId != null) {
@@ -162,7 +173,7 @@ namespace Toggl.Phoebe._Reactive
         async void DownloadEntries (TimerState state)
         {
             var startDate = state.DownloadInfo.DownloadFrom;
-            var endDate = Literals.TimeEntryLoadDays;
+            const int endDate = Literals.TimeEntryLoadDays;
 
             try {
                 var jsonEntries = await client.ListTimeEntries (startDate, endDate);
@@ -220,15 +231,15 @@ namespace Toggl.Phoebe._Reactive
 
             } catch (Exception exc) {
                 var tag = this.GetType ().Name;
-                var log = ServiceContainer.Resolve<ILogger> ();
+                var logger = ServiceContainer.Resolve<ILogger> ();
                 string errorMsg = string.Format (
                                       "Failed to fetch time entries {1} days up to {0}",
                                       startDate, endDate);
 
                 if (exc.IsNetworkFailure () || exc is TaskCanceledException) {
-                    log.Info (tag, exc, errorMsg);
+                    logger.Info (tag, exc, errorMsg);
                 } else {
-                    log.Warning (tag, exc, errorMsg);
+                    logger.Warning (tag, exc, errorMsg);
                 }
 
                 RxChain.Send (new DataMsg.ReceivedFromServer (exc));

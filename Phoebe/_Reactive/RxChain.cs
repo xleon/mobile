@@ -34,6 +34,12 @@ namespace Toggl.Phoebe._Reactive
             }
         }
 
+        public static void Cleanup ()
+        {
+            SyncOutManager.Cleanup ();
+            StoreManager.Cleanup ();
+        }
+
         public static void Send (DataMsg msg)
         {
             StoreManager.Singleton.Send (msg);

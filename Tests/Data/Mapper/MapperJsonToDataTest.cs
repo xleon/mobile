@@ -118,7 +118,7 @@ namespace Toggl.Phoebe.Tests.Data.Mapper
             Assert.AreEqual (projectData.UseTasksEstimate, projectJson.UseTasksEstimate);
             Assert.AreEqual (projectData.Color, int.Parse (projectJson.Color));
             Assert.AreEqual (projectData.ClientRemoteId, projectJson.ClientRemoteId);
-            Assert.AreEqual (projectData.ClientId, null);
+            Assert.AreEqual (projectData.ClientId, Guid.Empty);
             Assert.AreEqual (projectData.WorkspaceRemoteId, projectJson.WorkspaceRemoteId);
             Assert.AreEqual (projectData.WorkspaceId, Guid.Empty);
         }
@@ -312,13 +312,13 @@ namespace Toggl.Phoebe.Tests.Data.Mapper
             Assert.AreEqual (teData.Description, teJson.Description);
             Assert.AreEqual (teData.DurationOnly, teJson.DurationOnly);
             Assert.AreEqual (teData.IsBillable, teJson.IsBillable);
-            Assert.AreEqual (teData.ProjectId, null);
+            Assert.AreEqual (teData.ProjectId, Guid.Empty);
             Assert.AreEqual (teData.ProjectRemoteId, teJson.ProjectRemoteId);
             Assert.AreEqual (teData.StartTime, teJson.StartTime.ToUtc ());
             Assert.AreEqual (teData.StopTime, teJson.StopTime.ToUtc ());
             Assert.AreEqual (teData.State, TimeEntryState.Finished);
             Assert.AreEqual (teData.Tags, tags);
-            Assert.AreEqual (teData.TaskId, null);
+            Assert.AreEqual (teData.TaskId, Guid.Empty);
             Assert.AreEqual (teData.TaskRemoteId, teJson.TaskRemoteId);
             Assert.AreEqual (teData.UserId, Guid.Empty);
             Assert.AreEqual (teData.UserRemoteId, teJson.UserRemoteId);

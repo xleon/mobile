@@ -5,17 +5,14 @@ namespace Toggl.Phoebe
 {
     internal static class Platform
     {
-        private static readonly Lazy<IPlatformUtils> platform =
-            new Lazy<IPlatformUtils> (() => ServiceContainer.Resolve<IPlatformUtils> ());
-
         public static string AppIdentifier
         {
-            get { return platform.Value.AppIdentifier; }
+            get { return ServiceContainer.Resolve<IPlatformUtils> ().AppIdentifier; }
         }
 
         public static string AppVersion
         {
-            get { return platform.Value.AppVersion; }
+            get { return ServiceContainer.Resolve<IPlatformUtils> ().AppVersion; }
         }
 
         public static string DefaultCreatedWith

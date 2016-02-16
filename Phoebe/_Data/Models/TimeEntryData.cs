@@ -93,7 +93,7 @@ namespace Toggl.Phoebe._Data.Models
         public List<string> Tags
         {
             get {
-                return JsonConvert.DeserializeObject<List<string>> (RawTags);
+                return JsonConvert.DeserializeObject<List<string>> (RawTags ?? "[]");
             } set {
                 RawTags = JsonConvert.SerializeObject (value);
             }
@@ -101,6 +101,7 @@ namespace Toggl.Phoebe._Data.Models
 
         IReadOnlyList<string> ITimeEntryData.Tags => Tags;
 
+        [JsonIgnore]
         public string RawTags { get; set; }
     }
 }

@@ -80,7 +80,11 @@ namespace Toggl.Phoebe.Data.Utils
             // Unsubscribe from MessageBus
             if (bus != null && subscription != null) {
                 bus.Unsubscribe (subscription);
+                if (updateSubscription != null) {
+                    bus.Unsubscribe (updateSubscription);
+                }
                 subscription = null;
+                updateSubscription = null;
                 bus = null;
             }
 

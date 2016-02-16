@@ -253,6 +253,61 @@ namespace Toggl.Phoebe.Tests.Data
         #endregion
 
         [Test]
+        public async void TestRemoveHeaderBeforeEntry ()
+        {
+            var dt = new DateTime (2015, 12, 14, 19, 0, 0);
+            var entries = new [] {
+                CreateTimeEntry (dt),
+                CreateTimeEntry (dt.AddDays (-1)),
+                CreateTimeEntry (dt.AddDays (-2))
+            };
+
+            // Allow some buffer so pushes are handled at the same time
+            var feed = new TestFeed ();
+            var singleView = CreateTimeEntriesCollection<TimeEntryHolder> (feed, 0, entries);
+
+            var evs = await GetEvents (2, singleView, feed, () => {
+                feed.Push (entries[1], DataAction.Delete);  // Delete entry
+            });
+
+            Assert.AreEqual (2, evs.Count);
+            AssertList (singleView, dt, entries[0], dt.AddDays (-2), entries[2]);
+
+            AssertEvent (evs[0], "remove", "time entry");   // Remove time entry
+            AssertEvent (evs[1], "remove", "date header");   // Remove header
+        }
+
+        [Test]
+        public async void TestRemoveWholeSection ()
+        {
+            var dt = new DateTime (2015, 12, 14, 19, 0, 0);
+            var entries = new [] {
+                CreateTimeEntry (dt),
+                CreateTimeEntry (dt.AddDays (-1)),
+                CreateTimeEntry (dt.AddDays (-1).AddMinutes (-20)),
+                CreateTimeEntry (dt.AddDays (-2))
+            };
+
+            // Allow some buffer so pushes are handled at the same time
+            var feed = new TestFeed ();
+            var singleView = CreateTimeEntriesCollection<TimeEntryHolder> (feed, 0, entries);
+
+            var evs = await GetEvents (4, singleView, feed, () => {
+                feed.Push (entries[1], DataAction.Delete);  // Delete entry
+                feed.Push (entries[2], DataAction.Delete);  // Delete entry
+            });
+
+            Assert.AreEqual (4, evs.Count);
+            AssertList (singleView, dt, entries[0], dt.AddDays (-2), entries[3]);
+
+            AssertEvent (evs[0], "replace", "date header");   // Replace header before remove
+            AssertEvent (evs[1], "remove", "time entry");   // Remove first time entry
+            AssertEvent (evs[2], "remove", "time entry");   // Remove second time entry
+            AssertEvent (evs[3], "remove", "date header");   // Remove header
+        }
+
+
+        [Test]
         public async void TestMoveOneEntryFromPast ()
         {
             var dt = new DateTime (2015, 12, 14, 19, 0, 0);

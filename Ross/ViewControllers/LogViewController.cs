@@ -36,7 +36,7 @@ namespace Toggl.Ross.ViewControllers
         private UIActivityIndicatorView defaultFooterView;
 
         private Binding<string, string> durationBinding;
-        private Binding<bool, bool> syncBinding, hasMoreBinding, hasErrorBinding, isRunningBinding;
+        private Binding<bool, bool> syncBinding, hasMoreBinding, hasErrorBinding, isRunningBinding, hasItemsBinding;
         private Binding<ObservableCollection<IHolder>, ObservableCollection<IHolder>> collectionBinding;
 
         protected LogTimeEntriesViewModel ViewModel {get; set;}
@@ -112,6 +112,7 @@ namespace Toggl.Ross.ViewControllers
             });
             hasMoreBinding = this.SetBinding (() => ViewModel.HasMoreItems).WhenSourceChanges (SetFooterState);
             hasErrorBinding = this.SetBinding (() => ViewModel.HasLoadErrors).WhenSourceChanges (SetFooterState);
+            hasItemsBinding = this.SetBinding (() => ViewModel.HasItems).WhenSourceChanges (SetFooterState);
             collectionBinding = this.SetBinding (() => ViewModel.Collection).WhenSourceChanges (() => {
                 TableView.Source = new TimeEntriesSource (this, ViewModel);
             });
@@ -163,11 +164,6 @@ namespace Toggl.Ross.ViewControllers
             }
         }
 
-        private async void OnScrollEnds ()
-        {
-            await ViewModel.LoadMore ();
-        }
-
         private void SetStartStopButtonState ()
         {
             if (ViewModel.IsTimeEntryRunning) {
@@ -183,16 +179,20 @@ namespace Toggl.Ross.ViewControllers
                 if (defaultFooterView == null) {
                     defaultFooterView = new UIActivityIndicatorView (UIActivityIndicatorViewStyle.Gray);
                     defaultFooterView.Frame = new CGRect (0, 0, 50, 50);
+                    defaultFooterView.StartAnimating ();
                 }
                 TableView.TableFooterView = defaultFooterView;
-                defaultFooterView.StartAnimating ();
             } else if (ViewModel.HasMoreItems && ViewModel.HasLoadErrors) {
                 TableView.TableFooterView = reloadView;
             } else if (!ViewModel.HasMoreItems && !ViewModel.HasLoadErrors) {
-                if (OBMExperimentManager.IncludedInExperiment (OBMExperimentManager.HomeEmptyState)) {
-                    TableView.TableFooterView = obmEmptyView;
+                if (ViewModel.HasItems) {
+                    TableView.TableFooterView = new UIView ();
                 } else {
-                    TableView.TableFooterView = emptyView;
+                    if (OBMExperimentManager.IncludedInExperiment (OBMExperimentManager.HomeEmptyState)) {
+                        TableView.TableFooterView = obmEmptyView;
+                    } else {
+                        TableView.TableFooterView = emptyView;
+                    }
                 }
             }
         }

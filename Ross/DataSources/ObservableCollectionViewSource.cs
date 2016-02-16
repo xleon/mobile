@@ -102,12 +102,12 @@ namespace Toggl.Ross.DataSources
         public UIView EmptyView { get; set; }
 
         #region IEnumerable Utils
+
         protected NSIndexSet GetSectionFromPlainIndex (IEnumerable<TData> collection, int headerIndex)
         {
             var index = collection.Take (headerIndex).OfType <TSection> ().Count ();
-
-            var x = NSIndexSet.FromIndex (index);
-            return x;
+            var nsIndex = NSIndexSet.FromIndex (index);
+            return nsIndex;
         }
 
         protected NSIndexPath GetRowFromPlainIndex (IEnumerable<TData> collection, int holderIndex)

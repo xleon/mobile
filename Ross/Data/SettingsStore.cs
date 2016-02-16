@@ -210,7 +210,7 @@ namespace Toggl.Ross.Data
 
         public bool ChooseProjectForNew
         {
-            get { return (GetInt (RossChooseProjectForNewKey) ?? 1) == 1; }
+            get { return GetInt (RossChooseProjectForNewKey) == 1; }
             set {
                 SetInt (RossChooseProjectForNewKey, value ? 1 : 0);
                 OnSettingChanged (PropertyChooseProjectForNew);

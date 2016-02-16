@@ -65,7 +65,11 @@ namespace Toggl.Phoebe._Reactive
 
                 var updated = dataStore.Update (ctx => {
                     foreach (var newData in receivedData) {
-                        var oldData = ctx.SingleOrDefault (x => x.RemoteId == newData.RemoteId);
+                        // TODO: Review this
+                        ICommonData oldData = null;
+                        if (newData.Id != Guid.Empty) {
+                            oldData = ctx.SingleOrDefault (x => x.Id == newData.Id);
+                        }
                         if (oldData != null) {
                             if (newData.CompareTo (oldData) >= 0) {
                                 newData.Id = oldData.Id;

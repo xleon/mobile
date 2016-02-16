@@ -20,12 +20,16 @@ namespace Toggl.Phoebe._Net
         private static readonly DateTime UnixStart = new DateTime (1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
         private readonly Uri v8Url;
         private readonly Uri v9Url;
-        private readonly string authToken;
+        private string authToken;
 
-        public TogglRestClient (Uri url, string authToken)
+        public TogglRestClient (Uri url)
         {
             v8Url = new Uri (url, "v8/");
             v9Url = new Uri (url, "v9/");
+        }
+
+        public void Authenticate (string authToken)
+        {
             this.authToken = authToken;
             if (string.IsNullOrEmpty (authToken)) {
                 throw new NotSupportedException ("Wrong Auth Token!");
@@ -245,7 +249,8 @@ namespace Toggl.Phoebe._Net
         {
             using (var httpClient = MakeHttpClient ()) {
                 var reqTimer = Stopwatch.StartNew ();
-                var httpResp = await httpClient.SendAsync (httpReq, cancellationToken).ConfigureAwait (false);
+                HttpResponseMessage httpResp;
+                httpResp = await httpClient.SendAsync (httpReq, cancellationToken).ConfigureAwait (false);
                 reqTimer.Stop ();
                 await PrepareResponse (httpResp, reqTimer.Elapsed);
                 return httpResp;

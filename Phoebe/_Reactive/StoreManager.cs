@@ -17,6 +17,11 @@ namespace Toggl.Phoebe._Reactive
             Singleton = Singleton ?? new StoreManager (initState, reducer, schedulerProvider);
         }
 
+        public static void Cleanup ()
+        {
+            Singleton = null;
+        }
+
         readonly Subject<DataMsg> subject1 = new Subject<DataMsg> ();
         readonly Subject<DataSyncMsg<AppState>> subject2 = new Subject<DataSyncMsg<AppState>> ();
 
@@ -32,7 +37,7 @@ namespace Toggl.Phoebe._Reactive
                 } catch (Exception ex) {
                     var log = ServiceContainer.Resolve<ILogger> ();
                     log.Error (GetType ().Name, ex, "Failed to update state");
-                    return acc;
+                    return DataSyncMsg.Create (acc.State);
                 }
             })
             .Subscribe (subject2.OnNext);
@@ -45,13 +50,12 @@ namespace Toggl.Phoebe._Reactive
 
         public IObservable<DataSyncMsg<AppState>> Observe ()
         {
-            return subject2.AsObservable ();
+            return subject2;
         }
 
         public IObservable<T> Observe<T> (Func<AppState, T> selector)
         {
-            return subject2.AsObservable ()
-                   .Select (syncMsg => selector (syncMsg.State));
+            return subject2.Select (syncMsg => selector (syncMsg.State));
         }
     }
 }

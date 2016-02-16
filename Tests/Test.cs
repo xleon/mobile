@@ -20,11 +20,28 @@ namespace Toggl.Phoebe.Tests
         [TestFixtureSetUp]
         public virtual void Init ()
         {
+            syncContext = new MainThreadSynchronizationContext ();
+            SynchronizationContext.SetSynchronizationContext (syncContext);
+
+            databasePath = Path.GetTempFileName ();
+            ServiceContainer.RegisterScoped<MessageBus> (new MessageBus ());
+            ServiceContainer.RegisterScoped<ITimeProvider> (new DefaultTimeProvider ());
+            ServiceContainer.Register<TimeCorrectionManager> (new TimeCorrectionManager ());
+            ServiceContainer.RegisterScoped<Toggl.Phoebe._Data.ISyncDataStore> (
+                new Toggl.Phoebe._Data.SyncSqliteDataStore (databasePath, new SQLitePlatformGeneric ()));
+            ServiceContainer.RegisterScoped<LogStore> ((LogStore)null);
+            ServiceContainer.RegisterScoped<ILoggerClient> ((ILoggerClient)null);
+            ServiceContainer.RegisterScoped<ILogger> (new VoidLogger());
         }
 
         [TestFixtureTearDown]
         public virtual void Cleanup ()
         {
+            ServiceContainer.Clear ();
+            if (databasePath != null) {
+                File.Delete (databasePath);
+                databasePath = null;
+            }
         }
 
         [SetUp]
@@ -32,18 +49,6 @@ namespace Toggl.Phoebe.Tests
         {
             syncContext = new MainThreadSynchronizationContext ();
             SynchronizationContext.SetSynchronizationContext (syncContext);
-
-            // Create MessageBus egerly to avoid it being created in the background thread with invalid synchronization context.
-            ServiceContainer.Register<MessageBus> (new MessageBus ());
-            ServiceContainer.Register<ITimeProvider> (() => new DefaultTimeProvider ());
-            ServiceContainer.Register<TimeCorrectionManager> ();
-//            ServiceContainer.Register<IDataStore> (delegate {
-//                databasePath = Path.GetTempFileName ();
-//                return new SqliteDataStore (databasePath, new SQLitePlatformGeneric ());
-//            });
-            ServiceContainer.Register<LogStore> ((LogStore)null);
-            ServiceContainer.Register<ILoggerClient> ((ILoggerClient)null);
-            ServiceContainer.Register<ILogger> (() => new VoidLogger());
         }
 
         [TearDown]
@@ -57,13 +62,6 @@ namespace Toggl.Phoebe.Tests
 
             // Make sure all of the scheduled actions have been completed
             while (syncContext.Run ()) {
-            }
-
-            ServiceContainer.Clear ();
-
-            if (databasePath != null) {
-                File.Delete (databasePath);
-                databasePath = null;
             }
         }
 

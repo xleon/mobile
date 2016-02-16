@@ -176,7 +176,13 @@ namespace Toggl.Phoebe._Data
 
             public ICommonData SingleOrDefault (Expression<Func<ICommonData, bool>> selector)
             {
-                return conn.Get (selector);
+                // TODO: Is it there a better way for this?
+                try {
+                    return conn.Get (selector);
+                }
+                catch {
+                    return null;
+                }
             }
         }
     }

@@ -4,6 +4,7 @@ using SQLite.Net.Interop;
 using SQLite.Net.Platform.Generic;
 using Toggl.Phoebe._Data.Models;
 using Toggl.Phoebe._Reactive;
+using System.Threading.Tasks;
 
 namespace Toggl.Phoebe.Tests.Reactive
 {
@@ -30,26 +31,45 @@ namespace Toggl.Phoebe.Tests.Reactive
 
     public static class Util
     {
-        static Guid userId = Guid.NewGuid ();
-        static Guid workspaceId = Guid.NewGuid ();
+        public static readonly Guid UserId = Guid.NewGuid ();
+        public static readonly Guid WorkspaceId = Guid.NewGuid ();
 
-        public static TimeEntryData CreateTimeEntryData (DateTime startTime)
+        public static TimeEntryData CreateTimeEntryData (
+            DateTime startTime, long userRemoteId = 0, long workspaceRemoteId = 0)
         {
             return new TimeEntryData {
                 Id = Guid.NewGuid (),
+                Description = "Test Entry",
+                IsBillable = true,
+                DurationOnly = true,
                 StartTime = startTime,
                 StopTime = startTime.AddMinutes (1),
-                UserId = userId,
-                WorkspaceId = workspaceId,
-                Description = "Test Entry",
-                State = TimeEntryState.Finished
+                Tags = new List<string> (),
+                TaskRemoteId = null,
+                UserRemoteId = userRemoteId,
+                WorkspaceRemoteId = workspaceRemoteId,
+                UserId = UserId,
+                WorkspaceId = WorkspaceId,
+                State = TimeEntryState.Finished,
             };
+        }
+
+        public static TaskCompletionSource<T> CreateTask<T> (int timeout = 10000)
+        {
+            var tcs = new TaskCompletionSource<T> ();
+            var timer = new System.Timers.Timer (timeout);
+            timer.Elapsed += (s, e) => {
+                timer.Stop ();
+                tcs.SetException (new TimeoutException ());
+            };
+            timer.Start ();
+            return tcs;
         }
 
         public static AppState GetInitAppState ()
         {
-            var userData = new UserData { Id = userId };
-            var workspaceData = new WorkspaceData { Id = workspaceId };
+            var userData = new UserData { Id = UserId };
+            var workspaceData = new WorkspaceData { Id = WorkspaceId };
 
             // Set initial pagination Date to the beginning of the next day.
             // So, we can include all entries created -Today-.
@@ -59,7 +79,7 @@ namespace Toggl.Phoebe.Tests.Reactive
                 new TimerState (
                     downloadInfo: new DownloadInfo (true, false, downloadFrom, downloadFrom),
                     user: userData,
-                    workspaces: new Dictionary<Guid, WorkspaceData> { { workspaceId, workspaceData } },
+                    workspaces: new Dictionary<Guid, WorkspaceData> { { WorkspaceId, workspaceData } },
                     projects: new Dictionary<Guid, ProjectData> (),
                     clients: new Dictionary<Guid, ClientData> (),
                     tasks: new Dictionary<Guid, TaskData> (),

@@ -78,32 +78,29 @@ namespace Toggl.Phoebe._Data.Json
 
         public CommonData Map (CommonJson source)
         {
-            Type destinationType = null;
             Type sourceType = source.GetType ();
 
             if (sourceType == typeof (ClientJson)) {
-                destinationType = typeof (ClientData);
+                return mapper.Map<ClientData> (source as ClientJson);
             } else if (sourceType == typeof (ProjectJson)) {
-                destinationType = typeof (ProjectData);
+                return mapper.Map<ProjectData> (source as ProjectJson);
             } else if (sourceType == typeof (TaskJson)) {
-                destinationType = typeof (TaskData);
+                return mapper.Map<TaskData> (source as TaskJson);
             } else if (sourceType == typeof (TimeEntryJson)) {
-                destinationType = typeof (TimeEntryData);
+                return mapper.Map<TimeEntryData> (source as TimeEntryJson);
             } else if (sourceType == typeof (WorkspaceJson)) {
-                destinationType = typeof (WorkspaceData);
+                return mapper.Map<WorkspaceData> (source as WorkspaceJson);
             } else if (sourceType == typeof (UserJson)) {
-                destinationType = typeof (UserData);
+                return mapper.Map<UserData> (source as UserJson);
             } else if (sourceType == typeof (TagJson)) {
-                destinationType = typeof (TagData);
+                return mapper.Map<TagData> (source as TagJson);
             } else if (sourceType == typeof (WorkspaceUserJson)) {
-                destinationType = typeof (WorkspaceUserData);
+                return mapper.Map<WorkspaceUserData> (source as WorkspaceUserJson);
             } else if (sourceType == typeof (ProjectUserJson)) {
-                destinationType = typeof (ProjectUserData);
+                return mapper.Map<ProjectUserData> (source as ProjectUserJson);
             } else {
                 throw new NotSupportedException (string.Format ("Cannot map {0} from JSON", sourceType.FullName));
             }
-
-            return (CommonData)mapper.Map (source, sourceType, destinationType);
         }
 
         public CommonJson MapToJson (ICommonData source)

@@ -14,7 +14,7 @@
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\Debug</OutputPath>
-    <DefineConstants>DEBUG;</DefineConstants>
+    <DefineConstants>DEBUG;__STAGING__</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <ConsolePause>false</ConsolePause>
@@ -88,6 +88,7 @@
     <Compile Include="Views\**\*.cs" />
     <Compile Include="Analytics\**\*.cs" />
     <Compile Include="Misc\**\*.cs" />     -->
+    <Compile Include="Data\Mapper\*.cs" />
     <Compile Include="Reactive\**\*.cs" />
   </ItemGroup>
   <ItemGroup>

@@ -16,7 +16,7 @@ namespace Toggl.Ross.Theme
 
             public static void MessageLabel (UILabel v)
             {
-                v.Font = UIFont.FromName ("HelveticaNeue-Light", 20f);
+                v.Font = UIFont.FromName ("HelveticaNeue-Light", 17f);
                 v.Lines = 5;
                 v.TextAlignment = UITextAlignment.Center;
                 v.TextColor = Color.LightGray;

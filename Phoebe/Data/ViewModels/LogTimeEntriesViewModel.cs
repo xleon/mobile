@@ -10,7 +10,6 @@ using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Utils;
-using Toggl.Phoebe.Data.ViewModels;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
 
@@ -40,6 +39,10 @@ namespace Toggl.Phoebe.Data.ViewModels
             subscriptionSettingChanged = bus.Subscribe<SettingChangedMessage> (OnSettingChanged);
             subscriptionSyncFinished = bus.Subscribe<SyncFinishedMessage> (OnSyncFinished);
             subscriptionUpdateFinished = bus.Subscribe<UpdateFinishedMessage> (OnUpdateItemsFinished);
+
+            HasMoreItems = true;
+            HasLoadErrors = false;
+            HasItems = false;
 
             UpdateView (activeTimeEntryManager.ActiveTimeEntry);
             SyncCollectionView ();
@@ -79,6 +82,7 @@ namespace Toggl.Phoebe.Data.ViewModels
             }
 
             if (Collection != null) {
+                Collection.CollectionChanged -= OnDetectHasItems;
                 if (Collection is TimeEntriesCollection<TimeEntryHolder>) {
                     ((TimeEntriesCollection<TimeEntryHolder>)Collection).Dispose ();
                 } else {
@@ -99,6 +103,8 @@ namespace Toggl.Phoebe.Data.ViewModels
         public bool HasMoreItems { get; private set; }
 
         public bool HasLoadErrors { get; private set; }
+
+        public bool HasItems { get; private set; }
 
         public string Description { get; set; }
 
@@ -194,6 +200,7 @@ namespace Toggl.Phoebe.Data.ViewModels
         {
             return activeTimeEntryManager.ActiveTimeEntry;
         }
+
         #endregion
 
         private void SyncCollectionView ()
@@ -205,6 +212,7 @@ namespace Toggl.Phoebe.Data.ViewModels
             Collection = IsGroupedMode
                          ?        (ObservableCollection<IHolder>)new TimeEntriesCollection<TimeEntryGroup> (collectionFeed)
                          : new TimeEntriesCollection<TimeEntryHolder> (collectionFeed);
+            Collection.CollectionChanged += OnDetectHasItems;
         }
 
         private void UpdateView (TimeEntryData data)
@@ -261,9 +269,15 @@ namespace Toggl.Phoebe.Data.ViewModels
             });
         }
 
+        private void OnDetectHasItems (object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+        {
+            ServiceContainer.Resolve<IPlatformUtils> ().DispatchOnUIThread (() => {
+                HasItems = Collection.Count > 0;
+            });
+        }
+
         private void DurationTimerCallback (object sender, ElapsedEventArgs e)
         {
-
             var duration = TimeEntryModel.GetDuration (activeTimeEntryManager.ActiveTimeEntry, Time.UtcNow);  //model.GetDuration ();
             durationTimer.Interval = 1000 - duration.Milliseconds;
 

@@ -14,7 +14,7 @@
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\Debug</OutputPath>
-    <DefineConstants>DEBUG;__STAGING__</DefineConstants>
+    <DefineConstants>DEBUG;STAGING</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <ConsolePause>false</ConsolePause>
@@ -90,6 +90,9 @@
     <Compile Include="Misc\**\*.cs" />     -->
     <Compile Include="Data\Mapper\*.cs" />
     <Compile Include="Reactive\**\*.cs" />
+  </ItemGroup>
+  <ItemGroup Condition="$(DefineConstants.Contains('STAGING'))">
+    <Compile Include="Staging\**\*.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

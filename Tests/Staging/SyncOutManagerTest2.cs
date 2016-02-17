@@ -7,11 +7,11 @@ using Toggl.Phoebe._Data.Json;
 using Toggl.Phoebe._Data.Models;
 using Toggl.Phoebe._Net;
 using Toggl.Phoebe._Reactive;
+using Toggl.Phoebe.Tests.Reactive;
 using XPlatUtils;
 
-namespace Toggl.Phoebe.Tests.Reactive
+namespace Toggl.Phoebe.Tests.Staging
 {
-    #if __STAGING__
     [TestFixture]
     public class SyncOutManagerTest2 : Test
     {
@@ -176,6 +176,5 @@ namespace Toggl.Phoebe.Tests.Reactive
 //        }
 
     }
-    #endif
 }
 

@@ -5,12 +5,14 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Toggl.Phoebe.Data.Json;
+using System.Net.Security;
 using XPlatUtils;
 
 namespace Toggl.Phoebe.Net
@@ -35,6 +37,8 @@ namespace Toggl.Phoebe.Net
             var client = new HttpClient () {
                 Timeout = TimeSpan.FromSeconds (10),
             };
+
+            ServicePointManager.ServerCertificateValidationCallback = Validator;
             var headers = client.DefaultRequestHeaders;
             headers.UserAgent.Clear ();
             headers.UserAgent.Add (new ProductInfoHeaderValue (Platform.AppIdentifier, Platform.AppVersion));
@@ -820,6 +824,14 @@ namespace Toggl.Phoebe.Net
                 Content = new StringContent (json, Encoding.UTF8, "application/json")
             });
             var response = await SendAsync (httpReq).ConfigureAwait (false);
+        }
+
+        // Validator to bypass the cert requirement
+        // related with the staging endpoint.
+        // more options: http://www.mono-project.com/archived/usingtrustedrootsrespectfully/
+        public static bool Validator (object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)
+        {
+            return true;
         }
 
         private class Wrapper<T>

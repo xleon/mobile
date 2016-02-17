@@ -91,6 +91,20 @@ namespace Toggl.Ross.Theme
             {
                 v.BackgroundColor = Color.LightestGray;
             }
+
+            public static void WorkspaceHeader (UILabel v)
+            {
+                v.Font = UIFont.FromName ("HelveticaNeue-Medium", 14f);
+                v.TextAlignment = UITextAlignment.Center;
+                v.TextColor = Color.LightGray;
+            }
+
+            public static void WorkspaceLabel (UILabel v)
+            {
+                v.Font = UIFont.FromName ("HelveticaNeue", 16f);
+                v.TextAlignment = UITextAlignment.Left;
+                v.TextColor = Color.Gray;
+            }
         }
     }
 }

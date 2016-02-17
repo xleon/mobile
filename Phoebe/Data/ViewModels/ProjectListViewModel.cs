@@ -64,6 +64,7 @@ namespace Toggl.Phoebe.Data.ViewModels
         }
 
         #region Observable properties
+
         public List<WorkspaceData> WorkspaceList { get; private set; }
 
         public ProjectsCollection ProjectList { get; private set; }
@@ -71,6 +72,7 @@ namespace Toggl.Phoebe.Data.ViewModels
         public int CurrentWorkspaceIndex { get; private set; }
 
         public Guid CurrentWorkspaceId { get; private set; }
+
         #endregion
 
         private event EventHandler<string> onSearch;

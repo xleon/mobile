@@ -9,6 +9,8 @@ using Toggl.Phoebe.Data.Views;
 using Toggl.Ross.DataSources;
 using Toggl.Ross.Theme;
 using Toggl.Phoebe.Data.ViewModels;
+using GalaSoft.MvvmLight.Helpers;
+using System.Collections.ObjectModel;
 
 namespace Toggl.Ross.ViewControllers
 {
@@ -37,6 +39,7 @@ namespace Toggl.Ross.ViewControllers
             View.Apply (Style.Screen);
             EdgesForExtendedLayout = UIRectEdge.None;
 
+            TableView.RowHeight = 60f;
             TableView.RegisterClassForHeaderFooterViewReuse (typeof (SectionHeaderView), ClientHeaderId);
             TableView.RegisterClassForCellReuse (typeof (ProjectCell), ProjectCellId);
             TableView.RegisterClassForCellReuse (typeof (TaskCell), TaskCellId);
@@ -46,8 +49,12 @@ namespace Toggl.Ross.ViewControllers
             TableView.Source = new Source (this, viewModel);
 
             var addBtn = new UIBarButtonItem (UIBarButtonSystemItem.Add, OnAddNewProject);
-            var saveBtn = new UIBarButtonItem (UIBarButtonSystemItem.FixedSpace, OnShowWorkspaceFilter);
-            NavigationItem.RightBarButtonItems = new [] { saveBtn, addBtn};
+            if (viewModel.WorkspaceList.Count > 1) {
+                var filterBtn = new UIBarButtonItem (UIImage.FromFile ("filter_icon.png"), UIBarButtonItemStyle.Plain, OnShowWorkspaceFilter);
+                NavigationItem.RightBarButtonItems = new [] { filterBtn, addBtn};
+            } else {
+                NavigationItem.RightBarButtonItem = addBtn;
+            }
         }
 
         public override void ViewWillUnload()
@@ -82,7 +89,9 @@ namespace Toggl.Ross.ViewControllers
 
         private void OnShowWorkspaceFilter (object sender, EventArgs evt)
         {
-
+            var sourceRect = new CGRect (NavigationController.Toolbar.Bounds.Width - 45, NavigationController.Toolbar.Bounds.Height, 1, 1);
+            var popoverController = new WorkspaceSelectorPopover (viewModel, sourceRect);
+            PresentViewController (popoverController, true, null);
         }
 
         class Source : ObservableCollectionViewSource<CommonData, ClientData, ProjectData>
@@ -364,6 +373,79 @@ namespace Toggl.Ross.ViewControllers
             public void Bind (ClientData data)
             {
                 nameLabel.Text = string.IsNullOrEmpty (data.Name) ? "ProjectNoClient".Tr () : data.Name;
+            }
+        }
+
+        class WorkspaceSelectorPopover : ObservableTableViewController<WorkspaceData>, IUIPopoverPresentationControllerDelegate
+        {
+            private readonly ProjectListViewModel viewModel;
+            private const int cellHeight = 45;
+
+            public WorkspaceSelectorPopover (ProjectListViewModel viewModel, CGRect sourceRect)
+            {
+                this.viewModel = viewModel;
+                ModalPresentationStyle = UIModalPresentationStyle.Popover;
+
+                PopoverPresentationController.PermittedArrowDirections = UIPopoverArrowDirection.Up;
+                PopoverPresentationController.BackgroundColor = UIColor.LightGray;
+                PopoverPresentationController.SourceRect = sourceRect;
+                PopoverPresentationController.Delegate = this;
+
+                var height = (viewModel.WorkspaceList.Count < 5) ? (viewModel.WorkspaceList.Count + 1) : 5;
+                PreferredContentSize = new CGSize (200, height * cellHeight);
+            }
+
+            public override void ViewDidLoad()
+            {
+                base.ViewDidLoad();
+
+                UILabel headerLabel = new UILabel ();
+                headerLabel.Text = "Workspaces";
+                headerLabel.Bounds = new CGRect (0, 10, 200, 40);
+                headerLabel.Apply (Style.ProjectList.WorkspaceHeader);
+                TableView.TableHeaderView = headerLabel;
+
+                TableView.RowHeight = cellHeight;
+                CreateCellDelegate = CreateWorkspaceCell;
+                BindCellDelegate = BindCell;
+                DataSource = new ObservableCollection<WorkspaceData> (viewModel.WorkspaceList);
+                PopoverPresentationController.SourceView = TableView;
+            }
+
+            private UITableViewCell CreateWorkspaceCell (NSString cellIdentifier)
+            {
+                return new UITableViewCell (UITableViewCellStyle.Default, cellIdentifier);
+            }
+
+            private void BindCell (UITableViewCell cell, WorkspaceData workspaceData, NSIndexPath path)
+            {
+                // Set selected tags.
+                cell.Accessory = (path.Row == viewModel.CurrentWorkspaceIndex) ? UITableViewCellAccessory.Checkmark : UITableViewCellAccessory.None;
+                cell.TextLabel.Text  = workspaceData.Name;
+                cell.TextLabel.Apply (Style.ProjectList.WorkspaceLabel);
+            }
+
+            protected override void OnRowSelected (object item, NSIndexPath indexPath)
+            {
+                base.OnRowSelected (item, indexPath);
+                TableView.DeselectRow (indexPath, true);
+                if (indexPath.Row == viewModel.CurrentWorkspaceIndex) {
+                    return;
+                }
+
+                viewModel.ChangeWorkspaceByIndex (indexPath.Row);
+                // Set cell unselected
+                foreach (var cell in TableView.VisibleCells) {
+                    cell.Accessory = UITableViewCellAccessory.None;
+                }
+                TableView.CellAt (indexPath).Accessory = UITableViewCellAccessory.Checkmark;
+
+            }
+
+            [Export ("adaptivePresentationStyleForPresentationController:")]
+            public UIModalPresentationStyle GetAdaptivePresentationStyle (UIPresentationController controller)
+            {
+                return UIModalPresentationStyle.None;
             }
         }
     }

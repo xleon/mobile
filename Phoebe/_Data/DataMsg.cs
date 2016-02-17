@@ -174,6 +174,7 @@ namespace Toggl.Phoebe._Data
     {
         static readonly IDictionary<string, Type> typeCache = new Dictionary<string, Type> ();
 
+        public Guid LocalId { get; set; }
         public string TypeName { get; set; }
         public string RawData { get; set; }
 
@@ -196,8 +197,9 @@ namespace Toggl.Phoebe._Data
         {
         }
 
-        public DataJsonMsg (CommonJson json)
+        public DataJsonMsg (Guid localId, CommonJson json)
         {
+            LocalId = localId;
             Data = json;
             TypeName = json.GetType ().FullName;
         }

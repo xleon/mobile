@@ -65,11 +65,17 @@ namespace Toggl.Phoebe._Reactive
 
                 var updated = dataStore.Update (ctx => {
                     foreach (var newData in receivedData) {
-                        // TODO: Review this
                         ICommonData oldData = null;
+                        // Check first if the newData has localId assigned
+                        // (for example, the ones returned by TogglClient.Create)
                         if (newData.Id != Guid.Empty) {
                             oldData = ctx.SingleOrDefault (x => x.Id == newData.Id);
                         }
+                        // If no localId, check if an item with the same RemoteId is in the db
+                        else {
+                            oldData = ctx.SingleOrDefault (x => x.RemoteId == newData.RemoteId);
+                        }
+
                         if (oldData != null) {
                             if (newData.CompareTo (oldData) >= 0) {
                                 newData.Id = oldData.Id;
@@ -92,6 +98,8 @@ namespace Toggl.Phoebe._Reactive
                                clients: state.Update (state.Clients, updated),
                                tasks: state.Update (state.Tasks, updated),
                                tags: state.Update (state.Tags, updated),
+                               // TODO: Chech if the updated entries are withing the current scroll view
+                               // Probably it's better to do this check in UpdateTimeEntries
                                timeEntries: state.UpdateTimeEntries (updated)
                            ));
             },

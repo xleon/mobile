@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using System.Threading.Tasks;
 using NUnit.Framework;
 using Toggl.Phoebe.Tests;
@@ -11,10 +8,10 @@ using Toggl.Phoebe._Data.Models;
 using Toggl.Phoebe._Net;
 using Toggl.Phoebe._Reactive;
 using XPlatUtils;
-using System.Threading;
 
 namespace Toggl.Phoebe.Tests.Reactive
 {
+    #if __STAGING__
     [TestFixture]
     public class SyncOutManagerTest2 : Test
     {
@@ -33,7 +30,6 @@ namespace Toggl.Phoebe.Tests.Reactive
             }
         }
 
-        #if __STAGING__
         UserJson userJson;
         ISyncDataStore dataStore;
         TogglRestClient togglClient;
@@ -179,7 +175,7 @@ namespace Toggl.Phoebe.Tests.Reactive
 //            RxChain.Send (new DataMsg.TimeEntryAdd (te2));
 //        }
 
-        #endif
     }
+    #endif
 }
 

@@ -86,14 +86,14 @@ namespace Toggl.Phoebe._Reactive
 
                 if (queueEmpty && isConnected) {
                     try {
-                        await SendMessage (remoteObjects, exported);
+                        await SendMessage (remoteObjects, msg.Id, exported);
                     } catch (Exception ex) {
                         log (ex);
-                        Enqueue (exported);
+                        Enqueue (msg.Id, exported);
                         queueEmpty = false;
                     }
                 } else {
-                    Enqueue (exported);
+                    Enqueue (msg.Id, exported);
                     queueEmpty = false;
                 }
             }
@@ -120,7 +120,7 @@ namespace Toggl.Phoebe._Reactive
                     try {
                         do {
                             var jsonMsg = JsonConvert.DeserializeObject<DataJsonMsg> (json);
-                            await SendMessage (remoteObjects, jsonMsg.Data);
+                            await SendMessage (remoteObjects, jsonMsg.LocalId, jsonMsg.Data);
 
                             // If we sent the message successfully, remove it from the queue
                             dataStore.TryDequeue (QueueId, out json);
@@ -138,10 +138,10 @@ namespace Toggl.Phoebe._Reactive
             }
         }
 
-        void Enqueue (CommonJson json)
+        void Enqueue (Guid localId, CommonJson json)
         {
             try {
-                var serialized = JsonConvert.SerializeObject (new DataJsonMsg (json));
+                var serialized = JsonConvert.SerializeObject (new DataJsonMsg (localId, json));
                 dataStore.TryEnqueue (QueueId, serialized);
             } catch (Exception ex) {
                 // TODO: Retry?
@@ -149,17 +149,17 @@ namespace Toggl.Phoebe._Reactive
             }
         }
 
-        async Task SendMessage (List<CommonData> remoteObjects, CommonJson json)
+        async Task SendMessage (List<CommonData> remoteObjects, Guid localId, CommonJson json)
         {
             if (json.DeletedAt == null) {
                 if (json.RemoteId != null) {
                     // TODO: Save the response to remoteObjects here too?
                     await client.Update (json);
                 } else {
-                    // TODO: Can the response be null?
-                    // TODO: Must we assign Id to response?
                     var res = await client.Create (json);
-                    remoteObjects.Add (mapper.Map (res));
+                    var resData = mapper.Map (res);
+                    resData.Id = localId;
+                    remoteObjects.Add (resData);
                 }
             } else {
                 if (json.RemoteId != null) {

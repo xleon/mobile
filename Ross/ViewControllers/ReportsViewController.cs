@@ -56,19 +56,9 @@ namespace Toggl.Ross.ViewControllers
             _timeSpaceIndex = 0;
         }
 
-        public override void ViewWillDisappear (bool animated)
+        public override void LoadView ()
         {
-            NavigationController.InteractivePopGestureRecognizer.Enabled = true;
-            base.ViewWillDisappear (animated);
-        }
-
-        public override void ViewDidDisappear (bool animated)
-        {
-            base.ViewDidDisappear (animated);
-            if (menuController != null) {
-                menuController.Detach ();
-                menuController = null;
-            }
+            View = new UIView ().Apply (Style.Screen);
         }
 
         public override void ViewDidLoad ()
@@ -102,8 +92,6 @@ namespace Toggl.Ross.ViewControllers
             Add (dateSelectorView);
             Add (topBorder);
             Add (statusView);
-
-            NavigationController.InteractivePopGestureRecognizer.Enabled = false;
         }
 
         public override void ViewDidLayoutSubviews ()
@@ -115,15 +103,34 @@ namespace Toggl.Ross.ViewControllers
             LayoutStatusBar ();
         }
 
-        public override void LoadView ()
+
+        public override void ViewWillAppear (bool animated)
         {
-            View = new UIView ().Apply (Style.Screen);
+            base.ViewWillAppear (animated);
+            ((MainViewController)AppDelegate.TogglWindow.RootViewController).MenuEnabled = false;
+            NavigationController.InteractivePopGestureRecognizer.Enabled = false;
         }
 
         public override void ViewDidAppear (bool animated)
         {
             base.ViewDidAppear (animated);
             TrackScreenView ();
+        }
+
+        public override void ViewWillDisappear (bool animated)
+        {
+            ((MainViewController)AppDelegate.TogglWindow.RootViewController).MenuEnabled = true;
+            NavigationController.InteractivePopGestureRecognizer.Enabled = true;
+            base.ViewWillDisappear (animated);
+        }
+
+        public override void ViewDidDisappear (bool animated)
+        {
+            base.ViewDidDisappear (animated);
+            if (menuController != null) {
+                menuController.Detach ();
+                menuController = null;
+            }
         }
 
         private void TrackScreenView()

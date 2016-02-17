@@ -175,7 +175,6 @@
     <BundleResource Include="Resources\en.lproj\Localizable.strings" />
     <BundleResource Include="Resources\*.png" />
     <BundleResource Include="Resources\Fonts\icomoon.ttf" />
-    <BundleResource Include="Resources\filter_icon%402x.png" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Info.plist" />

@@ -98,7 +98,7 @@ namespace Toggl.Phoebe._Reactive
                                clients: state.Update (state.Clients, updated),
                                tasks: state.Update (state.Tasks, updated),
                                tags: state.Update (state.Tags, updated),
-                               // TODO: Chech if the updated entries are withing the current scroll view
+                               // TODO: Check if the updated entries are within the current scroll view
                                // Probably it's better to do this check in UpdateTimeEntries
                                timeEntries: state.UpdateTimeEntries (updated)
                            ));

@@ -117,14 +117,12 @@ namespace Toggl.Phoebe.Tests.Reactive
             }
         }
 
-        SyncSqliteDataStore dataStore;
         readonly ToggleClientMock togglClient = new ToggleClientMock ();
 
         public override void Init ()
         {
             base.Init ();
 
-            dataStore = (SyncSqliteDataStore)ServiceContainer.Resolve<ISyncDataStore> ();
             var platformUtils = new PlatformUtils ();
             ServiceContainer.RegisterScoped<IPlatformUtils> (platformUtils);
             ServiceContainer.RegisterScoped<ITogglClient> (togglClient);

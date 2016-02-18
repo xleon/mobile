@@ -82,10 +82,15 @@ namespace Toggl.Ross.ViewControllers
             nameTextField.BecomeFirstResponder ();
         }
 
-        public override void ViewWillUnload ()
+        public override void ViewWillDisappear (bool animated)
         {
-            ViewModel.Dispose ();
-            base.ViewWillUnload();
+            // Release ViewModel only when the
+            // ViewController is poped.
+            var dispose = !NavigationController.ViewControllers.Contains (this);
+            if (dispose) {
+                ViewModel.Dispose ();
+            }
+            base.ViewWillDisappear (animated);
         }
 
         private void OnClientButtonTouchUpInside (object sender, EventArgs e)

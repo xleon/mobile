@@ -136,10 +136,9 @@ namespace Toggl.Ross.ViewControllers
         public async override void ViewDidLoad ()
         {
             base.ViewDidLoad ();
-
             ViewModel = await EditTimeEntryViewModel.Init (data);
 
-            // Bindings.
+            // Bindings
             durationBinding = this.SetBinding (() => ViewModel.Duration).WhenSourceChanges (() => durationButton.SetTitle (ViewModel.Duration, UIControlState.Normal));
             startTimeBinding = this.SetBinding (() => ViewModel.StartDate, () => startStopView.StartTime);
             stopTimeBinding = this.SetBinding (() => ViewModel.StopDate, () => startStopView.StopTime);
@@ -150,7 +149,7 @@ namespace Toggl.Ross.ViewControllers
             tagBinding = this.SetBinding (() => ViewModel.TagList).WhenSourceChanges (() => {
                 FeedTags (ViewModel.TagList.Select (tag => tag.Name).ToList (), tagsButton);
             });
-            descriptionBinding = this.SetBinding (() => ViewModel.Description, () => descriptionTextField.Text).UpdateTargetTrigger (nameof (UITextField.EditingChanged));
+            descriptionBinding = this.SetBinding (() => ViewModel.Description, () => descriptionTextField.Text);
             isPremiumBinding = this.SetBinding (() => ViewModel.IsPremium, () => billableSwitch.Hidden).ConvertSourceToTarget (isPremium => !isPremium);
             isRunningBinding = this.SetBinding (() => ViewModel.IsRunning).WhenSourceChanges (() => {
                 if (ViewModel.IsRunning) {
@@ -159,17 +158,26 @@ namespace Toggl.Ross.ViewControllers
                     startStopView.StopTime = ViewModel.StopDate;
                 }
             });
-            isBillableBinding = this.SetBinding (() => ViewModel.IsBillable, () => billableSwitch.Switch.On).UpdateTargetTrigger (nameof (UISwitch.ValueChanged));
+            isBillableBinding = this.SetBinding (() => ViewModel.IsBillable, () => billableSwitch.Switch.On);
+
+            // Events to edit some fields
+            descriptionTextField.EditingChanged += (sender, e) => { ViewModel.ChangeDescription (descriptionTextField.Text); };
+            billableSwitch.Switch.ValueChanged += (sender, e) => { ViewModel.ChangeBillable (billableSwitch.Switch.On); };
         }
 
         public async override void ViewWillDisappear (bool animated)
         {
-            base.ViewWillDisappear (animated);
+            var dispose = !NavigationController.ViewControllers.Contains (this);
             NSNotificationCenter.DefaultCenter.RemoveObservers (notificationObjects);
             notificationObjects.Clear ();
-
             await ViewModel.SaveAsync ();
-            ViewModel.Dispose ();
+
+            // Release ViewModel only when the
+            // ViewController is poped.
+            if (dispose) {
+                ViewModel.Dispose ();
+            }
+            base.ViewWillDisappear (animated);
         }
 
         private void FeedTags (List<string> tagNames, UIButton btn)

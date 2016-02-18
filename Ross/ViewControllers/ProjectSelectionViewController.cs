@@ -45,6 +45,11 @@ namespace Toggl.Ross.ViewControllers
             TableView.RegisterClassForCellReuse (typeof (TaskCell), TaskCellId);
             TableView.SeparatorStyle = UITableViewCellSeparatorStyle.None;
 
+            var defaultFooterView = new UIActivityIndicatorView (UIActivityIndicatorViewStyle.Gray);
+            defaultFooterView.Frame = new CGRect (0, 0, 50, 50);
+            defaultFooterView.StartAnimating ();
+            TableView.TableFooterView = defaultFooterView;
+
             viewModel = await ProjectListViewModel.Init (workspaceId);
             TableView.Source = new Source (this, viewModel);
 
@@ -55,12 +60,8 @@ namespace Toggl.Ross.ViewControllers
             } else {
                 NavigationItem.RightBarButtonItem = addBtn;
             }
-        }
 
-        public override void ViewWillUnload()
-        {
-            viewModel.Dispose ();
-            base.ViewWillUnload();
+            TableView.TableFooterView = null;
         }
 
         protected void OnItemSelected (CommonData m)
@@ -83,7 +84,7 @@ namespace Toggl.Ross.ViewControllers
 
         private void OnAddNewProject (object sender, EventArgs evt)
         {
-            var newProjectController = new NewProjectViewController (workspaceId, handler);
+            var newProjectController = new NewProjectViewController (viewModel.CurrentWorkspaceId, handler);
             NavigationController.PushViewController (newProjectController, true);
         }
 

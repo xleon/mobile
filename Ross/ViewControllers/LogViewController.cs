@@ -95,6 +95,7 @@ namespace Toggl.Ross.ViewControllers
             EdgesForExtendedLayout = UIRectEdge.None;
             TableView.RegisterClassForCellReuse (typeof (TimeEntryCell), EntryCellId);
             TableView.RegisterClassForHeaderFooterViewReuse (typeof (SectionHeaderView), SectionHeaderId);
+            TableView.SetEditing (false, true);
 
             // Create view model
             ViewModel = LogTimeEntriesViewModel.Init ();

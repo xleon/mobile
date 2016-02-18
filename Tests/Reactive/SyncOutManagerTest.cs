@@ -17,21 +17,6 @@ namespace Toggl.Phoebe.Tests.Reactive
     [TestFixture]
     public class SyncOutManagerTest : Test
     {
-        public class NetWorkPresenceMock : Toggl.Phoebe.Net.INetworkPresence
-        {
-            public bool IsNetworkPresent { get; set; }
-
-            public void RegisterSyncWhenNetworkPresent ()
-            {
-                throw new NotImplementedException ();
-            }
-
-            public void UnregisterSyncWhenNetworkPresent ()
-            {
-                throw new NotImplementedException ();
-            }
-        }
-
         public class ToggleClientMock : ITogglClient
         {
             public Random rnd = new Random ();
@@ -132,21 +117,19 @@ namespace Toggl.Phoebe.Tests.Reactive
             }
         }
 
-        ISyncDataStore dataStore;
+        SyncSqliteDataStore dataStore;
         readonly ToggleClientMock togglClient = new ToggleClientMock ();
-        readonly NetWorkPresenceMock networkPresence = new NetWorkPresenceMock ();
 
         public override void Init ()
         {
             base.Init ();
 
-            dataStore = ServiceContainer.Resolve<ISyncDataStore> ();
+            dataStore = (SyncSqliteDataStore)ServiceContainer.Resolve<ISyncDataStore> ();
             var platformUtils = new PlatformUtils ();
             ServiceContainer.RegisterScoped<IPlatformUtils> (platformUtils);
             ServiceContainer.RegisterScoped<ITogglClient> (togglClient);
-            ServiceContainer.RegisterScoped<Toggl.Phoebe.Net.INetworkPresence> (networkPresence);
 
-            RxChain.Init (Util.GetInitAppState (), RxChain.InitMode.TestSyncManager);
+            RxChain.Init (Util.GetInitAppState ());
         }
 
         public override void Cleanup ()
@@ -158,32 +141,22 @@ namespace Toggl.Phoebe.Tests.Reactive
         [Test]
         public void TestSendMessageWithoutConnection ()
         {
-            IDisposable subscription = null;
-            var te = Util.CreateTimeEntryData (DateTime.Now);
-            var oldQueueSize = dataStore.GetQueueSize (SyncOutManager.QueueId);
-            networkPresence.IsNetworkPresent = false;
-            togglClient.ReceivedItems.Clear ();
             var tcs = Util.CreateTask<bool> ();
-
-            subscription =
-                SyncOutManager
-                    .Singleton
-                    .Observe ()
-                    .Subscribe (_ => {
+            var te = Util.CreateTimeEntryData (DateTime.Now);
+            
+            RunAsync (async () => {
+                RxChain.Send (
+                    new DataMsg.TimeEntryAdd (te), new SyncTestOptions (false, (sent, queued) => {
                         try {
-                            subscription.Dispose ();
                             // As there's no connection, message should have been enqueued
-                            Assert.AreEqual (dataStore.GetQueueSize (SyncOutManager.QueueId), oldQueueSize + 1);
-                            Assert.AreEqual (togglClient.ReceivedItems.Count, 0);
+                            Assert.True (queued.Any (x => x.LocalId == te.Id));
+                            Assert.AreEqual (0, sent.Count);
                             tcs.SetResult (true);
                         }
                         catch (Exception ex) {
                             tcs.SetException (ex);
-                        }
-                    });
-            
-            RunAsync (async () => {
-                RxChain.Send (new DataMsg.TimeEntryAdd (te));
+                        }                        
+                    }));
                 await tcs.Task;
             });
         }
@@ -191,32 +164,22 @@ namespace Toggl.Phoebe.Tests.Reactive
         [Test]
         public void TestSendMessageWithConnection ()
         {
-            IDisposable subscription = null;
-            var te = Util.CreateTimeEntryData (DateTime.Now);
-            var oldQueueSize = dataStore.GetQueueSize (SyncOutManager.QueueId);
-            networkPresence.IsNetworkPresent = true;
-            togglClient.ReceivedItems.Clear ();
             var tcs = Util.CreateTask<bool> ();
+            var te = Util.CreateTimeEntryData (DateTime.Now);
 
-            subscription =
-                SyncOutManager
-                    .Singleton
-                    .Observe ()
-                    .Subscribe (_ => {
+            RunAsync (async () => {
+                RxChain.Send (
+                    new DataMsg.TimeEntryAdd (te), new SyncTestOptions (true, (sent, queued) => {
                         try {
-                            subscription.Dispose ();
-                            // As there's connection, message (and pending ones) should have been sent
-                            Assert.AreEqual (dataStore.GetQueueSize (SyncOutManager.QueueId), 0);
-                            Assert.AreEqual (togglClient.ReceivedItems.Count, oldQueueSize + 1);
+                            // As there's connection, message should have been sent
+                            Assert.False (queued.Any (x => x.LocalId == te.Id));
+                            Assert.AreEqual (1, sent.Count);
                             tcs.SetResult (true);
                         }
                         catch (Exception ex) {
                             tcs.SetException (ex);
-                        }
-                    });
-
-            RunAsync (async () => {
-                RxChain.Send (new DataMsg.TimeEntryAdd (te));
+                        }                        
+                    }));
                 await tcs.Task;
             });
         }
@@ -224,47 +187,35 @@ namespace Toggl.Phoebe.Tests.Reactive
         [Test]
         public void TestTrySendMessageAndReconnect ()
         {
-            int step = 0;
-            IDisposable subscription = null;
+            var tcs = Util.CreateTask<bool> ();
             var te = Util.CreateTimeEntryData (DateTime.Now);
             var te2 = Util.CreateTimeEntryData (DateTime.Now + TimeSpan.FromMinutes(5));
-            var oldQueueSize = dataStore.GetQueueSize (SyncOutManager.QueueId);
-            networkPresence.IsNetworkPresent = false;
-            togglClient.ReceivedItems.Clear ();
-            var tcs = Util.CreateTask<bool> ();
-
-            subscription =
-                SyncOutManager
-                    .Singleton
-                    .Observe ()
-                    .Subscribe (_ => {
-                        try {
-                            switch (step) {
-                            case 0:
-                                // As there's no connection, message should have been enqueued
-                                Assert.AreEqual (dataStore.GetQueueSize (SyncOutManager.QueueId), oldQueueSize + 1);
-                                Assert.AreEqual (togglClient.ReceivedItems.Count, 0);
-                                step++;
-                                break;
-                            case 1:
-                                subscription.Dispose ();
-                                // As there's connection, message (and pending ones) should have been sent
-                                Assert.AreEqual (dataStore.GetQueueSize (SyncOutManager.QueueId), 0);
-                                Assert.AreEqual (togglClient.ReceivedItems.Count, oldQueueSize + 2);
-                                tcs.SetResult (true);
-                                break;
-                            }
-                        }
-                        catch (Exception ex) {
-                            subscription.Dispose ();
-                            tcs.SetException (ex);
-                        }
-                    });
 
             RunAsync (async () => {
-                RxChain.Send (new DataMsg.TimeEntryAdd (te));
-                networkPresence.IsNetworkPresent = true;
-                RxChain.Send (new DataMsg.TimeEntryAdd (te2));
+                RxChain.Send (
+                    new DataMsg.TimeEntryAdd (te), new SyncTestOptions (false, (sent, queued) => {
+                        try {
+                            // As there's no connection, message should have been enqueued
+                            Assert.True (queued.Any (x => x.LocalId == te.Id));
+                            Assert.AreEqual (0, sent.Count);
+                        }
+                        catch (Exception ex) {
+                            tcs.SetException (ex);
+                        }                        
+                    }));
+
+                RxChain.Send (
+                    new DataMsg.TimeEntryAdd (te2), new SyncTestOptions (true, (sent, queued) => {
+                        try {
+                            // As there's connection, messages should have been sent
+                            Assert.False (queued.Any (x => x.LocalId == te.Id || x.LocalId == te2.Id));
+                            Assert.True (sent.Count > 0);
+                            tcs.SetResult (true);
+                        }
+                        catch (Exception ex) {
+                            tcs.SetException (ex);
+                        }                        
+                    }));
                 await tcs.Task;
             });
         }

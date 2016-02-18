@@ -35,15 +35,6 @@ namespace Toggl.Phoebe._Reactive
         readonly ISyncDataStore dataStore;
         readonly ITogglClient client;
 
-        #if DEBUG
-        readonly Subject<List<CommonData>> subject = new Subject<List<CommonData>> ();
-
-        public IObservable<List<CommonData>> Observe ()
-        {
-            return subject.AsObservable ();
-        }       
-        #endif
-
         SyncOutManager ()
         {
             mapper = new JsonMapper ();
@@ -54,15 +45,7 @@ namespace Toggl.Phoebe._Reactive
             StoreManager.Singleton
             .Observe ()
             .SelectAsync (EnqueueOrSend)
-            .Catch ((Exception ex) => {
-                log(ex, "Uncaught error");
-                return Observable.Return<List<CommonData>> (new List<CommonData> ());
-            })
-            #if DEBUG
-            .Subscribe (subject.OnNext);
-            #elif
             .Subscribe ();
-            #endif
         }
 
         void log (Exception ex, string msg = "Failed to send data to server")
@@ -71,11 +54,13 @@ namespace Toggl.Phoebe._Reactive
             logger.Error (typeof (SyncOutManager).Name, ex, msg);
         }
 
-        async Task<List<CommonData>> EnqueueOrSend (DataSyncMsg<AppState> syncMsg)
+        async Task EnqueueOrSend (DataSyncMsg<AppState> syncMsg)
         {
-            // Check internet connection
-            var isConnected = networkPresence.IsNetworkPresent;
             var remoteObjects = new List<CommonData> ();
+            var enqueuedItems = new List<DataJsonMsg> ();
+            var isConnected = syncMsg.SyncTest != null
+                ? syncMsg.SyncTest.IsConnectionAvailable
+                : networkPresence.IsNetworkPresent;
 
             // Try to empty queue first
             bool queueEmpty = await tryEmptyQueue (remoteObjects, isConnected);
@@ -89,11 +74,11 @@ namespace Toggl.Phoebe._Reactive
                         await SendMessage (remoteObjects, msg.Id, exported);
                     } catch (Exception ex) {
                         log (ex);
-                        Enqueue (msg.Id, exported);
+                        Enqueue (msg.Id, exported, enqueuedItems);
                         queueEmpty = false;
                     }
                 } else {
-                    Enqueue (msg.Id, exported);
+                    Enqueue (msg.Id, exported, enqueuedItems);
                     queueEmpty = false;
                 }
             }
@@ -105,11 +90,13 @@ namespace Toggl.Phoebe._Reactive
                 RxChain.Send (new DataMsg.ReceivedFromServer (remoteObjects));
             }
 
-            if (syncMsg.IsSyncRequested) {
+            if (syncMsg.IsSyncRequested && isConnected) {
                 DownloadEntries (syncMsg.State.TimerState);
             }
 
-            return remoteObjects;
+            if (syncMsg.SyncTest != null) {
+                syncMsg.SyncTest.Continuation (remoteObjects, enqueuedItems);
+            }
         }
 
         async Task<bool> tryEmptyQueue (List<CommonData> remoteObjects, bool isConnected)
@@ -138,11 +125,13 @@ namespace Toggl.Phoebe._Reactive
             }
         }
 
-        void Enqueue (Guid localId, CommonJson json)
+        void Enqueue (Guid localId, CommonJson json, List<DataJsonMsg> enqueuedItems)
         {
             try {
-                var serialized = JsonConvert.SerializeObject (new DataJsonMsg (localId, json));
+                var jsonMsg = new DataJsonMsg (localId, json);
+                var serialized = JsonConvert.SerializeObject (jsonMsg);
                 dataStore.TryEnqueue (QueueId, serialized);
+                enqueuedItems.Add (jsonMsg);
             } catch (Exception ex) {
                 // TODO: Retry?
                 log (ex, "Failed to queue message");

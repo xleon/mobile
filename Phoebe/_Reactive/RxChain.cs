@@ -10,25 +10,19 @@ namespace Toggl.Phoebe._Reactive
     {
         public enum InitMode {
             Full,
-            TestStoreManager,
-            TestSyncManager
+            TestStoreManager
         }
 
         public static void Init (AppState initState, InitMode mode = InitMode.Full)
         {
             switch (mode) {
             case InitMode.TestStoreManager:
-                StoreManager.Init (initState, Reducers.Init (), new TestSchedulerProvider ());
-                break;
-
-            case InitMode.TestSyncManager:
-                StoreManager.Init (initState, Reducers.Init (), new TestSchedulerProvider ());
-                SyncOutManager.Init ();
+                StoreManager.Init (initState, Reducers.Init ());
                 break;
 
             // Full
             default:
-                StoreManager.Init (initState, Reducers.Init (), new DefaultSchedulerProvider ());
+                StoreManager.Init (initState, Reducers.Init ());
                 SyncOutManager.Init ();
                 break;
             }
@@ -40,9 +34,9 @@ namespace Toggl.Phoebe._Reactive
             StoreManager.Cleanup ();
         }
 
-        public static void Send (DataMsg msg)
+        public static void Send (DataMsg msg, SyncTestOptions syncTest = null)
         {
-            StoreManager.Singleton.Send (msg);
+            StoreManager.Singleton.Send (msg, syncTest);
         }
     }
 }

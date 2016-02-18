@@ -152,21 +152,28 @@ namespace Toggl.Phoebe._Data
     {
         public T State { get; private set; }
         public bool IsSyncRequested { get; private set; }
+        public SyncTestOptions SyncTest { get; private set; }
         public IReadOnlyList<ICommonData> SyncData { get; private set; }
 
-        public DataSyncMsg (T state, IEnumerable<ICommonData> syncData = null, bool isSyncRequested = false)
+        public DataSyncMsg (T state, IEnumerable<ICommonData> syncData = null, bool isSyncRequested = false, SyncTestOptions syncTest = null)
         {
             State = state;
+            SyncTest = syncTest;
             IsSyncRequested = isSyncRequested;
             SyncData = syncData != null ? syncData.ToList () : new List<ICommonData> ();
+        }
+
+        public DataSyncMsg<T> With (SyncTestOptions syncTest)
+        {
+            return new DataSyncMsg<T> (this.State, this.SyncData, this.IsSyncRequested, syncTest);
         }
     }
 
     public static class DataSyncMsg
     {
-        static public DataSyncMsg<T> Create<T> (T state, IEnumerable<ICommonData> syncData = null, bool isSyncRequested = false)
+        static public DataSyncMsg<T> Create<T> (T state, IEnumerable<ICommonData> syncData = null, bool isSyncRequested = false, SyncTestOptions syncTest = null)
         {
-            return new DataSyncMsg<T> (state, syncData, isSyncRequested);
+            return new DataSyncMsg<T> (state, syncData, isSyncRequested, syncTest);
         }
     }
 
@@ -202,6 +209,18 @@ namespace Toggl.Phoebe._Data
             LocalId = localId;
             Data = json;
             TypeName = json.GetType ().FullName;
+        }
+    }
+
+    public class SyncTestOptions
+    {
+        public bool IsConnectionAvailable { get; private set; }
+        public Action<List<CommonData>, List<DataJsonMsg>> Continuation { get; private set; }
+
+        public SyncTestOptions (bool isCnnAvailable, Action<List<CommonData>, List<DataJsonMsg>> continuation)
+        {
+            IsConnectionAvailable = isCnnAvailable;
+            Continuation = continuation;
         }
     }
 }

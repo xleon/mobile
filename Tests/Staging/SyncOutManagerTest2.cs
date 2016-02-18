@@ -52,7 +52,7 @@ namespace Toggl.Phoebe.Tests.Staging
             ServiceContainer.RegisterScoped<Toggl.Phoebe.Net.INetworkPresence> (networkPresence);
 
             RunAsync (async () => {
-                RxChain.Init (Util.GetInitAppState (), RxChain.InitMode.TestSyncManager);
+                RxChain.Init (Util.GetInitAppState ());
 
                 var tmpUser = new UserJson () {
                     Email = string.Format("mobile.{0}@toggl.com", Util.UserId),

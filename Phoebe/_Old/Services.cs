@@ -35,8 +35,6 @@ namespace Toggl.Phoebe
             RegisterJsonConverters ();
             ServiceContainer.Register<LoggerUserManager> ();
 
-            ServiceContainer.Register<ISchedulerProvider> (new DefaultSchedulerProvider ());
-
             // Start the Reactive chain
             SyncOutManager.Init ();
         }

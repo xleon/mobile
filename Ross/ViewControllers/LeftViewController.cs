@@ -229,7 +229,6 @@ namespace Toggl.Ross.ViewControllers
         {
             var main = window.RootViewController as MainViewController;
             if (sender == logButton) {
-                Console.WriteLine (main.ViewControllers);
                 if (main.ViewControllers.Length > 1 && main.ViewControllers[0] is LogViewController) {
                     main.PopViewController (true);
                 }

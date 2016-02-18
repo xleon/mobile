@@ -275,11 +275,13 @@ namespace Toggl.Ross.ViewControllers
             var currentValue = datePicker.Date.ToDateTime ().ToUtc ();
             switch (startStopView.Selected) {
             case TimeKind.Start:
+                datePicker.Mode = ViewModel.IsRunning ? UIDatePickerMode.Time : UIDatePickerMode.DateAndTime;
                 if (currentValue != ViewModel.StartDate) {
                     datePicker.SetDate (ViewModel.StartDate.ToNSDate (), !datePicker.Hidden);
                 }
                 break;
             case TimeKind.Stop:
+                datePicker.Mode = UIDatePickerMode.DateAndTime;
                 if (currentValue != ViewModel.StopDate) {
                     datePicker.SetDate (ViewModel.StopDate.ToNSDate (), !datePicker.Hidden);
                 }

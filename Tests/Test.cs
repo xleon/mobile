@@ -32,6 +32,7 @@ namespace Toggl.Phoebe.Tests
             ServiceContainer.RegisterScoped<LogStore> ((LogStore)null);
             ServiceContainer.RegisterScoped<ILoggerClient> ((ILoggerClient)null);
             ServiceContainer.RegisterScoped<ILogger> (new VoidLogger());
+            ServiceContainer.RegisterScoped<INetworkPresence> (new Reactive.NetWorkPresenceMock ());
         }
 
         [TestFixtureTearDown]

@@ -29,6 +29,21 @@ namespace Toggl.Phoebe.Tests.Reactive
         }
     }
 
+    public class NetWorkPresenceMock : Toggl.Phoebe.Net.INetworkPresence
+    {
+        public bool IsNetworkPresent { get { return false; } }
+
+        public void RegisterSyncWhenNetworkPresent ()
+        {
+            throw new NotImplementedException ();
+        }
+
+        public void UnregisterSyncWhenNetworkPresent ()
+        {
+            throw new NotImplementedException ();
+        }
+    }
+
     public static class Util
     {
         public static readonly Guid UserId = Guid.NewGuid ();
@@ -37,9 +52,10 @@ namespace Toggl.Phoebe.Tests.Reactive
         public static TimeEntryData CreateTimeEntryData (
             DateTime startTime, long userRemoteId = 0, long workspaceRemoteId = 0)
         {
+            var id = Guid.NewGuid ();
             return new TimeEntryData {
-                Id = Guid.NewGuid (),
-                Description = "Test Entry",
+                Id = id,
+                Description = id.ToString (),
                 IsBillable = true,
                 DurationOnly = true,
                 StartTime = startTime,

@@ -167,14 +167,15 @@ namespace Toggl.Ross.ViewControllers
 
         public async override void ViewWillDisappear (bool animated)
         {
-            var dispose = !NavigationController.ViewControllers.Contains (this);
             NSNotificationCenter.DefaultCenter.RemoveObservers (notificationObjects);
             notificationObjects.Clear ();
             await ViewModel.SaveAsync ();
 
-            // Release ViewModel only when the
-            // ViewController is poped.
-            if (dispose) {
+            // TODO: Release ViewModel only when the
+            // ViewController is poped. It is a weird behaviour
+            // considering the property name used.
+            // But it works ok.
+            if (IsMovingFromParentViewController) {
                 ViewModel.Dispose ();
             }
             base.ViewWillDisappear (animated);

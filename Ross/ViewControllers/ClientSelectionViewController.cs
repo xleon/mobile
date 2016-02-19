@@ -51,12 +51,6 @@ namespace Toggl.Ross.ViewControllers
             NavigationItem.RightBarButtonItem = new UIBarButtonItem (UIBarButtonSystemItem.Add, OnAddBtnPressed);
         }
 
-        public override void ViewWillUnload ()
-        {
-            viewModel.Dispose ();
-            base.ViewWillUnload();
-        }
-
         private void OnAddBtnPressed (object sender, EventArgs e)
         {
             // Show create client screen

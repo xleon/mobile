@@ -34,7 +34,6 @@ namespace Toggl.Phoebe.Data.ViewModels
 
         public void Dispose()
         {
-            model = null;
         }
 
         public string ClientName { get; set; }

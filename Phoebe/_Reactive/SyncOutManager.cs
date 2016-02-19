@@ -172,6 +172,7 @@ namespace Toggl.Phoebe._Reactive
                 var newProjects = new List<CommonJson> ();
                 var newClients = new List<CommonJson> ();
                 var newTasks = new List<CommonJson> ();
+                var newTags = new List<TagJson> ();
 
                 // Check the state contains all related objects
                 foreach (var entry in jsonEntries) {
@@ -204,11 +205,16 @@ namespace Toggl.Phoebe._Reactive
                     if (entry.TaskRemoteId.HasValue) {
                         if (state.Tasks.Values.All (x => x.RemoteId != entry.TaskRemoteId) &&
                                 newTasks.All (x => x.RemoteId != entry.TaskRemoteId)) {
-                            newTasks.Add (await client.Get<ClientJson> (entry.TaskRemoteId.Value));
+                            newTasks.Add (await client.Get<TaskJson> (entry.TaskRemoteId.Value));
                         }
                     }
 
-                    // TODO: Tags
+                    foreach (var tag in entry.Tags) {
+                        if (state.Tags.Values.All (x => x.Name != tag) &&
+                                newTags.All (x => x.Name != tag)) {
+                            newTags.Add (await client.Get<TagJson> (entry.TaskRemoteId.Value));
+                        }
+                    }
                 }
 
                 RxChain.Send (new DataMsg.ReceivedFromServer (
@@ -216,7 +222,9 @@ namespace Toggl.Phoebe._Reactive
                                   .Concat (newWorkspaces.Select (mapper.Map<WorkspaceData>).Cast<CommonData> ())
                                   .Concat (newProjects.Select (mapper.Map<ProjectData>).Cast<CommonData> ())
                                   .Concat (newClients.Select (mapper.Map<ClientData>).Cast<CommonData> ())
-                                  .Concat (newTasks.Select (mapper.Map<TaskData>).Cast<CommonData> ()).ToList ()));
+                                  .Concat (newTasks.Select (mapper.Map<TaskData>).Cast<CommonData> ())
+                                  .Concat (newTags.Select (mapper.Map<TagData>).Cast<CommonData> ())
+                                  .ToList ()));
 
             } catch (Exception exc) {
                 var tag = this.GetType ().Name;

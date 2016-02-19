@@ -229,10 +229,9 @@ namespace Toggl.Ross.ViewControllers
         {
             var main = window.RootViewController as MainViewController;
             if (sender == logButton) {
-                ServiceContainer.Resolve<SettingsStore> ().PreferredStartView = "log";
-                main.SetViewControllers (new[] {
-                    new LogViewController ()
-                }, true);
+                if (main.ViewControllers.Length > 1 && main.ViewControllers[0] is LogViewController) {
+                    main.PopViewController (true);
+                }
             } else if (sender == reportsButton) {
                 main.PushViewController (new ReportsViewController (), true);
             } else if (sender == settingsButton) {

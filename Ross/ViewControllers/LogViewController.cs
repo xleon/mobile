@@ -95,6 +95,7 @@ namespace Toggl.Ross.ViewControllers
             EdgesForExtendedLayout = UIRectEdge.None;
             TableView.RegisterClassForCellReuse (typeof (TimeEntryCell), EntryCellId);
             TableView.RegisterClassForHeaderFooterViewReuse (typeof (SectionHeaderView), SectionHeaderId);
+            TableView.SetEditing (false, true);
 
             // Create view model
             ViewModel = LogTimeEntriesViewModel.Init ();
@@ -152,7 +153,7 @@ namespace Toggl.Ross.ViewControllers
             var entry = await ViewModel.StartStopTimeEntry ();
 
             if (entry.State == TimeEntryState.Running) {
-                OBMExperimentManager.Send (OBMExperimentManager.HomeEmptyState, "startButton", "click");
+                OBMExperimentManager.Send (OBMExperimentManager.iOSHomeEmptyState, "startButton", "click");
                 // Show next viewController.
                 var controllers = new List<UIViewController> (NavigationController.ViewControllers);
                 var editController = new EditTimeEntryViewController (entry);
@@ -188,7 +189,7 @@ namespace Toggl.Ross.ViewControllers
                 if (ViewModel.HasItems) {
                     TableView.TableFooterView = new UIView ();
                 } else {
-                    if (OBMExperimentManager.IncludedInExperiment (OBMExperimentManager.HomeEmptyState)) {
+                    if (OBMExperimentManager.IncludedInExperiment (OBMExperimentManager.iOSHomeEmptyState)) {
                         TableView.TableFooterView = obmEmptyView;
                     } else {
                         TableView.TableFooterView = emptyView;

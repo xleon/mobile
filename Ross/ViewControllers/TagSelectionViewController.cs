@@ -50,10 +50,10 @@ namespace Toggl.Ross.ViewControllers
             NavigationItem.RightBarButtonItems = new [] { saveBtn, addBtn};
         }
 
-        public override void ViewWillUnload ()
+        public override void ViewWillDisappear (bool animated)
         {
             viewModel.Dispose ();
-            base.ViewDidUnload ();
+            base.ViewWillDisappear (animated);
         }
 
         private UITableViewCell CreateTagCell (NSString cellIdentifier)

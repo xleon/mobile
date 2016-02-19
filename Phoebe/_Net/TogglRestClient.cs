@@ -159,6 +159,8 @@ namespace Toggl.Phoebe._Net
                 await DeleteWorkspaceUser ((WorkspaceUserJson) (object)jsonObject);
             } else if (type == typeof (ProjectUserJson)) {
                 await DeleteProjectUser ((ProjectUserJson) (object)jsonObject);
+            } else if (type == typeof (UserJson)) {
+                await DeleteUser ();
             } else {
                 throw new NotSupportedException (string.Format ("Deleting of {0} is not supported.", type));
             }
@@ -706,6 +708,17 @@ namespace Toggl.Phoebe._Net
             return UpdateObject (url, jsonObject);
         }
 
+        // TODO: For testing purposes only
+        public async Task DeleteUser ()
+        {
+            var json = JsonConvert.SerializeObject (new CloseAccountInfo ());
+            var httpReq = SetupRequest (new HttpRequestMessage () {
+                Method = HttpMethod.Post,
+                RequestUri = new Uri (v8Url, "me/close_account"),
+                Content = new StringContent (json, Encoding.UTF8, "application/json"),
+            });
+            await SendAsync (httpReq).ConfigureAwait (false);
+        }
         #endregion
 
         public async Task<UserRelatedJson> GetChanges (DateTime? since)

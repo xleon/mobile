@@ -42,11 +42,14 @@ namespace Toggl.Ross.ViewControllers
         private Binding<bool, bool> isBillableBinding, billableBinding, isRunningBinding, isPremiumBinding;
 
         private readonly TimeEntryData data;
+        private readonly List<TagData> tagList;
         protected EditTimeEntryViewModel ViewModel { get; set; }
 
-        public EditTimeEntryViewController (TimeEntryData data)
+        public EditTimeEntryViewController (TimeEntryData data, List<TagData> tagList)
         {
+            this.tagList = tagList;
             this.data = data;
+            ViewModel = EditTimeEntryViewModel.Init (data, tagList);
         }
 
         protected override void Dispose (bool disposing)
@@ -70,6 +73,8 @@ namespace Toggl.Ross.ViewControllers
 
             wrapper.Add (startStopView = new StartStopView {
                 TranslatesAutoresizingMaskIntoConstraints = false,
+                StartTime = ViewModel.StartDate,
+                StopTime = ViewModel.StopDate,
             });
             startStopView.SelectedChanged += OnStartStopViewSelectedChanged;
 
@@ -133,10 +138,9 @@ namespace Toggl.Ross.ViewControllers
             View = scrollView;
         }
 
-        public async override void ViewDidLoad ()
+        public override void ViewDidLoad ()
         {
             base.ViewDidLoad ();
-            ViewModel = await EditTimeEntryViewModel.Init (data);
 
             // Bindings
             durationBinding = this.SetBinding (() => ViewModel.Duration).WhenSourceChanges (() => durationButton.SetTitle (ViewModel.Duration, UIControlState.Normal));
@@ -167,14 +171,15 @@ namespace Toggl.Ross.ViewControllers
 
         public async override void ViewWillDisappear (bool animated)
         {
-            var dispose = !NavigationController.ViewControllers.Contains (this);
             NSNotificationCenter.DefaultCenter.RemoveObservers (notificationObjects);
             notificationObjects.Clear ();
             await ViewModel.SaveAsync ();
 
-            // Release ViewModel only when the
-            // ViewController is poped.
-            if (dispose) {
+            // TODO: Release ViewModel only when the
+            // ViewController is poped. It is a weird behaviour
+            // considering the property name used.
+            // But it works ok.
+            if (IsMovingFromParentViewController) {
                 ViewModel.Dispose ();
             }
             base.ViewWillDisappear (animated);

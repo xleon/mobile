@@ -65,9 +65,8 @@ namespace Toggl.Phoebe.Data.ViewModels
             return new EditTimeEntryViewModel (data, tagList);
         }
 
-        public static async Task<EditTimeEntryViewModel> Init (TimeEntryData timeEntryData)
+        public static EditTimeEntryViewModel Init (TimeEntryData timeEntryData, List<TagData> tagList)
         {
-            var tagList = await ServiceContainer.Resolve<IDataStore> ().GetTimeEntryTags (timeEntryData.Id);
             return new EditTimeEntryViewModel (timeEntryData, tagList);
         }
 

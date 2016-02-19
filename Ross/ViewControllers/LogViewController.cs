@@ -9,6 +9,7 @@ using Foundation;
 using GalaSoft.MvvmLight.Helpers;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Data;
+using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Utils;
 using Toggl.Phoebe.Data.ViewModels;
@@ -156,7 +157,8 @@ namespace Toggl.Ross.ViewControllers
                 OBMExperimentManager.Send (OBMExperimentManager.iOSHomeEmptyState, "startButton", "click");
                 // Show next viewController.
                 var controllers = new List<UIViewController> (NavigationController.ViewControllers);
-                var editController = new EditTimeEntryViewController (entry);
+                var tagList = await ServiceContainer.Resolve<IDataStore> ().GetTimeEntryTags (entry.Id);
+                var editController = new EditTimeEntryViewController (entry, tagList);
                 controllers.Add (editController);
                 if (ServiceContainer.Resolve<SettingsStore> ().ChooseProjectForNew) {
                     controllers.Add (new ProjectSelectionViewController (entry.WorkspaceId, editController));
@@ -275,11 +277,17 @@ namespace Toggl.Ross.ViewControllers
                 }
             }
 
-            public override void RowSelected (UITableView tableView, NSIndexPath indexPath)
+            public async override void RowSelected (UITableView tableView, NSIndexPath indexPath)
             {
                 var rowIndex = GetPlainIndexFromRow (collection, indexPath);
                 var holder = collection.ElementAt (rowIndex) as ITimeEntryHolder;
-                owner.NavigationController.PushViewController (new EditTimeEntryViewController ((TimeEntryModel)holder.Data), true);
+
+                var teData = (TimeEntryModel)holder.Data;
+                List<TagData> tags = new List<TagData> ();
+                if (holder.Info.NumberOfTags > 0) {
+                    tags = await ServiceContainer.Resolve<IDataStore> ().GetTimeEntryTags (teData.Id);
+                }
+                owner.NavigationController.PushViewController (new EditTimeEntryViewController (teData, tags), true);
             }
 
             public async override void Scrolled (UIScrollView scrollView)

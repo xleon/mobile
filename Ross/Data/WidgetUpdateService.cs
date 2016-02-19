@@ -4,6 +4,7 @@ using Foundation;
 using Newtonsoft.Json;
 using NotificationCenter;
 using Toggl.Phoebe;
+using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Net;
 using Toggl.Ross.ViewControllers;
@@ -124,13 +125,14 @@ namespace Toggl.Ross.Data
             UpdateWidgetContent();
         }
 
-        public void ShowNewTimeEntryScreen (TimeEntryModel currentTimeEntry)
+        public async void ShowNewTimeEntryScreen (TimeEntryModel currentTimeEntry)
         {
             var topVCList = new List<UIViewController> (rootController.ChildViewControllers);
             if (topVCList.Count > 0) {
                 // Get current VC's navigation
                 var controllers = new List<UIViewController> (topVCList[0].NavigationController.ViewControllers);
-                var editController = new EditTimeEntryViewController (currentTimeEntry);
+                var tags = await ServiceContainer.Resolve<IDataStore> ().GetTimeEntryTags (currentTimeEntry.Data.Id);
+                var editController = new EditTimeEntryViewController (currentTimeEntry.Data, tags);
                 controllers.Add (editController);
                 if (ServiceContainer.Resolve<SettingsStore> ().ChooseProjectForNew) {
                     controllers.Add (new ProjectSelectionViewController (currentTimeEntry.Workspace.Id, editController));

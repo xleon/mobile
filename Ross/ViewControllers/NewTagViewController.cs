@@ -54,12 +54,6 @@ namespace Toggl.Ross.ViewControllers
             nameTextField.BecomeFirstResponder();
         }
 
-        public override void ViewWillUnload ()
-        {
-            viewModel.Dispose ();
-            base.ViewWillUnload();
-        }
-
         private async void OnAddTag (object sender, EventArgs e)
         {
             var newTagData = await viewModel.SaveTagModel (nameTextField.Text);

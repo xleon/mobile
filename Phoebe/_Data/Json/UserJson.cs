@@ -62,4 +62,32 @@ namespace Toggl.Phoebe._Data.Json
         [JsonProperty ("obm")]
         public OBMJson OBM { get; set; }
     }
+
+
+    public class CloseAccountInfo
+    {
+        public class Options
+        {
+            [JsonProperty ("question")]
+            public int Question { get; set; }
+
+            [JsonProperty ("variants")]
+            public string[] Variants { get; set; }
+        }
+
+        [JsonProperty ("comments")]
+        public string Comments { get; set; }
+
+        [JsonProperty ("closing_options")]
+        public Options ClosingOptions { get; set; }
+
+        public CloseAccountInfo ()
+        {
+            Comments = string.Empty;
+            ClosingOptions = new Options () {
+                Question = 0,
+                Variants = new string[0]
+            };
+        }
+    }
 }

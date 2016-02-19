@@ -47,14 +47,18 @@ namespace Toggl.Phoebe.Tests.Staging
 
         public override void Cleanup ()
         {
-            base.Cleanup ();
+            RunAsync (async () => {
+                if (userJson != null) {
+                    try {
+                        await togglClient.Delete (userJson);
+                    }
+                    catch (Exception ex) {
+                        throw ex;
+                    }
+                }
+            });
             RxChain.Cleanup ();
-            // TODO: Deleting user is not supported by the API, find another way
-//            RunAsync (async () => {
-//                if (userJson != null) {
-//                    await togglClient.Delete (userJson);
-//                }
-//            });
+            base.Cleanup ();
         }
 
         [Test]

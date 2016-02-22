@@ -211,7 +211,7 @@ namespace Toggl.Joey.UI.Fragments
             // Finally set content visible.
             editTimeEntryContent.Visibility = ViewStates.Visible;
             editTimeEntryProgressBar.Visibility = ViewStates.Gone;
-            
+
             if (LogTimeEntriesListFragment.NewTimeEntry) {
                 DescriptionField.RequestFocus ();
                 ((EditTimeEntryActivity)Activity).ShowSoftKeyboard (DescriptionField.TextField, false);

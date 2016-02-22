@@ -1,5 +1,6 @@
 ﻿  using System;
 using System.Collections.Generic;
+using System.Linq;
 using Android.Views;
 using Android.Widget;
 using Toggl.Joey.UI.Utils;
@@ -75,14 +76,13 @@ namespace Toggl.Joey.UI.Adapters
 
         private List<DrawerItem> FilterVisible (List<DrawerItem> list)
         {
-            var newList = new List<DrawerItem> ();
-            foreach (var item in list) {
-                if (item.VMode == VisibilityMode.Normal && authManager.OfflineMode || item.VMode == VisibilityMode.Offline && !authManager.OfflineMode) {
-                    continue;
-                }
-                newList.Add (item);
-            }
-            return newList;
+            Func<DrawerItem, bool> filter = item =>
+                                            ! (item.VMode == VisibilityMode.Normal && authManager.OfflineMode) &&
+                                            ! (item.VMode == VisibilityMode.Offline && !authManager.OfflineMode);
+
+            return list.Where (filter)
+                   .Select (item => item.With (item.SubItems.Where (filter).ToList ()))
+                   .ToList ();
         }
 
         public override View GetView (int position, View convertView, ViewGroup parent)
@@ -141,6 +141,19 @@ namespace Toggl.Joey.UI.Adapters
             public bool IsEnabled;
             public bool Expanded = false;
             public VisibilityMode VMode = VisibilityMode.Both;
+
+            public DrawerItem With (List<DrawerItem> subItems)
+            {
+                return new DrawerItem {
+                    Id = this.Id,
+                    TextResId = this.TextResId,
+                    ImageResId = this.ImageResId,
+                    ChildOf = this.ChildOf,
+                    IsEnabled = this.IsEnabled,
+                    Expanded = this.Expanded,
+                    VMode = this.VMode,
+                };
+            }
         }
 
         private class DrawerItemViewHolder : BindableViewHolder<DrawerItem>

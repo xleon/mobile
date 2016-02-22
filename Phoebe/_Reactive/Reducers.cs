@@ -14,16 +14,28 @@ namespace Toggl.Phoebe._Reactive
         {
             var tagReducer = new TagCompositeReducer<TimerState> ()
             .Add (typeof (DataMsg.ReceivedFromServer), ReceivedFromServer)
+            .Add (typeof (DataMsg.TimeEntriesSync), TimeEntriesSync)
             .Add (typeof (DataMsg.TimeEntriesLoad), TimeEntriesLoad)
-            .Add (typeof (DataMsg.TimeEntryAdd), TimeEntryAdd)
+            .Add (typeof (DataMsg.TimeEntryPut), TimeEntryPut)
+            .Add (typeof (DataMsg.TimeEntryDelete), TimeEntryDelete)
             .Add (typeof (DataMsg.TimeEntryContinue), TimeEntryContinue)
             .Add (typeof (DataMsg.TimeEntryStop), TimeEntryStop)
             .Add (typeof (DataMsg.TimeEntriesRemoveWithUndo), TimeEntriesRemoveWithUndo)
             .Add (typeof (DataMsg.TimeEntriesRestoreFromUndo), TimeEntriesRestoreFromUndo)
-            .Add (typeof (DataMsg.TimeEntriesRemovePermanently), TimeEntriesRemovePermanently);
+            .Add (typeof (DataMsg.TimeEntriesRemovePermanently), TimeEntriesRemovePermanently)
+            .Add (typeof (DataMsg.TagPut), TagPut)
+            .Add (typeof (DataMsg.TagsPut), TagsPut)
+            .Add (typeof (DataMsg.ClientDataPut), ClientDataPut)
+            .Add (typeof (DataMsg.ProjectDataPut), ProjectDataPut);
+            //.Add (typeof (DataMsg.ProjectUserDataPut), ProjectUserDataPut)
 
             return new PropertyCompositeReducer<AppState> ()
                    .Add (x => x.TimerState, tagReducer);
+        }
+
+        static DataSyncMsg<TimerState> TimeEntriesSync (TimerState state, DataMsg msg)
+        {
+            return DataSyncMsg.Create (state, isSyncRequested: true);
         }
 
         static DataSyncMsg<TimerState> TimeEntriesLoad (TimerState state, DataMsg msg)
@@ -108,9 +120,9 @@ namespace Toggl.Phoebe._Reactive
                    );
         }
 
-        static DataSyncMsg<TimerState> TimeEntryAdd (TimerState state, DataMsg msg)
+        static DataSyncMsg<TimerState> TimeEntryPut (TimerState state, DataMsg msg)
         {
-            var entryData = (msg as DataMsg.TimeEntryAdd).Data.ForceLeft ();
+            var entryData = (msg as DataMsg.TimeEntryPut).Data.ForceLeft ();
             var dataStore = ServiceContainer.Resolve <ISyncDataStore> ();
 
             // TODO: Entry sanity check
@@ -122,21 +134,112 @@ namespace Toggl.Phoebe._Reactive
                        updated);
         }
 
+        static DataSyncMsg<TimerState> TimeEntryDelete (TimerState state, DataMsg msg)
+        {
+            var entryData = (msg as DataMsg.TimeEntryDelete).Data.ForceLeft ();
+            var dataStore = ServiceContainer.Resolve <ISyncDataStore> ();
+
+            var updated = dataStore.Update (ctx => ctx.Delete (new TimeEntryData (entryData) {
+                DeletedAt = Time.UtcNow
+            }));
+
+            // TODO: Check updated.Count == 1?
+            return DataSyncMsg.Create (
+                state.With (timeEntries: state.UpdateTimeEntries (updated)),
+                updated);
+        }
+
+        static DataSyncMsg<TimerState> TagPut (TimerState state, DataMsg msg)
+        {
+            var tuple = (msg as DataMsg.TagPut).Data.ForceLeft ();
+            var dataStore = ServiceContainer.Resolve <ISyncDataStore> ();
+
+            // TODO: Check if the tag already exists?
+            var updated = dataStore.Update (ctx => ctx.Put (new TagData {
+                WorkspaceId = tuple.Item1,
+                Name = tuple.Item2
+            }));
+
+            // TODO: Check updated.Count == 1?
+            return DataSyncMsg.Create (
+                state.With (timeEntries: state.UpdateTimeEntries (updated)),
+                updated);
+        }
+
+        static DataSyncMsg<TimerState> TagsPut (TimerState state, DataMsg msg)
+        {
+            var tuple = (msg as DataMsg.TagsPut).Data.ForceLeft ();
+            var dataStore = ServiceContainer.Resolve <ISyncDataStore> ();
+
+            var updated = dataStore.Update (ctx => {
+                ctx.Put (new TimeEntryData (tuple.Item1) {
+                    Tags = tuple.Item2.ToList ()
+                });
+
+                // TODO: Do we need to check if the tags exist here?
+                foreach (var tag in tuple.Item2) {
+                    if (state.Tags.Values.All (x => x.Name != tag)) {
+                        ctx.Put (new TagData {
+                            WorkspaceId = tuple.Item1.WorkspaceId,
+                            Name = tag
+                        });
+                    }
+                }
+            });
+
+            return DataSyncMsg.Create (
+                state.With (timeEntries: state.UpdateTimeEntries (updated)),
+                updated);
+        }
+
+        static IReadOnlyList<ICommonData> Put (ICommonData data)
+        {
+            var dataStore = ServiceContainer.Resolve <ISyncDataStore> ();
+            return dataStore.Update (ctx => ctx.Put (data));
+			// TODO: Check updated.Count == 1?
+        }
+
+        static DataSyncMsg<TimerState> ClientDataPut (TimerState state, DataMsg msg)
+        {
+            var data = (msg as DataMsg.ClientDataPut).Data.ForceLeft ();
+            var updated = Put (data);
+            return DataSyncMsg.Create (state.With (clients: state.Update (state.Clients, updated)), updated);
+        }
+
+        static DataSyncMsg<TimerState> ProjectDataPut (TimerState state, DataMsg msg)
+        {
+            var data = (msg as DataMsg.ProjectDataPut).Data.ForceLeft ();
+            var updated = Put (data);
+            return DataSyncMsg.Create (state.With (projects: state.Update (state.Projects, updated)), updated);
+        }
+
+        // TODO
+        //static DataSyncMsg<TimerState> ProjectUserDataPut (TimerState state, DataMsg msg)
+        //{
+        //    var data = (msg as DataMsg.ProjectUserDataPut).Data.ForceLeft ();
+        //    var updated = Put (data);
+        //    return DataSyncMsg.Create (state.With (projectUsers: state.Update (state.ProjectUsers, updated)), updated);
+        //}
+
+        static void CheckTimeEntryState (ITimeEntryData entryData, TimeEntryState expected, string action)
+        {
+            if (entryData.State != expected) {
+                throw new InvalidOperationException (
+                    String.Format ("Cannot {0} a time entry ({1}) in {2} state.",
+                                   action, entryData.Id, entryData.State));
+            }
+        }
+
         static DataSyncMsg<TimerState> TimeEntryContinue (TimerState state, DataMsg msg)
         {
             var entryData = (msg as DataMsg.TimeEntryContinue).Data.ForceLeft ();
             var dataStore = ServiceContainer.Resolve <ISyncDataStore> ();
 
-            if (entryData.State != TimeEntryState.Finished) {
-                throw new InvalidOperationException (
-                    String.Format ("Cannot continue a time entry ({0}) in {1} state.",
-                                   entryData.Id, entryData.State));
-            }
+            CheckTimeEntryState (entryData, TimeEntryState.Finished, "continue");
 
-            var updated = dataStore.Update (ctx => {
-                // TODO: Create new entry
-                throw new NotImplementedException ();
-            });
+            var updated = dataStore.Update (ctx => ctx.Put (new TimeEntryData (entryData) {
+                State = TimeEntryState.Running,
+            }));
 
             // TODO: Check updated.Count == 1?
             return DataSyncMsg.Create (
@@ -149,11 +252,7 @@ namespace Toggl.Phoebe._Reactive
             var entryData = (msg as DataMsg.TimeEntryStop).Data.ForceLeft ();
             var dataStore = ServiceContainer.Resolve <ISyncDataStore> ();
 
-            if (entryData.State != TimeEntryState.Running) {
-                throw new InvalidOperationException (
-                    String.Format ("Cannot stop a time entry ({0}) in {1} state.",
-                                   entryData.Id, entryData.State));
-            }
+            CheckTimeEntryState (entryData, TimeEntryState.Running, "stop");
 
             var updated = dataStore.Update (ctx => ctx.Put (new TimeEntryData (entryData) {
                 State = TimeEntryState.Finished,

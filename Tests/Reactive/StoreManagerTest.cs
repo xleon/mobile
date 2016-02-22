@@ -45,7 +45,7 @@ namespace Toggl.Phoebe.Tests.Reactive
                 subscription.Dispose ();
             });
 
-            RxChain.Send (new DataMsg.TimeEntryAdd (te));
+            RxChain.Send (new DataMsg.TimeEntryPut (te));
         }
 
         [Test]
@@ -75,7 +75,7 @@ namespace Toggl.Phoebe.Tests.Reactive
                 }
             });
 
-            RxChain.Send (new DataMsg.TimeEntryAdd (te));
+            RxChain.Send (new DataMsg.TimeEntryPut (te));
             RxChain.Send (new DataMsg.TimeEntryStop (te));
         }
 
@@ -106,7 +106,7 @@ namespace Toggl.Phoebe.Tests.Reactive
                 }
             });
 
-            RxChain.Send (new DataMsg.TimeEntryAdd (te));
+            RxChain.Send (new DataMsg.TimeEntryPut (te));
 
             RxChain.Send (new DataMsg.TimeEntriesRemovePermanently (
                               new List<ITimeEntryData> { te }));
@@ -146,7 +146,7 @@ namespace Toggl.Phoebe.Tests.Reactive
                 }
             });
 
-            RxChain.Send (new DataMsg.TimeEntryAdd (te));
+            RxChain.Send (new DataMsg.TimeEntryPut (te));
 
             RxChain.Send (new DataMsg.TimeEntriesRemoveWithUndo (
                               new List<ITimeEntryData> { te }));
@@ -174,7 +174,7 @@ namespace Toggl.Phoebe.Tests.Reactive
             });
 
 
-            RxChain.Send (new DataMsg.TimeEntryAdd (te));
+            RxChain.Send (new DataMsg.TimeEntryPut (te));
 
             // Modifying the entry now shouldn't affect the state
             te.Description = "NEW";
@@ -218,7 +218,7 @@ namespace Toggl.Phoebe.Tests.Reactive
                         }
                     });
 
-            RxChain.Send (new DataMsg.TimeEntryAdd (te));
+            RxChain.Send (new DataMsg.TimeEntryPut (te));
 
             RxChain.Send (new DataMsg.TimeEntriesRemovePermanently (
                 new List<ITimeEntryData> { te }));

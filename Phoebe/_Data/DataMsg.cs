@@ -41,6 +41,10 @@ namespace Toggl.Phoebe._Data
             }
         }
 
+        public sealed class TimeEntriesSync : DataMsg
+        {
+        }
+
         public sealed class TimeEntriesLoad : DataMsg
         {
             public Either<object, Exception> Data
@@ -78,7 +82,7 @@ namespace Toggl.Phoebe._Data
             }
         }
 
-        public sealed class TimeEntryAdd : DataMsg
+        public sealed class TimeEntryPut : DataMsg
         {
             public Either<ITimeEntryData, Exception> Data
             {
@@ -86,11 +90,26 @@ namespace Toggl.Phoebe._Data
                 set { RawData = value.CastLeft<object> (); }
             }
 
-            public TimeEntryAdd (ITimeEntryData data)
+            public TimeEntryPut (ITimeEntryData data)
             {
                 Data = Either<ITimeEntryData, Exception>.Left (data);
             }
         }
+
+        public sealed class TimeEntryDelete : DataMsg
+        {
+            public Either<ITimeEntryData, Exception> Data
+            {
+                get { return RawData.CastLeft<ITimeEntryData> (); }
+                set { RawData = value.CastLeft<object> (); }
+            }
+
+            public TimeEntryDelete (ITimeEntryData data)
+            {
+                Data = Either<ITimeEntryData, Exception>.Left (data);
+            }
+        }
+
         public sealed class TimeEntriesRemoveWithUndo : DataMsg
         {
             public Either<IEnumerable<ITimeEntryData>, Exception> Data
@@ -132,6 +151,34 @@ namespace Toggl.Phoebe._Data
             }
         }
 
+        public sealed class TagsPut : DataMsg
+        {
+            public Either<Tuple<ITimeEntryData,IEnumerable<string>>, Exception> Data
+            {
+                get { return RawData.CastLeft<Tuple<ITimeEntryData,IEnumerable<string>>> (); }
+                set { RawData = value.CastLeft<object> (); }
+            }
+
+            public TagsPut (Tuple<ITimeEntryData,IEnumerable<string>> data)
+            {
+                Data = Either<Tuple<ITimeEntryData,IEnumerable<string>>, Exception>.Left (data);
+            }
+        }
+
+        public sealed class TagPut : DataMsg
+        {
+            public Either<Tuple<Guid, string>, Exception> Data
+            {
+                get { return RawData.CastLeft<Tuple<Guid, string>> (); }
+                set { RawData = value.CastLeft<object> (); }
+            }
+
+            public TagPut (Guid workspaceId, string tag)
+            {
+                Data = Either<Tuple<Guid, string>, Exception>.Left (Tuple.Create (workspaceId, tag));
+            }
+        }
+
         // Launch this message when connection has been recovered after a while
         public sealed class EmptyQueueAndSync : DataMsg
         {
@@ -144,6 +191,48 @@ namespace Toggl.Phoebe._Data
             public EmptyQueueAndSync (DateTime data)
             {
                 Data = Either<DateTime, Exception>.Left (data);
+            }
+        }
+
+        public sealed class ProjectDataPut : DataMsg
+        {
+            public Either<ProjectData, Exception> Data
+            {
+                get { return RawData.CastLeft<ProjectData> (); }
+                set { RawData = value.CastLeft<object> (); }
+            }
+
+            public ProjectDataPut (ProjectData data)
+            {
+                Data = Either<ProjectData, Exception>.Left (data);
+            }
+        }
+
+        public sealed class ProjectUserDataPut : DataMsg
+        {
+            public Either<ProjectUserData, Exception> Data
+            {
+                get { return RawData.CastLeft<ProjectUserData> (); }
+                set { RawData = value.CastLeft<object> (); }
+            }
+
+            public ProjectUserDataPut (ProjectUserData data)
+            {
+                Data = Either<ProjectUserData, Exception>.Left (data);
+            }
+        }
+
+        public sealed class ClientDataPut : DataMsg
+        {
+            public Either<ClientData, Exception> Data
+            {
+                get { return RawData.CastLeft<ClientData> (); }
+                set { RawData = value.CastLeft<object> (); }
+            }
+
+            public ClientDataPut (ClientData data)
+            {
+                Data = Either<ClientData, Exception>.Left (data);
             }
         }
     }

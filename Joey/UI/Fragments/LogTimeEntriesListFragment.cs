@@ -33,7 +33,7 @@ namespace Toggl.Joey.UI.Fragments
         ItemTouchListener.IItemTouchListener,
         SwipeRefreshLayout.IOnRefreshListener
     {
-        public static bool NewTimeEntryStartedByFAB;
+        public static bool NewTimeEntry;
 
         private RecyclerView recyclerView;
         private SwipeRefreshLayout swipeLayout;
@@ -101,7 +101,7 @@ namespace Toggl.Joey.UI.Fragments
 
             var settingsStore = ServiceContainer.Resolve<SettingsStore> ();
             var authManager = ServiceContainer.Resolve<AuthManager> ();
-            if (settingsStore.GotWelcomeMessage || !authManager.OfflineMode) {
+            if (settingsStore.ShowOverlay || !authManager.OfflineMode) {
                 layoverView.Visibility = ViewStates.Gone;
             }
 
@@ -111,7 +111,7 @@ namespace Toggl.Joey.UI.Fragments
         private void OnAllrightButtonClicked (object sender, EventArgs e)
         {
             var settingsStore = ServiceContainer.Resolve<SettingsStore> ();
-            settingsStore.GotWelcomeMessage = true;
+            settingsStore.ShowOverlay = true;
             layoverView.Visibility = ViewStates.Gone;
         }
 
@@ -165,7 +165,8 @@ namespace Toggl.Joey.UI.Fragments
 
             var timeEntryData = await ViewModel.StartStopTimeEntry ();
             if (timeEntryData.State == TimeEntryState.Running) {
-                NewTimeEntryStartedByFAB = true;
+                NewTimeEntry = true;
+
                 var ids = new List<string> { timeEntryData.Id.ToString () };
                 var intent = new Intent (Activity, typeof (EditTimeEntryActivity));
                 intent.PutStringArrayListExtra (EditTimeEntryActivity.ExtraGroupedTimeEntriesGuids, ids);
@@ -250,6 +251,7 @@ namespace Toggl.Joey.UI.Fragments
 
         public override bool OnOptionsItemSelected (IMenuItem item)
         {
+            NewTimeEntry = true;
             var i = new Intent (Activity, typeof (EditTimeEntryActivity));
             i.PutStringArrayListExtra (EditTimeEntryActivity.ExtraGroupedTimeEntriesGuids, new List<string> { ViewModel.GetActiveTimeEntry ().Id.ToString ()});
             Activity.StartActivity (i);

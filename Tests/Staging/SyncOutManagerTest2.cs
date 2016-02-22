@@ -69,7 +69,7 @@ namespace Toggl.Phoebe.Tests.Staging
 
             RunAsync (async () => {
                 RxChain.Send (
-                    new DataMsg.TimeEntryAdd (te), new SyncTestOptions (false, (sent, queued) => {
+                    new DataMsg.TimeEntryPut (te), new SyncTestOptions (false, (sent, queued) => {
                         try {
                             // As there's no connection, message should have been enqueued
                             Assert.True (queued.Any (x => x.LocalId == te.Id));
@@ -92,7 +92,7 @@ namespace Toggl.Phoebe.Tests.Staging
 
             RunAsync (async () => {
                 RxChain.Send (
-                    new DataMsg.TimeEntryAdd (te), new SyncTestOptions (true, (sent, queued) => {
+                    new DataMsg.TimeEntryPut (te), new SyncTestOptions (true, (sent, queued) => {
                         try {
                             // As there's connection, message should have been sent
                             Assert.False (queued.Any (x => x.LocalId == te.Id));
@@ -116,7 +116,7 @@ namespace Toggl.Phoebe.Tests.Staging
 
             RunAsync (async () => {
                 RxChain.Send (
-                    new DataMsg.TimeEntryAdd (te), new SyncTestOptions (false, (sent, queued) => {
+                    new DataMsg.TimeEntryPut (te), new SyncTestOptions (false, (sent, queued) => {
                         try {
                             // As there's no connection, message should have been enqueued
                             Assert.True (queued.Any (x => x.LocalId == te.Id));
@@ -128,7 +128,7 @@ namespace Toggl.Phoebe.Tests.Staging
                     }));
 
                 RxChain.Send (
-                    new DataMsg.TimeEntryAdd (te2), new SyncTestOptions (true, (sent, queued) => {
+                    new DataMsg.TimeEntryPut (te2), new SyncTestOptions (true, (sent, queued) => {
                         try {
                             // As there's connection, messages should have been sent
                             Assert.False (queued.Any (x => x.LocalId == te.Id || x.LocalId == te2.Id));

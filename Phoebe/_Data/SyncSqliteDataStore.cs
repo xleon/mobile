@@ -153,6 +153,11 @@ namespace Toggl.Phoebe._Data
                 this.updated = new List<ICommonData> ();
             }
 
+            public SQLiteConnection Connection
+            {
+                get { return conn; }
+            }
+
             public IReadOnlyList<ICommonData> UpdatedItems
             {
                 get { return updated; }

@@ -86,9 +86,9 @@ namespace Toggl.Phoebe._Helpers
             return false;
         }
 
-
-        public static TimeSpan GetDuration (this ITimeEntryData data, DateTime now)
+        public static TimeSpan GetDuration (this ITimeEntryData data)
         {
+            var now = Time.UtcNow;
             if (data.StartTime.IsMinValue ()) {
                 return TimeSpan.Zero;
             }
@@ -98,6 +98,30 @@ namespace Toggl.Phoebe._Helpers
                 duration = TimeSpan.Zero;
             }
             return duration;
+        }
+
+        public static void SetDuration (this TimeEntryData data, TimeSpan value)
+        {
+            var now = Time.UtcNow;
+
+            if (data.State == TimeEntryState.Finished) {
+                data.StopTime = data.StartTime + value;
+            } else if (data.State == TimeEntryState.New) {
+                if (value == TimeSpan.Zero) {
+                    data.StartTime = DateTime.MinValue;
+                    data.StopTime = null;
+                } else if (data.StopTime.HasValue) {
+                    data.StartTime = data.StopTime.Value - value;
+                } else {
+                    data.StartTime = now - value;
+                    data.StopTime = now;
+                }
+            } else {
+                data.StartTime = now - value;
+            }
+
+            data.StartTime = data.StartTime.Truncate (TimeSpan.TicksPerSecond);
+            data.StopTime = data.StopTime.Truncate (TimeSpan.TicksPerSecond);
         }
     }
 }

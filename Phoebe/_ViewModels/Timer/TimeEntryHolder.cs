@@ -48,7 +48,7 @@ namespace Toggl.Phoebe._ViewModels.Timer
 
         public TimeSpan GetDuration()
         {
-            return Data.GetDuration (Time.UtcNow);
+            return Data.GetDuration ();
         }
 
         public override string ToString ()

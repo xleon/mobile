@@ -299,22 +299,24 @@ namespace Toggl.Phoebe._Reactive
 
         public TimeEntryInfo LoadTimeEntryInfo (ITimeEntryData teData)
         {
-            var projectData = teData.ProjectId != Guid.Empty
-                              ? this.Projects[teData.ProjectId]
-                              : new ProjectData ();
-            var clientData = projectData.ClientId != Guid.Empty
-                             ? this.Clients[projectData.ClientId]
-                             : new ClientData ();
-            var taskData = teData.TaskId != Guid.Empty
-                           ? this.Tasks[teData.TaskId]
-                           : new TaskData ();
+            var projectData = teData.ProjectId != Guid.Empty ? Projects[teData.ProjectId] : new ProjectData ();
+            var clientData = projectData.ClientId != Guid.Empty ? Clients[projectData.ClientId] : new ClientData ();
+            var taskData = teData.TaskId != Guid.Empty ? Tasks[teData.TaskId] : new TaskData ();
             var color = (projectData.Id != Guid.Empty) ? projectData.Color : -1;
+            var tagsData =
+                teData.Tags.Select (
+                    x => Tags.Values.SingleOrDefault (y => y.WorkspaceId == teData.WorkspaceId && y.Name == x))
+                      // TODO: Throw exception if tag was not found?
+                      .Where (x => x != null)
+                      .ToList ();
 
             return new TimeEntryInfo (
-                       projectData,
-                       clientData,
-                       taskData,
-                       color);
+                Workspaces[teData.WorkspaceId],
+                projectData,
+                clientData,
+                taskData,
+                tagsData,
+                color);
         }
     }
 }

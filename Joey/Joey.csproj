@@ -668,7 +668,6 @@
     <AndroidResource Include="Resources\layout\LogTimeEntriesListFragment.axml" />
     <AndroidResource Include="Resources\layout\ProjectListActivityLayout.axml" />
     <AndroidResource Include="Resources\layout\ProjectListFragment.axml" />
-    <AndroidResource Include="Resources\layout\UndoBar.axml" />
     <AndroidResource Include="Resources\drawable\ToolbarBgPattern.xml" />
     <AndroidResource Include="Resources\drawable-hdpi\ToolbarBg.png" />
     <AndroidResource Include="Resources\drawable-mdpi\ToolbarBg.png" />

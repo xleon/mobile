@@ -55,9 +55,11 @@ namespace Toggl.Joey.UI.Utils
         {
             if (viewHolder != null) {
                 var view = viewHolder.ItemView.FindViewById (Resource.Id.swipe_layout);
-                DefaultUIUtil.OnDraw (cValue, recyclerView, view, dX, dY, actionState, isCurrentlyActive);
+                view.SetX (dX);
             }
-            recycler = recyclerView;
+            if (recycler == null) {
+                recycler = recyclerView;
+            }
         }
 
         public override void ClearView (RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder)

@@ -274,7 +274,7 @@ namespace Toggl.Joey.UI.Fragments
         {
             recyclerView.RemoveItemDecoration (shadowDecoration);
             recyclerView.RemoveItemDecoration (dividerDecoration);
-            //recyclerView.RemoveOnItemTouchListener (itemTouchListener);
+            recyclerView.RemoveOnItemTouchListener (itemTouchListener);
 
             recyclerView.GetAdapter ().Dispose ();
             recyclerView.Dispose ();
@@ -294,23 +294,6 @@ namespace Toggl.Joey.UI.Fragments
 
             recyclerView.Visibility = ViewModel.HasMoreItems ? ViewStates.Visible : ViewStates.Gone;
             emptyMessageView.Visibility = ViewModel.HasMoreItems ? ViewStates.Gone : ViewStates.Visible;
-        }
-
-        // Temporal hack to change the
-        // action color in snack bar
-        private void ChangeSnackBarColor (Snackbar snack)
-        {
-            var group = (ViewGroup) snack.View;
-            for (int i = 0; i < group.ChildCount; i++) {
-                View v = group.GetChildAt (i);
-                var textView = v as TextView;
-                if (textView != null) {
-                    TextView t = textView;
-                    if (t.Text == Resources.GetString (Resource.String.UndoBarButtonText)) {
-                        t.SetTextColor (Resources.GetColor (Resource.Color.material_green));
-                    }
-                }
-            }
         }
 
         class ScrollListener : RecyclerView.OnScrollListener

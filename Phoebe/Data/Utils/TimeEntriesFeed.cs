@@ -26,15 +26,12 @@ namespace Toggl.Phoebe.Data.Utils
     public class TimeEntriesFeed : IObservable<TimeEntryMessage>, IDisposable
     {
         public const int MaxInitLocalEntries = 100;
-        public const int UndoSecondsInterval = 5;
         public const int DaysLoad = 5;
 
         private MessageBus bus;
         private DateTime paginationDate;
-        private ITimeEntryHolder lastRemovedItem;
         private Subscription<DataChangeMessage> subscription;
         private Subscription<UpdateFinishedMessage> updateSubscription;
-        private System.Timers.Timer undoTimer = new System.Timers.Timer ();
         private CancellationTokenSource cts = new CancellationTokenSource ();
         private Subject<TimeEntryMessage> subject = new Subject<TimeEntryMessage> ();
 
@@ -66,15 +63,6 @@ namespace Toggl.Phoebe.Data.Utils
                 cts.Cancel ();
                 cts.Dispose ();
                 cts = null;
-            }
-
-            // Release Undo timer
-            // A recently deleted item will not be
-            // removed
-            if (undoTimer != null) {
-                undoTimer.Elapsed -= OnUndoTimeFinished;
-                undoTimer.Close();
-                undoTimer = null;
             }
 
             // Unsubscribe from MessageBus
@@ -120,58 +108,6 @@ namespace Toggl.Phoebe.Data.Utils
             // Return old paginationDate to get the same data from server
             // using the sync manager.
             return endDate;
-        }
-
-        public async Task RemoveItemWithUndoAsync (ITimeEntryHolder timeEntryHolder)
-        {
-            if (timeEntryHolder == null) {
-                return;
-            }
-
-            // Remove previous if exists
-            if (lastRemovedItem != null) {
-                await RemoveItemPermanentlyAsync (lastRemovedItem);
-            }
-
-            if (timeEntryHolder.Data.State == TimeEntryState.Running) {
-                await TimeEntryModel.StopAsync (timeEntryHolder.Data);
-            }
-            lastRemovedItem = timeEntryHolder;
-
-            // Remove item only from list
-            subject.OnNext (new TimeEntryMessage (timeEntryHolder.Data, DataAction.Delete));
-
-            // Create Undo timer
-            if (undoTimer != null) {
-                undoTimer.Elapsed -= OnUndoTimeFinished;
-                undoTimer.Close();
-            }
-            // Using the correct timer.
-            undoTimer = new System.Timers.Timer ((UndoSecondsInterval + 1) * 1000);
-            undoTimer.AutoReset = false;
-            undoTimer.Elapsed += OnUndoTimeFinished;
-            undoTimer.Start();
-        }
-
-        public void RestoreItemFromUndo()
-        {
-            if (lastRemovedItem != null) {
-                subject.OnNext (new TimeEntryMessage (lastRemovedItem.Data, DataAction.Put));
-                lastRemovedItem = null;
-            }
-        }
-
-        private async Task RemoveItemPermanentlyAsync (ITimeEntryHolder holder)
-        {
-            if (holder != null) {
-                await holder.DeleteAsync ();
-            }
-        }
-
-        private async void OnUndoTimeFinished (object sender, System.Timers.ElapsedEventArgs e)
-        {
-            await RemoveItemPermanentlyAsync (lastRemovedItem);
-            lastRemovedItem = null;
         }
 
         private void OnUpdateFinished (UpdateFinishedMessage msg)

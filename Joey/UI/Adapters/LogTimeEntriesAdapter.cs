@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Threading.Tasks;
 using Android.Content;
 using Android.Graphics;
 using Android.Graphics.Drawables;
@@ -35,7 +34,7 @@ namespace Toggl.Joey.UI.Adapters
         private readonly Handler handler = new Handler ();
         private static readonly int ContinueThreshold = 1;
         private DateTime lastTimeEntryContinuedTime;
-        private RecyclerView.ViewHolder undoItem;
+        private int lastUndoIndex = -1;
         protected LogTimeEntriesViewModel ViewModel { get; private set; }
 
         public LogTimeEntriesAdapter (IntPtr a, Android.Runtime.JniHandleOwnership b) : base (a, b)
@@ -63,6 +62,7 @@ namespace Toggl.Joey.UI.Adapters
 
         private async void OnRemoveTimeEntry (RecyclerView.ViewHolder viewHolder)
         {
+            lastUndoIndex = -1;
             await ViewModel.RemoveTimeEntryAsync (viewHolder.AdapterPosition);
         }
 
@@ -92,7 +92,13 @@ namespace Toggl.Joey.UI.Adapters
 
             var timeEntryListItemHolder = holder as TimeEntryListItemHolder;
             if (timeEntryListItemHolder != null) {
-                timeEntryListItemHolder.Bind ((ITimeEntryHolder) GetItem (position), undoItem);
+                timeEntryListItemHolder.Bind ((ITimeEntryHolder) GetItem (position));
+                // Set correct Undo state.
+                if (position == lastUndoIndex) {
+                    timeEntryListItemHolder.SetUndoState ();
+                } else {
+                    timeEntryListItemHolder.SetNormalState ();
+                }
             }
         }
 
@@ -117,6 +123,7 @@ namespace Toggl.Joey.UI.Adapters
             base.OnViewDetachedFromWindow (holder);
         }
 
+        #region IUndo interface implementation
         public void SetItemsToNormalPosition ()
         {
             var linearLayout = (LinearLayoutManager)Owner.GetLayoutManager ();
@@ -133,54 +140,37 @@ namespace Toggl.Joey.UI.Adapters
                     }
                 }
             }
-            undoItem = null;
+            lastUndoIndex = -1;
         }
 
         public async void SetItemToUndoPosition (RecyclerView.ViewHolder viewHolder)
         {
-            /*
-            var linearLayout = (LinearLayoutManager)Owner.GetLayoutManager ();
-            var firstVisible = linearLayout.FindFirstVisibleItemPosition ();
-            var lastVisible = linearLayout.FindLastVisibleItemPosition ();
-
-            for (int i = 0; i < linearLayout.ItemCount; i++) {
-                var holder = Owner.FindViewHolderForLayoutPosition (i);
-                if (holder is TimeEntryListItemHolder) {
-                    var tHolder = (TimeEntryListItemHolder)holder;
-                    if (!tHolder.IsNormalState && tHolder.LayoutPosition != viewHolder.LayoutPosition) {
-                        var withAnim = (firstVisible < i) && (lastVisible > i);
-                        tHolder.SetNormalState (withAnim);
-                    }
-                }
-            }
-            */
-            if (undoItem != null) {
-                await ViewModel.RemoveTimeEntryAsync (undoItem.LayoutPosition);
+            // If another ViewHolder is visible and ready to Remove,
+            // just Remove it.
+            if (lastUndoIndex > -1) {
+                await ViewModel.RemoveTimeEntryAsync (lastUndoIndex);
             }
 
-            undoItem = viewHolder;
-            // Show Undo layout.
-            var undoLayout = viewHolder.ItemView.FindViewById (Resource.Id.undo_layout);
-            var preUndoLayout = viewHolder.ItemView.FindViewById (Resource.Id.pre_undo_layout);
-            undoLayout.Visibility = ViewStates.Visible;
-            preUndoLayout.Visibility = ViewStates.Gone;
+            // Save last selected ViewHolder index.
+            lastUndoIndex = viewHolder.LayoutPosition;
 
+            // Important!
             // Refresh holder (and tell to ItemTouchHelper
             // that actions ended over it.
             NotifyItemChanged (viewHolder.LayoutPosition);
+
         }
 
         public bool IsUndo (int index)
         {
-            var holder = Owner.FindViewHolderForLayoutPosition (index);
+            // Ask to the holder about if it is Undo or not.
+            var holder =  Owner.FindViewHolderForLayoutPosition (index);
             if (holder is TimeEntryListItemHolder) {
-                var tHolder = (TimeEntryListItemHolder)holder;
-                if (!tHolder.IsNormalState) {
-                    return true;
-                }
+                return ! ((TimeEntryListItemHolder)holder).IsNormalState;
             }
             return false;
         }
+        #endregion
 
         protected override RecyclerView.ViewHolder GetFooterHolder (ViewGroup parent)
         {
@@ -316,7 +306,7 @@ namespace Toggl.Joey.UI.Adapters
                         return true;
                     }
                     if (v == UndoButton) {
-                        SetNormalState (true);
+                        owner.SetItemsToNormalPosition ();
                         return true;
                     }
                     return false;
@@ -327,29 +317,33 @@ namespace Toggl.Joey.UI.Adapters
             public bool IsNormalState
             {
                 get {
-                    return SwipeLayout.GetX () < 0;
+                    return SwipeLayout.TranslationX < 5;
                 }
             }
 
             public void SetNormalState (bool animated = false)
             {
+                SwipeLayout.Visibility = ViewStates.Visible;
                 if (animated) {
-                    SwipeLayout.Animate().TranslationX (0).SetDuration (150).WithEndAction (new Java.Lang.Runnable (
-                    () => {
-                        SetNormalState (false);
-                    }));
+                    SwipeLayout.Animate().TranslationX (0).SetDuration (150);
+                } else {
+                    SwipeLayout.SetX (0);
                 }
-                SwipeLayout.SetX (0);
                 PreUndoLayout.Visibility = ViewStates.Visible;
                 UndoLayout.Visibility = ViewStates.Gone;
             }
 
-            public void Bind (ITimeEntryHolder datasource, RecyclerView.ViewHolder undoItem)
+            public void SetUndoState ()
             {
-                if (undoItem != null && LayoutPosition != undoItem.LayoutPosition) {
-                    SetNormalState ();
-                }
+                // Show Undo layout for selected ViewHolder
+                UndoLayout.Visibility = ViewStates.Visible;
+                PreUndoLayout.Visibility = ViewStates.Gone;
+                SwipeLayout.Visibility = ViewStates.Gone;
+                SwipeLayout.SetX (ItemView.Width);
+            }
 
+            public void Bind (ITimeEntryHolder datasource)
+            {
                 DataSource = datasource;
 
                 if (DataSource == null || Handle == IntPtr.Zero) {

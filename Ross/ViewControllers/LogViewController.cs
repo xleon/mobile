@@ -273,7 +273,7 @@ namespace Toggl.Ross.ViewControllers
             {
                 if (editingStyle == UITableViewCellEditingStyle.Delete) {
                     var rowIndex = GetPlainIndexFromRow (collection, indexPath);
-                    await VM.RemoveItem (rowIndex);
+                    await VM.RemoveTimeEntryAsync (rowIndex);
                 }
             }
 

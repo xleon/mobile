@@ -126,7 +126,7 @@ namespace Toggl.Joey.UI.Fragments
                 OBMExperimentManager.Send (OBMExperimentManager.HomeWithTEListState, "startButton", "click");
             }
 
-            if (timeEntryData.State == Toggl.Phoebe.Data.TimeEntryState.Running) {
+            if (timeEntryData.State == Phoebe.Data.TimeEntryState.Running) {
                 NewTimeEntryStartedByFAB = true;
 
                 var ids = new List<string> { timeEntryData.Id.ToString () };
@@ -191,24 +191,16 @@ namespace Toggl.Joey.UI.Fragments
             var adapter = recyclerView.GetAdapter ();
             return adapter.GetItemViewType (viewHolder.LayoutPosition) == RecyclerCollectionDataAdapter<IHolder>.ViewTypeContent;
         }
-
-        public async void OnDismiss (RecyclerView.ViewHolder viewHolder)
-        {
-            const int duration = TimeEntriesFeed.UndoSecondsInterval * 1000;
-
-            await ViewModel.RemoveItemWithUndoAsync (viewHolder.AdapterPosition);
-            var snackBar = Snackbar
-                           .Make (coordinatorLayout, Resources.GetString (Resource.String.UndoBarDeletedText), duration)
-                           .SetAction (Resources.GetString (Resource.String.UndoBarButtonText),
-                                       _ => ViewModel.RestoreItemFromUndo ());
-            ChangeSnackBarColor (snackBar);
-            snackBar.Show ();
-        }
         #endregion
 
         #region IRecyclerViewOnItemClickListener implementation
         public void OnItemClick (RecyclerView parent, View clickedView, int position)
         {
+            var undoAdapter = (IUndoAdapter)parent.GetAdapter ();
+            if (undoAdapter.IsUndo (position)) {
+                return;
+            }
+
             var intent = new Intent (Activity, typeof (EditTimeEntryActivity));
             IList<string> guids = ((ITimeEntryHolder)ViewModel.Collection.ElementAt (position)).Guids;
             intent.PutStringArrayListExtra (EditTimeEntryActivity.ExtraGroupedTimeEntriesGuids, guids);
@@ -275,14 +267,14 @@ namespace Toggl.Joey.UI.Fragments
             shadowDecoration = new ShadowItemDecoration (Activity);
             recyclerView.AddItemDecoration (dividerDecoration);
             recyclerView.AddItemDecoration (shadowDecoration);
-            recyclerView.GetItemAnimator ().SupportsChangeAnimations = false;
+            recyclerView.GetItemAnimator ().ChangeDuration = 0;
         }
 
         private void ReleaseRecyclerView ()
         {
             recyclerView.RemoveItemDecoration (shadowDecoration);
             recyclerView.RemoveItemDecoration (dividerDecoration);
-            recyclerView.RemoveOnItemTouchListener (itemTouchListener);
+            //recyclerView.RemoveOnItemTouchListener (itemTouchListener);
 
             recyclerView.GetAdapter ().Dispose ();
             recyclerView.Dispose ();
@@ -355,6 +347,15 @@ namespace Toggl.Joey.UI.Fragments
                     loading = true;
                     // Request more entries.
                     await viewModel.LoadMore ();
+                }
+            }
+
+            public override void OnScrollStateChanged (RecyclerView recyclerView, int newState)
+            {
+                base.OnScrollStateChanged (recyclerView, newState);
+                if (newState == 1) {
+                    var adapter = (IUndoAdapter) recyclerView.GetAdapter ();
+                    adapter.SetItemsToNormalPosition ();
                 }
             }
         }

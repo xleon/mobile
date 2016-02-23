@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 using Android.Content;
 using Android.Graphics;
 using Android.Graphics.Drawables;
@@ -18,13 +19,23 @@ using XPlatUtils;
 
 namespace Toggl.Joey.UI.Adapters
 {
-    public class LogTimeEntriesAdapter : RecyclerCollectionDataAdapter<IHolder>
+    public interface IUndoAdapter
+    {
+        void SetItemsToNormalPosition ();
+
+        void SetItemToUndoPosition (RecyclerView.ViewHolder item);
+
+        bool IsUndo (int position);
+    }
+
+    public class LogTimeEntriesAdapter : RecyclerCollectionDataAdapter<IHolder>, IUndoAdapter
     {
         public const int ViewTypeDateHeader = ViewTypeContent + 1;
 
         private readonly Handler handler = new Handler ();
         private static readonly int ContinueThreshold = 1;
         private DateTime lastTimeEntryContinuedTime;
+        private RecyclerView.ViewHolder undoItem;
         protected LogTimeEntriesViewModel ViewModel { get; private set; }
 
         public LogTimeEntriesAdapter (IntPtr a, Android.Runtime.JniHandleOwnership b) : base (a, b)
@@ -48,6 +59,11 @@ namespace Toggl.Joey.UI.Adapters
             lastTimeEntryContinuedTime = Time.UtcNow;
 
             await ViewModel.ContinueTimeEntryAsync (viewHolder.AdapterPosition);
+        }
+
+        private async void OnRemoveTimeEntry (RecyclerView.ViewHolder viewHolder)
+        {
+            await ViewModel.RemoveTimeEntryAsync (viewHolder.AdapterPosition);
         }
 
         protected override RecyclerView.ViewHolder GetViewHolder (ViewGroup parent, int viewType)
@@ -76,7 +92,7 @@ namespace Toggl.Joey.UI.Adapters
 
             var timeEntryListItemHolder = holder as TimeEntryListItemHolder;
             if (timeEntryListItemHolder != null) {
-                timeEntryListItemHolder.Bind ((ITimeEntryHolder) GetItem (position));
+                timeEntryListItemHolder.Bind ((ITimeEntryHolder) GetItem (position), undoItem);
             }
         }
 
@@ -99,6 +115,71 @@ namespace Toggl.Joey.UI.Adapters
                 mHolder.DisposeDataSource ();
             }
             base.OnViewDetachedFromWindow (holder);
+        }
+
+        public void SetItemsToNormalPosition ()
+        {
+            var linearLayout = (LinearLayoutManager)Owner.GetLayoutManager ();
+            var firstVisible = linearLayout.FindFirstVisibleItemPosition ();
+            var lastVisible = linearLayout.FindLastVisibleItemPosition ();
+
+            for (int i = 0; i < linearLayout.ItemCount; i++) {
+                var holder = Owner.FindViewHolderForLayoutPosition (i);
+                if (holder is TimeEntryListItemHolder) {
+                    var tHolder = (TimeEntryListItemHolder)holder;
+                    if (!tHolder.IsNormalState) {
+                        var withAnim = (firstVisible < i) && (lastVisible > i);
+                        tHolder.SetNormalState (withAnim);
+                    }
+                }
+            }
+            undoItem = null;
+        }
+
+        public async void SetItemToUndoPosition (RecyclerView.ViewHolder viewHolder)
+        {
+            /*
+            var linearLayout = (LinearLayoutManager)Owner.GetLayoutManager ();
+            var firstVisible = linearLayout.FindFirstVisibleItemPosition ();
+            var lastVisible = linearLayout.FindLastVisibleItemPosition ();
+
+            for (int i = 0; i < linearLayout.ItemCount; i++) {
+                var holder = Owner.FindViewHolderForLayoutPosition (i);
+                if (holder is TimeEntryListItemHolder) {
+                    var tHolder = (TimeEntryListItemHolder)holder;
+                    if (!tHolder.IsNormalState && tHolder.LayoutPosition != viewHolder.LayoutPosition) {
+                        var withAnim = (firstVisible < i) && (lastVisible > i);
+                        tHolder.SetNormalState (withAnim);
+                    }
+                }
+            }
+            */
+            if (undoItem != null) {
+                await ViewModel.RemoveTimeEntryAsync (undoItem.LayoutPosition);
+            }
+
+            undoItem = viewHolder;
+            // Show Undo layout.
+            var undoLayout = viewHolder.ItemView.FindViewById (Resource.Id.undo_layout);
+            var preUndoLayout = viewHolder.ItemView.FindViewById (Resource.Id.pre_undo_layout);
+            undoLayout.Visibility = ViewStates.Visible;
+            preUndoLayout.Visibility = ViewStates.Gone;
+
+            // Refresh holder (and tell to ItemTouchHelper
+            // that actions ended over it.
+            NotifyItemChanged (viewHolder.LayoutPosition);
+        }
+
+        public bool IsUndo (int index)
+        {
+            var holder = Owner.FindViewHolderForLayoutPosition (index);
+            if (holder is TimeEntryListItemHolder) {
+                var tHolder = (TimeEntryListItemHolder)holder;
+                if (!tHolder.IsNormalState) {
+                    return true;
+                }
+            }
+            return false;
         }
 
         protected override RecyclerView.ViewHolder GetFooterHolder (ViewGroup parent)
@@ -185,6 +266,12 @@ namespace Toggl.Joey.UI.Adapters
             public TextView DurationTextView { get; private set; }
             public ImageButton ContinueImageButton { get; private set; }
 
+            public View SwipeLayout { get; private set; }
+            public View PreUndoLayout { get; private set; }
+            public View UndoLayout { get; private set; }
+            public View RemoveButton { get; private set; }
+            public View UndoButton { get; private set; }
+
             public TimeEntryListItemHolder (IntPtr a, Android.Runtime.JniHandleOwnership b) : base (a, b)
             {
             }
@@ -204,22 +291,65 @@ namespace Toggl.Joey.UI.Adapters
                 BillableView = root.FindViewById<View> (Resource.Id.BillableIcon);
                 DurationTextView = root.FindViewById<TextView> (Resource.Id.DurationTextView).SetFont (Font.RobotoLight);
                 ContinueImageButton = root.FindViewById<ImageButton> (Resource.Id.ContinueImageButton);
+                SwipeLayout = root.FindViewById<RelativeLayout> (Resource.Id.swipe_layout);
+                PreUndoLayout = root.FindViewById<FrameLayout> (Resource.Id.pre_undo_layout);
+                UndoButton = root.FindViewById<LinearLayout> (Resource.Id.undo_layout);
+                RemoveButton = root.FindViewById (Resource.Id.remove_button);
+                UndoButton = root.FindViewById (Resource.Id.undo_button);
+                UndoLayout = root.FindViewById (Resource.Id.undo_layout);
+
                 ContinueImageButton.SetOnTouchListener (this);
+                UndoButton.SetOnTouchListener (this);
+                RemoveButton.SetOnTouchListener (this);
             }
 
             public bool OnTouch (View v, MotionEvent e)
             {
                 switch (e.Action) {
-                case MotionEventActions.Up:
-                    owner.OnContinueTimeEntry (this);
+                case MotionEventActions.Down:
+                    if (v == ContinueImageButton) {
+                        owner.OnContinueTimeEntry (this);
+                        return true;
+                    }
+                    if (v == RemoveButton) {
+                        owner.OnRemoveTimeEntry (this);
+                        return true;
+                    }
+                    if (v == UndoButton) {
+                        SetNormalState (true);
+                        return true;
+                    }
                     return false;
                 }
-
                 return false;
             }
 
-            public void Bind (ITimeEntryHolder datasource)
+            public bool IsNormalState
             {
+                get {
+                    return SwipeLayout.GetX () < 0;
+                }
+            }
+
+            public void SetNormalState (bool animated = false)
+            {
+                if (animated) {
+                    SwipeLayout.Animate().TranslationX (0).SetDuration (150).WithEndAction (new Java.Lang.Runnable (
+                    () => {
+                        SetNormalState (false);
+                    }));
+                }
+                SwipeLayout.SetX (0);
+                PreUndoLayout.Visibility = ViewStates.Visible;
+                UndoLayout.Visibility = ViewStates.Gone;
+            }
+
+            public void Bind (ITimeEntryHolder datasource, RecyclerView.ViewHolder undoItem)
+            {
+                if (undoItem != null && LayoutPosition != undoItem.LayoutPosition) {
+                    SetNormalState ();
+                }
+
                 DataSource = datasource;
 
                 if (DataSource == null || Handle == IntPtr.Zero) {
@@ -242,7 +372,7 @@ namespace Toggl.Joey.UI.Adapters
                 }
 
                 var info = DataSource.Info;
-                if (!String.IsNullOrWhiteSpace (info.ProjectData.Name)) {
+                if (!string.IsNullOrWhiteSpace (info.ProjectData.Name)) {
                     color = Color.ParseColor (ProjectModel.HexColors [info.Color % ProjectModel.HexColors.Length]);
                     ProjectTextView.SetTextColor (color);
                     ProjectTextView.Text = info.ProjectData.Name;
@@ -251,23 +381,23 @@ namespace Toggl.Joey.UI.Adapters
                     ProjectTextView.SetTextColor (ctx.Resources.GetColor (Resource.Color.dark_gray_text));
                 }
 
-                if (String.IsNullOrWhiteSpace (info.ClientData.Name)) {
-                    ClientTextView.Text = String.Empty;
+                if (string.IsNullOrWhiteSpace (info.ClientData.Name)) {
+                    ClientTextView.Text = string.Empty;
                     ClientTextView.Visibility = ViewStates.Gone;
                 } else {
-                    ClientTextView.Text = String.Format ("{0} • ", info.ClientData.Name);
+                    ClientTextView.Text = string.Format ("{0} • ", info.ClientData.Name);
                     ClientTextView.Visibility = ViewStates.Visible;
                 }
 
-                if (String.IsNullOrWhiteSpace (info.TaskData.Name)) {
-                    TaskTextView.Text = String.Empty;
+                if (string.IsNullOrWhiteSpace (info.TaskData.Name)) {
+                    TaskTextView.Text = string.Empty;
                     TaskTextView.Visibility = ViewStates.Gone;
                 } else {
-                    TaskTextView.Text = String.Format ("{0} • ", info.TaskData.Name);
+                    TaskTextView.Text = string.Format ("{0} • ", info.TaskData.Name);
                     TaskTextView.Visibility = ViewStates.Visible;
                 }
 
-                if (String.IsNullOrWhiteSpace (info.Description)) {
+                if (string.IsNullOrWhiteSpace (info.Description)) {
                     DescriptionTextView.Text = ctx.GetString (Resource.String.RecentTimeEntryNoDescription);
                 } else {
                     DescriptionTextView.Text = info.Description;

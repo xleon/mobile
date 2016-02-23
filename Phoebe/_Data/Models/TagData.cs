@@ -11,6 +11,13 @@ namespace Toggl.Phoebe._Data.Models
         {
         }
 
+        public TagData (Guid workspaceId, string name)
+        {
+            Id = Guid.NewGuid ();
+            Name = name;
+            WorkspaceId = workspaceId;
+        }
+
         public TagData (TagData other) : base (other)
         {
             Name = other.Name;

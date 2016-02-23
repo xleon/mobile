@@ -210,9 +210,11 @@ namespace Toggl.Phoebe._Reactive
                     }
 
                     foreach (var tag in entry.Tags) {
-                        if (state.Tags.Values.All (x => x.Name != tag) &&
-                                newTags.All (x => x.Name != tag)) {
-                            newTags.Add (await client.Get<TagJson> (entry.TaskRemoteId.Value));
+                        if (state.Tags.Values.All (x => x.WorkspaceRemoteId != entry.WorkspaceRemoteId || x.Name != tag) &&
+                            newTags.All (x => x.WorkspaceRemoteId != entry.WorkspaceRemoteId || x.Name != tag)) {
+                            // TODO: How to get the tag without a remote id?
+                            //newTags.Add (await client.Get<TagJson> (tagRemoteId));
+							throw new NotImplementedException ();
                         }
                     }
                 }

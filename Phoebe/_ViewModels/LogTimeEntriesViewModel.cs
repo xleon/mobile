@@ -248,7 +248,7 @@ namespace Toggl.Phoebe._ViewModels
 
         private void DurationTimerCallback (object sender, System.Timers.ElapsedEventArgs e)
         {
-            var duration = activeTimeEntryManager.ActiveTimeEntry.GetDuration (Time.UtcNow);  //model.GetDuration ();
+            var duration = activeTimeEntryManager.ActiveTimeEntry.GetDuration ();  //model.GetDuration ();
             durationTimer.Interval = 1000 - duration.Milliseconds;
 
             // Update on UI Thread

@@ -87,7 +87,7 @@ namespace Toggl.Phoebe._ViewModels.Timer
 
         public TimeSpan GetDuration ()
         {
-            return DataCollection.Aggregate (TimeSpan.Zero, (acc, x) => acc + x.GetDuration (Time.UtcNow));
+            return DataCollection.Aggregate (TimeSpan.Zero, (acc, x) => acc + x.GetDuration ());
         }
 
         public override string ToString ()

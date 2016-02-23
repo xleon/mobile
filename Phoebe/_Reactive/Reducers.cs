@@ -151,16 +151,11 @@ namespace Toggl.Phoebe._Reactive
 
         static DataSyncMsg<TimerState> TagPut (TimerState state, DataMsg msg)
         {
-            var tuple = (msg as DataMsg.TagPut).Data.ForceLeft ();
+            var tagData = (msg as DataMsg.TagPut).Data.ForceLeft ();
             var dataStore = ServiceContainer.Resolve <ISyncDataStore> ();
 
-            // TODO: Check if the tag already exists?
-            var updated = dataStore.Update (ctx => ctx.Put (new TagData {
-                WorkspaceId = tuple.Item1,
-                Name = tuple.Item2
-            }));
+            var updated = dataStore.Update (ctx => ctx.Put (tagData));
 
-            // TODO: Check updated.Count == 1?
             return DataSyncMsg.Create (
                 state.With (timeEntries: state.UpdateTimeEntries (updated)),
                 updated);
@@ -173,23 +168,19 @@ namespace Toggl.Phoebe._Reactive
 
             var updated = dataStore.Update (ctx => {
                 ctx.Put (new TimeEntryData (tuple.Item1) {
-                    Tags = tuple.Item2.ToList ()
+                    // TODO: This should already have been done by the ViewModel
+                    Tags = tuple.Item2.Select (x => x.Name).ToList ()
                 });
 
-                // TODO: Do we need to check if the tags exist here?
                 foreach (var tag in tuple.Item2) {
-                    if (state.Tags.Values.All (x => x.Name != tag)) {
-                        ctx.Put (new TagData {
-                            WorkspaceId = tuple.Item1.WorkspaceId,
-                            Name = tag
-                        });
-                    }
+                    ctx.Put (tag);
                 }
             });
 
             return DataSyncMsg.Create (
                 state.With (timeEntries: state.UpdateTimeEntries (updated)),
                 updated);
+
         }
 
         static IReadOnlyList<ICommonData> Put (ICommonData data)

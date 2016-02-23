@@ -23,6 +23,7 @@ namespace Toggl.Phoebe._Data
         void Delete (ICommonData obj);
         ICommonData SingleOrDefault (Expression<Func<ICommonData, bool>> selector);
         IReadOnlyList<ICommonData> UpdatedItems { get; }
+        SQLiteConnection Connection { get; }
     }
 }
 

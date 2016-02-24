@@ -51,7 +51,6 @@ namespace Toggl.Phoebe._ViewModels
         {
         }
 
-
         #region List operations
         public SortProjectsBy SortBy
         {

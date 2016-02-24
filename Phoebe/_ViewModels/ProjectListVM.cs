@@ -23,8 +23,8 @@ namespace Toggl.Phoebe._ViewModels
 
             // TODO: Change settings for a better library like James Montemagno version
             // and define default values to avoid this code.
-			// TODO TODO TODO: Danger! Mutating a property from a service
-			var settingsStore = ServiceContainer.Resolve<Data.ISettingsStore> ();
+            // TODO TODO TODO: Danger! Mutating a property from a service
+            var settingsStore = ServiceContainer.Resolve<Data.ISettingsStore> ();
             if (string.IsNullOrEmpty (settingsStore.SortProjectsBy)) {
                 settingsStore.SortProjectsBy = ProjectsCollectionVM.SortProjectsBy.Clients.ToString ();
             }

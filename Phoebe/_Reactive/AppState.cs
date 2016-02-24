@@ -200,6 +200,8 @@ namespace Toggl.Phoebe._Reactive
         public UserData User { get; private set; }
         public IReadOnlyDictionary<Guid, WorkspaceData> Workspaces { get; private set; }
         public IReadOnlyDictionary<Guid, ProjectData> Projects { get; private set; }
+        public IReadOnlyDictionary<Guid, WorkspaceUserData> WorkspaceUsers { get; private set; }
+        public IReadOnlyDictionary<Guid, ProjectUserData> ProjectUsers { get; private set; }
         public IReadOnlyDictionary<Guid, ClientData> Clients { get; private set; }
         public IReadOnlyDictionary<Guid, TaskData> Tasks { get; private set; }
         public IReadOnlyDictionary<Guid, TagData> Tags { get; private set; }
@@ -210,6 +212,8 @@ namespace Toggl.Phoebe._Reactive
             UserData user,
             IReadOnlyDictionary<Guid, WorkspaceData> workspaces,
             IReadOnlyDictionary<Guid, ProjectData> projects,
+            IReadOnlyDictionary<Guid, WorkspaceUserData> workspaceUsers,
+            IReadOnlyDictionary<Guid, ProjectUserData> projectUsers,
             IReadOnlyDictionary<Guid, ClientData> clients,
             IReadOnlyDictionary<Guid, TaskData> tasks,
             IReadOnlyDictionary<Guid, TagData> tags,
@@ -219,6 +223,8 @@ namespace Toggl.Phoebe._Reactive
             User = user;
             Workspaces = workspaces;
             Projects = projects;
+            WorkspaceUsers = workspaceUsers;
+            ProjectUsers = projectUsers;
             Clients = clients;
             Tasks = tasks;
             Tags = tags;
@@ -230,20 +236,24 @@ namespace Toggl.Phoebe._Reactive
             UserData user = null,
             IReadOnlyDictionary<Guid, WorkspaceData> workspaces = null,
             IReadOnlyDictionary<Guid, ProjectData> projects = null,
+            IReadOnlyDictionary<Guid, WorkspaceUserData> workspaceUsers = null,
+            IReadOnlyDictionary<Guid, ProjectUserData> projectUsers = null,
             IReadOnlyDictionary<Guid, ClientData> clients = null,
             IReadOnlyDictionary<Guid, TaskData> tasks = null,
             IReadOnlyDictionary<Guid, TagData> tags = null,
             IReadOnlyDictionary<Guid, RichTimeEntry> timeEntries = null)
         {
             return new TimerState (
-                       downloadInfo == null ? this.DownloadInfo : downloadInfo,
-                       user ?? this.User,
-                       workspaces ?? this.Workspaces,
-                       projects ?? this.Projects,
-                       clients ?? this.Clients,
-                       tasks ?? this.Tasks,
-                       tags ?? this.Tags,
-                       timeEntries ?? this.TimeEntries);
+                downloadInfo ?? DownloadInfo,
+                user ?? User,
+                workspaces ?? Workspaces,
+                projects ?? Projects,
+                workspaceUsers ?? WorkspaceUsers,
+                projectUsers ?? ProjectUsers,
+                clients ?? Clients,
+                tasks ?? Tasks,
+                tags ?? Tags,
+                timeEntries ?? TimeEntries);
         }
 
         /// <summary>
@@ -321,20 +331,10 @@ namespace Toggl.Phoebe._Reactive
 
         public IEnumerable<ProjectData> GetUserAccessibleProjects (Guid userId)
         {
-            throw new NotImplementedException ();
+            return Projects.Values.Where (
+                p => p.IsActive && (p.IsPrivate || ProjectUsers.Values.Any (x => x.ProjectId == p.Id && x.UserId == userId)))
+                           .OrderBy (p => p.Name);
         }
-        //public async static Task<List<ProjectData>> GetUserAccessibleProjects (this IDataStore ds, Guid userId)
-        //{
-        //    var projectTbl = await ds.GetTableNameAsync<ProjectData>();
-        //    var projectUserTbl = await ds.GetTableNameAsync<ProjectUserData>();
-        //    var q = String.Concat (
-        //        "SELECT p.* FROM ", projectTbl, " AS p ",
-        //        "LEFT JOIN ", projectUserTbl, " AS pu ON pu.ProjectId = p.Id AND pu.UserId=? ",
-        //        "WHERE p.DeletedAt IS NULL AND p.IsActive != 0 AND ",
-        //        "(p.IsPrivate == 0 OR pu.UserId IS NOT NULL)",
-        //        "ORDER BY p.Name ");
-        //    return await ds.QueryAsync<ProjectData> (q, userId);
-        //}
     }
 }
 

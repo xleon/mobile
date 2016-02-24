@@ -102,18 +102,20 @@ namespace Toggl.Phoebe._Reactive
 
                 var hasMore = receivedData.OfType<TimeEntryData> ().Any ();
 
-                return DataSyncMsg.Create (
-                           state.With (
-                               downloadInfo: state.DownloadInfo.With (hasMore: hasMore, hadErrors: false),
-                               workspaces: state.Update (state.Workspaces, updated),
-                               projects: state.Update (state.Projects, updated),
-                               clients: state.Update (state.Clients, updated),
-                               tasks: state.Update (state.Tasks, updated),
-                               tags: state.Update (state.Tags, updated),
-                               // TODO: Check if the updated entries are within the current scroll view
-                               // Probably it's better to do this check in UpdateTimeEntries
-                               timeEntries: state.UpdateTimeEntries (updated)
-                           ));
+            return DataSyncMsg.Create (
+                    state.With (
+                        downloadInfo: state.DownloadInfo.With (hasMore: hasMore, hadErrors: false),
+                        workspaces: state.Update (state.Workspaces, updated),
+                        projects: state.Update (state.Projects, updated),   
+                        workspaceUsers: state.Update (state.WorkspaceUsers, updated),
+                        projectUsers: state.Update (state.ProjectUsers, updated),
+                        clients: state.Update (state.Clients, updated),
+                        tasks: state.Update (state.Tasks, updated),
+                        tags: state.Update (state.Tags, updated),
+                        // TODO: Check if the updated entries are within the current scroll view
+                        // Probably it's better to do this check in UpdateTimeEntries
+                        timeEntries: state.UpdateTimeEntries (updated)
+                    ));
             },
             ex => DataSyncMsg.Create (
                 state.With (downloadInfo: state.DownloadInfo.With (hadErrors: true)))

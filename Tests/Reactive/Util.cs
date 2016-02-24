@@ -97,6 +97,8 @@ namespace Toggl.Phoebe.Tests.Reactive
                     user: userData,
                     workspaces: new Dictionary<Guid, WorkspaceData> { { WorkspaceId, workspaceData } },
                     projects: new Dictionary<Guid, ProjectData> (),
+                    workspaceUsers: new Dictionary<Guid, WorkspaceUserData> (),
+                    projectUsers: new Dictionary<Guid, ProjectUserData> (),
                     clients: new Dictionary<Guid, ClientData> (),
                     tasks: new Dictionary<Guid, TaskData> (),
                     tags: new Dictionary<Guid, TagData> (),

@@ -27,7 +27,6 @@ namespace Toggl.Phoebe._Reactive
             .Add (typeof (DataMsg.TagsPut), TagsPut)
             .Add (typeof (DataMsg.ClientDataPut), ClientDataPut)
             .Add (typeof (DataMsg.ProjectDataPut), ProjectDataPut);
-            //.Add (typeof (DataMsg.ProjectUserDataPut), ProjectUserDataPut)
 
             return new PropertyCompositeReducer<AppState> ()
                    .Add (x => x.TimerState, tagReducer);
@@ -185,34 +184,32 @@ namespace Toggl.Phoebe._Reactive
 
         }
 
-        static IReadOnlyList<ICommonData> Put (ICommonData data)
-        {
-            var dataStore = ServiceContainer.Resolve <ISyncDataStore> ();
-            return dataStore.Update (ctx => ctx.Put (data));
-			// TODO: Check updated.Count == 1?
-        }
-
         static DataSyncMsg<TimerState> ClientDataPut (TimerState state, DataMsg msg)
         {
             var data = (msg as DataMsg.ClientDataPut).Data.ForceLeft ();
-            var updated = Put (data);
+            var dataStore = ServiceContainer.Resolve <ISyncDataStore> ();
+
+            var updated = dataStore.Update (ctx => ctx.Put (data));
+
             return DataSyncMsg.Create (state.With (clients: state.Update (state.Clients, updated)), updated);
         }
 
         static DataSyncMsg<TimerState> ProjectDataPut (TimerState state, DataMsg msg)
         {
             var data = (msg as DataMsg.ProjectDataPut).Data.ForceLeft ();
-            var updated = Put (data);
-            return DataSyncMsg.Create (state.With (projects: state.Update (state.Projects, updated)), updated);
-        }
+            var dataStore = ServiceContainer.Resolve <ISyncDataStore> ();
 
-        // TODO
-        //static DataSyncMsg<TimerState> ProjectUserDataPut (TimerState state, DataMsg msg)
-        //{
-        //    var data = (msg as DataMsg.ProjectUserDataPut).Data.ForceLeft ();
-        //    var updated = Put (data);
-        //    return DataSyncMsg.Create (state.With (projectUsers: state.Update (state.ProjectUsers, updated)), updated);
-        //}
+            var updated = dataStore.Update (ctx => {
+                ctx.Put (data.Item1);
+                ctx.Put (data.Item2);
+            });
+
+            return DataSyncMsg.Create (
+                state.With (
+                    projects: state.Update (state.Projects, updated),
+                    projectUsers: state.Update (state.ProjectUsers, updated)
+                ), updated);
+        }
 
         static void CheckTimeEntryState (ITimeEntryData entryData, TimeEntryState expected, string action)
         {

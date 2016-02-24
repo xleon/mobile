@@ -1,18 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Linq;
-using System.Threading.Tasks;
 using GalaSoft.MvvmLight;
 using PropertyChanged;
-using Toggl.Phoebe._Data;
-using Toggl.Phoebe._Reactive;
 using Toggl.Phoebe.Analytics;
+using Toggl.Phoebe._Data;
 using Toggl.Phoebe._Data.Models;
-using Toggl.Phoebe._ViewModels;
-//using Toggl.Phoebe.Data.Views;
-using XPlatUtils;
 using Toggl.Phoebe._Helpers;
+using Toggl.Phoebe._Reactive;
+using XPlatUtils;
 
 namespace Toggl.Phoebe._ViewModels
 {
@@ -226,4 +222,3 @@ namespace Toggl.Phoebe._ViewModels
         }
     }
 }
-

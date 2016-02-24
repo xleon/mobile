@@ -318,6 +318,23 @@ namespace Toggl.Phoebe._Reactive
                 tagsData,
                 color);
         }
+
+        public IEnumerable<ProjectData> GetUserAccessibleProjects (Guid userId)
+        {
+            throw new NotImplementedException ();
+        }
+        //public async static Task<List<ProjectData>> GetUserAccessibleProjects (this IDataStore ds, Guid userId)
+        //{
+        //    var projectTbl = await ds.GetTableNameAsync<ProjectData>();
+        //    var projectUserTbl = await ds.GetTableNameAsync<ProjectUserData>();
+        //    var q = String.Concat (
+        //        "SELECT p.* FROM ", projectTbl, " AS p ",
+        //        "LEFT JOIN ", projectUserTbl, " AS pu ON pu.ProjectId = p.Id AND pu.UserId=? ",
+        //        "WHERE p.DeletedAt IS NULL AND p.IsActive != 0 AND ",
+        //        "(p.IsPrivate == 0 OR pu.UserId IS NOT NULL)",
+        //        "ORDER BY p.Name ");
+        //    return await ds.QueryAsync<ProjectData> (q, userId);
+        //}
     }
 }
 

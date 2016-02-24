@@ -197,29 +197,15 @@ namespace Toggl.Phoebe._Data
 
         public sealed class ProjectDataPut : DataMsg
         {
-            public Either<ProjectData, Exception> Data
+            public Either<Tuple<ProjectData, ProjectUserData>, Exception> Data
             {
-                get { return RawData.CastLeft<ProjectData> (); }
+                get { return RawData.CastLeft<Tuple<ProjectData, ProjectUserData>> (); }
                 set { RawData = value.CastLeft<object> (); }
             }
 
-            public ProjectDataPut (ProjectData data)
+            public ProjectDataPut (ProjectData project, ProjectUserData projectUser)
             {
-                Data = Either<ProjectData, Exception>.Left (data);
-            }
-        }
-
-        public sealed class ProjectUserDataPut : DataMsg
-        {
-            public Either<ProjectUserData, Exception> Data
-            {
-                get { return RawData.CastLeft<ProjectUserData> (); }
-                set { RawData = value.CastLeft<object> (); }
-            }
-
-            public ProjectUserDataPut (ProjectUserData data)
-            {
-                Data = Either<ProjectUserData, Exception>.Left (data);
+                Data = Either<Tuple<ProjectData, ProjectUserData>, Exception>.Left (Tuple.Create (project, projectUser));
             }
         }
 

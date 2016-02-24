@@ -36,6 +36,7 @@ namespace Toggl.Phoebe._ViewModels
         }
 
         public string ClientName { get; set; }
+
         public void SetClient (ClientData clientData)
         {
             model.ClientId = clientData.Id;

@@ -21,8 +21,8 @@ namespace Toggl.Phoebe._ViewModels
 
         public CreateClientViewModel (TimerState timerState, Guid workspaceId)
         {
-            
-            var workspace = timerState.Workspaces[workspaceId];
+			var workspace = timerState.Workspaces[workspaceId];
+            this.timerState = timerState;
             model = new ClientData {
                 Id = Guid.NewGuid (),
                 WorkspaceId = workspaceId,

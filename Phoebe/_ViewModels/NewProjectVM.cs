@@ -49,15 +49,12 @@ namespace Toggl.Phoebe._ViewModels
             model.Name = projectName;
             model.Color = projectColor;
 
-            // Create an extra model for Project / User relationship
-            var userData = ServiceContainer.Resolve<Net.AuthManager> ().User;
-
             var projectUser = new ProjectUserData {
                 Id = Guid.NewGuid (),
                 ProjectId = model.Id,
-				UserId = userData.Id,
+                UserId = timerState.User.Id,
                 ProjectRemoteId = model.RemoteId.HasValue ? model.RemoteId.Value : 0,
-                UserRemoteId = userData.RemoteId.HasValue ? userData.RemoteId.Value : 0
+                UserRemoteId = timerState.User.RemoteId.HasValue ? timerState.User.RemoteId.Value : 0
             };
 
             // Save new project and relationship

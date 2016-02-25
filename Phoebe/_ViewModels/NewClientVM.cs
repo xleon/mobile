@@ -14,12 +14,12 @@ using Toggl.Phoebe._Data;
 
 namespace Toggl.Phoebe._ViewModels
 {
-    public class CreateClientViewModel : IDisposable
+    public class NewClientVM : IDisposable
     {
         private ClientData model;
-        private TimerState timerState;
+        private readonly TimerState timerState;
 
-        public CreateClientViewModel (TimerState timerState, Guid workspaceId)
+        public NewClientVM (TimerState timerState, Guid workspaceId)
         {
 			var workspace = timerState.Workspaces[workspaceId];
             this.timerState = timerState;
@@ -37,7 +37,7 @@ namespace Toggl.Phoebe._ViewModels
 
         public string ClientName { get; set; }
 
-        public ClientData SaveNewClient ()
+        public ClientData SaveClient ()
         {
             // Save client name to make sure it doesn't change while iterating
             var clientName = ClientName;

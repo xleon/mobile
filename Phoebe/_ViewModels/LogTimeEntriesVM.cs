@@ -21,7 +21,7 @@ using XPlatUtils;
 namespace Toggl.Phoebe._ViewModels
 {
     [ImplementPropertyChanged]
-    public class LogTimeEntriesViewModel : ViewModelBase, IDisposable
+    public class LogTimeEntriesVM : ViewModelBase, IDisposable
     {
         private readonly Timer durationTimer;
         private Subscription<SettingChangedMessage> subscriptionSettingChanged;
@@ -30,7 +30,7 @@ namespace Toggl.Phoebe._ViewModels
         private TimeEntriesFeed collectionFeed;
         private readonly ActiveTimeEntryManager activeTimeEntryManager;
 
-        LogTimeEntriesViewModel ()
+        LogTimeEntriesVM ()
         {
             // durationTimer will update the Duration value if ActiveTimeEntry is running
             durationTimer = new System.Timers.Timer ();
@@ -53,9 +53,9 @@ namespace Toggl.Phoebe._ViewModels
             SyncCollectionView ();
         }
 
-        public static LogTimeEntriesViewModel Init ()
+        public static LogTimeEntriesVM Init ()
         {
-            var vm = new LogTimeEntriesViewModel ();
+            var vm = new LogTimeEntriesVM ();
             return vm;
         }
 

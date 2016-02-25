@@ -61,7 +61,7 @@ namespace Toggl.Joey.UI.Fragments
 
         #region Binding objects and properties.
 
-        public LogTimeEntriesViewModel ViewModel { get; private set;}
+        public LogTimeEntriesVM ViewModel { get; private set;}
         public IMenuItem AddNewMenuItem { get; private set; }
         public StartStopFab StartStopBtn { get; private set;}
 
@@ -93,7 +93,7 @@ namespace Toggl.Joey.UI.Fragments
             base.OnViewCreated (view, savedInstanceState);
 
             // init viewModel
-            ViewModel = LogTimeEntriesViewModel.Init ();
+            ViewModel = LogTimeEntriesVM.Init ();
 
             collectionBinding = this.SetBinding (() => ViewModel.Collection).WhenSourceChanges (() => {
                 logAdapter = new LogTimeEntriesAdapter (recyclerView, ViewModel);
@@ -282,7 +282,7 @@ namespace Toggl.Joey.UI.Fragments
         }
         #endregion
 
-        private void SetupRecyclerView (LogTimeEntriesViewModel viewModel)
+        private void SetupRecyclerView (LogTimeEntriesVM viewModel)
         {
             // Touch listeners.
             itemTouchListener = new ItemTouchListener (recyclerView, this);
@@ -325,9 +325,9 @@ namespace Toggl.Joey.UI.Fragments
             private bool loading = true; // True if we are still waiting for the last set of data to load.
             private int firstVisibleItem, visibleItemCount, totalItemCount;
             private readonly LinearLayoutManager linearLayoutManager;
-            private readonly LogTimeEntriesViewModel viewModel;
+            private readonly LogTimeEntriesVM viewModel;
 
-            public ScrollListener (LinearLayoutManager linearLayoutManager, LogTimeEntriesViewModel viewModel)
+            public ScrollListener (LinearLayoutManager linearLayoutManager, LogTimeEntriesVM viewModel)
             {
                 this.linearLayoutManager = linearLayoutManager;
                 this.viewModel = viewModel;

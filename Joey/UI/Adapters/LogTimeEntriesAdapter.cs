@@ -41,7 +41,7 @@ namespace Toggl.Joey.UI.Adapters
         {
         }
 
-        public LogTimeEntriesAdapter (RecyclerView owner, LogTimeEntriesViewModel viewModel)
+        public LogTimeEntriesAdapter (RecyclerView owner, LogTimeEntriesVM viewModel)
         : base (owner, viewModel.Collection)
         {
             this.viewModel = viewModel;
@@ -483,7 +483,7 @@ namespace Toggl.Joey.UI.Adapters
             RelativeLayout retryLayout;
             Button retryButton;
 
-            public FooterHolder (View root, LogTimeEntriesViewModel viewModel) : base (root)
+            public FooterHolder (View root, LogTimeEntriesVM viewModel) : base (root)
             {
                 retryLayout = ItemView.FindViewById<RelativeLayout> (Resource.Id.RetryLayout);
                 progressBar = ItemView.FindViewById<ProgressBar> (Resource.Id.ProgressBar);

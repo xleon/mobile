@@ -25,13 +25,13 @@ namespace Toggl.Joey.UI.Adapters
         private readonly Handler handler = new Handler ();
         private static readonly int ContinueThreshold = 1;
         private DateTime lastTimeEntryContinuedTime;
-        protected LogTimeEntriesViewModel ViewModel { get; private set; }
+        protected LogTimeEntriesVM ViewModel { get; private set; }
 
         public LogTimeEntriesAdapter (IntPtr a, Android.Runtime.JniHandleOwnership b) : base (a, b)
         {
         }
 
-        public LogTimeEntriesAdapter (RecyclerView owner, LogTimeEntriesViewModel viewModel)
+        public LogTimeEntriesAdapter (RecyclerView owner, LogTimeEntriesVM viewModel)
         : base (owner, viewModel.Collection)
         {
             ViewModel = viewModel;
@@ -321,11 +321,11 @@ namespace Toggl.Joey.UI.Adapters
             readonly ProgressBar progressBar;
             readonly RelativeLayout retryLayout;
             readonly Button retryButton;
-            protected LogTimeEntriesViewModel Vm { get; set; }
+            protected LogTimeEntriesVM Vm { get; set; }
             Binding<bool, bool> hasMoreBinding, hasErrorBinding;
             RecyclerLoadState loadState = RecyclerLoadState.Loading;
 
-            public FooterHolder (View root, LogTimeEntriesViewModel viewModel) : base (root)
+            public FooterHolder (View root, LogTimeEntriesVM viewModel) : base (root)
             {
                 Vm = viewModel;
                 retryLayout = ItemView.FindViewById<RelativeLayout> (Resource.Id.RetryLayout);

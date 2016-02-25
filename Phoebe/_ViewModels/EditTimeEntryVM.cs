@@ -13,7 +13,7 @@ using XPlatUtils;
 namespace Toggl.Phoebe._ViewModels
 {
     [ImplementPropertyChanged]
-    public class EditTimeEntryViewModel : ViewModelBase, IDisposable
+    public class EditTimeEntryVM : ViewModelBase, IDisposable
     {
         internal static readonly string DefaultTag = "mobile";
 
@@ -33,7 +33,7 @@ namespace Toggl.Phoebe._ViewModels
             UpdateView ();
         }
 
-        public EditTimeEntryViewModel (TimerState timerState, Guid workspaceId)
+        public EditTimeEntryVM (TimerState timerState, Guid workspaceId)
         {
 			var tagList = GetDefaultTagList (timerState, workspaceId);
             this.timerState = timerState;
@@ -50,7 +50,7 @@ namespace Toggl.Phoebe._ViewModels
             Init ();
         }
 
-        public EditTimeEntryViewModel (TimerState timerState, ITimeEntryData timeEntry, TimeEntryInfo timeEntryInfo)
+        public EditTimeEntryVM (TimerState timerState, ITimeEntryData timeEntry, TimeEntryInfo timeEntryInfo)
         {
             model = new TimeEntryData (timeEntry);
             modelInfo = timeEntryInfo;

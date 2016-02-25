@@ -14,7 +14,7 @@ using Toggl.Phoebe.Data.Utils;
 
 namespace Toggl.Phoebe._ViewModels
 {
-    public class TagListViewModel : IDisposable
+    public class TagListVM : IDisposable
     {
         // This viewMode is apparently simple but
         // it needs the code related with the update of
@@ -24,7 +24,7 @@ namespace Toggl.Phoebe._ViewModels
         private readonly Guid workspaceId;
         private readonly List<Guid> previousSelectedIds;
 
-        TagListViewModel (TimerState timerState, Guid workspaceId, List<Guid> previousSelectedIds)
+        TagListVM (TimerState timerState, Guid workspaceId, List<Guid> previousSelectedIds)
         {
             this.previousSelectedIds = previousSelectedIds;
             this.workspaceId = workspaceId;

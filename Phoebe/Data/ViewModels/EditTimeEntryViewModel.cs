@@ -193,7 +193,8 @@ namespace Toggl.Phoebe.Data.ViewModels
             }
 
             if (!AreEqual (initialTagList, TagList)) {
-                await SaveTagRelationships (data, TagList).ConfigureAwait (false);
+                await ResetTagRelatioships (data, TagList).ConfigureAwait (false);
+                data = await TimeEntryModel.SaveTimeEntryDataAsync (data).ConfigureAwait (false);
             }
         }
 
@@ -265,10 +266,12 @@ namespace Toggl.Phoebe.Data.ViewModels
                         TaskName = string.Empty;
                     }
 
-                    // TODO: Workspace and Billable should change!?
+                    // TODO: Workspace, Billable and Tags should change!?
                     if (data.WorkspaceId != project.WorkspaceId) {
                         data.WorkspaceId = project.WorkspaceId;
                         workspace = await TimeEntryModel.GetWorkspaceDataAsync (project.WorkspaceId);
+                        data.IsBillable = workspace.IsPremium ? IsBillable : false;
+                        TagList = await UpdateTagsWithWorkspace (data.Id, data.WorkspaceId, TagList);
                     }
                 } else {
                     ProjectName = string.Empty;
@@ -277,6 +280,7 @@ namespace Toggl.Phoebe.Data.ViewModels
                     ProjectColorHex = ProjectModel.HexColors [ProjectModel.DefaultColor];
                 }
 
+                IsBillable = data.IsBillable;
                 WorkspaceId = data.WorkspaceId;
                 IsPremium = workspace.IsPremium;
             });
@@ -293,35 +297,32 @@ namespace Toggl.Phoebe.Data.ViewModels
             });
         }
 
-        private async Task<TimeEntryData> SaveTagRelationships (TimeEntryData timeEntry, List<TagData> newTagList)
+        private async Task<TimeEntryData> ResetTagRelatioships (TimeEntryData timeEntry, List<TagData> newTagList)
         {
             // Create tag list.
             var dataStore = ServiceContainer.Resolve<IDataStore> ();
             var existingTagRelations = new List<TimeEntryTagData> ();
 
-            var tags = await dataStore.Table<TimeEntryTagData> ()
-                       .Where (r => r.TimeEntryId == timeEntry.Id && r.DeletedAt == null)
-                       .ToListAsync();
-            existingTagRelations.AddRange (tags);
+            var relations = await dataStore.Table<TimeEntryTagData> ()
+                            .Where (r => r.TimeEntryId == timeEntry.Id && r.DeletedAt == null)
+                            .ToListAsync();
+            existingTagRelations = new List<TimeEntryTagData> (relations);
 
+            existingTagRelations.ForEach ((obj) => Console.WriteLine (obj.Id + " " + obj.TagId + " " + obj.TimeEntryId));
+            Console.WriteLine ("After");
             // Delete unused tag relations:
-            var deleteTasks = existingTagRelations
-                              .Where (oldTagRelation => newTagList.All (newTag => newTag.Id != oldTagRelation.TagId))
-                              .Select (tagRelation => new TimeEntryTagModel (tagRelation).DeleteAsync ())
-                              .ToList();
+            existingTagRelations.Where (r => !newTagList.Exists (t => t.Id == r.TagId))
+            .ForEach (async (obj) => await dataStore.DeleteAsync (obj));
+            // Add new relationships.
+            newTagList.Where (t => !existingTagRelations.Exists (r => r.TagId == t.Id))
+            .ForEach (async (obj) => await dataStore.PutAsync (new TimeEntryTagData {TagId = obj.Id, TimeEntryId = timeEntry.Id }));
 
-            // Create new tag relations:
-            var createTasks = newTagList
-                              .Where (newTag => existingTagRelations.All (oldTagRelation => oldTagRelation.TagId != newTag.Id))
-            .Select (data => new TimeEntryTagModel { TimeEntry = new TimeEntryModel (timeEntry), Tag = new TagModel (data)} .SaveAsync ())
-            .ToList();
 
-            await Task.WhenAll (deleteTasks.Concat (createTasks));
-
-            if (deleteTasks.Any<Task> () || createTasks.Any<Task> ()) {
-                timeEntry = await TimeEntryModel.PrepareForSync (timeEntry);
-                timeEntry = await TimeEntryModel.SaveTimeEntryDataAsync (timeEntry);
-            }
+            relations = await dataStore.Table<TimeEntryTagData> ()
+                        .Where (r => r.TimeEntryId == timeEntry.Id && r.DeletedAt == null)
+                        .ToListAsync();
+            existingTagRelations = new List<TimeEntryTagData> (relations);
+            existingTagRelations.ForEach ((obj) => Console.WriteLine (obj.Id + " " + obj.TagId + " " + obj.TimeEntryId));
 
             return timeEntry;
         }
@@ -346,6 +347,46 @@ namespace Toggl.Phoebe.Data.ViewModels
                 defaultTagList.Add (defaultTag);
             }
             return defaultTagList;
+        }
+
+        private async Task<List<TagData>> UpdateTagsWithWorkspace (Guid timeEntryId, Guid workspaceId, List<TagData> oldTagList)
+        {
+            var dataStore = ServiceContainer.Resolve<IDataStore> ();
+
+            // Get new workspace tag list.
+            var tagList = await dataStore.Table<TagData> ()
+                          .Where (r => r.WorkspaceId == workspaceId && r.DeletedAt == null)
+                          .ToListAsync();
+
+            // Get new tags to create and existing tags from previous workspace.
+            var tagsToCreate = new List<TagData> (oldTagList.Where (t => tagList.IndexOf (n => n.Name.Equals (t.Name)) == -1));
+            var commonTags = new List<TagData> (tagList.Where (t => oldTagList.IndexOf (n => n.Name.Equals (t.Name)) != -1));
+
+            // Create new tags.
+            for (int i = 0; i < tagsToCreate.Count; i++) {
+                var newTag = await TagModel.AddTag (workspaceId, tagsToCreate[i].Name);
+                tagsToCreate[i] = newTag;
+            }
+
+            // Contact both lists.
+            var newTagList = commonTags.Concat (tagsToCreate);
+
+            // Delete existing tag relationships from relationship table.
+            var oldRelationships = await dataStore.Table<TimeEntryTagData> ()
+                                   .Where (t => t.TimeEntryId == timeEntryId && t.DeletedAt == null)
+                                   .ToListAsync ();
+            oldRelationships.ForEach (async (r) => await dataStore.DeleteAsync (r));
+
+            // Create and save new relationships
+            foreach (var item in newTagList) {
+                var r = new TimeEntryTagData {
+                    TagId = item.Id,
+                    TimeEntryId = timeEntryId
+                };
+                await dataStore.PutAsync (r);
+            }
+
+            return newTagList.ToList ();
         }
 
         private bool AreEqual (List<TagData> list1, List<TagData> list2)

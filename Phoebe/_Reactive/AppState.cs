@@ -210,6 +210,7 @@ namespace Toggl.Phoebe._Reactive
         public IReadOnlyDictionary<Guid, TaskData> Tasks { get; private set; }
         public IReadOnlyDictionary<Guid, TagData> Tags { get; private set; }
         public IReadOnlyDictionary<Guid, RichTimeEntry> TimeEntries { get; private set; }
+        public ITimeEntryData ActiveTimeEntry { get; private set; }
 
         public TimerState (
             DownloadInfo downloadInfo,
@@ -221,7 +222,8 @@ namespace Toggl.Phoebe._Reactive
             IReadOnlyDictionary<Guid, ClientData> clients,
             IReadOnlyDictionary<Guid, TaskData> tasks,
             IReadOnlyDictionary<Guid, TagData> tags,
-            IReadOnlyDictionary<Guid, RichTimeEntry> timeEntries)
+            IReadOnlyDictionary<Guid, RichTimeEntry> timeEntries,
+            ITimeEntryData activeTimeEntry)
         {
             DownloadInfo = downloadInfo;
             User = user;
@@ -233,6 +235,7 @@ namespace Toggl.Phoebe._Reactive
             Tasks = tasks;
             Tags = tags;
             TimeEntries = timeEntries;
+            ActiveTimeEntry = activeTimeEntry;
         }
 
         public TimerState With (
@@ -245,7 +248,8 @@ namespace Toggl.Phoebe._Reactive
             IReadOnlyDictionary<Guid, ClientData> clients = null,
             IReadOnlyDictionary<Guid, TaskData> tasks = null,
             IReadOnlyDictionary<Guid, TagData> tags = null,
-            IReadOnlyDictionary<Guid, RichTimeEntry> timeEntries = null)
+            IReadOnlyDictionary<Guid, RichTimeEntry> timeEntries = null,
+            ITimeEntryData activeTimeEntry = null)
         {
             return new TimerState (
                 downloadInfo ?? DownloadInfo,
@@ -257,7 +261,8 @@ namespace Toggl.Phoebe._Reactive
                 clients ?? Clients,
                 tasks ?? Tasks,
                 tags ?? Tags,
-                timeEntries ?? TimeEntries);
+                timeEntries ?? TimeEntries,
+                activeTimeEntry ?? ActiveTimeEntry);
         }
 
         /// <summary>

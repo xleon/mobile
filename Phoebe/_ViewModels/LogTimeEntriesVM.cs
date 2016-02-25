@@ -19,44 +19,22 @@ namespace Toggl.Phoebe._ViewModels
     {
         private Subscription<Toggl.Phoebe.Data.SettingChangedMessage> subscriptionSettingChanged;
         private readonly System.Timers.Timer durationTimer;
-        private readonly ActiveTimeEntryManager activeTimeEntryManager;
         private readonly IDisposable subscriptionState;
-
-        private object __timerStateLock = new object ();
-        private TimerState __timerStateUnsafe;
-        private TimerState timerState
-        {
-            get {
-                lock (__timerStateLock) {
-                    return __timerStateUnsafe;
-                }
-            }
-            set {
-                lock (__timerStateLock) {
-                    __timerStateUnsafe = value;
-                }
-            }
-        }
 
         public LogTimeEntriesVM (TimerState timerState)
         {
-            this.timerState = timerState;
-
             // durationTimer will update the Duration value if ActiveTimeEntry is running
             durationTimer = new System.Timers.Timer ();
             durationTimer.Elapsed += DurationTimerCallback;
 
             ServiceContainer.Resolve<ITracker> ().CurrentScreen = "TimeEntryList Screen";
-            activeTimeEntryManager = ServiceContainer.Resolve<ActiveTimeEntryManager> ();
-            activeTimeEntryManager.PropertyChanged += OnActiveTimeEntryChanged;
 
             var bus = ServiceContainer.Resolve<MessageBus> ();
             subscriptionSettingChanged = bus.Subscribe<Toggl.Phoebe.Data.SettingChangedMessage> (OnSettingChanged);
             subscriptionState = StoreManager.Singleton
                                             .Observe (app => app.TimerState)
                                             .Subscribe (OnStateUpdated);
-
-            UpdateView (activeTimeEntryManager.IsRunning, activeTimeEntryManager.ActiveTimeEntry);
+            UpdateView (timerState);
             SyncCollectionView ();
         }
 
@@ -70,7 +48,6 @@ namespace Toggl.Phoebe._ViewModels
             if (subscriptionState != null) {
                 subscriptionState.Dispose ();
             }
-            activeTimeEntryManager.PropertyChanged -= OnActiveTimeEntryChanged;
             durationTimer.Elapsed -= DurationTimerCallback;
             DisposeCollection ();
         }
@@ -102,6 +79,8 @@ namespace Toggl.Phoebe._ViewModels
         public string Duration { get; private set; }
 
         public TimeEntryCollectionVM Collection { get; private set; }
+
+        public ITimeEntryData ActiveTimeEntry { get; private set; }
         #endregion
 
         #region Sync operations
@@ -140,26 +119,22 @@ namespace Toggl.Phoebe._ViewModels
             }
         }
 
-        public TimeEntryData StartStopTimeEntry ()
+        public ITimeEntryData StartStopTimeEntry ()
         {
             // Protect from double clicks?
             if (IsProcessingAction) {
-                return activeTimeEntryManager.ActiveTimeEntry;
+                return ActiveTimeEntry;
             }
 
             IsProcessingAction = true;
-            var active = activeTimeEntryManager.ActiveTimeEntry;
+
+            var active = ActiveTimeEntry;
             if (active.State == TimeEntryState.Running) {
                 RxChain.Send (new DataMsg.TimeEntryStop (active));
-            }
-            else {
-                RxChain.Send (new DataMsg.TimeEntryContinue (active));
-            }
-
-            if (activeTimeEntryManager.IsRunning) {
                 ServiceContainer.Resolve<ITracker> ().SendTimerStartEvent (TimerStartSource.AppNew);
             }
             else {
+                RxChain.Send (new DataMsg.TimeEntryContinue (active));
                 ServiceContainer.Resolve<ITracker> ().SendTimerStopEvent (TimerStopSource.App);
             }
 
@@ -176,11 +151,6 @@ namespace Toggl.Phoebe._ViewModels
         {
             Collection.RestoreTimeEntryFromUndo ();
         }
-
-        public TimeEntryData GetActiveTimeEntry ()
-        {
-            return activeTimeEntryManager.ActiveTimeEntry;
-        }
         #endregion
 
         private void SyncCollectionView ()
@@ -192,11 +162,19 @@ namespace Toggl.Phoebe._ViewModels
                 IsGroupedMode ? TimeEntryGroupMethod.Single : TimeEntryGroupMethod.ByDateAndTask);
         }
 
-        private void UpdateView (bool isRunning, TimeEntryData data)
+        private void UpdateView (TimerState timerState)
         {
             ServiceContainer.Resolve<IPlatformUtils> ().DispatchOnUIThread (() => {
+
+                IsProcessingAction = false;
+                IsAppSyncing = timerState.DownloadInfo.IsSyncing;
+                HasMoreItems = timerState.DownloadInfo.HasMore;
+                HasLoadErrors = timerState.DownloadInfo.HadErrors;
+
+                var data = ActiveTimeEntry = timerState.ActiveTimeEntry;
+
                 // Check if an entry is running.
-                if (isRunning) {
+                if (data.State == TimeEntryState.Running) {
                     TimeEntryInfo info = timerState.TimeEntries[data.Id].Info;
                     Description = data.Description;
                     ProjectName = info.ProjectData != null ? info.ProjectData.Name : string.Empty;
@@ -213,13 +191,6 @@ namespace Toggl.Phoebe._ViewModels
             });
         }
 
-        private void OnActiveTimeEntryChanged (object sender, PropertyChangedEventArgs e)
-        {
-            if (e.PropertyName == ActiveTimeEntryManager.PropertyIsRunning) {
-                UpdateView (activeTimeEntryManager.IsRunning, activeTimeEntryManager.ActiveTimeEntry);
-            }
-        }
-
         private void OnSettingChanged (Toggl.Phoebe.Data.SettingChangedMessage msg)
         {
             // Implement a GetPropertyName
@@ -230,24 +201,16 @@ namespace Toggl.Phoebe._ViewModels
 
         private void OnStateUpdated (TimerState timerState)
         {
-            var info = timerState.DownloadInfo;
-            this.timerState = timerState;
-
-            ServiceContainer.Resolve<IPlatformUtils> ().DispatchOnUIThread (() => {
-                IsProcessingAction = false;
-                IsAppSyncing = info.IsSyncing;
-                HasMoreItems = info.HasMore;
-                HasLoadErrors = info.HadErrors;
-            });
+            UpdateView (timerState);
         }
 
         private void DurationTimerCallback (object sender, System.Timers.ElapsedEventArgs e)
         {
-            var duration = activeTimeEntryManager.ActiveTimeEntry.GetDuration ();  //model.GetDuration ();
-            durationTimer.Interval = 1000 - duration.Milliseconds;
-
             // Update on UI Thread
             ServiceContainer.Resolve<IPlatformUtils> ().DispatchOnUIThread (() => {
+    			var duration = ActiveTimeEntry.GetDuration ();
+				durationTimer.Interval = 1000 - duration.Milliseconds;
+
                 Duration = TimeSpan.FromSeconds (duration.TotalSeconds).ToString ().Substring (0, 8);
             });
         }

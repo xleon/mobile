@@ -18,8 +18,20 @@ namespace Toggl.Joey.UI.Adapters
 
         public const int ViewTypeLoaderPlaceholder = 0;
         public const int ViewTypeContent = 1;
-        protected ObservableCollection<T> Collection;
         protected RecyclerView Owner;
+        private readonly ObservableCollection<T> collectionData;
+
+        // Protect RecyclerCollectionDataAdapter from
+        // requirements when the Collection is null.
+        protected ObservableCollection<T> Collection
+        {
+            get {
+                if (collectionData == null) {
+                    return new ObservableCollection<T> ();
+                }
+                return collectionData;
+            }
+        }
 
         protected RecyclerCollectionDataAdapter (IntPtr a, Android.Runtime.JniHandleOwnership b) : base (a, b)
         {
@@ -27,7 +39,7 @@ namespace Toggl.Joey.UI.Adapters
 
         protected RecyclerCollectionDataAdapter (RecyclerView owner, ObservableCollection<T> collectionData)
         {
-            Collection = collectionData;
+            this.collectionData = collectionData;
             Collection.CollectionChanged += OnCollectionChanged;
             Owner = owner;
             HasStableIds = false;
@@ -86,16 +98,6 @@ namespace Toggl.Joey.UI.Adapters
             }
         }
 
-        protected T GetItem (int index)
-        {
-            return index < Collection.Count ? Collection.ElementAt (index) : default (T);
-        }
-
-        public override int GetItemViewType (int position)
-        {
-            return position >= Collection.Count ? ViewTypeLoaderPlaceholder : ViewTypeContent;
-        }
-
         public override RecyclerView.ViewHolder OnCreateViewHolder (ViewGroup parent, int viewType)
         {
             return viewType == ViewTypeLoaderPlaceholder ? GetFooterHolder (parent) : GetViewHolder (parent, viewType);
@@ -104,6 +106,16 @@ namespace Toggl.Joey.UI.Adapters
         public override void OnBindViewHolder (RecyclerView.ViewHolder holder, int position)
         {
             BindHolder (holder, position);
+        }
+
+        protected T GetItem (int index)
+        {
+            return index < Collection.Count ? Collection.ElementAt (index) : default (T);
+        }
+
+        public override int GetItemViewType (int position)
+        {
+            return position >= Collection.Count ? ViewTypeLoaderPlaceholder : ViewTypeContent;
         }
 
         public override int ItemCount

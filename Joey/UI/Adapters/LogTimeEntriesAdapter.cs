@@ -18,13 +18,23 @@ using XPlatUtils;
 
 namespace Toggl.Joey.UI.Adapters
 {
-    public class LogTimeEntriesAdapter : RecyclerCollectionDataAdapter<IHolder>
+    public interface IUndoAdapter
+    {
+        void SetItemsToNormalPosition ();
+
+        void SetItemToUndoPosition (RecyclerView.ViewHolder item);
+
+        bool IsUndo (int position);
+    }
+
+    public class LogTimeEntriesAdapter : RecyclerCollectionDataAdapter<IHolder>, IUndoAdapter
     {
         public const int ViewTypeDateHeader = ViewTypeContent + 1;
 
         private readonly Handler handler = new Handler ();
         private static readonly int ContinueThreshold = 1;
         private DateTime lastTimeEntryContinuedTime;
+        private int lastUndoIndex = -1;
         protected LogTimeEntriesViewModel ViewModel { get; private set; }
 
         public LogTimeEntriesAdapter (IntPtr a, Android.Runtime.JniHandleOwnership b) : base (a, b)
@@ -48,6 +58,12 @@ namespace Toggl.Joey.UI.Adapters
             lastTimeEntryContinuedTime = Time.UtcNow;
 
             await ViewModel.ContinueTimeEntryAsync (viewHolder.AdapterPosition);
+        }
+
+        private async void OnRemoveTimeEntry (RecyclerView.ViewHolder viewHolder)
+        {
+            lastUndoIndex = -1;
+            await ViewModel.RemoveTimeEntryAsync (viewHolder.AdapterPosition);
         }
 
         protected override RecyclerView.ViewHolder GetViewHolder (ViewGroup parent, int viewType)
@@ -77,6 +93,12 @@ namespace Toggl.Joey.UI.Adapters
             var timeEntryListItemHolder = holder as TimeEntryListItemHolder;
             if (timeEntryListItemHolder != null) {
                 timeEntryListItemHolder.Bind ((ITimeEntryHolder) GetItem (position));
+                // Set correct Undo state.
+                if (position == lastUndoIndex) {
+                    timeEntryListItemHolder.SetUndoState ();
+                } else {
+                    timeEntryListItemHolder.SetNormalState ();
+                }
             }
         }
 
@@ -100,6 +122,55 @@ namespace Toggl.Joey.UI.Adapters
             }
             base.OnViewDetachedFromWindow (holder);
         }
+
+        #region IUndo interface implementation
+        public void SetItemsToNormalPosition ()
+        {
+            var linearLayout = (LinearLayoutManager)Owner.GetLayoutManager ();
+            var firstVisible = linearLayout.FindFirstVisibleItemPosition ();
+            var lastVisible = linearLayout.FindLastVisibleItemPosition ();
+
+            for (int i = 0; i < linearLayout.ItemCount; i++) {
+                var holder = Owner.FindViewHolderForLayoutPosition (i);
+                if (holder is TimeEntryListItemHolder) {
+                    var tHolder = (TimeEntryListItemHolder)holder;
+                    if (!tHolder.IsNormalState) {
+                        var withAnim = (firstVisible < i) && (lastVisible > i);
+                        tHolder.SetNormalState (withAnim);
+                    }
+                }
+            }
+            lastUndoIndex = -1;
+        }
+
+        public async void SetItemToUndoPosition (RecyclerView.ViewHolder viewHolder)
+        {
+            // If another ViewHolder is visible and ready to Remove,
+            // just Remove it.
+            if (lastUndoIndex > -1) {
+                await ViewModel.RemoveTimeEntryAsync (lastUndoIndex);
+            }
+
+            // Save last selected ViewHolder index.
+            lastUndoIndex = viewHolder.LayoutPosition;
+
+            // Important!
+            // Refresh holder (and tell to ItemTouchHelper
+            // that actions ended over it.
+            NotifyItemChanged (viewHolder.LayoutPosition);
+
+        }
+
+        public bool IsUndo (int index)
+        {
+            // Ask to the holder about if it is Undo or not.
+            var holder =  Owner.FindViewHolderForLayoutPosition (index);
+            if (holder is TimeEntryListItemHolder) {
+                return ! ((TimeEntryListItemHolder)holder).IsNormalState;
+            }
+            return false;
+        }
+        #endregion
 
         protected override RecyclerView.ViewHolder GetFooterHolder (ViewGroup parent)
         {
@@ -185,6 +256,12 @@ namespace Toggl.Joey.UI.Adapters
             public TextView DurationTextView { get; private set; }
             public ImageButton ContinueImageButton { get; private set; }
 
+            public View SwipeLayout { get; private set; }
+            public View PreUndoLayout { get; private set; }
+            public View UndoLayout { get; private set; }
+            public View RemoveButton { get; private set; }
+            public View UndoButton { get; private set; }
+
             public TimeEntryListItemHolder (IntPtr a, Android.Runtime.JniHandleOwnership b) : base (a, b)
             {
             }
@@ -204,18 +281,70 @@ namespace Toggl.Joey.UI.Adapters
                 BillableView = root.FindViewById<View> (Resource.Id.BillableIcon);
                 DurationTextView = root.FindViewById<TextView> (Resource.Id.DurationTextView).SetFont (Font.RobotoLight);
                 ContinueImageButton = root.FindViewById<ImageButton> (Resource.Id.ContinueImageButton);
+                SwipeLayout = root.FindViewById<RelativeLayout> (Resource.Id.swipe_layout);
+                PreUndoLayout = root.FindViewById<FrameLayout> (Resource.Id.pre_undo_layout);
+                UndoButton = root.FindViewById<LinearLayout> (Resource.Id.undo_layout);
+                RemoveButton = root.FindViewById (Resource.Id.remove_button);
+                UndoButton = root.FindViewById (Resource.Id.undo_button);
+                UndoLayout = root.FindViewById (Resource.Id.undo_layout);
+
                 ContinueImageButton.SetOnTouchListener (this);
+                UndoButton.SetOnTouchListener (this);
+                RemoveButton.SetOnTouchListener (this);
             }
 
-            public bool OnTouch (View v, MotionEvent e)
+            bool View.IOnTouchListener.OnTouch (View v, MotionEvent e)
             {
+                bool returnValue = true;
                 switch (e.Action) {
-                case MotionEventActions.Up:
-                    owner.OnContinueTimeEntry (this);
-                    return false;
-                }
+                case MotionEventActions.Down:
+                    returnValue = ! (v == ContinueImageButton);
+                    break;
 
-                return false;
+                case MotionEventActions.Up:
+                    if (v == ContinueImageButton) {
+                        owner.OnContinueTimeEntry (this);
+                        returnValue = false;
+                    }
+                    if (v == RemoveButton) {
+                        owner.OnRemoveTimeEntry (this);
+                        returnValue = true;
+                    }
+                    if (v == UndoButton) {
+                        owner.SetItemsToNormalPosition();
+                        returnValue = true;
+                    }
+                    break;
+                }
+                return returnValue;
+            }
+
+            public bool IsNormalState
+            {
+                get {
+                    return SwipeLayout.TranslationX < 5;
+                }
+            }
+
+            public void SetNormalState (bool animated = false)
+            {
+                SwipeLayout.Visibility = ViewStates.Visible;
+                if (animated) {
+                    SwipeLayout.Animate().TranslationX (0).SetDuration (150);
+                } else {
+                    SwipeLayout.SetX (0);
+                }
+                PreUndoLayout.Visibility = ViewStates.Visible;
+                UndoLayout.Visibility = ViewStates.Gone;
+            }
+
+            public void SetUndoState ()
+            {
+                // Show Undo layout for selected ViewHolder
+                UndoLayout.Visibility = ViewStates.Visible;
+                PreUndoLayout.Visibility = ViewStates.Gone;
+                SwipeLayout.Visibility = ViewStates.Gone;
+                SwipeLayout.SetX (ItemView.Width);
             }
 
             public void Bind (ITimeEntryHolder datasource)
@@ -242,7 +371,7 @@ namespace Toggl.Joey.UI.Adapters
                 }
 
                 var info = DataSource.Info;
-                if (!String.IsNullOrWhiteSpace (info.ProjectData.Name)) {
+                if (!string.IsNullOrWhiteSpace (info.ProjectData.Name)) {
                     color = Color.ParseColor (ProjectModel.HexColors [info.Color % ProjectModel.HexColors.Length]);
                     ProjectTextView.SetTextColor (color);
                     ProjectTextView.Text = info.ProjectData.Name;
@@ -251,23 +380,23 @@ namespace Toggl.Joey.UI.Adapters
                     ProjectTextView.SetTextColor (ctx.Resources.GetColor (Resource.Color.dark_gray_text));
                 }
 
-                if (String.IsNullOrWhiteSpace (info.ClientData.Name)) {
-                    ClientTextView.Text = String.Empty;
+                if (string.IsNullOrWhiteSpace (info.ClientData.Name)) {
+                    ClientTextView.Text = string.Empty;
                     ClientTextView.Visibility = ViewStates.Gone;
                 } else {
-                    ClientTextView.Text = String.Format ("{0} • ", info.ClientData.Name);
+                    ClientTextView.Text = string.Format ("{0} • ", info.ClientData.Name);
                     ClientTextView.Visibility = ViewStates.Visible;
                 }
 
-                if (String.IsNullOrWhiteSpace (info.TaskData.Name)) {
-                    TaskTextView.Text = String.Empty;
+                if (string.IsNullOrWhiteSpace (info.TaskData.Name)) {
+                    TaskTextView.Text = string.Empty;
                     TaskTextView.Visibility = ViewStates.Gone;
                 } else {
-                    TaskTextView.Text = String.Format ("{0} • ", info.TaskData.Name);
+                    TaskTextView.Text = string.Format ("{0} • ", info.TaskData.Name);
                     TaskTextView.Visibility = ViewStates.Visible;
                 }
 
-                if (String.IsNullOrWhiteSpace (info.Description)) {
+                if (string.IsNullOrWhiteSpace (info.Description)) {
                     DescriptionTextView.Text = ctx.GetString (Resource.String.RecentTimeEntryNoDescription);
                 } else {
                     DescriptionTextView.Text = info.Description;

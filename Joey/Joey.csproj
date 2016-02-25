@@ -52,12 +52,6 @@
     <Reference Include="Newtonsoft.Json">
       <HintPath>..\packages\Newtonsoft.Json.7.0.1\lib\portable-net40+sl5+wp80+win8+wpa81\Newtonsoft.Json.dll</HintPath>
     </Reference>
-    <Reference Include="Xamarin.Android.Support.v4">
-      <HintPath>..\packages\Xamarin.Android.Support.v4.23.0.1.3\lib\MonoAndroid403\Xamarin.Android.Support.v4.dll</HintPath>
-    </Reference>
-    <Reference Include="Xamarin.Android.Support.v7.RecyclerView">
-      <HintPath>..\packages\Xamarin.Android.Support.v7.RecyclerView.23.0.1.3\lib\MonoAndroid403\Xamarin.Android.Support.v7.RecyclerView.dll</HintPath>
-    </Reference>
     <Reference Include="Xamarin.Android.Support.v7.AppCompat">
       <HintPath>..\packages\Xamarin.Android.Support.v7.AppCompat.23.0.1.3\lib\MonoAndroid403\Xamarin.Android.Support.v7.AppCompat.dll</HintPath>
     </Reference>
@@ -117,6 +111,12 @@
     </Reference>
     <Reference Include="Mindscape.Raygun4Net.Xamarin.Android">
       <HintPath>..\packages\Mindscape.Raygun4Net.5.2.0\lib\MonoAndroid2.2\Mindscape.Raygun4Net.Xamarin.Android.dll</HintPath>
+    </Reference>
+    <Reference Include="Xamarin.Android.Support.v4">
+      <HintPath>..\packages\Xamarin.Android.Support.v4.23.1.1.0\lib\MonoAndroid403\Xamarin.Android.Support.v4.dll</HintPath>
+    </Reference>
+    <Reference Include="Xamarin.Android.Support.v7.RecyclerView">
+      <HintPath>..\packages\Xamarin.Android.Support.v7.RecyclerView.23.1.1.0\lib\MonoAndroid403\Xamarin.Android.Support.v7.RecyclerView.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
@@ -668,7 +668,6 @@
     <AndroidResource Include="Resources\layout\LogTimeEntriesListFragment.axml" />
     <AndroidResource Include="Resources\layout\ProjectListActivityLayout.axml" />
     <AndroidResource Include="Resources\layout\ProjectListFragment.axml" />
-    <AndroidResource Include="Resources\layout\UndoBar.axml" />
     <AndroidResource Include="Resources\drawable\ToolbarBgPattern.xml" />
     <AndroidResource Include="Resources\drawable-hdpi\ToolbarBg.png" />
     <AndroidResource Include="Resources\drawable-mdpi\ToolbarBg.png" />
@@ -753,6 +752,10 @@
     <AndroidResource Include="Resources\layout\TimeEntryListFooter.xml" />
     <AndroidResource Include="Resources\drawable\obm90.png" />
     <AndroidResource Include="Resources\drawable\ItemSyncError.xml" />
+    <AndroidResource Include="Resources\drawable-hdpi\ic_delete_white_24dp.png" />
+    <AndroidResource Include="Resources\drawable-mdpi\ic_delete_white_24dp.png" />
+    <AndroidResource Include="Resources\drawable-xhdpi\ic_delete_white_24dp.png" />
+    <AndroidResource Include="Resources\drawable-xxhdpi\ic_delete_white_24dp.png" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Xamarin\Android\Xamarin.Android.CSharp.targets" />
   <ItemGroup>

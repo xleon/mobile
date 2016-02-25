@@ -293,25 +293,30 @@ namespace Toggl.Joey.UI.Adapters
                 RemoveButton.SetOnTouchListener (this);
             }
 
-            public bool OnTouch (View v, MotionEvent e)
+            bool View.IOnTouchListener.OnTouch (View v, MotionEvent e)
             {
+                bool returnValue = true;
                 switch (e.Action) {
                 case MotionEventActions.Down:
+                    returnValue = ! (v == ContinueImageButton);
+                    break;
+
+                case MotionEventActions.Up:
                     if (v == ContinueImageButton) {
                         owner.OnContinueTimeEntry (this);
-                        return true;
+                        returnValue = false;
                     }
                     if (v == RemoveButton) {
                         owner.OnRemoveTimeEntry (this);
-                        return true;
+                        returnValue = true;
                     }
                     if (v == UndoButton) {
-                        owner.SetItemsToNormalPosition ();
-                        return true;
+                        owner.SetItemsToNormalPosition();
+                        returnValue = true;
                     }
-                    return false;
+                    break;
                 }
-                return false;
+                return returnValue;
             }
 
             public bool IsNormalState

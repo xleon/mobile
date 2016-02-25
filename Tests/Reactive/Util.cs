@@ -102,7 +102,8 @@ namespace Toggl.Phoebe.Tests.Reactive
                     clients: new Dictionary<Guid, ClientData> (),
                     tasks: new Dictionary<Guid, TaskData> (),
                     tags: new Dictionary<Guid, TagData> (),
-                    timeEntries: new Dictionary<Guid, RichTimeEntry> ());
+                    timeEntries: new Dictionary<Guid, RichTimeEntry> (),
+                    activeTimeEntry: null);
 
             return new AppState (timerState);
         }

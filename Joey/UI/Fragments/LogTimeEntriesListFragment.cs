@@ -203,7 +203,7 @@ namespace Toggl.Joey.UI.Fragments
         public override bool OnOptionsItemSelected (IMenuItem item)
         {
             var i = new Intent (Activity, typeof (EditTimeEntryActivity));
-            i.PutStringArrayListExtra (EditTimeEntryActivity.ExtraGroupedTimeEntriesGuids, new List<string> { ViewModel.GetActiveTimeEntry ().Id.ToString ()});
+            i.PutStringArrayListExtra (EditTimeEntryActivity.ExtraGroupedTimeEntriesGuids, new List<string> { ViewModel.ActiveTimeEntry.Id.ToString ()});
             Activity.StartActivity (i);
 
             return base.OnOptionsItemSelected (item);

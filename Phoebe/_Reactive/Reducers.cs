@@ -34,7 +34,8 @@ namespace Toggl.Phoebe._Reactive
 
         static DataSyncMsg<TimerState> TimeEntriesSync (TimerState state, DataMsg msg)
         {
-            return DataSyncMsg.Create (state, isSyncRequested: true);
+            var newState = state.With (downloadInfo: state.DownloadInfo.With (isSyncing: true));
+            return DataSyncMsg.Create (newState, isSyncRequested: true);
         }
 
         static DataSyncMsg<TimerState> TimeEntriesLoad (TimerState state, DataMsg msg)
@@ -56,6 +57,7 @@ namespace Toggl.Phoebe._Reactive
 
             var downloadInfo =
                 state.DownloadInfo.With (
+                    isSyncing: true,
                     downloadFrom: endDate,
                     nextDownloadFrom: dbEntries.Any ()
                     ? dbEntries.Min (x => x.StartTime)
@@ -103,7 +105,7 @@ namespace Toggl.Phoebe._Reactive
 
             return DataSyncMsg.Create (
                     state.With (
-                        downloadInfo: state.DownloadInfo.With (hasMore: hasMore, hadErrors: false),
+                        downloadInfo: state.DownloadInfo.With (isSyncing: false, hasMore: hasMore, hadErrors: false),
                         workspaces: state.Update (state.Workspaces, updated),
                         projects: state.Update (state.Projects, updated),   
                         workspaceUsers: state.Update (state.WorkspaceUsers, updated),
@@ -117,8 +119,7 @@ namespace Toggl.Phoebe._Reactive
                     ));
             },
             ex => DataSyncMsg.Create (
-                state.With (downloadInfo: state.DownloadInfo.With (hadErrors: true)))
-                   );
+                state.With (downloadInfo: state.DownloadInfo.With (isSyncing: false, hadErrors: true))));
         }
 
         static DataSyncMsg<TimerState> TimeEntryPut (TimerState state, DataMsg msg)

@@ -2,7 +2,6 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
-using System.Threading.Tasks;
 using GalaSoft.MvvmLight;
 using PropertyChanged;
 using Toggl.Phoebe.Analytics;
@@ -14,7 +13,6 @@ using Toggl.Phoebe._Data;
 using Toggl.Phoebe._Data.Models;
 using Toggl.Phoebe._Helpers;
 using Toggl.Phoebe._Reactive;
-using Toggl.Phoebe._ViewModels;
 using Toggl.Phoebe._ViewModels.Timer;
 using XPlatUtils;
 
@@ -23,15 +21,31 @@ namespace Toggl.Phoebe._ViewModels
     [ImplementPropertyChanged]
     public class LogTimeEntriesVM : ViewModelBase, IDisposable
     {
-        private readonly Timer durationTimer;
-        private Subscription<SettingChangedMessage> subscriptionSettingChanged;
-        private Subscription<SyncFinishedMessage> subscriptionSyncFinished;
-        private Subscription<UpdateFinishedMessage> subscriptionUpdateFinished;
-        private TimeEntriesFeed collectionFeed;
+        private Subscription<Toggl.Phoebe.Data.SettingChangedMessage> subscriptionSettingChanged;
+        private readonly System.Timers.Timer durationTimer;
         private readonly ActiveTimeEntryManager activeTimeEntryManager;
+        private readonly IDisposable subscriptionState;
 
-        LogTimeEntriesVM ()
+        private object __timerStateLock = new object ();
+        private TimerState __timerStateUnsafe;
+        private TimerState timerState
         {
+            get {
+                lock (__timerStateLock) {
+                    return __timerStateUnsafe;
+                }
+            }
+            set {
+                lock (__timerStateLock) {
+                    __timerStateUnsafe = value;
+                }
+            }
+        }
+
+        public LogTimeEntriesVM (TimerState timerState)
+        {
+            this.timerState = timerState;
+
             // durationTimer will update the Duration value if ActiveTimeEntry is running
             durationTimer = new System.Timers.Timer ();
             durationTimer.Elapsed += DurationTimerCallback;
@@ -42,8 +56,9 @@ namespace Toggl.Phoebe._ViewModels
 
             var bus = ServiceContainer.Resolve<MessageBus> ();
             subscriptionSettingChanged = bus.Subscribe<Toggl.Phoebe.Data.SettingChangedMessage> (OnSettingChanged);
-//            subscriptionSyncFinished = bus.Subscribe<SyncFinishedMessage> (OnSyncFinished);
-//            subscriptionUpdateFinished = bus.Subscribe<UpdateFinishedMessage> (OnUpdateItemsFinished);
+            subscriptionState = StoreManager.Singleton
+                                            .Observe (app => app.TimerState)
+                                            .Subscribe (OnStateUpdated);
 
             HasMoreItems = true;
             HasLoadErrors = false;
@@ -53,12 +68,6 @@ namespace Toggl.Phoebe._ViewModels
             SyncCollectionView ();
         }
 
-        public static LogTimeEntriesVM Init ()
-        {
-            var vm = new LogTimeEntriesVM ();
-            return vm;
-        }
-
         public void Dispose ()
         {
             var bus = ServiceContainer.Resolve<MessageBus> ();
@@ -66,15 +75,9 @@ namespace Toggl.Phoebe._ViewModels
                 bus.Unsubscribe (subscriptionSettingChanged);
                 subscriptionSettingChanged = null;
             }
-//            if (subscriptionSyncFinished != null) {
-//                bus.Unsubscribe (subscriptionSyncFinished);
-//                subscriptionSyncFinished = null;
-//            }
-//            if (subscriptionUpdateFinished != null) {
-//                bus.Unsubscribe (subscriptionUpdateFinished);
-//                subscriptionUpdateFinished = null;
-//            }
-
+            if (subscriptionState != null) {
+                subscriptionState.Dispose ();
+            }
             activeTimeEntryManager.PropertyChanged -= OnActiveTimeEntryChanged;
             durationTimer.Elapsed -= DurationTimerCallback;
             DisposeCollection ();
@@ -145,10 +148,11 @@ namespace Toggl.Phoebe._ViewModels
 
             if (timeEntryHolder.Data.State == TimeEntryState.Running) {
                 RxChain.Send (new DataMsg.TimeEntryStop (timeEntryHolder.Data));
-                ServiceContainer.Resolve<ITracker>().SendTimerStopEvent (TimerStopSource.App);
-            } else {
+                ServiceContainer.Resolve<ITracker> ().SendTimerStopEvent (TimerStopSource.App);
+            }
+            else {
                 RxChain.Send (new DataMsg.TimeEntryContinue (timeEntryHolder.Data));
-                ServiceContainer.Resolve<ITracker>().SendTimerStartEvent (TimerStartSource.AppContinue);
+                ServiceContainer.Resolve<ITracker> ().SendTimerStartEvent (TimerStartSource.AppContinue);
             }
         }
 
@@ -168,16 +172,16 @@ namespace Toggl.Phoebe._ViewModels
             var active = activeTimeEntryManager.ActiveTimeEntry;
             if (active.State == TimeEntryState.Running) {
                 RxChain.Send (new DataMsg.TimeEntryStop (active));
-            } else {
+            }
+            else {
                 RxChain.Send (new DataMsg.TimeEntryContinue (active));
             }
-            // TODO: This must be at the end of the Reactive chain
-            IsProcessingAction = false;
 
-            if (active.State == TimeEntryState.Running) {
-                ServiceContainer.Resolve<ITracker>().SendTimerStartEvent (TimerStartSource.AppNew);
-            } else {
-                ServiceContainer.Resolve<ITracker>().SendTimerStopEvent (TimerStopSource.App);
+            if (activeTimeEntryManager.IsRunning) {
+                ServiceContainer.Resolve<ITracker> ().SendTimerStartEvent (TimerStartSource.AppNew);
+            }
+            else {
+                ServiceContainer.Resolve<ITracker> ().SendTimerStopEvent (TimerStopSource.App);
             }
 
             // Welcome wizard isn't needed after a time entry is started / stopped.
@@ -192,7 +196,7 @@ namespace Toggl.Phoebe._ViewModels
             return TimeEntryModel.DeleteTimeEntryDataAsync (te.Data);
         }
 
-        public TimeEntryData GetActiveTimeEntry ()
+        public void RestoreItemFromUndo ()
         {
             return activeTimeEntryManager.ActiveTimeEntry;
         }
@@ -212,29 +216,22 @@ namespace Toggl.Phoebe._ViewModels
             DisposeCollection ();
             IsGroupedMode = ServiceContainer.Resolve<Toggl.Phoebe.Data.ISettingsStore> ().GroupedTimeEntries;
 
-            collectionFeed = new TimeEntriesFeed ();
-            Collection = IsGroupedMode
-                         ?        (ObservableCollection<IHolder>)new TimeEntriesCollection<TimeEntryGroup> (collectionFeed)
-                         : new TimeEntriesCollection<TimeEntryHolder> (collectionFeed);
-            Collection.CollectionChanged += OnDetectHasItems;
+            Collection = new TimeEntryCollectionVM (
+                IsGroupedMode ? TimeEntryGroupMethod.Single : TimeEntryGroupMethod.ByDateAndTask);
         }
 
         private void UpdateView (TimeEntryData data)
         {
-            ServiceContainer.Resolve<IPlatformUtils> ().DispatchOnUIThread (async () => {
-
-                if (data.State == TimeEntryState.Running) {
-                    Description = string.IsNullOrEmpty (data.Description) ? string.Empty : data.Description;
-                    if (data.ProjectId != null) {
-                        var prj = await TimeEntryModel.GetProjectDataAsync (data.ProjectId.Value);
-                        ProjectName = prj.Name;
-                    } else {
-                        ProjectName = string.Empty;
-                    }
+            ServiceContainer.Resolve<IPlatformUtils> ().DispatchOnUIThread (() => {
+                // Check if an entry is running.
+                if (isRunning) {
+                    TimeEntryInfo info = timerState.TimeEntries[data.Id].Info;
+                    Description = data.Description;
+                    ProjectName = info.ProjectData != null ? info.ProjectData.Name : string.Empty;
                     IsTimeEntryRunning = true;
                     durationTimer.Start ();
-                } else {
-                    IsTimeEntryRunning = false;
+                }
+                else {
                     Description = string.Empty;
                     ProjectName = string.Empty;
                     durationTimer.Stop ();
@@ -258,25 +255,16 @@ namespace Toggl.Phoebe._ViewModels
             }
         }
 
-        void OnLoadFinished (object sender, TimeEntryCollectionVM.LoadFinishedArgs args)
+        private void OnStateUpdated (TimerState timerState)
         {
-            ServiceContainer.Resolve<IPlatformUtils> ().DispatchOnUIThread (() => {
-                HasMoreItems = args.HasMore;
-                HasLoadErrors = args.HasErrors;
-            });
-        }
+            var info = timerState.DownloadInfo;
+            this.timerState = timerState;
 
-//        private void OnSyncFinished (SyncFinishedMessage msg)
-//        {
-//            ServiceContainer.Resolve<IPlatformUtils> ().DispatchOnUIThread (() => {
-//                IsAppSyncing = false;
-//            });
-//        }
-
-        private void OnDetectHasItems (object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
-        {
             ServiceContainer.Resolve<IPlatformUtils> ().DispatchOnUIThread (() => {
-                HasItems = Collection.Count > 0;
+                IsProcessingAction = false;
+                IsAppSyncing = info.IsSyncing;
+                HasMoreItems = info.HasMore;
+                HasLoadErrors = info.HadErrors;
             });
         }
 

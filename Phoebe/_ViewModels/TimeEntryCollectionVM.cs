@@ -18,18 +18,10 @@ namespace Toggl.Phoebe._ViewModels
 {
     public class TimeEntryCollectionVM : ObservableRangeCollection<IHolder>, ICollectionData<IHolder>
     {
-        public class LoadFinishedArgs : EventArgs
-        {
-            public bool HasMore { get; set; }
-            public bool HasErrors { get; set; }
-        }
-
         IDisposable disposable;
         ITimeEntryHolder lastRemovedItem;
         TimeEntryGrouper grouper;
         System.Timers.Timer undoTimer = new System.Timers.Timer ();
-
-        public event EventHandler<LoadFinishedArgs> LoadFinished;
 
         public IEnumerable<IHolder> Data
         {

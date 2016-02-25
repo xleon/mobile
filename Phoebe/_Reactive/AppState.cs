@@ -161,15 +161,17 @@ namespace Toggl.Phoebe._Reactive
 
     public class DownloadInfo
     {
+        public bool IsSyncing { get; private set; }
         public bool HasMore { get; private set; }
         public bool HadErrors { get; private set; }
         public DateTime DownloadFrom { get; private set; }
         public DateTime NextDownloadFrom { get; private set; }
 
         public DownloadInfo (
-            bool hasMore, bool hadErrors,
+            bool isSyncing, bool hasMore, bool hadErrors,
             DateTime downloadFrom, DateTime nextDownloadFrom)
         {
+            IsSyncing = isSyncing;
             HasMore = hasMore;
             HadErrors = hadErrors;
             DownloadFrom = downloadFrom;
@@ -177,16 +179,18 @@ namespace Toggl.Phoebe._Reactive
         }
 
         public DownloadInfo With (
+            bool? isSyncing = null,
             bool? hasMore = null,
             bool? hadErrors = null,
             DateTime? downloadFrom = null,
             DateTime? nextDownloadFrom = null)
         {
             return new DownloadInfo (
-                       hasMore.HasValue ? hasMore.Value : this.HasMore,
-                       hadErrors.HasValue ? hadErrors.Value : this.HadErrors,
-                       downloadFrom.HasValue ? downloadFrom.Value : this.DownloadFrom,
-                       nextDownloadFrom.HasValue ? nextDownloadFrom.Value : this.NextDownloadFrom);
+                isSyncing.HasValue ? isSyncing.Value : this.IsSyncing,
+                hasMore.HasValue ? hasMore.Value : this.HasMore,
+                hadErrors.HasValue ? hadErrors.Value : this.HadErrors,
+                downloadFrom.HasValue ? downloadFrom.Value : this.DownloadFrom,
+                nextDownloadFrom.HasValue ? nextDownloadFrom.Value : this.NextDownloadFrom);
         }
     }
 

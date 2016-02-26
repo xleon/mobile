@@ -283,10 +283,7 @@ namespace Toggl.Ross.ViewControllers
                 var holder = collection.ElementAt (rowIndex) as ITimeEntryHolder;
 
                 var teData = (TimeEntryModel)holder.Data;
-                List<TagData> tags = new List<TagData> ();
-                if (holder.Info.NumberOfTags > 0) {
-                    tags = await ServiceContainer.Resolve<IDataStore> ().GetTimeEntryTags (teData.Id);
-                }
+                List<TagData> tags = await ServiceContainer.Resolve<IDataStore> ().GetTimeEntryTags (teData.Id);
                 owner.NavigationController.PushViewController (new EditTimeEntryViewController (teData, tags), true);
             }
 

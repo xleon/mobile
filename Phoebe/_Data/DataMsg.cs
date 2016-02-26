@@ -153,16 +153,15 @@ namespace Toggl.Phoebe._Data
 
         public sealed class TagsPut : DataMsg
         {
-            public Either<Tuple<ITimeEntryData,IEnumerable<TagData>>, Exception> Data
+            public Either<IEnumerable<TagData>, Exception> Data
             {
-                get { return RawData.CastLeft<Tuple<ITimeEntryData,IEnumerable<TagData>>> (); }
+                get { return RawData.CastLeft<IEnumerable<TagData>> (); }
                 set { RawData = value.CastLeft<object> (); }
             }
 
-            public TagsPut (ITimeEntryData timeEntry, IEnumerable<TagData> tags)
+            public TagsPut (IEnumerable<TagData> tags)
             {
-                Data = Either<Tuple<ITimeEntryData,IEnumerable<TagData>>, Exception>.Left (
-                    Tuple.Create (timeEntry, tags));
+                Data = Either<IEnumerable<TagData>, Exception>.Left (tags);
             }
         }
 

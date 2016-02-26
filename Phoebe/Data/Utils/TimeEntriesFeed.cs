@@ -78,7 +78,10 @@ namespace Toggl.Phoebe.Data.Utils
 
             if (subject != null) {
                 subject.Dispose ();
-                subject = null;
+                // TODO: Remove nullification
+                // to avoid a wrong call. This kind of fixes will be
+                // replaced with a Fragment navigation system.
+                //subject = null;
             }
         }
 

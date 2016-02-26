@@ -28,6 +28,8 @@ namespace Toggl.Phoebe._Data.Models
         Guid ProjectId { get; }
         Guid TaskId { get; }
         IReadOnlyList<string> Tags { get; }
+
+        ITimeEntryData With (Action<TimeEntryData> transform);
     }
 
     [Table ("TimeEntryModel")]
@@ -56,7 +58,14 @@ namespace Toggl.Phoebe._Data.Models
             TaskRemoteId = other.TaskRemoteId;
         }
 
-        public object Clone ()
+        public ITimeEntryData With (Action<TimeEntryData> transform)
+        {
+            var newEntry = new TimeEntryData (this);
+            transform (newEntry);
+            return newEntry;
+        }
+
+        public new object Clone ()
         {
             return new TimeEntryData (this);
         }

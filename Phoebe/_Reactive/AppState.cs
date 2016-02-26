@@ -154,8 +154,13 @@ namespace Toggl.Phoebe._Reactive
 
         public RichTimeEntry (ITimeEntryData data, TimeEntryInfo info)
         {
+			Data = (ITimeEntryData)data.Clone ();
             Info = info;
-            Data = (ITimeEntryData)data.Clone ();
+        }
+
+        public RichTimeEntry (TimerState timerState, ITimeEntryData data)
+            : this(data, timerState.LoadTimeEntryInfo (data))
+        {
         }
     }
 
@@ -343,6 +348,21 @@ namespace Toggl.Phoebe._Reactive
             return Projects.Values.Where (
                 p => p.IsActive && (p.IsPrivate || ProjectUsers.Values.Any (x => x.ProjectId == p.Id && x.UserId == userId)))
                            .OrderBy (p => p.Name);
+        }
+
+        public TimeEntryData GetTimeEntryDraft ()
+        {
+            var userId = User.Id;
+            var workspaceId = User.DefaultWorkspaceId;
+            var durationOnly = User.TrackingMode == TrackingMode.Continue;
+
+            // Create new draft object
+            return new TimeEntryData {
+                State = TimeEntryState.New,
+                UserId = userId,
+                WorkspaceId = workspaceId,
+                DurationOnly = durationOnly,
+            };
         }
     }
 }

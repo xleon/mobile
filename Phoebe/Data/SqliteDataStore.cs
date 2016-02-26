@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using SQLite.Net;
 using SQLite.Net.Async;
 using SQLite.Net.Interop;
+using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
 
@@ -28,12 +29,12 @@ namespace Toggl.Phoebe.Data
             subscriptionAuthChanged = bus.Subscribe<AuthChangedMessage> (OnAuthChanged);
 
             CreateTables();
-            CleanOldDraftEntry ();
+            DatabaseCleanUp ();
         }
 
         internal static IEnumerable<Type> DiscoverDataObjectTypes ()
         {
-            var dataType = typeof (Toggl.Phoebe.Data.DataObjects.TimeEntryData);
+            var dataType = typeof (TimeEntryData);
             return from t in dataType.Assembly.GetTypes ()
                    where t.Namespace == dataType.Namespace && !t.IsAbstract
                    select t;
@@ -47,12 +48,30 @@ namespace Toggl.Phoebe.Data
             }
         }
 
-        private void CleanOldDraftEntry ()
+        private void DatabaseCleanUp ()
         {
             // TODO: temporal method to clear old
             // draft entries from DB. It should be removed
             // in next versions.
-            cnn.Table <Toggl.Phoebe.Data.DataObjects.TimeEntryData> ().Delete (t => t.State == TimeEntryState.New);
+            cnn.Table <TimeEntryData> ().Delete (t => t.State == TimeEntryState.New);
+
+            // TODO: temporal method to clear
+            // data with wrong workspace defined.
+            var user = cnn.Table <UserData> ().FirstOrDefault ();
+            if (user != null && user.DefaultWorkspaceId != Guid.Empty) {
+                var tableNames = new List<string>  { cnn.Table<TimeEntryData>().Table.TableName,
+                                                     cnn.Table<ClientData>().Table.TableName,
+                                                     cnn.Table<ProjectData>().Table.TableName,
+                                                     cnn.Table<TagData>().Table.TableName,
+                                                     cnn.Table<TaskData>().Table.TableName
+                                                   };
+                cnn.RunInTransaction (() =>  {
+                    foreach (var tableName in tableNames) {
+                        var q = string.Concat ("UPDATE ", tableName ," SET WorkspaceId = '", user.DefaultWorkspaceId ,"' WHERE WorkspaceId = '", Guid.Empty, "'");
+                        cnn.Execute (q);
+                    }
+                });
+            }
         }
 
         private void WipeTables ()
@@ -115,6 +134,11 @@ namespace Toggl.Phoebe.Data
 
         public async Task<T> PutAsync<T> (T obj) where T : class, new()
         {
+            // TODO: Patch for release 8.1.2 to avoid empty workspaces
+            if (Context.DetectEmptyWorkspaces<T> (obj)) {
+                obj = Context.FixEmptyWorkspaces<T> (cnn, obj);
+            }
+
             obj = Clone (obj);
             var success = await CreateAsyncCnn().InsertOrReplaceAsync (obj) == 1;
             if (success) {
@@ -170,7 +194,7 @@ namespace Toggl.Phoebe.Data
             }
         }
 
-        public async Task ExecuteInTransactionAsync (Action<IDataStoreContext> worker)
+        public async Task ExecuteInTransactionAsync (Action<IDataStoreContext>  worker)
         {
             try {
                 Context ctx = null;
@@ -199,8 +223,13 @@ namespace Toggl.Phoebe.Data
             }
 
             public T Put<T> (T obj)
-            where T : new()
+            where T : class, new()
             {
+                // TODO: Patch for release 8.1.2 to avoid empty workspaces
+                if (DetectEmptyWorkspaces<T> (obj)) {
+                    obj = FixEmptyWorkspaces<T> (conn, obj);
+                }
+
                 var success = conn.InsertOrReplace (obj) == 1;
                 if (success) {
                     // Schedule message to be sent about this update post transaction
@@ -217,6 +246,60 @@ namespace Toggl.Phoebe.Data
                     Messages.Add (new DataChangeMessage (store, obj, DataAction.Delete));
                 }
                 return success;
+            }
+
+            public static bool DetectEmptyWorkspaces<T> (T obj)
+            {
+                if (obj is TimeEntryData) {
+                    var t = obj as TimeEntryData;
+                    return t.WorkspaceId == Guid.Empty;
+                } else if (obj is ProjectData) {
+                    var t = obj as ProjectData;
+                    return t.WorkspaceId == Guid.Empty;
+                } else if (obj is ClientData) {
+                    var t = obj as ClientData;
+                    return t.WorkspaceId == Guid.Empty;
+                } else if (obj is TaskData) {
+                    var t = obj as TaskData;
+                    return t.WorkspaceId == Guid.Empty;
+                } else if (obj is TagData) {
+                    var t = obj as TagData;
+                    return t.WorkspaceId == Guid.Empty;
+                }
+                return false;
+            }
+
+            public static T FixEmptyWorkspaces<T> (SQLiteConnection cnn, T obj) where T : class, new()
+            {
+                // TODO: temporal method to clear
+                // data with wrong workspace defined.
+                var user = cnn.Table <UserData> ().FirstOrDefault ();
+
+                if (user != null && user.DefaultWorkspaceId != Guid.Empty) {
+                    if (obj is TimeEntryData) {
+                        var t = obj as TimeEntryData;
+                        t.WorkspaceId = user.DefaultWorkspaceId;
+                        return t as T;
+                    } else if (obj is ProjectData) {
+                        var t = obj as ProjectData;
+                        t.WorkspaceId = user.DefaultWorkspaceId;
+                        return t as T;
+                    } else if (obj is ClientData) {
+                        var t = obj as ClientData;
+                        t.WorkspaceId = user.DefaultWorkspaceId;
+                        return t as T;
+                    } else if (obj is TaskData) {
+                        var t = obj as TaskData;
+                        t.WorkspaceId = user.DefaultWorkspaceId;
+                        return t as T;
+                    } else if (obj is TagData) {
+                        var t = obj as TagData;
+                        t.WorkspaceId = user.DefaultWorkspaceId;
+                        return t as T;
+                    }
+                }
+
+                return obj;
             }
 
             public SQLiteConnection Connection

@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using GalaSoft.MvvmLight;
-using PropertyChanged;
 using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe._Data;
 using Toggl.Phoebe._Data.Models;
@@ -12,50 +11,62 @@ using XPlatUtils;
 
 namespace Toggl.Phoebe._ViewModels
 {
-    [ImplementPropertyChanged]
     public class EditTimeEntryVM : ViewModelBase, IDisposable
     {
         internal static readonly string DefaultTag = "mobile";
 
         private TimerState timerState;
-        private TimeEntryData model;
-        private TimeEntryInfo modelInfo;
+        private RichTimeEntry richData;
+        private RichTimeEntry initialData;
         private System.Timers.Timer durationTimer;
 
-        private void Init ()
+        private void Init (TimerState timerState, TimeEntryData timeData, List<string> tagList)
         {
             durationTimer = new System.Timers.Timer ();
-            IsManual = model.Id == Guid.Empty;
-
             durationTimer.Elapsed += DurationTimerCallback;
 
-            ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Edit Time Entry";
-            UpdateView ();
-        }
-
-        public EditTimeEntryVM (TimerState timerState, Guid workspaceId)
-        {
-			var tagList = GetDefaultTagList (timerState, workspaceId);
             this.timerState = timerState;
-            this.model = new TimeEntryData {
-                Id = Guid.NewGuid (),
-                WorkspaceId = workspaceId,
-                StartTime = Time.UtcNow.AddMinutes (-5),
-                StopTime = Time.UtcNow,
-                State = TimeEntryState.Finished,
-                Tags = tagList.Select (x => x.Name).ToList ()
-            };
-            this.modelInfo = timerState.LoadTimeEntryInfo (model).With (tags: tagList);
+			IsManual = timeData.Id == Guid.Empty;
+            richData = new RichTimeEntry (timerState, timeData);
 
-            Init ();
+            UpdateView (x => {
+                x.Tags = tagList;
+                if (IsManual) {
+                    x.StartTime = Time.UtcNow.AddMinutes (-5);
+                    x.StopTime = Time.UtcNow;
+                    x.State = TimeEntryState.Finished;
+                }
+            });
+
+            // Save previous state.
+            initialData = IsManual
+				// Hack to force tag saving even if there're no other changes
+                ? new RichTimeEntry (timerState, richData.Data.With (x => x.Tags = new List<string> ()))
+                : new RichTimeEntry (richData.Data, richData.Info);
+
+            ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Edit Time Entry";
         }
 
-        public EditTimeEntryVM (TimerState timerState, ITimeEntryData timeEntry, TimeEntryInfo timeEntryInfo)
+        public EditTimeEntryVM (TimerState timerState, Guid timeEntryId)
         {
-            model = new TimeEntryData (timeEntry);
-            modelInfo = timeEntryInfo;
+            TimeEntryData data;
+            List<string> tagList;
 
-            Init ();
+            if (timeEntryId == Guid.Empty) {
+                data = timerState.GetTimeEntryDraft ();
+                tagList = GetDefaultTagList (timerState, data.WorkspaceId).Select (x => x.Name).ToList ();
+            } else {
+                var richTe = timerState.TimeEntries[timeEntryId];
+                data = new TimeEntryData (richTe.Data);
+                tagList = new List<string> (richTe.Data.Tags);
+            }
+
+            Init (timerState, data, tagList);
+        }
+
+        public EditTimeEntryVM (TimerState timerState, ITimeEntryData timeEntryData, List<string> tagList)
+        {
+            Init (timerState, new TimeEntryData (timeEntryData), tagList);
         }
 
         public void Dispose ()
@@ -65,99 +76,118 @@ namespace Toggl.Phoebe._ViewModels
         }
 
         #region viewModel State properties
-		public IEnumerable<TagData> TagList
-        {
-            get { return modelInfo.Tags; }
-        }
-
-        public bool IsPremium { get; private set; }
-
-        public bool IsRunning { get; private set; }
-
         public bool IsManual { get; private set; }
 
-        public string Duration { get; private set; }
+        public string Duration {
+            get {
+                // TODO: check substring function for long times
+                return TimeSpan.FromSeconds (richData.Data.GetDuration ().TotalSeconds)
+                               .ToString ().Substring (0, 8);
+            }
+        }
 
-        public DateTime StartDate { get; private set; }
+        public DateTime StartData {
+            get {
+                return richData.Data.StartTime == DateTime.MinValue
+                               ? DateTime.UtcNow.AddMinutes (-1).ToLocalTime ()
+                               : richData.Data.StartTime.ToLocalTime ();
+            }
+        }
 
-        public DateTime StopDate { get; private set; }
+        public DateTime StopDate {
+            get {
+                return richData.Data.StopTime.HasValue
+                           ? richData.Data.StopTime.Value.ToLocalTime ()
+                           : DateTime.UtcNow.ToLocalTime ();
+            }
+        }
 
-        public string ProjectName { get; private set; }
+        public string ProjectColorHex {
+            get {
+                return richData.Info.ProjectData.Id != Guid.Empty
+                               ? ProjectData.HexColors[richData.Info.ProjectData.Color % ProjectData.HexColors.Length]
+                               : ProjectData.HexColors[ProjectData.DefaultColor];
+            }
+        }
 
-        public string ClientName { get; private set; }
+        public bool IsRunning { get { return richData.Data.State == TimeEntryState.Running; } }
+        public string Description { get { return richData.Data.Description ?? ""; } }
+        public bool IsBillable { get { return richData.Data.IsBillable; } }
+        public bool IsPremium { get { return richData.Info.WorkspaceData.IsPremium; } }
+        public Guid WorkspaceId { get { return richData.Data.WorkspaceId; } }
 
-        public string Description { get; private set; }
-
-        public bool IsBillable { get; private set; }
-
-        public Guid WorkspaceId { get; private set; }
+        public string ProjectName { get { return richData.Info.ProjectData.Name ?? ""; } }
+        public string TaskName { get { return richData.Info.TaskData.Name ?? ""; } }
+        public string ClientName { get { return richData.Info.ClientData.Name ?? ""; } }
+        public IReadOnlyList<TagData> TagList { get { return richData.Info.Tags; } }
 
         #endregion
 
-        public void SetProjectAndTask (Guid workspaceId, Guid projectId, Guid taskId)
+        public void ChangeProjectAndTask (Guid workspaceId, Guid projectId, Guid taskId)
         {
-            // TODO: Check taskId == Guid.Empty if projectId == Guid.Empty?
-            // TODO: What to do with tags if project has changed?
-
-            model = new TimeEntryData (model) {
-                WorkspaceId = workspaceId,
-                ProjectId = projectId,
-                TaskId = taskId
-            };
-            modelInfo = timerState.LoadTimeEntryInfo (model);
-
-            UpdateView ();
+            if (projectId != richData.Data.ProjectId || taskId != richData.Data.TaskId) {
+                UpdateView (x => {
+                    x.ProjectId = projectId;
+                    x.TaskId = taskId;
+                });
+            }
         }
 
         public void ChangeTimeEntryDuration (TimeSpan newDuration)
         {
-            model.SetDuration (newDuration);
-            UpdateView ();
+            UpdateView (x => x.SetDuration (newDuration));
             ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Change Duration";
         }
 
         public void ChangeTimeEntryStart (TimeSpan diffTime)
         {
-            model.StartTime += diffTime;
-            UpdateView ();
+            UpdateView (x => x.StartTime += diffTime);
             ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Change Start Time";
         }
 
         public void ChangeTimeEntryStop (TimeSpan diffTime)
         {
-            model.StopTime += diffTime;
-            if (diffTime.TotalSeconds > 0) {
-
-                model.StartTime = model.StartTime.Truncate (TimeSpan.TicksPerMinute);
-                model.StopTime = ((DateTime)model.StopTime).Truncate (TimeSpan.TicksPerMinute);
-            }
-            UpdateView ();
-
+            UpdateView (x => {
+                x.StopTime += diffTime;
+                if (diffTime.TotalSeconds > 0) {
+                    x.StartTime = x.StartTime.Truncate (TimeSpan.TicksPerMinute);
+                    x.StopTime = ((DateTime)x.StopTime).Truncate (TimeSpan.TicksPerMinute);
+				}
+            });
             ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Change Stop Time";
         }
 
-        public void ChangeTagList (List<TagData> newTagList)
+        public void ChangeTagList (IEnumerable<string> newTags)
         {
-            modelInfo = modelInfo.With (tags: newTagList);
-            RaisePropertyChanged (() => TagList);
+            UpdateView (x => x.Tags = newTags.ToList (), nameof (TagList));
         }
 
-        public void AddTag (TagData tagData)
+        public void ChangeDescription (string description)
         {
-            modelInfo = modelInfo.With (tags: modelInfo.Tags.Append (tagData).ToList ());
-            RaisePropertyChanged (() => TagList);
+            UpdateView (x => x.Description = description, nameof (Description));
+        }
+
+        public void ChangeBillable (bool billable)
+        {
+            UpdateView (x => x.IsBillable = billable, nameof (IsBillable));
         }
 
         public void Save ()
         {
-            if (IsManual) {
-                return;
+            if (!IsManual) {
+                // TODO TODO TODO: Structural equality
+                bool isStructurallyEqual = initialData == richData;
+
+                if (!isStructurallyEqual) {
+                    RxChain.Send (new DataMsg.TimeEntryPut (richData.Data));
+                    RxChain.Send (new DataMsg.TagsPut (TagList));
+                }
             }
+        }
 
-            model.IsBillable = IsBillable;
-            model.Description = Description;
-
-            RxChain.Send (new DataMsg.TagsPut (model, TagList));
+        public void Delete ()
+        {
+            RxChain.Send (new DataMsg.TimeEntryDelete (richData.Data));
         }
 
         public void SaveManual ()
@@ -166,40 +196,67 @@ namespace Toggl.Phoebe._ViewModels
             Save ();
         }
 
-        private void UpdateView ()
+        private void UpdateView (Action<TimeEntryData> updater, params string[] changedProperties)
         {
             // Ensure that this content runs in UI thread
             ServiceContainer.Resolve<IPlatformUtils> ().DispatchOnUIThread (() => {
 
-                StartDate = model.StartTime == DateTime.MinValue ? DateTime.UtcNow.AddMinutes (-1).ToLocalTime () : model.StartTime.ToLocalTime ();
-                StopDate = model.StopTime.HasValue ? model.StopTime.Value.ToLocalTime () : DateTime.UtcNow.ToLocalTime ();
-                Duration = TimeSpan.FromSeconds (model.GetDuration ().TotalSeconds).ToString ().Substring (0, 8); // TODO: check substring function for long times
-                Description = model.Description;
-                ProjectName = modelInfo.ProjectData != null ? modelInfo.ProjectData.Name : string.Empty;
-                IsBillable = model.IsBillable;
-                IsPremium = modelInfo.WorkspaceData.IsPremium;
-                WorkspaceId = modelInfo.WorkspaceData.Id;
+                var oldProjectId = richData.Data.ProjectId;
 
-                ClientName = modelInfo.ClientData != null ? modelInfo.ClientData.Name : string.Empty;
+                richData = new RichTimeEntry (
+                    timerState,
+                    richData.Data.With (updater)
+                );
 
-                if (model.State == TimeEntryState.Running && !IsRunning) {
-                    IsRunning = true;
+                if (richData.Data.State == TimeEntryState.Running && !durationTimer.Enabled) {
                     durationTimer.Start ();
-                } else if (model.State != TimeEntryState.Running) {
-                    IsRunning = false;
+                } else if (richData.Data.State != TimeEntryState.Running) {
                     durationTimer.Stop ();
+                }
+
+                UpdateRelationships (oldProjectId);
+
+                if (changedProperties.Length == 0) {
+                    // TODO: This should update all properties, check
+                    RaisePropertyChanged ();
+                }
+                else {
+					foreach (var prop in changedProperties)
+						RaisePropertyChanged (prop);
                 }
             });
         }
 
+        private void UpdateRelationships (Guid oldProjectId)
+        {
+            // Check if project has changed
+            if (richData.Data.ProjectId != Guid.Empty && richData.Data.ProjectId != oldProjectId) {
+
+                // Check if the new project belongs to a different workspace
+                if (richData.Data.WorkspaceId != richData.Info.ProjectData.WorkspaceId) {
+                    var workspace = timerState.Workspaces[richData.Info.ProjectData.WorkspaceId];
+
+                    richData = new RichTimeEntry (
+                        timerState,
+                        richData.Data.With (x => {
+                            x.WorkspaceId = workspace.Id;
+                            x.IsBillable = workspace.IsPremium && x.IsBillable;
+                            x.Tags = UpdateTagsWithWorkspace (timerState, x.Id, workspace.Id, TagList)
+                                .Select (t => t.Name).ToList ();
+                        })
+                    );
+                }
+            }
+        }
+
         private void DurationTimerCallback (object sender, System.Timers.ElapsedEventArgs e)
         {
-            var duration = model.GetDuration ();
-            durationTimer.Interval = 1000 - duration.Milliseconds;
-
             // Update on UI Thread
             ServiceContainer.Resolve<IPlatformUtils> ().DispatchOnUIThread (() => {
-                Duration = TimeSpan.FromSeconds (duration.TotalSeconds).ToString ().Substring (0, 8);
+				var duration = richData.Data.GetDuration ();
+                // Hack to ensure the timer triggers every second even if there're some extra milliseconds
+				durationTimer.Interval = 1000 - duration.Milliseconds;
+                RaisePropertyChanged (nameof (Duration));
             });
         }
 
@@ -210,15 +267,33 @@ namespace Toggl.Phoebe._ViewModels
             }
 
             var defaultTagList = timerState.Tags.Values.Where (
-                r => r.Name == DefaultTag && r.WorkspaceId == workspaceId && r.DeletedAt == null).ToList ();
+                r => r.Name == DefaultTag && r.WorkspaceId == workspaceId).ToList ();
 
             if (defaultTagList.Count == 0) {
-                defaultTagList = new List<TagData> ();
-                var defaultTag = new TagData (workspaceId, DefaultTag);
-				defaultTagList.Add (defaultTag);
-                RxChain.Send (new DataMsg.TagPut (defaultTag));
+                defaultTagList = new List<TagData> { new TagData (workspaceId, DefaultTag) };
+                RxChain.Send (new DataMsg.TagsPut (defaultTagList));
             }
             return defaultTagList;
+        }
+
+        private static List<TagData> UpdateTagsWithWorkspace (TimerState timerState, Guid timeEntryId, Guid workspaceId, IEnumerable<TagData> oldTagList)
+        {
+            // Get new workspace tag list.
+            var tagList = timerState.Tags.Values.Where (r => r.WorkspaceId == workspaceId).ToList ();
+
+            // Get new tags to create and existing tags from previous workspace.
+            var tagsToCreate = new List<TagData> (oldTagList.Where (t => tagList.IndexOf (n => n.Name.Equals (t.Name)) == -1));
+            var commonTags = new List<TagData> (tagList.Where (t => oldTagList.IndexOf (n => n.Name.Equals (t.Name)) != -1));
+
+            // Create new tags
+            var newTags = tagsToCreate.Select (x => new TagData {
+                WorkspaceId = workspaceId,
+                Name = x.Name
+            }).ToList ();
+            RxChain.Send (new DataMsg.TagsPut (newTags));
+
+            // Create new tags and concat both lists
+            return commonTags.Concat (tagsToCreate).ToList ();
         }
     }
 }

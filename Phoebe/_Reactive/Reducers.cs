@@ -165,16 +165,11 @@ namespace Toggl.Phoebe._Reactive
 
         static DataSyncMsg<TimerState> TagsPut (TimerState state, DataMsg msg)
         {
-            var tuple = (msg as DataMsg.TagsPut).Data.ForceLeft ();
+            var tags = (msg as DataMsg.TagsPut).Data.ForceLeft ();
             var dataStore = ServiceContainer.Resolve <ISyncDataStore> ();
 
             var updated = dataStore.Update (ctx => {
-                ctx.Put (new TimeEntryData (tuple.Item1) {
-                    // TODO: This should already have been done by the ViewModel
-                    Tags = tuple.Item2.Select (x => x.Name).ToList ()
-                });
-
-                foreach (var tag in tuple.Item2) {
+                foreach (var tag in tags) {
                     ctx.Put (tag);
                 }
             });

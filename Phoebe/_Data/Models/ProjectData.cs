@@ -13,6 +13,12 @@ namespace Toggl.Phoebe._Data.Models
             "#67412c", "#3c6526", "#094558", "#bc2d07", "#999999"
         };
 
+        public static readonly int DefaultColor = HexColors.Length - 1;
+
+        public static readonly int GroupedProjectColorIndex = -1;
+
+        public static readonly string GroupedProjectColor = "#dddddd";
+
         public ProjectData ()
         {
         }

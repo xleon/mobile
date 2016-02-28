@@ -189,7 +189,6 @@ namespace Toggl.Phoebe.Data.ViewModels
         {
             return activeTimeEntryManager.ActiveTimeEntry;
         }
-
         #endregion
 
         private void SyncCollectionView ()

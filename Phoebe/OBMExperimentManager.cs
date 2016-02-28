@@ -1,14 +1,12 @@
-﻿using System;
-using System.Threading.Tasks;
-using Toggl.Phoebe.Net;
+﻿using Toggl.Phoebe.Net;
 using XPlatUtils;
 
 namespace Toggl.Phoebe
 {
     public static class OBMExperimentManager
     {
-        public const int HomeWithTEListState = 93;
-        public const int iOSHomeEmptyState = 83;
+        public const int AndroidExperimentNumber = 93;
+        public const int iOSExperimentNumber = 83;
 
         public static async void Send (int experimentNumber, string actionKey, string actionValue)
         {

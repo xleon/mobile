@@ -154,7 +154,10 @@ namespace Toggl.Ross.ViewControllers
             var entry = await ViewModel.StartStopTimeEntry ();
 
             if (entry.State == TimeEntryState.Running) {
-                OBMExperimentManager.Send (OBMExperimentManager.iOSHomeEmptyState, "startButton", "click");
+                if (!ViewModel.HasItems && OBMExperimentManager.IncludedInExperiment (OBMExperimentManager.iOSExperimentNumber)) {
+                    OBMExperimentManager.Send (OBMExperimentManager.iOSExperimentNumber, "startButton", "click");
+                }
+
                 // Show next viewController.
                 var controllers = new List<UIViewController> (NavigationController.ViewControllers);
                 var tagList = await ServiceContainer.Resolve<IDataStore> ().GetTimeEntryTags (entry.Id);
@@ -191,7 +194,7 @@ namespace Toggl.Ross.ViewControllers
                 if (ViewModel.HasItems) {
                     TableView.TableFooterView = new UIView ();
                 } else {
-                    if (OBMExperimentManager.IncludedInExperiment (OBMExperimentManager.iOSHomeEmptyState)) {
+                    if (OBMExperimentManager.IncludedInExperiment (OBMExperimentManager.iOSExperimentNumber)) {
                         TableView.TableFooterView = obmEmptyView;
                     } else {
                         TableView.TableFooterView = emptyView;

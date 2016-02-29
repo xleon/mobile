@@ -95,7 +95,7 @@ namespace Toggl.Phoebe._Reactive
             }
 
             if (syncMsg.SyncTest != null) {
-                syncMsg.SyncTest.Continuation (remoteObjects, enqueuedItems);
+                syncMsg.SyncTest.Continuation (syncMsg.State, remoteObjects, enqueuedItems);
             }
         }
 

@@ -22,7 +22,6 @@ namespace Toggl.Phoebe._Reactive
             Singleton = null;
         }
 
-        Toggl.Phoebe.Net.INetworkPresence networkPresence;
         readonly Subject<Tuple<DataMsg,SyncTestOptions>> subject1 = new Subject<Tuple<DataMsg,SyncTestOptions>> ();
         readonly Subject<DataSyncMsg<AppState>> subject2 = new Subject<DataSyncMsg<AppState>> ();
 

@@ -8,6 +8,7 @@ using Toggl.Phoebe._Data;
 using Toggl.Phoebe._Data.Json;
 using Toggl.Phoebe._Data.Models;
 using Toggl.Phoebe._Helpers;
+using Toggl.Phoebe._Reactive;
 using Toggl.Phoebe.Logging;
 using XPlatUtils;
 
@@ -290,9 +291,9 @@ namespace Toggl.Phoebe._Data
     public class SyncTestOptions
     {
         public bool IsConnectionAvailable { get; private set; }
-        public Action<List<CommonData>, List<DataJsonMsg>> Continuation { get; private set; }
+        public Action<AppState, List<CommonData>, List<DataJsonMsg>> Continuation { get; private set; }
 
-        public SyncTestOptions (bool isCnnAvailable, Action<List<CommonData>, List<DataJsonMsg>> continuation)
+        public SyncTestOptions (bool isCnnAvailable, Action<AppState, List<CommonData>, List<DataJsonMsg>> continuation)
         {
             IsConnectionAvailable = isCnnAvailable;
             Continuation = continuation;

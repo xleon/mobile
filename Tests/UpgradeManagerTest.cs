@@ -131,6 +131,8 @@ namespace Toggl.Phoebe.Tests
             public string SortProjectsBy { get; set; }
 
             public bool IsStagingMode { get; set; }
+
+            public bool ShowWelcome { get; set; }
         }
     }
 }

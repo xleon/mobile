@@ -23,5 +23,7 @@ namespace Toggl.Phoebe.Data
         string SortProjectsBy { get; set; }
 
         bool IsStagingMode { get; set; }
+
+        bool ShowWelcome { get; set; }
     }
 }

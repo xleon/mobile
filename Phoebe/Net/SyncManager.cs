@@ -492,7 +492,6 @@ namespace Toggl.Phoebe.Net
                 var dataStore = ServiceContainer.Resolve<IDataStore> ();
                 var entries = await dataStore.ExecuteInTransactionAsync (ctx =>
                               jsonEntries.Select (json => json.Import (ctx)).ToList ());
-
                 hasMore = entries.Any ();
                 endDate = hasMore ? entries.Min (p => p.StartTime) : startFrom;
             } catch (Exception exc) {

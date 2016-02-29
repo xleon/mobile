@@ -6,7 +6,6 @@ using Android.OS;
 using Android.Support.V7.Widget;
 using Android.Views;
 using Android.Widget;
-using GalaSoft.MvvmLight.Helpers;
 using Toggl.Joey.UI.Utils;
 using Toggl.Joey.UI.Views;
 using Toggl.Phoebe;
@@ -35,7 +34,8 @@ namespace Toggl.Joey.UI.Adapters
         private static readonly int ContinueThreshold = 1;
         private DateTime lastTimeEntryContinuedTime;
         private int lastUndoIndex = -1;
-        protected LogTimeEntriesViewModel ViewModel { get; private set; }
+        private LogTimeEntriesViewModel viewModel;
+        private RecyclerLoadState footerState = RecyclerLoadState.Loading;
 
         public LogTimeEntriesAdapter (IntPtr a, Android.Runtime.JniHandleOwnership b) : base (a, b)
         {
@@ -44,7 +44,7 @@ namespace Toggl.Joey.UI.Adapters
         public LogTimeEntriesAdapter (RecyclerView owner, LogTimeEntriesViewModel viewModel)
         : base (owner, viewModel.Collection)
         {
-            ViewModel = viewModel;
+            this.viewModel = viewModel;
             lastTimeEntryContinuedTime = Time.UtcNow;
         }
 
@@ -57,13 +57,13 @@ namespace Toggl.Joey.UI.Adapters
             }
             lastTimeEntryContinuedTime = Time.UtcNow;
 
-            await ViewModel.ContinueTimeEntryAsync (viewHolder.AdapterPosition);
+            await viewModel.ContinueTimeEntryAsync (viewHolder.AdapterPosition);
         }
 
         private async void OnRemoveTimeEntry (RecyclerView.ViewHolder viewHolder)
         {
             lastUndoIndex = -1;
-            await ViewModel.RemoveTimeEntryAsync (viewHolder.AdapterPosition);
+            await viewModel.RemoveTimeEntryAsync (viewHolder.AdapterPosition);
         }
 
         protected override RecyclerView.ViewHolder GetViewHolder (ViewGroup parent, int viewType)
@@ -99,6 +99,12 @@ namespace Toggl.Joey.UI.Adapters
                 } else {
                     timeEntryListItemHolder.SetNormalState ();
                 }
+                return;
+            }
+
+            var footerHolder = holder as FooterHolder;
+            if (footerHolder != null) {
+                footerHolder.Bind (footerState);
             }
         }
 
@@ -121,6 +127,19 @@ namespace Toggl.Joey.UI.Adapters
                 mHolder.DisposeDataSource ();
             }
             base.OnViewDetachedFromWindow (holder);
+        }
+
+        public void SetFooterState (RecyclerLoadState state)
+        {
+            // TODO: Once the footer is in the "finished" state.
+            // all remaining calls are rejected. Why? In a very special situations, scroll
+            // loadMore call and initial LoadMore aren't called in the correct order.
+            if (footerState == RecyclerLoadState.Finished) {
+                return;
+            }
+
+            footerState = state;
+            NotifyItemChanged (ItemCount - 1);
         }
 
         #region IUndo interface implementation
@@ -148,7 +167,7 @@ namespace Toggl.Joey.UI.Adapters
             // If another ViewHolder is visible and ready to Remove,
             // just Remove it.
             if (lastUndoIndex > -1) {
-                await ViewModel.RemoveTimeEntryAsync (lastUndoIndex);
+                await viewModel.RemoveTimeEntryAsync (lastUndoIndex);
             }
 
             // Save last selected ViewHolder index.
@@ -158,7 +177,6 @@ namespace Toggl.Joey.UI.Adapters
             // Refresh holder (and tell to ItemTouchHelper
             // that actions ended over it.
             NotifyItemChanged (viewHolder.LayoutPosition);
-
         }
 
         public bool IsUndo (int index)
@@ -176,7 +194,7 @@ namespace Toggl.Joey.UI.Adapters
         {
             var view = LayoutInflater.FromContext (parent.Context).Inflate (
                            Resource.Layout.TimeEntryListFooter, parent, false);
-            return new FooterHolder (view, ViewModel);
+            return new FooterHolder (view, viewModel);
         }
 
         [Shadow (ShadowAttribute.Mode.Top | ShadowAttribute.Mode.Bottom)]
@@ -461,44 +479,26 @@ namespace Toggl.Joey.UI.Adapters
 
         class FooterHolder : RecyclerView.ViewHolder
         {
-            readonly ProgressBar progressBar;
-            readonly RelativeLayout retryLayout;
-            readonly Button retryButton;
-            protected LogTimeEntriesViewModel Vm { get; set; }
-            Binding<bool, bool> hasMoreBinding, hasErrorBinding;
-            RecyclerLoadState loadState = RecyclerLoadState.Loading;
+            ProgressBar progressBar;
+            RelativeLayout retryLayout;
+            Button retryButton;
 
             public FooterHolder (View root, LogTimeEntriesViewModel viewModel) : base (root)
             {
-                Vm = viewModel;
                 retryLayout = ItemView.FindViewById<RelativeLayout> (Resource.Id.RetryLayout);
-                retryButton = ItemView.FindViewById<Button> (Resource.Id.RetryButton);
                 progressBar = ItemView.FindViewById<ProgressBar> (Resource.Id.ProgressBar);
-                IsRecyclable = false;
-
-                retryButton.Click += async (sender, e) => await Vm.LoadMore ();
-                hasMoreBinding = this.SetBinding (() => Vm.HasMoreItems).WhenSourceChanges (SetFooterState);
-                hasErrorBinding = this.SetBinding (() => Vm.HasLoadErrors).WhenSourceChanges (SetFooterState);
-
-                SetFooterState ();
+                retryButton = ItemView.FindViewById<Button> (Resource.Id.RetryButton);
+                retryButton.Click += async (sender, e) => await viewModel.LoadMore ();
             }
 
-            protected void SetFooterState ()
+            public void Bind (RecyclerLoadState state)
             {
-                if (Vm.HasMoreItems && !Vm.HasLoadErrors) {
-                    loadState = RecyclerLoadState.Loading;
-                } else if (Vm.HasMoreItems && Vm.HasLoadErrors) {
-                    loadState = RecyclerLoadState.Retry;
-                } else if (!Vm.HasMoreItems && !Vm.HasLoadErrors) {
-                    loadState = RecyclerLoadState.Finished;
-                }
-
                 progressBar.Visibility = ViewStates.Gone;
                 retryLayout.Visibility = ViewStates.Gone;
 
-                if (loadState == RecyclerLoadState.Loading) {
+                if (state == RecyclerLoadState.Loading) {
                     progressBar.Visibility = ViewStates.Visible;
-                } else if (loadState == RecyclerLoadState.Retry) {
+                } else if (state == RecyclerLoadState.Retry) {
                     retryLayout.Visibility = ViewStates.Visible;
                 }
             }

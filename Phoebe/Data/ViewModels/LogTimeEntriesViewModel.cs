@@ -176,6 +176,9 @@ namespace Toggl.Phoebe.Data.ViewModels
                 ServiceContainer.Resolve<ITracker>().SendTimerStopEvent (TimerStopSource.App);
             }
 
+            // Welcome wizard isn't needed after a time entry is started / stopped.
+            ServiceContainer.Resolve<ISettingsStore> ().ShowWelcome = false;
+
             return active;
         }
 
@@ -189,7 +192,15 @@ namespace Toggl.Phoebe.Data.ViewModels
         {
             return activeTimeEntryManager.ActiveTimeEntry;
         }
+        #endregion
 
+        #region Extra operations
+        public void ReportExperiment (int number, string actionKey, string actionValue)
+        {
+            if (!HasItems && ServiceContainer.Resolve<ISettingsStore> ().ShowWelcome) {
+                OBMExperimentManager.Send (number, actionKey, actionValue);
+            }
+        }
         #endregion
 
         private void SyncCollectionView ()

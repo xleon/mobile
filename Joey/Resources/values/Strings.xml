@@ -53,7 +53,7 @@
     <string name="RecentTimeEntryContinueDialogOk">Continue</string>
     <string name="RecentTimeEntryContinueDialogCancel">Cancel</string>
     <string name="NoItemsTitle">Welcome!</string>
-    <string name="NoItemsText">Start you timer here.</string>
+    <string name="NoItemsText">Start the timer to create your first entry.</string>
     <string name="TimerNoTimeEntryRunning">You aren\'t tracking any time at the moment!</string>
     <string name="TimerStartButtonText">Start</string>
     <string name="TimerStopButtonText">Stop</string>

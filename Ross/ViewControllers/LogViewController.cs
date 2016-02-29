@@ -28,7 +28,7 @@ namespace Toggl.Ross.ViewControllers
         readonly static NSString EntryCellId = new NSString ("EntryCellId");
         readonly static NSString SectionHeaderId = new NSString ("SectionHeaderId");
 
-        private UIView emptyView;
+        private SimpleEmptyView emptyView;
         private UIView obmEmptyView;
         private UIView reloadView;
         private UIButton durationButton;
@@ -37,7 +37,7 @@ namespace Toggl.Ross.ViewControllers
         private UIActivityIndicatorView defaultFooterView;
 
         private Binding<string, string> durationBinding;
-        private Binding<bool, bool> syncBinding, hasMoreBinding, hasErrorBinding, isRunningBinding, hasItemsBinding;
+        private Binding<bool, bool> syncBinding, hasMoreBinding, hasErrorBinding, isRunningBinding, hasItemsBinding, loadMoreBinding;
         private Binding<ObservableCollection<IHolder>, ObservableCollection<IHolder>> collectionBinding;
 
         protected LogTimeEntriesViewModel ViewModel {get; set;}
@@ -115,6 +115,7 @@ namespace Toggl.Ross.ViewControllers
             hasMoreBinding = this.SetBinding (() => ViewModel.HasMoreItems).WhenSourceChanges (SetFooterState);
             hasErrorBinding = this.SetBinding (() => ViewModel.HasLoadErrors).WhenSourceChanges (SetFooterState);
             hasItemsBinding = this.SetBinding (() => ViewModel.HasItems).WhenSourceChanges (SetFooterState);
+            loadMoreBinding = this.SetBinding (() => ViewModel.HasItems).WhenSourceChanges (LoadMoreIfNeeded);
             collectionBinding = this.SetBinding (() => ViewModel.Collection).WhenSourceChanges (() => {
                 TableView.Source = new TimeEntriesSource (this, ViewModel);
             });
@@ -151,13 +152,13 @@ namespace Toggl.Ross.ViewControllers
 
         private async void OnActionButtonTouchUpInside (object sender, EventArgs e)
         {
+            // Send experiment data.
+            ViewModel.ReportExperiment (OBMExperimentManager.iOSExperimentNumber,
+                                        OBMExperimentManager.StartButtonActionKey,
+                                        OBMExperimentManager.ClickActionValue);
+
             var entry = await ViewModel.StartStopTimeEntry ();
-
             if (entry.State == TimeEntryState.Running) {
-                if (!ViewModel.HasItems && OBMExperimentManager.IncludedInExperiment (OBMExperimentManager.iOSExperimentNumber)) {
-                    OBMExperimentManager.Send (OBMExperimentManager.iOSExperimentNumber, "startButton", "click");
-                }
-
                 // Show next viewController.
                 var controllers = new List<UIViewController> (NavigationController.ViewControllers);
                 var tagList = await ServiceContainer.Resolve<IDataStore> ().GetTimeEntryTags (entry.Id);
@@ -179,6 +180,15 @@ namespace Toggl.Ross.ViewControllers
             }
         }
 
+        private async void LoadMoreIfNeeded ()
+        {
+            // TODO: Small hack due to the scroll needs more than the
+            // 10 items to work correctly and load more itens.
+            if (ViewModel.Collection.Count > 0 && ViewModel.Collection.Count < 10) {
+                await ViewModel.LoadMore ();
+            }
+        }
+
         private void SetFooterState ()
         {
             if (ViewModel.HasMoreItems && !ViewModel.HasLoadErrors) {
@@ -194,6 +204,7 @@ namespace Toggl.Ross.ViewControllers
                 if (ViewModel.HasItems) {
                     TableView.TableFooterView = new UIView ();
                 } else {
+                    emptyView.Title = ServiceContainer.Resolve<ISettingsStore> ().ShowWelcome ? "LogWelcomeTitle".Tr () : "LogEmptyTitle".Tr ();
                     if (OBMExperimentManager.IncludedInExperiment (OBMExperimentManager.iOSExperimentNumber)) {
                         TableView.TableFooterView = obmEmptyView;
                     } else {

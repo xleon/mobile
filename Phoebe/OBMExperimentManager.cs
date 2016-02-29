@@ -8,10 +8,13 @@ namespace Toggl.Phoebe
         public const int AndroidExperimentNumber = 93;
         public const int iOSExperimentNumber = 83;
 
+        public const string StartButtonActionKey = "startButton";
+        public const string ClickActionValue = "click";
+
         public static async void Send (int experimentNumber, string actionKey, string actionValue)
         {
             if (InExperimentGroups (experimentNumber)) {
-                var experimentAction = new ExperimentAction() {
+                var experimentAction = new ExperimentAction {
                     ExperimentId = experimentNumber,
                     ActionKey = actionKey,
                     ActionValue = actionValue

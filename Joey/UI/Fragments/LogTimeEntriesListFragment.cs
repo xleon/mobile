@@ -19,6 +19,7 @@ using Toggl.Joey.UI.Components;
 using Toggl.Joey.UI.Utils;
 using Toggl.Joey.UI.Views;
 using Toggl.Phoebe;
+using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Utils;
 using Toggl.Phoebe.Data.ViewModels;
 using Toggl.Phoebe.Net;
@@ -41,6 +42,8 @@ namespace Toggl.Joey.UI.Fragments
         private CoordinatorLayout coordinatorLayout;
         private Subscription<SyncFinishedMessage> drawerSyncFinished;
         private TimerComponent timerComponent;
+        private TextView welcomeMessage;
+        private TextView noItemsMessage;
 
         // Recycler setup
         private DividerItemDecoration dividerDecoration;
@@ -67,6 +70,8 @@ namespace Toggl.Joey.UI.Fragments
 
             experimentEmptyView = view.FindViewById<View> (Resource.Id.ExperimentEmptyMessageView);
             emptyMessageView = view.FindViewById<View> (Resource.Id.EmptyMessageView);
+            welcomeMessage = view.FindViewById<TextView> (Resource.Id.WelcomeTextView);
+            noItemsMessage = view.FindViewById<TextView> (Resource.Id.EmptyTitleTextView);
             recyclerView = view.FindViewById<RecyclerView> (Resource.Id.LogRecyclerView);
             recyclerView.SetLayoutManager (new LinearLayoutManager (Activity));
             swipeLayout = view.FindViewById<SwipeRefreshLayout> (Resource.Id.LogSwipeContainer);
@@ -123,13 +128,13 @@ namespace Toggl.Joey.UI.Fragments
 
         public async void StartStopClick (object sender, EventArgs e)
         {
+            // Send experiment data.
+            ViewModel.ReportExperiment (OBMExperimentManager.AndroidExperimentNumber,
+                                        OBMExperimentManager.StartButtonActionKey,
+                                        OBMExperimentManager.ClickActionValue);
+
             var timeEntryData = await ViewModel.StartStopTimeEntry ();
-
-            if (timeEntryData.State == Phoebe.Data.TimeEntryState.Running) {
-                if (!ViewModel.HasItems && OBMExperimentManager.IncludedInExperiment (OBMExperimentManager.AndroidExperimentNumber)) {
-                    OBMExperimentManager.Send (OBMExperimentManager.AndroidExperimentNumber, "startButton", "click");
-                }
-
+            if (timeEntryData.State == TimeEntryState.Running) {
                 NewTimeEntryStartedByFAB = true;
                 var ids = new List<string> { timeEntryData.Id.ToString () };
                 var intent = new Intent (Activity, typeof (EditTimeEntryActivity));
@@ -171,6 +176,9 @@ namespace Toggl.Joey.UI.Fragments
                     logAdapter.SetFooterState (RecyclerCollectionDataAdapter<IHolder>.RecyclerLoadState.Finished);
                 } else {
                     View emptyView = emptyMessageView;
+                    // According to settings, show welcome message or no.
+                    welcomeMessage.Visibility = ServiceContainer.Resolve<ISettingsStore> ().ShowWelcome ? ViewStates.Visible : ViewStates.Gone;
+                    noItemsMessage.Visibility = ServiceContainer.Resolve<ISettingsStore> ().ShowWelcome ? ViewStates.Gone : ViewStates.Visible;
                     if (OBMExperimentManager.IncludedInExperiment (OBMExperimentManager.AndroidExperimentNumber)) {
                         emptyView = experimentEmptyView;
                     }

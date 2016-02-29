@@ -14,7 +14,7 @@ namespace Toggl.Phoebe.Tests
 {
     public abstract class Test
     {
-        private string databasePath;
+        protected string databasePath;
         private MainThreadSynchronizationContext syncContext;
 
         [TestFixtureSetUp]

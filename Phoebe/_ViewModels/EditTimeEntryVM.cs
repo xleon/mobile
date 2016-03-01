@@ -17,7 +17,7 @@ namespace Toggl.Phoebe._ViewModels
 
         private TimerState timerState;
         private RichTimeEntry richData;
-        private RichTimeEntry initialData;
+        private RichTimeEntry previousData;
         private System.Timers.Timer durationTimer;
 
         private void Init (TimerState timerState, TimeEntryData timeData, List<string> tagList)
@@ -39,7 +39,7 @@ namespace Toggl.Phoebe._ViewModels
             });
 
             // Save previous state.
-            initialData = IsManual
+            previousData = IsManual
 				// Hack to force tag saving even if there're no other changes
                 ? new RichTimeEntry (timerState, richData.Data.With (x => x.Tags = new List<string> ()))
                 : new RichTimeEntry (richData.Data, richData.Info);
@@ -176,12 +176,13 @@ namespace Toggl.Phoebe._ViewModels
         public void Save ()
         {
             if (!IsManual) {
-                // TODO TODO TODO: Structural equality
-                bool isStructurallyEqual = initialData == richData;
+                // TODO: Would be more efficient to use structural equality here?
+                bool hasChanged = previousData != richData;
 
-                if (!isStructurallyEqual) {
+                if (hasChanged) {
                     RxChain.Send (new DataMsg.TimeEntryPut (richData.Data));
                     RxChain.Send (new DataMsg.TagsPut (TagList));
+                    previousData = richData;
                 }
             }
         }

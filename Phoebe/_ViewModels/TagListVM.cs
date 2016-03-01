@@ -21,14 +21,9 @@ namespace Toggl.Phoebe._ViewModels
         // the list. (subscription and reload of data
         // everytime a tag is changed/created/deleted
 
-        private readonly Guid workspaceId;
-        private readonly List<Guid> previousSelectedIds;
-
         TagListVM (TimerState timerState, Guid workspaceId, List<Guid> previousSelectedIds)
         {
-            this.previousSelectedIds = previousSelectedIds;
-            this.workspaceId = workspaceId;
-            LoadTags (timerState);
+            TagCollection = LoadTags (timerState, workspaceId, previousSelectedIds);
             ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Select Tags";
         }
 
@@ -39,32 +34,21 @@ namespace Toggl.Phoebe._ViewModels
 
         public ObservableRangeCollection<TagData> TagCollection { get; set; }
 
-        private void LoadTags (TimerState timerState)
+        private ObservableRangeCollection<TagData> LoadTags (
+            TimerState timerState, Guid workspaceId, List<Guid> previousSelectedIds)
         {
-            TagCollection = new ObservableRangeCollection<TagData> ();
+            var tagCollection = new ObservableRangeCollection<TagData> ();
 
-            var workspaceTags =
-                timerState.Tags.Values.Where (r => r.WorkspaceId == workspaceId).ToList ();
+            var selectedTags =
+                timerState.Tags.Values.Where (
+                        r => r.WorkspaceId == workspaceId &&
+                            previousSelectedIds.Contains (r.Id)).ToList ();
 
-            var currentSelectedTags =
-                timerState.Tags.Values.Where (r => previousSelectedIds.Contains (r.Id)).ToList ();
+            selectedTags.Sort (
+                (a, b) => String.Compare (a?.Name ?? "", b?.Name ?? "", StringComparison.Ordinal));
 
-            // TODO:
-            // There is an strange case, tags are created again across
-            // workspaces. To avoid display similar names
-            // on the list the diff and corrupt data, the filter is done by
-            // names. The bad point is that tags will appears unselected.
-            var diff = currentSelectedTags.Where (sTag => workspaceTags.All (wTag => sTag.Name != wTag.Name));
-
-            workspaceTags.AddRange (diff);
-
-            workspaceTags.Sort ((a, b) => {
-                var aName = a != null ? (a.Name ?? String.Empty) : String.Empty;
-                var bName = b != null ? (b.Name ?? String.Empty) : String.Empty;
-                return String.Compare (aName, bName, StringComparison.Ordinal);
-            });
-
-            TagCollection.AddRange (workspaceTags);
+            tagCollection.AddRange (selectedTags);
+            return tagCollection;
         }
     }
 }

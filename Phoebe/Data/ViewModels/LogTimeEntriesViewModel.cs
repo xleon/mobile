@@ -18,6 +18,12 @@ namespace Toggl.Phoebe.Data.ViewModels
     [ImplementPropertyChanged]
     public class LogTimeEntriesViewModel : ViewModelBase, IDisposable
     {
+        public enum CollectionState {
+            NotReady = -1,
+            Empty = 0,
+            NotEmpty = 1
+        };
+
         private readonly Timer durationTimer;
         private Subscription<SettingChangedMessage> subscriptionSettingChanged;
         private Subscription<SyncFinishedMessage> subscriptionSyncFinished;
@@ -42,7 +48,7 @@ namespace Toggl.Phoebe.Data.ViewModels
 
             HasMoreItems = true;
             HasLoadErrors = false;
-            HasItems = false;
+            HasItems = CollectionState.NotReady;
 
             UpdateView (activeTimeEntryManager.ActiveTimeEntry);
             SyncCollectionView ();
@@ -104,7 +110,7 @@ namespace Toggl.Phoebe.Data.ViewModels
 
         public bool HasLoadErrors { get; private set; }
 
-        public bool HasItems { get; private set; }
+        public CollectionState HasItems { get; private set; }
 
         public string Description { get; set; }
 
@@ -197,7 +203,7 @@ namespace Toggl.Phoebe.Data.ViewModels
         #region Extra operations
         public void ReportExperiment (int number, string actionKey, string actionValue)
         {
-            if (!HasItems && ServiceContainer.Resolve<ISettingsStore> ().ShowWelcome) {
+            if (HasItems != CollectionState.NotEmpty && ServiceContainer.Resolve<ISettingsStore> ().ShowWelcome) {
                 OBMExperimentManager.Send (number, actionKey, actionValue);
             }
         }
@@ -266,13 +272,16 @@ namespace Toggl.Phoebe.Data.ViewModels
             ServiceContainer.Resolve<IPlatformUtils> ().DispatchOnUIThread (() => {
                 HasMoreItems = msg.HadMore;
                 HasLoadErrors = msg.HadErrors;
+                if (HasMoreItems == false && !HasLoadErrors && HasItems == CollectionState.NotReady) {
+                    HasItems = CollectionState.Empty;
+                }
             });
         }
 
         private void OnDetectHasItems (object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
         {
             ServiceContainer.Resolve<IPlatformUtils> ().DispatchOnUIThread (() => {
-                HasItems = Collection.Count > 0;
+                HasItems = (Collection.Count > 0) ? CollectionState.NotEmpty : CollectionState.Empty;
             });
         }
 

@@ -51,7 +51,8 @@ namespace Toggl.Joey.UI.Fragments
         private ItemTouchListener itemTouchListener;
 
         // binding references
-        private Binding<bool, bool> hasItemsBinding, newMenuBinding, hasMoreBinging, hasErrorBinding;
+        private Binding<bool, bool> newMenuBinding, hasMoreBinging, hasErrorBinding;
+        private Binding<LogTimeEntriesViewModel.CollectionState, LogTimeEntriesViewModel.CollectionState> hasItemsBinding;
         private Binding<ObservableCollection<IHolder>, ObservableCollection<IHolder>> collectionBinding;
         private Binding<bool, FABButtonState> fabBinding;
 
@@ -97,7 +98,7 @@ namespace Toggl.Joey.UI.Fragments
             });
             hasMoreBinging = this.SetBinding (()=> ViewModel.HasMoreItems).WhenSourceChanges (SetFooterState);
             hasErrorBinding = this.SetBinding (()=> ViewModel.HasLoadErrors).WhenSourceChanges (SetFooterState);
-            hasItemsBinding = this.SetBinding (()=> ViewModel.HasItems).WhenSourceChanges (SetFooterState);
+            hasItemsBinding = this.SetBinding (()=> ViewModel.HasItems).WhenSourceChanges (SetCollectionState);
             fabBinding = this.SetBinding (() => ViewModel.IsTimeEntryRunning, () => StartStopBtn.ButtonAction)
                          .ConvertSourceToTarget (isRunning => isRunning ? FABButtonState.Stop : FABButtonState.Start);
 
@@ -172,20 +173,29 @@ namespace Toggl.Joey.UI.Fragments
             } else if (ViewModel.HasMoreItems && ViewModel.HasLoadErrors) {
                 logAdapter.SetFooterState (RecyclerCollectionDataAdapter<IHolder>.RecyclerLoadState.Retry);
             } else if (!ViewModel.HasMoreItems && !ViewModel.HasLoadErrors) {
-                if (ViewModel.HasItems) {
-                    logAdapter.SetFooterState (RecyclerCollectionDataAdapter<IHolder>.RecyclerLoadState.Finished);
-                } else {
-                    View emptyView = emptyMessageView;
-                    // According to settings, show welcome message or no.
-                    welcomeMessage.Visibility = ServiceContainer.Resolve<ISettingsStore> ().ShowWelcome ? ViewStates.Visible : ViewStates.Gone;
-                    noItemsMessage.Visibility = ServiceContainer.Resolve<ISettingsStore> ().ShowWelcome ? ViewStates.Gone : ViewStates.Visible;
-                    if (OBMExperimentManager.IncludedInExperiment (OBMExperimentManager.AndroidExperimentNumber)) {
-                        emptyView = experimentEmptyView;
-                    }
-                    emptyView.Visibility = ViewModel.HasItems ? ViewStates.Gone : ViewStates.Visible;
-                }
+                logAdapter.SetFooterState (RecyclerCollectionDataAdapter<IHolder>.RecyclerLoadState.Finished);
             }
-            recyclerView.Visibility = ViewModel.HasItems ? ViewStates.Visible : ViewStates.Gone;
+        }
+
+        private void SetCollectionState ()
+        {
+            if (ViewModel.HasItems != LogTimeEntriesViewModel.CollectionState.NotReady) {
+                View emptyView = emptyMessageView;
+                var isWelcome = ServiceContainer.Resolve<ISettingsStore> ().ShowWelcome;
+                var isInExperiment = OBMExperimentManager.IncludedInExperiment (OBMExperimentManager.AndroidExperimentNumber);
+                var hasItems = ViewModel.HasItems == LogTimeEntriesViewModel.CollectionState.NotEmpty;
+
+                // According to settings, show welcome message or no.
+                welcomeMessage.Visibility = isWelcome ? ViewStates.Visible : ViewStates.Gone;
+                noItemsMessage.Visibility = isWelcome ? ViewStates.Gone : ViewStates.Visible;
+
+                if (isWelcome && isInExperiment) {
+                    emptyView = experimentEmptyView;
+                }
+
+                emptyView.Visibility = hasItems ? ViewStates.Gone : ViewStates.Visible;
+                recyclerView.Visibility = hasItems ? ViewStates.Visible : ViewStates.Gone;
+            }
         }
 
         #region Menu setup

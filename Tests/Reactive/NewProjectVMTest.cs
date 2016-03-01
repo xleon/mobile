@@ -59,7 +59,7 @@ namespace Toggl.Phoebe.Tests.Reactive
 
                         // Check project has been correctly saved in database
                         Assert.NotNull (dataStore.Table<ProjectData> ().SingleOrDefault (
-                            x => x.WorkspaceId == Util.WorkspaceId && x.Name == pname && x.Color == pcolor));
+                            x => x.WorkspaceId == Util.WorkspaceId && x.Name == pname && x.Color == pcolor && x.Id == project.Id));
 
                         // ProjectUserData
                         Assert.NotNull (state.TimerState.ProjectUsers.Values.SingleOrDefault (x => x.ProjectId == project.Id));
@@ -93,8 +93,6 @@ namespace Toggl.Phoebe.Tests.Reactive
                     try {
                         Assert.NotNull (state.TimerState.Projects.Values.SingleOrDefault (
                             x => x.Name == pname && x.ClientId == client.Id));
-
-                        // TODO: Check also if ClientData has been saved? It's not at the moment
 
                         tcs.SetResult (true);
                     }

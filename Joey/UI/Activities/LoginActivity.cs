@@ -112,11 +112,6 @@ namespace Toggl.Joey.UI.Activities
             return false;
         }
 
-        private void StartAuth ()
-        {
-            StartAuthActivity ();
-        }
-
         private ArrayAdapter<string> MakeEmailsAdapter ()
         {
             var am = AccountManager.Get (this);
@@ -163,7 +158,7 @@ namespace Toggl.Joey.UI.Activities
             SupportActionBar.SetDisplayShowTitleEnabled (false);
 
             ViewModel = LoginViewModel.Init ();
-            isAuthencticatedBinding = this.SetBinding (() => ViewModel.IsAuthenticated).WhenSourceChanges (StartAuth);
+            isAuthencticatedBinding = this.SetBinding (() => ViewModel.IsAuthenticated).WhenSourceChanges (() => StartAuthActivity());
             isAuthencticatingBinding = this.SetBinding (() => ViewModel.IsAuthenticating).WhenSourceChanges (SyncContent);
 
             if (state != null) {
@@ -335,12 +330,7 @@ namespace Toggl.Joey.UI.Activities
                 PasswordEditText.RequestFocus ();
 
                 ShowAuthError (EmailEditText.Text, authRes, Mode.Login);
-            } else {
-                // Start the initial sync for the user
-                ServiceContainer.Resolve<ISyncManager> ().Run ();
             }
-
-            StartAuthActivity ();
         }
 
         private async Task TrySignupPasswordAsync ()
@@ -351,12 +341,7 @@ namespace Toggl.Joey.UI.Activities
                 EmailEditText.RequestFocus ();
 
                 ShowAuthError (EmailEditText.Text, authRes, Mode.Signup);
-            } else {
-                // Start the initial sync for the user
-                ServiceContainer.Resolve<ISyncManager> ().Run ();
             }
-
-            StartAuthActivity ();
         }
 
         public async Task<AuthResult> TryLoginWithGoogleAsync (string token)
@@ -482,8 +467,8 @@ namespace Toggl.Joey.UI.Activities
                 var frag = mgr.FindFragmentByTag ("google_auth");
                 if (frag != null) {
                     var authFrag = frag as GoogleAuthFragment;
-                    var activity = (LoginActivity)Activity;
-                    if (authFrag != null && activity.ViewModel.IsAuthenticating) {
+                    var activity = frag.Activity as LoginActivity;
+                    if (activity != null && activity.ViewModel.IsAuthenticating) {
                         // Authentication going on still, do nothing.
                         return;
                     }
@@ -606,12 +591,6 @@ namespace Toggl.Joey.UI.Activities
                     FragmentManager.BeginTransaction ()
                     .Remove (this)
                     .Commit ();
-                }
-
-                // Try to make the activity recheck auth status
-                activity = Activity as LoginActivity;
-                if (activity != null) {
-                    activity.StartAuthActivity ();
                 }
             }
 
@@ -791,7 +770,7 @@ namespace Toggl.Joey.UI.Activities
             }
         }
 
-        public enum LoginError {
+        private enum LoginError {
             InvalidCredentials,
             SignupFailed,
             NoAccount,

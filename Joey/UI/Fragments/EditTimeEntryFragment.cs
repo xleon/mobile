@@ -46,7 +46,6 @@ namespace Toggl.Joey.UI.Fragments
         public TogglField DescriptionField { get; private set; }
         public TogglTagsField TagsField { get; private set; }
         public IMenuItem SaveMenuItem { get; private set; }
-        public LinearLayout SyncError { get; private set; }
 
         private TextView stopTimeEditLabel;
         private ActionBar toolbar;
@@ -114,7 +113,6 @@ namespace Toggl.Joey.UI.Fragments
 
             TagsField = view.FindViewById<TogglTagsField> (Resource.Id.TagsBit);
             BillableCheckBox = view.FindViewById<CheckBox> (Resource.Id.BillableCheckBox).SetFont (Font.RobotoLight);
-            SyncError = view.FindViewById<LinearLayout> (Resource.Id.ItemSyncError);
 
             HasOptionsMenu = true;
             return view;
@@ -191,10 +189,6 @@ namespace Toggl.Joey.UI.Fragments
                 if (SaveMenuItem != null) {
                     SaveMenuItem.SetVisible (ViewModel.IsManual);
                 }
-            });
-
-            syncErrorBinding = this.SetBinding (() => ViewModel.SyncError).WhenSourceChanges (() => {
-                SyncError.Visibility = ViewModel.SyncError ? ViewStates.Visible : ViewStates.Gone;
             });
 
             // Configure option menu.

@@ -105,8 +105,6 @@ namespace Toggl.Phoebe.Data.ViewModels
 
         public Guid WorkspaceId { get; private set; }
 
-        public bool SyncError { get; private set; }
-
         #endregion
 
         public void SetProjectAndTask (Guid projectId, Guid taskId)
@@ -229,8 +227,6 @@ namespace Toggl.Phoebe.Data.ViewModels
                     IsRunning = false;
                     durationTimer.Stop ();
                 }
-
-                SyncError = (data.RemoteRejected || !data.RemoteId.HasValue);
             });
         }
 

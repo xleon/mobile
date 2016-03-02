@@ -156,8 +156,7 @@ namespace Toggl.Ross.ViewControllers
         private async void OnActionButtonTouchUpInside (object sender, EventArgs e)
         {
             // Send experiment data.
-            ViewModel.ReportExperiment (OBMExperimentManager.iOSExperimentNumber,
-                                        OBMExperimentManager.StartButtonActionKey,
+            ViewModel.ReportExperiment (OBMExperimentManager.StartButtonActionKey,
                                         OBMExperimentManager.ClickActionValue);
 
             var entry = await ViewModel.StartStopTimeEntry ();
@@ -213,7 +212,7 @@ namespace Toggl.Ross.ViewControllers
             if (ViewModel.HasItems != LogTimeEntriesViewModel.CollectionState.NotReady) {
                 UIView emptyView = defaultEmptyView; // Default empty view.
                 var isWelcome = ServiceContainer.Resolve<ISettingsStore> ().ShowWelcome;
-                var isInExperiment = OBMExperimentManager.IncludedInExperiment (OBMExperimentManager.AndroidExperimentNumber);
+                var isInExperiment = OBMExperimentManager.IncludedInExperiment ();
                 var hasItems = ViewModel.HasItems == LogTimeEntriesViewModel.CollectionState.NotEmpty;
 
                 // According to settings, show welcome message or no.

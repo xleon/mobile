@@ -201,10 +201,10 @@ namespace Toggl.Phoebe.Data.ViewModels
         #endregion
 
         #region Extra operations
-        public void ReportExperiment (int number, string actionKey, string actionValue)
+        public void ReportExperiment (string actionKey, string actionValue)
         {
             if (HasItems != CollectionState.NotEmpty && ServiceContainer.Resolve<ISettingsStore> ().ShowWelcome) {
-                OBMExperimentManager.Send (number, actionKey, actionValue);
+                OBMExperimentManager.Send (actionKey, actionValue);
             }
         }
         #endregion
@@ -216,8 +216,8 @@ namespace Toggl.Phoebe.Data.ViewModels
 
             collectionFeed = new TimeEntriesFeed ();
             Collection = IsGroupedMode
-                         ?        (ObservableCollection<IHolder>)new TimeEntriesCollection<TimeEntryGroup> (collectionFeed)
-                         : new TimeEntriesCollection<TimeEntryHolder> (collectionFeed);
+                         ?        (ObservableCollection<IHolder>)new TimeEntriesCollection<TimeEntryGroup> (collectionFeed, 150)
+                         : new TimeEntriesCollection<TimeEntryHolder> (collectionFeed, 150);
             Collection.CollectionChanged += OnDetectHasItems;
         }
 

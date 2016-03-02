@@ -1,11 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 using NUnit.Framework;
-using Toggl.Phoebe.Tests;
 using Toggl.Phoebe._Data;
-using Toggl.Phoebe._Data.Json;
 using Toggl.Phoebe._Data.Models;
 using Toggl.Phoebe._Net;
 using Toggl.Phoebe._Reactive;

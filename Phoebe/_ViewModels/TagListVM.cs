@@ -2,12 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reactive.Linq;
-using GalaSoft.MvvmLight;
-using PropertyChanged;
 using Toggl.Phoebe.Analytics;
-using Toggl.Phoebe.Logging;
 using Toggl.Phoebe._Data.Models;
-using Toggl.Phoebe._Helpers;
 using Toggl.Phoebe._Reactive;
 using XPlatUtils;
 using Toggl.Phoebe.Data.Utils;
@@ -45,7 +41,7 @@ namespace Toggl.Phoebe._ViewModels
                             previousSelectedIds.Contains (r.Id)).ToList ();
 
             selectedTags.Sort (
-                (a, b) => String.Compare (a?.Name ?? "", b?.Name ?? "", StringComparison.Ordinal));
+                (a, b) => string.Compare (a?.Name ?? "", b?.Name ?? "", StringComparison.Ordinal));
 
             tagCollection.AddRange (selectedTags);
             return tagCollection;

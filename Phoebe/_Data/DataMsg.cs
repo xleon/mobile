@@ -166,20 +166,6 @@ namespace Toggl.Phoebe._Data
             }
         }
 
-        public sealed class TagPut : DataMsg
-        {
-            public Either<TagData, Exception> Data
-            {
-                get { return RawData.CastLeft<TagData> (); }
-                set { RawData = value.CastLeft<object> (); }
-            }
-
-            public TagPut (TagData tag)
-            {
-                Data = Either<TagData, Exception>.Left (tag);
-            }
-        }
-
         // Launch this message when connection has been recovered after a while
         public sealed class EmptyQueueAndSync : DataMsg
         {

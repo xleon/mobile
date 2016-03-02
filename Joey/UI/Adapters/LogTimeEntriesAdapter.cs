@@ -17,15 +17,6 @@ using XPlatUtils;
 
 namespace Toggl.Joey.UI.Adapters
 {
-    public interface IUndoAdapter
-    {
-        void SetItemsToNormalPosition ();
-
-        void SetItemToUndoPosition (RecyclerView.ViewHolder item);
-
-        bool IsUndo (int position);
-    }
-
     public class LogTimeEntriesAdapter : RecyclerCollectionDataAdapter<IHolder>, IUndoAdapter
     {
         public const int ViewTypeDateHeader = ViewTypeContent + 1;
@@ -50,6 +41,8 @@ namespace Toggl.Joey.UI.Adapters
 
         private async void OnContinueTimeEntry (RecyclerView.ViewHolder viewHolder)
         {
+            DeleteSelectedItem ();
+
             // Don't continue a new TimeEntry before
             // x seconds has passed.
             if (Time.UtcNow < lastTimeEntryContinuedTime + TimeSpan.FromSeconds (ContinueThreshold)) {
@@ -58,12 +51,6 @@ namespace Toggl.Joey.UI.Adapters
             lastTimeEntryContinuedTime = Time.UtcNow;
 
             await viewModel.ContinueTimeEntryAsync (viewHolder.AdapterPosition);
-        }
-
-        private async void OnRemoveTimeEntry (RecyclerView.ViewHolder viewHolder)
-        {
-            lastUndoIndex = -1;
-            await viewModel.RemoveTimeEntryAsync (viewHolder.AdapterPosition);
         }
 
         protected override RecyclerView.ViewHolder GetViewHolder (ViewGroup parent, int viewType)
@@ -137,13 +124,12 @@ namespace Toggl.Joey.UI.Adapters
             if (footerState == RecyclerLoadState.Finished) {
                 return;
             }
-
             footerState = state;
             NotifyItemChanged (ItemCount - 1);
         }
 
         #region IUndo interface implementation
-        public void SetItemsToNormalPosition ()
+        private void SetItemsToNormalPosition ()
         {
             var linearLayout = (LinearLayoutManager)Owner.GetLayoutManager ();
             var firstVisible = linearLayout.FindFirstVisibleItemPosition ();
@@ -156,6 +142,24 @@ namespace Toggl.Joey.UI.Adapters
                     if (!tHolder.IsNormalState) {
                         var withAnim = (firstVisible < i) && (lastVisible > i);
                         tHolder.SetNormalState (withAnim);
+                    }
+                }
+            }
+            lastUndoIndex = -1;
+        }
+
+        public async void DeleteSelectedItem ()
+        {
+            var linearLayout = (LinearLayoutManager)Owner.GetLayoutManager ();
+            var firstVisible = linearLayout.FindFirstVisibleItemPosition ();
+            var lastVisible = linearLayout.FindLastVisibleItemPosition ();
+
+            for (int i = firstVisible; i < lastVisible + 1; i++) {
+                var holder = Owner.FindViewHolderForLayoutPosition (i);
+                if (holder is TimeEntryListItemHolder) {
+                    var tHolder = (TimeEntryListItemHolder)holder;
+                    if (!tHolder.IsNormalState) {
+                        await viewModel.RemoveTimeEntryAsync (i);
                     }
                 }
             }
@@ -277,7 +281,6 @@ namespace Toggl.Joey.UI.Adapters
             public View SwipeLayout { get; private set; }
             public View PreUndoLayout { get; private set; }
             public View UndoLayout { get; private set; }
-            public View RemoveButton { get; private set; }
             public View UndoButton { get; private set; }
 
             public TimeEntryListItemHolder (IntPtr a, Android.Runtime.JniHandleOwnership b) : base (a, b)
@@ -302,13 +305,11 @@ namespace Toggl.Joey.UI.Adapters
                 SwipeLayout = root.FindViewById<RelativeLayout> (Resource.Id.swipe_layout);
                 PreUndoLayout = root.FindViewById<FrameLayout> (Resource.Id.pre_undo_layout);
                 UndoButton = root.FindViewById<LinearLayout> (Resource.Id.undo_layout);
-                RemoveButton = root.FindViewById (Resource.Id.remove_button);
                 UndoButton = root.FindViewById (Resource.Id.undo_button);
                 UndoLayout = root.FindViewById (Resource.Id.undo_layout);
 
                 ContinueImageButton.SetOnTouchListener (this);
                 UndoButton.SetOnTouchListener (this);
-                RemoveButton.SetOnTouchListener (this);
             }
 
             bool View.IOnTouchListener.OnTouch (View v, MotionEvent e)
@@ -324,12 +325,8 @@ namespace Toggl.Joey.UI.Adapters
                         owner.OnContinueTimeEntry (this);
                         returnValue = false;
                     }
-                    if (v == RemoveButton) {
-                        owner.OnRemoveTimeEntry (this);
-                        returnValue = true;
-                    }
                     if (v == UndoButton) {
-                        owner.SetItemsToNormalPosition();
+                        owner.SetItemsToNormalPosition ();
                         returnValue = true;
                     }
                     break;

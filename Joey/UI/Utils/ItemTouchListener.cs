@@ -1,5 +1,4 @@
-﻿using System;
-using Android.Support.V7.Widget;
+﻿using Android.Support.V7.Widget;
 using Android.Views;
 using Java.Lang;
 
@@ -48,6 +47,24 @@ namespace Toggl.Joey.UI.Utils
 
         public bool OnInterceptTouchEvent (RecyclerView rv, MotionEvent e)
         {
+            // TODO : this part intercep any touch inside recycler
+            // and delete pending items.
+            // A better method could be used.
+
+            if (e.Action == MotionEventActions.Down) {
+                var undoAdapter = (IUndoAdapter)rv.GetAdapter ();
+                View view = GetChildViewUnder (e);
+
+                if (view == null) {
+                    undoAdapter.DeleteSelectedItem ();
+                } else {
+                    int position = recyclerView.GetChildLayoutPosition (view);
+                    if (!undoAdapter.IsUndo (position)) {
+                        undoAdapter.DeleteSelectedItem ();
+                    }
+                }
+            }
+
             if (IsEnabled) {
                 gestureDetector.OnTouchEvent (e);
             }
@@ -79,10 +96,13 @@ namespace Toggl.Joey.UI.Utils
 
             int position = recyclerView.GetChildLayoutPosition (view);
             if ( listener.CanClick (recyclerView, position)) {
-                listener.OnItemClick (recyclerView, view, position);
-                view.Pressed = false;
-                view.Selected = false;
-                return true;
+                var undoAdapter = (IUndoAdapter)recyclerView.GetAdapter ();
+                if (!undoAdapter.IsUndo (position)) {
+                    listener.OnItemClick (recyclerView, view, position);
+                    view.Pressed = false;
+                    view.Selected = false;
+                    return true;
+                }
             }
             return false;
         }

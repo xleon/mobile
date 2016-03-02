@@ -130,8 +130,7 @@ namespace Toggl.Joey.UI.Fragments
         public async void StartStopClick (object sender, EventArgs e)
         {
             // Send experiment data.
-            ViewModel.ReportExperiment (OBMExperimentManager.AndroidExperimentNumber,
-                                        OBMExperimentManager.StartButtonActionKey,
+            ViewModel.ReportExperiment (OBMExperimentManager.StartButtonActionKey,
                                         OBMExperimentManager.ClickActionValue);
 
             var timeEntryData = await ViewModel.StartStopTimeEntry ();
@@ -182,7 +181,7 @@ namespace Toggl.Joey.UI.Fragments
             if (ViewModel.HasItems != LogTimeEntriesViewModel.CollectionState.NotReady) {
                 View emptyView = emptyMessageView;
                 var isWelcome = ServiceContainer.Resolve<ISettingsStore> ().ShowWelcome;
-                var isInExperiment = OBMExperimentManager.IncludedInExperiment (OBMExperimentManager.AndroidExperimentNumber);
+                var isInExperiment = OBMExperimentManager.IncludedInExperiment ();
                 var hasItems = ViewModel.HasItems == LogTimeEntriesViewModel.CollectionState.NotEmpty;
 
                 // According to settings, show welcome message or no.
@@ -236,11 +235,6 @@ namespace Toggl.Joey.UI.Fragments
         #region IRecyclerViewOnItemClickListener implementation
         public void OnItemClick (RecyclerView parent, View clickedView, int position)
         {
-            var undoAdapter = (IUndoAdapter)parent.GetAdapter ();
-            if (undoAdapter.IsUndo (position)) {
-                return;
-            }
-
             var intent = new Intent (Activity, typeof (EditTimeEntryActivity));
             IList<string> guids = ((ITimeEntryHolder)ViewModel.Collection.ElementAt (position)).Guids;
             intent.PutStringArrayListExtra (EditTimeEntryActivity.ExtraGroupedTimeEntriesGuids, guids);
@@ -308,6 +302,7 @@ namespace Toggl.Joey.UI.Fragments
             recyclerView.AddItemDecoration (dividerDecoration);
             recyclerView.AddItemDecoration (shadowDecoration);
             recyclerView.GetItemAnimator ().ChangeDuration = 0;
+            recyclerView.GetItemAnimator ().RemoveDuration = 150;
         }
 
         private void ReleaseRecyclerView ()
@@ -358,15 +353,6 @@ namespace Toggl.Joey.UI.Fragments
                     loading = true;
                     // Request more entries.
                     await viewModel.LoadMore ();
-                }
-            }
-
-            public override void OnScrollStateChanged (RecyclerView recyclerView, int newState)
-            {
-                base.OnScrollStateChanged (recyclerView, newState);
-                if (newState == 1) {
-                    var adapter = (IUndoAdapter) recyclerView.GetAdapter ();
-                    adapter.SetItemsToNormalPosition ();
                 }
             }
         }

@@ -207,7 +207,7 @@
     <string name="EditTimeEntryFragmentDescription">Description</string>
     <string name="EditTimeEntryFragmentDescriptionHint">What are you doing?</string>
     <string name="EditTimeEntryFragmentSaveButtonText">Save</string>
-    <string name="SwipeDeleteQuestion">Delete</string>
+    <string name="SwipeDeleteQuestion">Deleted</string>
     <string name="UndoBarDeletedText">Time entry deleted</string>
     <string name="UndoButtonText">UNDO</string>
     <string name="SwitchViewText">or you can</string>

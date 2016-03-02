@@ -17,7 +17,7 @@ namespace Toggl.Phoebe._ViewModels
         public NewTagVM (TimerState timerState, Guid workspaceId)
         {
             this.timerState = timerState;
-            this.workspace = timerState.Workspaces[workspaceId];
+            workspace = timerState.Workspaces[workspaceId];
             ServiceContainer.Resolve<ITracker> ().CurrentScreen = "New Tag Screen";
         }
 
@@ -27,10 +27,11 @@ namespace Toggl.Phoebe._ViewModels
         {
         }
 
-        public TagData SaveTag ()
+        public TagData SaveTag (SyncTestOptions testOptions = null)
         {
             var existing =
-                timerState.Tags.Values.SingleOrDefault (r => r.WorkspaceId == workspace.Id && r.Name == TagName);
+                timerState.Tags.Values.SingleOrDefault (
+                    r => r.WorkspaceId == workspace.Id && r.Name == TagName);
 
             var tag = existing
                 ?? new TagData {
@@ -40,7 +41,7 @@ namespace Toggl.Phoebe._ViewModels
                     WorkspaceRemoteId = workspace.RemoteId.HasValue ? workspace.RemoteId.Value : 0
                 };
 
-            RxChain.Send (new DataMsg.TagPut (tag));
+            RxChain.Send (new DataMsg.TagsPut (new[] { tag }), testOptions);
             return tag;
         }
     }

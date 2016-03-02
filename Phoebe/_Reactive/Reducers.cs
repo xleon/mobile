@@ -23,7 +23,6 @@ namespace Toggl.Phoebe._Reactive
             .Add (typeof (DataMsg.TimeEntriesRemoveWithUndo), TimeEntriesRemoveWithUndo)
             .Add (typeof (DataMsg.TimeEntriesRestoreFromUndo), TimeEntriesRestoreFromUndo)
             .Add (typeof (DataMsg.TimeEntriesRemovePermanently), TimeEntriesRemovePermanently)
-            .Add (typeof (DataMsg.TagPut), TagPut)
             .Add (typeof (DataMsg.TagsPut), TagsPut)
             .Add (typeof (DataMsg.ClientDataPut), ClientDataPut)
             .Add (typeof (DataMsg.ProjectDataPut), ProjectDataPut);
@@ -151,18 +150,6 @@ namespace Toggl.Phoebe._Reactive
                 updated);
         }
 
-        static DataSyncMsg<TimerState> TagPut (TimerState state, DataMsg msg)
-        {
-            var tagData = (msg as DataMsg.TagPut).Data.ForceLeft ();
-            var dataStore = ServiceContainer.Resolve <ISyncDataStore> ();
-
-            var updated = dataStore.Update (ctx => ctx.Put (tagData));
-
-            return DataSyncMsg.Create (
-                state.With (timeEntries: state.UpdateTimeEntries (updated)),
-                updated);
-        }
-
         static DataSyncMsg<TimerState> TagsPut (TimerState state, DataMsg msg)
         {
             var tags = (msg as DataMsg.TagsPut).Data.ForceLeft ();
@@ -174,10 +161,7 @@ namespace Toggl.Phoebe._Reactive
                 }
             });
 
-            return DataSyncMsg.Create (
-                state.With (timeEntries: state.UpdateTimeEntries (updated)),
-                updated);
-
+            return DataSyncMsg.Create (state.With (tags: state.Update (state.Tags, updated)), updated);
         }
 
         static DataSyncMsg<TimerState> ClientDataPut (TimerState state, DataMsg msg)

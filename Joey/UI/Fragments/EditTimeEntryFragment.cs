@@ -47,6 +47,8 @@ namespace Toggl.Joey.UI.Fragments
         public TogglTagsField TagsField { get; private set; }
         public IMenuItem SaveMenuItem { get; private set; }
 
+        private View editTimeEntryContent;
+        private View editTimeEntryProgressBar;
         private TextView stopTimeEditLabel;
         private ActionBar toolbar;
 
@@ -90,6 +92,7 @@ namespace Toggl.Joey.UI.Fragments
             toolbar = activity.SupportActionBar;
             toolbar.SetDisplayHomeAsUpEnabled (true);
 
+
             var durationLayout = inflater.Inflate (Resource.Layout.DurationTextView, null);
             DurationTextView = durationLayout.FindViewById<TextView> (Resource.Id.DurationTextViewTextView);
 
@@ -113,6 +116,8 @@ namespace Toggl.Joey.UI.Fragments
 
             TagsField = view.FindViewById<TogglTagsField> (Resource.Id.TagsBit);
             BillableCheckBox = view.FindViewById<CheckBox> (Resource.Id.BillableCheckBox).SetFont (Font.RobotoLight);
+            editTimeEntryProgressBar = view.FindViewById<View> (Resource.Id.EditTimeEntryProgressBar);
+            editTimeEntryContent = view.FindViewById<View> (Resource.Id.EditTimeEntryContent);
 
             HasOptionsMenu = true;
             return view;
@@ -184,12 +189,6 @@ namespace Toggl.Joey.UI.Fragments
                 var label = ViewModel.IsBillable ? GetString (Resource.String.CurrentTimeEntryEditBillableChecked) : GetString (Resource.String.CurrentTimeEntryEditBillableUnchecked);
                 BillableCheckBox.Text = label;
             });
-            saveMenuBinding = this.SetBinding (() => ViewModel.IsManual)
-            .WhenSourceChanges (() => {
-                if (SaveMenuItem != null) {
-                    SaveMenuItem.SetVisible (ViewModel.IsManual);
-                }
-            });
 
             // Configure option menu.
             ConfigureOptionMenu ();
@@ -200,6 +199,10 @@ namespace Toggl.Joey.UI.Fragments
                 LogTimeEntriesListFragment.NewTimeEntryStartedByFAB = false;
                 OpenProjectListActivity ();
             }
+
+            // Finally set content visible.
+            editTimeEntryContent.Visibility = ViewStates.Visible;
+            editTimeEntryProgressBar.Visibility = ViewStates.Gone;
         }
 
         public override void OnDestroyView ()
@@ -266,10 +269,13 @@ namespace Toggl.Joey.UI.Fragments
             ViewModel.ChangeTimeEntryDuration (newDuration);
         }
 
+        IMenu menu;
+        MenuInflater inflater;
+
         public override void OnCreateOptionsMenu (IMenu menu, MenuInflater inflater)
         {
-            inflater.Inflate (Resource.Menu.SaveItemMenu, menu);
-            SaveMenuItem = menu.FindItem (Resource.Id.saveItem);
+            this.menu = menu;
+            this.inflater = inflater;
             ConfigureOptionMenu ();
         }
 
@@ -295,8 +301,11 @@ namespace Toggl.Joey.UI.Fragments
         // this method is called from two points
         private void ConfigureOptionMenu ()
         {
-            if (ViewModel != null && SaveMenuItem != null) {
-                SaveMenuItem.SetVisible (ViewModel.IsManual);
+            if (ViewModel != null && menu != null) {
+                if (ViewModel.IsManual) {
+                    inflater.Inflate (Resource.Menu.SaveItemMenu, menu);
+                    SaveMenuItem = menu.FindItem (Resource.Id.saveItem);
+                }
             }
         }
     }

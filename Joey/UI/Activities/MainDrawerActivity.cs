@@ -64,7 +64,7 @@ namespace Toggl.Joey.UI.Activities
 
         private FrameLayout DrawerSyncView { get; set; }
 
-        private Toolbar MainToolbar { get; set; }
+        public Toolbar MainToolbar { get; set; }
 
 
         protected override void OnCreateActivity (Bundle state)

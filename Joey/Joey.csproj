@@ -540,7 +540,6 @@
     <AndroidResource Include="Resources\drawable-mdpi\IcKeyLeft.png" />
     <AndroidResource Include="Resources\drawable-mdpi\IcKeyRight.png" />
     <AndroidResource Include="Resources\layout\ReportsPagerFragment.axml" />
-    <AndroidResource Include="Resources\layout\MainDrawerSubListItem.axml" />
     <AndroidResource Include="Resources\layout\TagListCreateItem.axml" />
     <AndroidResource Include="Resources\drawable-hdpi\IcAddGrey.png" />
     <AndroidResource Include="Resources\drawable-mdpi\IcAddGrey.png" />

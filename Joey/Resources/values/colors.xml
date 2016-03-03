@@ -19,10 +19,7 @@
     <color name="drawer_serparator_gray">#80c0c0c0</color>
     <color name="project_list_gray">#878787</color>
     <color name="project_list_dark_gray">#5F5F5F</color>
-    <color name="drawer_text_active">#8f8f8f</color>
-    <color name="drawer_text_disabled">@color/light_gray</color>
-    <color name="drawer_text_default">#8f8f8f</color>
-    <color name="drawer_text_subitem">#7a7a7a</color>
+    <color name="drawer_text_default">#4e4e4e</color>
     <color name="drawer_sync_status_box">#989898</color>
     <color name="button_divider">#DBDBDB</color>    
     <color name="reports_title">#777777</color> 

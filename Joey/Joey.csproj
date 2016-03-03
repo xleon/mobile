@@ -409,7 +409,6 @@
     <AndroidResource Include="Resources\drawable-xhdpi\AndroidListFocusedHolo.9.png" />
     <AndroidResource Include="Resources\drawable-xhdpi\AndroidListSelectorDisabledHoloLight.9.png" />
     <AndroidResource Include="Resources\drawable-xxhdpi\AndroidListFocusedHolo.9.png" />
-    <AndroidResource Include="Resources\color\DrawerTextColor.xml" />
     <AndroidResource Include="Resources\layout\SettingsListHeaderItem.axml" />
     <AndroidResource Include="Resources\layout\SettingsListCheckboxItem.axml" />
     <AndroidResource Include="Resources\layout\SettingsListFragment.axml" />

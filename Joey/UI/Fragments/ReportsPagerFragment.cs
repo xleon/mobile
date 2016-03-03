@@ -245,6 +245,7 @@ namespace Toggl.Joey.UI.Fragments
         {
             inflater.Inflate (Resource.Menu.ReportsToolbarMenu, menu);
             toolbar.SetOnMenuItemClickListener (this);
+            toolbar.OverflowIcon = Resources.GetDrawable (Resource.Drawable.IcReportsOverflow);
         }
 
         public bool OnMenuItemClick (IMenuItem item)

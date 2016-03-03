@@ -11,8 +11,8 @@ using Toggl.Joey.UI.Views;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
-using Toggl.Phoebe._ViewModels;
-using Toggl.Phoebe._ViewModels.Timer;
+using Toggl.Phoebe.Data.Utils;
+using Toggl.Phoebe.Data.ViewModels;
 using XPlatUtils;
 
 namespace Toggl.Joey.UI.Adapters
@@ -41,8 +41,8 @@ namespace Toggl.Joey.UI.Adapters
         {
         }
 
-        public LogTimeEntriesAdapter (RecyclerView owner, LogTimeEntriesVM viewModel)
-        : base (owner, viewModel.Collection)
+        public LogTimeEntriesAdapter (RecyclerView owner, LogTimeEntriesViewModel viewModel)
+            : base (owner, viewModel.Collection)
         {
             this.viewModel = viewModel;
             lastTimeEntryContinuedTime = Time.UtcNow;
@@ -193,7 +193,7 @@ namespace Toggl.Joey.UI.Adapters
         protected override RecyclerView.ViewHolder GetFooterHolder (ViewGroup parent)
         {
             var view = LayoutInflater.FromContext (parent.Context).Inflate (
-                           Resource.Layout.TimeEntryListFooter, parent, false);
+                Resource.Layout.TimeEntryListFooter, parent, false);
             return new FooterHolder (view, viewModel);
         }
 
@@ -245,13 +245,13 @@ namespace Toggl.Joey.UI.Adapters
                 var ctx = ServiceContainer.Resolve<Context> ();
                 var ts = Time.Now.Date - dateTime.Date;
                 switch (ts.Days) {
-                case 0:
+                    case 0:
                     return ctx.Resources.GetString (Resource.String.Today);
-                case 1:
+                    case 1:
                     return ctx.Resources.GetString (Resource.String.Yesterday);
-                case -1:
+                    case -1:
                     return ctx.Resources.GetString (Resource.String.Tomorrow);
-                default:
+                    default:
                     return dateTime.ToDeviceDateString ();
                 }
             }
@@ -315,23 +315,23 @@ namespace Toggl.Joey.UI.Adapters
             {
                 bool returnValue = true;
                 switch (e.Action) {
-                case MotionEventActions.Down:
-                    returnValue = ! (v == ContinueImageButton);
+                    case MotionEventActions.Down:
+                        returnValue = ! (v == ContinueImageButton);
                     break;
 
-                case MotionEventActions.Up:
-                    if (v == ContinueImageButton) {
-                        owner.OnContinueTimeEntry (this);
-                        returnValue = false;
-                    }
-                    if (v == RemoveButton) {
-                        owner.OnRemoveTimeEntry (this);
-                        returnValue = true;
-                    }
-                    if (v == UndoButton) {
-                        owner.SetItemsToNormalPosition();
-                        returnValue = true;
-                    }
+                    case MotionEventActions.Up:
+                        if (v == ContinueImageButton) {
+                            owner.OnContinueTimeEntry (this);
+                            returnValue = false;
+                        }
+                        if (v == RemoveButton) {
+                            owner.OnRemoveTimeEntry (this);
+                            returnValue = true;
+                        }
+                        if (v == UndoButton) {
+                            owner.SetItemsToNormalPosition();
+                            returnValue = true;
+                        }
                     break;
                 }
                 return returnValue;
@@ -441,7 +441,7 @@ namespace Toggl.Joey.UI.Adapters
                 var duration = DataSource.GetDuration ();
                 DurationTextView.Text = TimeEntryModel.GetFormattedDuration (duration);
 
-                if (DataSource.Data.State == Toggl.Phoebe._Data.Models.TimeEntryState.Running) {
+                if (DataSource.Data.State == TimeEntryState.Running) {
                     handler.RemoveCallbacks (RebindDuration);
                     handler.PostDelayed (RebindDuration, 1000 - duration.Milliseconds);
                 } else {
@@ -457,7 +457,7 @@ namespace Toggl.Joey.UI.Adapters
                     return;
                 }
 
-                if (DataSource.Data.State == Toggl.Phoebe._Data.Models.TimeEntryState.Running) {
+                if (DataSource.Data.State == TimeEntryState.Running) {
                     ContinueImageButton.SetImageResource (Resource.Drawable.IcStop);
                 } else {
                     ContinueImageButton.SetImageResource (Resource.Drawable.IcPlayArrowGrey);
@@ -483,7 +483,7 @@ namespace Toggl.Joey.UI.Adapters
             RelativeLayout retryLayout;
             Button retryButton;
 
-            public FooterHolder (View root, LogTimeEntriesVM viewModel) : base (root)
+            public FooterHolder (View root, LogTimeEntriesViewModel viewModel) : base (root)
             {
                 retryLayout = ItemView.FindViewById<RelativeLayout> (Resource.Id.RetryLayout);
                 progressBar = ItemView.FindViewById<ProgressBar> (Resource.Id.ProgressBar);

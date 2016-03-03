@@ -28,8 +28,8 @@ namespace Toggl.Joey
         private Subscription<AuthChangedMessage> subscriptionAuthChanged;
         private TimeEntryModel activeTimeEntryModel;
 
-        private Binding<Toggl.Phoebe._Data.Models.TimeEntryData, Toggl.Phoebe._Data.Models.TimeEntryData> binding;
-        protected Toggl.Phoebe._Data.ActiveTimeEntryManager TimeEntryManager {get; set;}
+        private Binding<TimeEntryData, TimeEntryData> binding;
+        protected ActiveTimeEntryManager TimeEntryManager {get; set;}
 
         public AndroidNotificationManager ()
         {
@@ -39,7 +39,7 @@ namespace Toggl.Joey
             idleBuilder = CreateIdleNotificationBuilder (ctx);
             propertyTracker = new PropertyChangeTracker ();
 
-            TimeEntryManager = ServiceContainer.Resolve<Toggl.Phoebe._Data.ActiveTimeEntryManager> ();
+            TimeEntryManager = ServiceContainer.Resolve<ActiveTimeEntryManager> ();
             binding = this.SetBinding (() => TimeEntryManager.ActiveTimeEntry).WhenSourceChanges (OnActiveTimeEntryChanged);
 
             var bus = ServiceContainer.Resolve<MessageBus> ();
@@ -71,12 +71,11 @@ namespace Toggl.Joey
         {
             var data = TimeEntryManager.ActiveTimeEntry;
 
-            // TODO TODO TODO
-//            if (activeTimeEntryModel == null) {
-//                activeTimeEntryModel = new TimeEntryModel (data);
-//            } else {
-//                activeTimeEntryModel.Data = data;
-//            }
+            if (activeTimeEntryModel == null) {
+                activeTimeEntryModel = new TimeEntryModel (data);
+            } else {
+                activeTimeEntryModel.Data = data;
+            }
 
             SyncNotification ();
         }
@@ -89,19 +88,18 @@ namespace Toggl.Joey
 
             propertyTracker.MarkAllStale ();
 
-            // TODO TODO TODO
-//            var model = activeTimeEntryModel;
-//            if (model != null) {
-//                propertyTracker.Add (model, HandleTimeEntryPropertyChanged);
-//
-//                if (model.Project != null) {
-//                    propertyTracker.Add (model.Project, HandleProjectPropertyChanged);
-//                }
-//
-//                if (model.Task != null) {
-//                    propertyTracker.Add (model.Task, HandleTaskPropertyChanged);
-//                }
-//            }
+            var model = activeTimeEntryModel;
+            if (model != null) {
+                propertyTracker.Add (model, HandleTimeEntryPropertyChanged);
+
+                if (model.Project != null) {
+                    propertyTracker.Add (model.Project, HandleProjectPropertyChanged);
+                }
+
+                if (model.Task != null) {
+                    propertyTracker.Add (model.Task, HandleTaskPropertyChanged);
+                }
+            }
 
             propertyTracker.ClearStale ();
         }
@@ -109,9 +107,9 @@ namespace Toggl.Joey
         private void HandleTimeEntryPropertyChanged (string prop)
         {
             if (prop == TimeEntryModel.PropertyProject
-                    || prop == TimeEntryModel.PropertyTask
-                    || prop == TimeEntryModel.PropertyDescription
-                    || prop == TimeEntryModel.PropertyStartTime) {
+                || prop == TimeEntryModel.PropertyTask
+                || prop == TimeEntryModel.PropertyDescription
+                || prop == TimeEntryModel.PropertyStartTime) {
                 SyncNotification ();
             }
         }
@@ -170,9 +168,9 @@ namespace Toggl.Joey
                 var correction = ServiceContainer.Resolve<TimeCorrectionManager> ().Correction;
                 var startTime = currentTimeEntry.StartTime - correction;
                 runningBuilder
-                .SetContentTitle (GetProjectName (currentTimeEntry))
-                .SetContentText (GetDescription (currentTimeEntry))
-                .SetWhen ((long)startTime.ToUnix ().TotalMilliseconds);
+                    .SetContentTitle (GetProjectName (currentTimeEntry))
+                    .SetContentText (GetDescription (currentTimeEntry))
+                    .SetWhen ((long)startTime.ToUnix ().TotalMilliseconds);
 
                 notificationManager.Notify (RunningNotifId, runningBuilder.Build ());
             }
@@ -211,15 +209,15 @@ namespace Toggl.Joey
             var pendingStopIntent = PendingIntent.GetBroadcast (ctx, 0, stopIntent, PendingIntentFlags.UpdateCurrent);
 
             return new NotificationCompat.Builder (ctx)
-                   .SetAutoCancel (false)
-                   .SetUsesChronometer (true)
-                   .SetOngoing (true)
-                   .SetSmallIcon (Resource.Drawable.IcNotificationIcon)
-                   // TODO: Removed Stop button from notification until
-                   // find a fiable solution
-                   // .AddAction (Resource.Drawable.IcActionStop, res.GetString (Resource.String.RunningNotificationStopButton), pendingStopIntent)
-                   // .AddAction (Resource.Drawable.IcActionEdit, res.GetString (Resource.String.RunningNotificationEditButton), editIntent)
-                   .SetContentIntent (pendingOpenIntent);
+                                         .SetAutoCancel (false)
+                                         .SetUsesChronometer (true)
+                                         .SetOngoing (true)
+                                         .SetSmallIcon (Resource.Drawable.IcNotificationIcon)
+                                         // TODO: Removed Stop button from notification until
+                                         // find a fiable solution
+                                         // .AddAction (Resource.Drawable.IcActionStop, res.GetString (Resource.String.RunningNotificationStopButton), pendingStopIntent)
+                                         // .AddAction (Resource.Drawable.IcActionEdit, res.GetString (Resource.String.RunningNotificationEditButton), editIntent)
+                                         .SetContentIntent (pendingOpenIntent);
         }
 
         private static NotificationCompat.Builder CreateIdleNotificationBuilder (Context ctx)
@@ -232,12 +230,12 @@ namespace Toggl.Joey
             var pendingOpenIntent = PendingIntent.GetActivity (ctx, 0, openIntent, 0);
 
             return new NotificationCompat.Builder (ctx)
-                   .SetAutoCancel (false)
-                   .SetOngoing (true)
-                   .SetSmallIcon (Resource.Drawable.IcNotificationIconIdle)
-                   .SetContentIntent (pendingOpenIntent)
-                   .SetContentTitle (res.GetString (Resource.String.IdleNotificationTitle))
-                   .SetContentText (res.GetString (Resource.String.IdleNotificationText));
+                                         .SetAutoCancel (false)
+                                         .SetOngoing (true)
+                                         .SetSmallIcon (Resource.Drawable.IcNotificationIconIdle)
+                                         .SetContentIntent (pendingOpenIntent)
+                                         .SetContentTitle (res.GetString (Resource.String.IdleNotificationTitle))
+                                         .SetContentText (res.GetString (Resource.String.IdleNotificationText));
         }
     }
 }

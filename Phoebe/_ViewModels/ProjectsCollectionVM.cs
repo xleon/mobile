@@ -10,7 +10,7 @@ using XPlatUtils;
 
 namespace Toggl.Phoebe._ViewModels
 {
-    public class ProjectsCollectionVM : ObservableRangeCollection<CommonData>, ICollectionData<CommonData>
+    public class ProjectsCollectionVM : ObservableRangeCollection<CommonData>
     {
         private List<ClientData> clients;
         private List<SuperProjectData> projects;

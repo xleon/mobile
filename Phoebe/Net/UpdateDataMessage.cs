@@ -1,26 +1,65 @@
 ﻿using System;
-using System.Collections.Generic;
-using Toggl.Phoebe.Data.Json;
 
 namespace Toggl.Phoebe.Net
 {
-    public class UpdateFinishedMessage
+    public class UpdateStartedMessage : Message
     {
-        public readonly List<TimeEntryJson> JsonEntries;
-        public readonly DateTime StartDate;
-        public readonly DateTime EndDate;
-        public readonly bool HadErrors;
-        public readonly bool HadMore;
+        private readonly DateTime startDate;
 
-        public UpdateFinishedMessage (
-            List<TimeEntryJson> jsonEntries, DateTime startDate, DateTime endDate,
-            bool hadMore, bool hadErrors)
+        public UpdateStartedMessage (ISyncManager sender, DateTime startDate) : base (sender)
         {
-            this.JsonEntries = jsonEntries;
-            this.HadErrors = hadErrors;
-            this.StartDate = startDate;
-            this.EndDate = endDate;
-            this.HadMore = hadMore;
+            this.startDate = startDate;
+        }
+
+        public ISyncManager SyncManager
+        {
+            get { return (ISyncManager)Sender; }
+        }
+
+        public DateTime StartDate
+        {
+            get { return startDate; }
+        }
+    }
+
+    public class UpdateFinishedMessage : Message
+    {
+        private readonly DateTime startDate;
+        private readonly DateTime endDate;
+        private readonly bool hadErrors;
+        private readonly bool hadMore;
+
+        public UpdateFinishedMessage (ISyncManager sender, DateTime startDate, DateTime endDate, bool hadMore, bool hadErrors) : base (sender)
+        {
+            this.hadErrors = hadErrors;
+            this.startDate = startDate;
+            this.endDate = endDate;
+            this.hadMore = hadMore;
+        }
+
+        public ISyncManager SyncManager
+        {
+            get { return (ISyncManager)Sender; }
+        }
+
+        public DateTime StartDate
+        {
+            get { return startDate; }
+        }
+
+        public DateTime EndDate
+        {
+            get { return endDate; }
+        }
+
+        public bool HadErrors
+        {
+            get { return hadErrors; }
+        }
+
+        public bool HadMore
+        {
+            get { return hadMore; }
         }
     }
 }

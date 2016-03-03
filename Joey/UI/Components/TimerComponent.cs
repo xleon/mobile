@@ -3,7 +3,7 @@ using Android.Widget;
 using GalaSoft.MvvmLight.Helpers;
 using Toggl.Joey.UI.Utils;
 using Toggl.Joey.UI.Views;
-using Toggl.Phoebe._ViewModels;
+using Toggl.Phoebe.Data.ViewModels;
 using Activity = Android.Support.V4.App.FragmentActivity;
 using Fragment = Android.Support.V4.App.Fragment;
 
@@ -20,7 +20,7 @@ namespace Toggl.Joey.UI.Components
 
         public View Root { get; private set; }
         public ImageButton AddManualEntry { get; private set; }
-        public LogTimeEntriesVM ViewModel { get; private set; }
+        public LogTimeEntriesViewModel ViewModel { get; private set; }
 
         private Binding<bool, bool> isRunningBinding;
         private Binding<string, string> descBinding, durationBinding, projectBinding;
@@ -64,7 +64,7 @@ namespace Toggl.Joey.UI.Components
             IsRunning = false;
         }
 
-        public void SetViewModel (LogTimeEntriesVM viewModel)
+        public void SetViewModel (LogTimeEntriesViewModel viewModel)
         {
             ViewModel = viewModel;
 
@@ -72,9 +72,9 @@ namespace Toggl.Joey.UI.Components
             isRunningBinding = this.SetBinding (() => ViewModel.IsTimeEntryRunning, () => IsRunning);
             durationBinding = this.SetBinding (() => ViewModel.Duration, () => DurationTextView.Text);
             descBinding = this.SetBinding (() => ViewModel.Description, () => DescriptionTextView.Text)
-                          .ConvertSourceToTarget (desc => desc != string.Empty ? desc : activity.ApplicationContext.Resources.GetText (Resource.String.TimerComponentNoDescription));
+                              .ConvertSourceToTarget (desc => desc != string.Empty ? desc : activity.ApplicationContext.Resources.GetText (Resource.String.TimerComponentNoDescription));
             projectBinding = this.SetBinding (() => ViewModel.ProjectName, () => ProjectTextView.Text)
-                             .ConvertSourceToTarget (proj => proj != string.Empty ? proj : activity.ApplicationContext.Resources.GetText (Resource.String.TimerComponentNoProject));
+                                 .ConvertSourceToTarget (proj => proj != string.Empty ? proj : activity.ApplicationContext.Resources.GetText (Resource.String.TimerComponentNoProject));
         }
 
         public void DetachBindind ()

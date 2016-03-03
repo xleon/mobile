@@ -2,9 +2,12 @@
 using System.Collections.Generic;
 using SQLite.Net.Interop;
 using SQLite.Net.Platform.Generic;
+using Toggl.Phoebe._Data.Json;
 using Toggl.Phoebe._Data.Models;
+using Toggl.Phoebe._Net;
 using Toggl.Phoebe._Reactive;
 using System.Threading.Tasks;
+using Toggl.Phoebe.Analytics;
 
 namespace Toggl.Phoebe.Tests.Reactive
 {
@@ -41,6 +44,142 @@ namespace Toggl.Phoebe.Tests.Reactive
         public void UnregisterSyncWhenNetworkPresent ()
         {
             throw new NotImplementedException ();
+        }
+    }
+
+    public class ToggleClientMock : ITogglClient
+    {
+        public Random rnd = new Random ();
+        public IList<CommonJson> ReceivedItems = new List<CommonJson> ();
+
+        public Task<T> Create<T> (T jsonObject) where T : CommonJson
+        {
+            return Task.Run (() => {
+                ReceivedItems.Add (jsonObject);
+                jsonObject.RemoteId = rnd.Next (100);
+                return jsonObject;
+            });
+        }
+        public Task<T> Get<T> (long id) where T : CommonJson
+        {
+            throw new NotImplementedException ();
+        }
+        public Task<List<T>> List<T> () where T : CommonJson
+        {
+            throw new NotImplementedException ();
+        }
+        public Task<T> Update<T> (T jsonObject) where T : CommonJson
+        {
+            return Task.Run (() => {
+                ReceivedItems.Add (jsonObject);
+                return jsonObject;
+            });
+        }
+        public Task Delete<T> (T jsonObject) where T : CommonJson
+        {
+            return Task.Run (() => {
+                ReceivedItems.Add (jsonObject);
+            });
+        }
+        public Task Delete<T> (IEnumerable<T> jsonObjects) where T : CommonJson
+        {
+            throw new NotImplementedException ();
+        }
+        public Task<UserJson> GetUser (string username, string password)
+        {
+            throw new NotImplementedException ();
+        }
+        public Task<UserJson> GetUser (string googleAccessToken)
+        {
+            throw new NotImplementedException ();
+        }
+        public Task<List<ClientJson>> ListWorkspaceClients (long workspaceId)
+        {
+            throw new NotImplementedException ();
+        }
+        public Task<List<ProjectJson>> ListWorkspaceProjects (long workspaceId)
+        {
+            throw new NotImplementedException ();
+        }
+        public Task<List<WorkspaceUserJson>> ListWorkspaceUsers (long workspaceId)
+        {
+            throw new NotImplementedException ();
+        }
+        public Task<List<TaskJson>> ListWorkspaceTasks (long workspaceId)
+        {
+            throw new NotImplementedException ();
+        }
+        public Task<List<TaskJson>> ListProjectTasks (long projectId)
+        {
+            throw new NotImplementedException ();
+        }
+        public Task<List<ProjectUserJson>> ListProjectUsers (long projectId)
+        {
+            throw new NotImplementedException ();
+        }
+        public Task<List<TimeEntryJson>> ListTimeEntries (DateTime start, DateTime end, System.Threading.CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException ();
+        }
+        public Task<List<TimeEntryJson>> ListTimeEntries (DateTime start, DateTime end)
+        {
+            throw new NotImplementedException ();
+        }
+        public Task<List<TimeEntryJson>> ListTimeEntries (DateTime end, int days, System.Threading.CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException ();
+        }
+        public Task<List<TimeEntryJson>> ListTimeEntries (DateTime end, int days)
+        {
+            throw new NotImplementedException ();
+        }
+        public Task<UserRelatedJson> GetChanges (DateTime? since)
+        {
+            throw new NotImplementedException ();
+        }
+        public Task CreateFeedback (FeedbackJson jsonObject)
+        {
+            throw new NotImplementedException ();
+        }
+        public Task CreateExperimentAction (ActionJson jsonObject)
+        {
+            throw new NotImplementedException ();
+        }
+    }
+
+    public class TrackerMock : ITracker
+    {
+        public string CurrentScreen
+        {
+            set { } // Do nothing
+        }
+        public void SendAccountCreateEvent (AccountCredentials credentialsType)
+        {
+            // Do nothing
+        }
+        public void SendAccountLoginEvent (AccountCredentials credentialsType)
+        {
+            // Do nothing
+        }
+        public void SendAccountLogoutEvent ()
+        {
+            // Do nothing
+        }
+        public void SendAppInitTime (TimeSpan duration)
+        {
+            // Do nothing
+        }
+        public void SendSettingsChangeEvent (SettingName settingName)
+        {
+            // Do nothing
+        }
+        public void SendTimerStartEvent (TimerStartSource startSource)
+        {
+            // Do nothing
+        }
+        public void SendTimerStopEvent (TimerStopSource stopSource)
+        {
+            // Do nothing
         }
     }
 
@@ -109,4 +248,3 @@ namespace Toggl.Phoebe.Tests.Reactive
         }
     }
 }
-

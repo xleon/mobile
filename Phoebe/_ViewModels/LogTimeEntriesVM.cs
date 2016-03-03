@@ -1,13 +1,9 @@
 ﻿using System;
-using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 using GalaSoft.MvvmLight;
 using PropertyChanged;
 using Toggl.Phoebe.Analytics;
-using Toggl.Phoebe.Data.DataObjects;
-using Toggl.Phoebe.Data.Models;
-using Toggl.Phoebe.Data.Utils;
 using Toggl.Phoebe.Net;
 using Toggl.Phoebe._Data;
 using Toggl.Phoebe._Data.Models;
@@ -59,12 +55,7 @@ namespace Toggl.Phoebe._ViewModels
         private void DisposeCollection ()
         {
             if (Collection != null) {
-                Collection.CollectionChanged -= OnDetectHasItems;
-                if (Collection is TimeEntriesCollection<TimeEntryHolder>) {
-                    ((TimeEntriesCollection<TimeEntryHolder>)Collection).Dispose ();
-                } else {
-                    ((TimeEntriesCollection<TimeEntryGroup>)Collection).Dispose ();
-                }
+                Collection.Dispose ();
             }
         }
 
@@ -80,8 +71,6 @@ namespace Toggl.Phoebe._ViewModels
         public bool HasMoreItems { get; private set; }
 
         public bool HasLoadErrors { get; private set; }
-
-        public bool HasItems { get; private set; }
 
         public string Description { get; set; }
 
@@ -115,8 +104,7 @@ namespace Toggl.Phoebe._ViewModels
         public void ContinueTimeEntry (int index)
         {
             var newTimeEntry = new TimeEntryData ();
-            var timeEntryHolder = Collection.ElementAt (index) as ITimeEntryHolder;
-
+            var timeEntryHolder = Collection.Data.ElementAt (index) as ITimeEntryHolder;
             if (timeEntryHolder == null) {
                 return;
             }
@@ -150,21 +138,18 @@ namespace Toggl.Phoebe._ViewModels
                 ServiceContainer.Resolve<ITracker> ().SendTimerStopEvent (TimerStopSource.App);
             }
 
-            // Welcome wizard isn't needed after a time entry is started / stopped.
-            ServiceContainer.Resolve<ISettingsStore> ().ShowWelcome = false;
-
             return active;
         }
 
-        public Task RemoveTimeEntryAsync (int index)
+        public void RemoveItemWithUndo (int index)
         {
-            var te = Collection.ElementAt (index) as ITimeEntryHolder;
-            return TimeEntryModel.DeleteTimeEntryDataAsync (te.Data);
+            Collection.RemoveTimeEntryWithUndo (
+                Collection.Data.ElementAt (index) as ITimeEntryHolder);
         }
 
         public void RestoreItemFromUndo ()
         {
-            return activeTimeEntryManager.ActiveTimeEntry;
+            Collection.RestoreTimeEntryFromUndo ();
         }
         #endregion
 
@@ -199,6 +184,7 @@ namespace Toggl.Phoebe._ViewModels
                 else {
                     Description = string.Empty;
                     ProjectName = string.Empty;
+                    IsTimeEntryRunning = false;
                     durationTimer.Stop ();
                     Duration = TimeSpan.FromSeconds (0).ToString ().Substring (0, 8);
                 }

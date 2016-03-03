@@ -9,10 +9,7 @@ using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Logging;
 using Toggl.Phoebe.Net;
-using Toggl.Phoebe._Data;
-using Toggl.Phoebe._Reactive;
 using XPlatUtils;
-using Toggl.Phoebe._ViewModels.Timer;
 
 namespace Toggl.Phoebe
 {
@@ -22,11 +19,11 @@ namespace Toggl.Phoebe
         private const string DefaultDurationText = " 00:00:00 ";
 
         private readonly AuthManager authManager;
-        private Toggl.Phoebe._Data.ActiveTimeEntryManager activeTimeEntryManager;
+        private ActiveTimeEntryManager activeTimeEntryManager;
         private readonly IWidgetUpdateService widgetUpdateService;
         private Subscription<SyncStartedMessage> subscriptionSyncStarted;
         private Subscription<SyncFinishedMessage> subscriptionSyncFinished;
-        private Subscription<Toggl.Phoebe._Data.StartStopMessage> subscriptionStartStopFinished;
+        private Subscription<StartStopMessage> subscriptionStartStopFinished;
 
         private bool isLoading;
         private MessageBus messageBus;
@@ -42,7 +39,7 @@ namespace Toggl.Phoebe
             messageBus = ServiceContainer.Resolve<MessageBus> ();
             subscriptionSyncStarted = messageBus.Subscribe<SyncStartedMessage> (OnSyncWidget);
             subscriptionSyncFinished = messageBus.Subscribe<SyncFinishedMessage> (OnSyncWidget);
-            subscriptionStartStopFinished = messageBus.Subscribe<Toggl.Phoebe._Data.StartStopMessage> (OnSyncWidget);
+            subscriptionStartStopFinished = messageBus.Subscribe<StartStopMessage> (OnSyncWidget);
         }
 
         public void Dispose ()
@@ -68,7 +65,7 @@ namespace Toggl.Phoebe
         public async Task StartStopTimeEntry ()
         {
             if (activeTimeEntryManager.IsRunning) {
-                RxChain.Send (new DataMsg.TimeEntryStop (activeTimeEntryManager.ActiveTimeEntry));
+                await TimeEntryModel.StopAsync (activeTimeEntryManager.ActiveTimeEntry);
                 ServiceContainer.Resolve<ITracker>().SendTimerStopEvent (TimerStopSource.Widget);
             } else {
                 var startedEntry = await TimeEntryModel.StartAsync (TimeEntryModel.GetDraft ());
@@ -100,8 +97,8 @@ namespace Toggl.Phoebe
                 // Query local data:
                 var store = ServiceContainer.Resolve<IDataStore> ();
                 var entries = await store.Table<TimeEntryData> ()
-                              .OrderByDescending (r => r.StartTime) .Where (r => r.DeletedAt == null && r.State != TimeEntryState.New)
-                              .Take (4).ToListAsync ().ConfigureAwait (false);
+                                         .OrderByDescending (r => r.StartTime) .Where (r => r.DeletedAt == null && r.State != TimeEntryState.New)
+                                         .Take (4).ToListAsync ().ConfigureAwait (false);
 
                 var widgetEntries = new List<WidgetEntryData>();
 
@@ -169,4 +166,3 @@ namespace Toggl.Phoebe
         }
     }
 }
-

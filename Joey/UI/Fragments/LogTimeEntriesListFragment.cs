@@ -22,19 +22,15 @@ using Toggl.Phoebe;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Utils;
 using Toggl.Phoebe.Data.ViewModels;
-using Toggl.Phoebe.Models;
 using Toggl.Phoebe.Net;
-using Toggl.Phoebe._Helpers;
-using Toggl.Phoebe._ViewModels;
-using Toggl.Phoebe._ViewModels.Timer;
 using XPlatUtils;
 
 namespace Toggl.Joey.UI.Fragments
 {
     public class LogTimeEntriesListFragment : Fragment,
-        SwipeDismissCallback.IDismissListener,
-        ItemTouchListener.IItemTouchListener,
-        SwipeRefreshLayout.IOnRefreshListener
+    SwipeDismissCallback.IDismissListener,
+                            ItemTouchListener.IItemTouchListener,
+                            SwipeRefreshLayout.IOnRefreshListener
     {
         public static bool NewTimeEntryStartedByFAB;
 
@@ -55,13 +51,13 @@ namespace Toggl.Joey.UI.Fragments
         private ItemTouchListener itemTouchListener;
 
         // binding references
-        private Binding<bool, bool> hasMoreBinding, newMenuBinding;
-        private Binding<TimeEntryCollectionVM, TimeEntryCollectionVM> collectionBinding;
+        private Binding<bool, bool> hasItemsBinding, newMenuBinding, hasMoreBinging, hasErrorBinding;
+        private Binding<ObservableCollection<IHolder>, ObservableCollection<IHolder>> collectionBinding;
         private Binding<bool, FABButtonState> fabBinding;
 
         #region Binding objects and properties.
 
-        public LogTimeEntriesVM ViewModel { get; private set;}
+        public LogTimeEntriesViewModel ViewModel { get; private set;}
         public IMenuItem AddNewMenuItem { get; private set; }
         public StartStopFab StartStopBtn { get; private set;}
 
@@ -88,12 +84,12 @@ namespace Toggl.Joey.UI.Fragments
             return view;
         }
 
-        public override void OnViewCreated (View view, Bundle savedInstanceState)
+        public async override void OnViewCreated (View view, Bundle savedInstanceState)
         {
             base.OnViewCreated (view, savedInstanceState);
 
             // init viewModel
-            ViewModel = LogTimeEntriesVM.Init ();
+            ViewModel = LogTimeEntriesViewModel.Init ();
 
             collectionBinding = this.SetBinding (() => ViewModel.Collection).WhenSourceChanges (() => {
                 logAdapter = new LogTimeEntriesAdapter (recyclerView, ViewModel);
@@ -103,10 +99,10 @@ namespace Toggl.Joey.UI.Fragments
             hasErrorBinding = this.SetBinding (()=> ViewModel.HasLoadErrors).WhenSourceChanges (SetFooterState);
             hasItemsBinding = this.SetBinding (()=> ViewModel.HasItems).WhenSourceChanges (SetFooterState);
             fabBinding = this.SetBinding (() => ViewModel.IsTimeEntryRunning, () => StartStopBtn.ButtonAction)
-                         .ConvertSourceToTarget (isRunning => isRunning ? FABButtonState.Stop : FABButtonState.Start);
+                             .ConvertSourceToTarget (isRunning => isRunning ? FABButtonState.Stop : FABButtonState.Start);
 
             newMenuBinding = this.SetBinding (() => ViewModel.IsTimeEntryRunning)
-            .WhenSourceChanges (() => {
+                                 .WhenSourceChanges (() => {
                 if (AddNewMenuItem != null) {
                     AddNewMenuItem.SetVisible (!ViewModel.IsTimeEntryRunning);
                 }
@@ -122,7 +118,7 @@ namespace Toggl.Joey.UI.Fragments
             // until a screenloader is added to the screen
             // is better to load the items after create
             // the viewModel and show the loader from RecyclerView
-            ViewModel.LoadMore ();
+            await ViewModel.LoadMore ();
 
             // Subscribe to sync messages
             var bus = ServiceContainer.Resolve<MessageBus> ();
@@ -203,7 +199,7 @@ namespace Toggl.Joey.UI.Fragments
         public override bool OnOptionsItemSelected (IMenuItem item)
         {
             var i = new Intent (Activity, typeof (EditTimeEntryActivity));
-            i.PutStringArrayListExtra (EditTimeEntryActivity.ExtraGroupedTimeEntriesGuids, new List<string> { ViewModel.ActiveTimeEntry.Id.ToString ()});
+            i.PutStringArrayListExtra (EditTimeEntryActivity.ExtraGroupedTimeEntriesGuids, new List<string> { ViewModel.GetActiveTimeEntry ().Id.ToString ()});
             Activity.StartActivity (i);
 
             return base.OnOptionsItemSelected (item);
@@ -282,7 +278,7 @@ namespace Toggl.Joey.UI.Fragments
         }
         #endregion
 
-        private void SetupRecyclerView (LogTimeEntriesVM viewModel)
+        private void SetupRecyclerView (LogTimeEntriesViewModel viewModel)
         {
             // Touch listeners.
             itemTouchListener = new ItemTouchListener (recyclerView, this);
@@ -325,15 +321,15 @@ namespace Toggl.Joey.UI.Fragments
             private bool loading = true; // True if we are still waiting for the last set of data to load.
             private int firstVisibleItem, visibleItemCount, totalItemCount;
             private readonly LinearLayoutManager linearLayoutManager;
-            private readonly LogTimeEntriesVM viewModel;
+            private readonly LogTimeEntriesViewModel viewModel;
 
-            public ScrollListener (LinearLayoutManager linearLayoutManager, LogTimeEntriesVM viewModel)
+            public ScrollListener (LinearLayoutManager linearLayoutManager, LogTimeEntriesViewModel viewModel)
             {
                 this.linearLayoutManager = linearLayoutManager;
                 this.viewModel = viewModel;
             }
 
-            public override void OnScrolled (RecyclerView recyclerView, int dx, int dy)
+            public async override void OnScrolled (RecyclerView recyclerView, int dx, int dy)
             {
                 base.OnScrolled (recyclerView, dx, dy);
 
@@ -351,7 +347,7 @@ namespace Toggl.Joey.UI.Fragments
                 if (!loading && (totalItemCount - visibleItemCount) <= (firstVisibleItem + visibleThreshold)) {
                     loading = true;
                     // Request more entries.
-                    viewModel.LoadMore ();
+                    await viewModel.LoadMore ();
                 }
             }
 

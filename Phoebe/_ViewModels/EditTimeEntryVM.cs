@@ -77,7 +77,6 @@ namespace Toggl.Phoebe._ViewModels
 
         #region viewModel State properties
         public bool IsManual { get; private set; }
-        public bool SyncError { get; private set; }
 
         public string Duration {
             get {

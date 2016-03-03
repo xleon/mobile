@@ -4,7 +4,6 @@ using System.Linq;
 using System.Reactive;
 using System.Reactive.Linq;
 using System.Threading.Tasks;
-using Toggl.Phoebe.Data.Utils;
 using Toggl.Phoebe.Logging;
 using Toggl.Phoebe._Data;
 using Toggl.Phoebe._Data.Diff;
@@ -16,7 +15,7 @@ using XPlatUtils;
 
 namespace Toggl.Phoebe._ViewModels
 {
-    public class TimeEntryCollectionVM : ObservableRangeCollection<IHolder>, ICollectionData<IHolder>
+    public class TimeEntryCollectionVM : Toggl.Phoebe.Data.Utils.ObservableRangeCollection<IHolder>
     {
         IDisposable disposable;
         ITimeEntryHolder lastRemovedItem;

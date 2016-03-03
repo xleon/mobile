@@ -43,8 +43,8 @@ namespace Toggl.Joey.Wear
         private void Init (Context ctx)
         {
             googleApiClient = new GoogleApiClient.Builder (ctx)
-            .AddApi (WearableClass.API)
-            .Build ();
+                                                 .AddApi (WearableClass.API)
+                                                 .Build ();
             googleApiClient.Connect ();
         }
 
@@ -52,13 +52,13 @@ namespace Toggl.Joey.Wear
         {
             base.OnCreate ();
             Init (this);
-            var manager = ServiceContainer.Resolve<Toggl.Phoebe._Data.ActiveTimeEntryManager> ();
+            var manager = ServiceContainer.Resolve<ActiveTimeEntryManager> ();
             manager.PropertyChanged += OnActiveTimeEntryManagerPropertyChanged;
         }
 
         private async void OnActiveTimeEntryManagerPropertyChanged (object sender, PropertyChangedEventArgs args)
         {
-            if (args.PropertyName == Toggl.Phoebe._Data.ActiveTimeEntryManager.PropertyActiveTimeEntry) {
+            if (args.PropertyName == ActiveTimeEntryManager.PropertyActiveTimeEntry) {
                 await UpdateSharedTimeEntryList ();
             }
         }
@@ -123,7 +123,7 @@ namespace Toggl.Joey.Wear
                 try {
                     if (path == Common.StartStopTimeEntryPath) {
 
-                        WearDataProvider.StartStopTimeEntry (BaseContext);
+                        await WearDataProvider.StartStopTimeEntry (BaseContext);
                         await UpdateSharedTimeEntryList ();
                     } else if (path == Common.ContinueTimeEntryPath) {
 
@@ -201,11 +201,11 @@ namespace Toggl.Joey.Wear
         {
             get {
                 return WearableClass
-                       .NodeApi
-                       .GetConnectedNodes (googleApiClient)
-                       .Await ()
-                       .JavaCast<INodeApiGetConnectedNodesResult> ()
-                       .Nodes;
+                    .NodeApi
+                    .GetConnectedNodes (googleApiClient)
+                    .Await ()
+                    .JavaCast<INodeApiGetConnectedNodesResult> ()
+                    .Nodes;
             }
         }
 

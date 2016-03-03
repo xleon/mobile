@@ -64,6 +64,8 @@
     <string name="Today">Today</string>
     <string name="Yesterday">Yesterday</string>
     <string name="Tomorrow">Tomorrow</string>
+    <string name="LogHeaderDurationHoursMinutes">{0} h {1} min</string>
+    <string name="LogHeaderDurationMinutes">{0} min</string>	
     <string name="TimeTrackingNewTab">NEW</string>
     <string name="TimeTrackingRunningTab">RUNNING</string>
     <string name="TimeTrackingManualTab">MANUAL</string>

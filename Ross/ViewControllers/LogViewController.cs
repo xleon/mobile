@@ -351,7 +351,8 @@ namespace Toggl.Ross.ViewControllers
             private readonly UILabel durationLabel;
             private readonly UIImageView runningImageView;
             private Timer timer;
-            private ITimeEntryHolder holder;
+            private bool isRunning;
+            private TimeSpan duration;
             private Action<TimeEntryCell> OnContinueAction;
 
             public TimeEntryCell (IntPtr ptr) : base (ptr)
@@ -451,36 +452,40 @@ namespace Toggl.Ross.ViewControllers
                     SetNeedsLayout ();
                 }
 
+                // Set duration
+                duration = dataSource.GetDuration ();
+                isRunning = dataSource.Data.State == TimeEntryState.Running;
+
                 RebindTags (dataSource);
-                RebindDuration (dataSource);
+                RebindDuration ();
                 LayoutIfNeeded ();
-                holder = dataSource;
             }
 
             // Rebind duration with the saved state "lastDataSource"
             // TODO: Try to find a stateless method.
-            private void RebindDuration (ITimeEntryHolder dataSource)
+            private void RebindDuration ()
             {
-                var duration = dataSource.GetDuration ();
-                durationLabel.Text = TimeEntryModel.GetFormattedDuration (duration);
-                runningImageView.Hidden = dataSource.Data.State != TimeEntryState.Running;
-
                 if (timer != null) {
                     timer.Stop ();
                     timer.Elapsed -= OnDurationElapsed;
                     timer = null;
                 }
 
-                if (dataSource.Data.State == TimeEntryState.Running) {
+                if (isRunning) {
                     timer = new Timer (1000 - duration.Milliseconds);
                     timer.Elapsed += OnDurationElapsed;
                     timer.Start ();
                 }
+
+                durationLabel.Text = TimeEntryModel.GetFormattedDuration (duration);
+                runningImageView.Hidden = !isRunning;
             }
 
             private void OnDurationElapsed (object sender, ElapsedEventArgs e)
             {
-                InvokeOnMainThread (() => RebindDuration (holder));
+                // Update duration with new time.
+                duration = duration.Add (TimeSpan.FromMilliseconds (timer.Interval));
+                InvokeOnMainThread (() => RebindDuration ());
             }
 
             private void RebindTags (ITimeEntryHolder dataSource)

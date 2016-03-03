@@ -81,7 +81,7 @@ namespace Toggl.Joey
 
         private void InitializeStartupComponents ()
         {
-            ServiceContainer.Resolve<UpgradeManger> ().TryUpgrade ();
+            //ServiceContainer.Resolve<UpgradeManger> ().TryUpgrade ();
             ServiceContainer.Resolve<ILoggerClient> ();
             ServiceContainer.Resolve<LoggerUserManager> ();
             ServiceContainer.Resolve<WidgetSyncManager>();

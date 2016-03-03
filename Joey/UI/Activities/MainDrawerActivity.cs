@@ -52,6 +52,8 @@ namespace Toggl.Joey.UI.Activities
 
         private TextView DrawerUserName { get; set; }
 
+        private TextView DrawerEmail { get; set; }
+
         private ProfileImageView DrawerImage { get; set; }
 
         private View DrawerUserView { get; set; }
@@ -75,6 +77,7 @@ namespace Toggl.Joey.UI.Activities
             DrawerListView = FindViewById<ListView> (Resource.Id.DrawerListView);
             DrawerUserView = LayoutInflater.Inflate (Resource.Layout.MainDrawerListHeader, null);
             DrawerUserName = DrawerUserView.FindViewById<TextView> (Resource.Id.TitleTextView);
+            DrawerEmail = DrawerUserView.FindViewById<TextView> (Resource.Id.EmailTextView);
             DrawerImage = DrawerUserView.FindViewById<ProfileImageView> (Resource.Id.IconProfileImageView);
             DrawerListView.AddHeaderView (DrawerUserView);
             DrawerListView.Adapter = drawerAdapter = new DrawerListAdapter ();
@@ -151,6 +154,7 @@ namespace Toggl.Joey.UI.Activities
                 return;
             }
             DrawerUserName.Text = userData.Name;
+            DrawerEmail.Text = userData.Email;
             DrawerImage.ImageUrl = userData.ImageUrl;
         }
 

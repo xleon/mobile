@@ -2,10 +2,18 @@
 using Android.Graphics;
 using Android.Support.V7.Widget;
 using Android.Support.V7.Widget.Helper;
-using Toggl.Joey.UI.Adapters;
 
 namespace Toggl.Joey.UI.Utils
 {
+    public interface IUndoAdapter
+    {
+        void DeleteSelectedItem ();
+
+        void SetItemToUndoPosition (RecyclerView.ViewHolder item);
+
+        bool IsUndo (int position);
+    }
+
     public class SwipeDismissCallback : ItemTouchHelper.SimpleCallback
     {
         public interface IDismissListener
@@ -53,7 +61,7 @@ namespace Toggl.Joey.UI.Utils
 
         public override void OnChildDraw (Canvas cValue, RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder, float dX, float dY, int actionState, bool isCurrentlyActive)
         {
-            if (viewHolder != null) {
+            if (viewHolder != null && actionState == 1) {
                 var view = viewHolder.ItemView.FindViewById (Resource.Id.swipe_layout);
                 view.SetX (dX);
             }

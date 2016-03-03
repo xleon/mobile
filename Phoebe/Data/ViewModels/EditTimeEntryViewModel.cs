@@ -105,8 +105,6 @@ namespace Toggl.Phoebe.Data.ViewModels
 
         public Guid WorkspaceId { get; private set; }
 
-        public bool SyncError { get; private set; }
-
         #endregion
 
         public void SetProjectAndTask (Guid projectId, Guid taskId)
@@ -217,7 +215,7 @@ namespace Toggl.Phoebe.Data.ViewModels
                 StartDate = data.StartTime == DateTime.MinValue ? DateTime.UtcNow.AddMinutes (-1).ToLocalTime () : data.StartTime.ToLocalTime ();
                 StopDate = data.StopTime.HasValue ? data.StopTime.Value.ToLocalTime () : DateTime.MaxValue;
                 var duration = TimeEntryModel.GetDuration (data, Time.UtcNow);
-                Duration = TimeSpan.FromSeconds (duration.TotalSeconds).ToString ().Substring (0, 8); // TODO: check substring function for long times
+                Duration = string.Format ("{0:D2}:{1:mm}:{1:ss}", (int)duration.TotalHours, duration);
                 Description = data.Description;
                 WorkspaceId = data.WorkspaceId;
                 IsBillable = data.IsBillable;
@@ -229,8 +227,6 @@ namespace Toggl.Phoebe.Data.ViewModels
                     IsRunning = false;
                     durationTimer.Stop ();
                 }
-
-                SyncError = (data.RemoteRejected || !data.RemoteId.HasValue);
             });
         }
 
@@ -293,7 +289,7 @@ namespace Toggl.Phoebe.Data.ViewModels
 
             // Update on UI Thread
             ServiceContainer.Resolve<IPlatformUtils> ().DispatchOnUIThread (() => {
-                Duration = TimeSpan.FromSeconds (duration.TotalSeconds).ToString ().Substring (0, 8);
+                Duration = string.Format ("{0:D2}:{1:mm}:{1:ss}", (int)duration.TotalHours, duration);
             });
         }
 
@@ -309,7 +305,6 @@ namespace Toggl.Phoebe.Data.ViewModels
             existingTagRelations = new List<TimeEntryTagData> (relations);
 
             existingTagRelations.ForEach ((obj) => Console.WriteLine (obj.Id + " " + obj.TagId + " " + obj.TimeEntryId));
-            Console.WriteLine ("After");
             // Delete unused tag relations:
             existingTagRelations.Where (r => !newTagList.Exists (t => t.Id == r.TagId))
             .ForEach (async (obj) => await dataStore.DeleteAsync (obj));
@@ -322,8 +317,6 @@ namespace Toggl.Phoebe.Data.ViewModels
                         .Where (r => r.TimeEntryId == timeEntry.Id && r.DeletedAt == null)
                         .ToListAsync();
             existingTagRelations = new List<TimeEntryTagData> (relations);
-            existingTagRelations.ForEach ((obj) => Console.WriteLine (obj.Id + " " + obj.TagId + " " + obj.TimeEntryId));
-
             return timeEntry;
         }
 

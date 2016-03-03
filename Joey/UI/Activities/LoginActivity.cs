@@ -560,7 +560,11 @@ namespace Toggl.Joey.UI.Activities
 
                     String token = null;
                     try {
-                        token = await Task.Factory.StartNew (() => GoogleAuthUtil.GetToken (ctx, Email, GoogleOAuthScope));
+                        var account = AccountManager.Get (ctx).GetAccounts()
+                                      .Where (x => x.Type == GoogleAuthUtil.GoogleAccountType && x.Name == Email)
+                                      .FirstOrDefault();
+
+                        token = await Task.Factory.StartNew (() => GoogleAuthUtil.GetToken (ctx, account, GoogleOAuthScope));
                     } catch (GooglePlayServicesAvailabilityException exc) {
                         var dia = GooglePlayServicesUtil.GetErrorDialog (
                                       exc.ConnectionStatusCode, ctx, GoogleAuthRequestCode);
@@ -582,6 +586,7 @@ namespace Toggl.Joey.UI.Activities
                     try {
                         activity = Activity as LoginActivity;
                         if (activity != null && activity.CurrentMode == Mode.Signup) {
+
                             // Signup with Google
                             var authRes = await authManager.SignupWithGoogleAsync (token);
                             if (authRes != AuthResult.Success) {

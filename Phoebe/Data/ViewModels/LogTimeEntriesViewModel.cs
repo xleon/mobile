@@ -292,7 +292,7 @@ namespace Toggl.Phoebe.Data.ViewModels
 
             // Update on UI Thread
             ServiceContainer.Resolve<IPlatformUtils> ().DispatchOnUIThread (() => {
-                Duration = TimeSpan.FromSeconds (duration.TotalSeconds).ToString ().Substring (0, 8);
+                Duration = string.Format ("{0:D2}:{1:mm}:{1:ss}", (int)duration.TotalHours, duration);
             });
         }
     }

@@ -52,6 +52,8 @@ namespace Toggl.Joey.UI.Activities
 
         private TextView DrawerUserName { get; set; }
 
+        private TextView DrawerEmail { get; set; }
+
         private ProfileImageView DrawerImage { get; set; }
 
         private View DrawerUserView { get; set; }
@@ -62,7 +64,7 @@ namespace Toggl.Joey.UI.Activities
 
         private FrameLayout DrawerSyncView { get; set; }
 
-        private Toolbar MainToolbar { get; set; }
+        public Toolbar MainToolbar { get; set; }
 
 
         protected override void OnCreateActivity (Bundle state)
@@ -75,6 +77,7 @@ namespace Toggl.Joey.UI.Activities
             DrawerListView = FindViewById<ListView> (Resource.Id.DrawerListView);
             DrawerUserView = LayoutInflater.Inflate (Resource.Layout.MainDrawerListHeader, null);
             DrawerUserName = DrawerUserView.FindViewById<TextView> (Resource.Id.TitleTextView);
+            DrawerEmail = DrawerUserView.FindViewById<TextView> (Resource.Id.EmailTextView);
             DrawerImage = DrawerUserView.FindViewById<ProfileImageView> (Resource.Id.IconProfileImageView);
             DrawerListView.AddHeaderView (DrawerUserView);
             DrawerListView.Adapter = drawerAdapter = new DrawerListAdapter ();
@@ -151,6 +154,7 @@ namespace Toggl.Joey.UI.Activities
                 return;
             }
             DrawerUserName.Text = userData.Name;
+            DrawerEmail.Text = userData.Email;
             DrawerImage.ImageUrl = userData.ImageUrl;
         }
 
@@ -185,16 +189,9 @@ namespace Toggl.Joey.UI.Activities
 
         private void SetMenuSelection (int pos)
         {
-            int parentPos = drawerAdapter.GetParentPosition (pos -1);
             DrawerListView.ClearChoices ();
-            if (parentPos > -1) {
-                DrawerListView.ChoiceMode = (ChoiceMode)ListView.ChoiceModeMultiple;
-                DrawerListView.SetItemChecked (parentPos, true);
-                DrawerListView.SetItemChecked (pos, true);
-            } else {
-                DrawerListView.ChoiceMode = (ChoiceMode)ListView.ChoiceModeSingle;
-                DrawerListView.SetItemChecked (pos, true);
-            }
+            DrawerListView.ChoiceMode = (ChoiceMode)ListView.ChoiceModeSingle;
+            DrawerListView.SetItemChecked (pos, true);
         }
 
         private void OpenPage (int id)
@@ -203,41 +200,20 @@ namespace Toggl.Joey.UI.Activities
                 OpenFragment (settingsFragment.Value);
                 SupportActionBar.SetTitle (Resource.String.MainDrawerSettings);
             } else if (id == DrawerListAdapter.ReportsPageId) {
-                drawerAdapter.ExpandCollapse (DrawerListAdapter.ReportsPageId);
                 if (reportFragment.Value.ZoomLevel == ZoomLevel.Week) {
                     SupportActionBar.SetTitle (Resource.String.MainDrawerReportsWeek);
-                    id = DrawerListAdapter.ReportsWeekPageId;
                 } else if (reportFragment.Value.ZoomLevel == ZoomLevel.Month) {
                     SupportActionBar.SetTitle (Resource.String.MainDrawerReportsMonth);
-                    id = DrawerListAdapter.ReportsMonthPageId;
                 } else {
                     SupportActionBar.SetTitle (Resource.String.MainDrawerReportsYear);
-                    id = DrawerListAdapter.ReportsYearPageId;
                 }
-                OpenFragment (reportFragment.Value);
-            } else if (id == DrawerListAdapter.ReportsWeekPageId) {
-                drawerAdapter.ExpandCollapse (DrawerListAdapter.ReportsPageId);
-                SupportActionBar.SetTitle (Resource.String.MainDrawerReportsWeek);
-                reportFragment.Value.ZoomLevel = ZoomLevel.Week;
-                OpenFragment (reportFragment.Value);
-            } else if (id == DrawerListAdapter.ReportsMonthPageId) {
-                drawerAdapter.ExpandCollapse (DrawerListAdapter.ReportsPageId);
-                SupportActionBar.SetTitle (Resource.String.MainDrawerReportsMonth);
-                reportFragment.Value.ZoomLevel = ZoomLevel.Month;
-                OpenFragment (reportFragment.Value);
-            } else if (id == DrawerListAdapter.ReportsYearPageId) {
-                drawerAdapter.ExpandCollapse (DrawerListAdapter.ReportsPageId);
-                SupportActionBar.SetTitle (Resource.String.MainDrawerReportsYear);
-                reportFragment.Value.ZoomLevel = ZoomLevel.Year;
                 OpenFragment (reportFragment.Value);
             } else if (id == DrawerListAdapter.FeedbackPageId) {
                 SupportActionBar.SetTitle (Resource.String.MainDrawerFeedback);
-                drawerAdapter.ExpandCollapse (DrawerListAdapter.FeedbackPageId);
                 OpenFragment (feedbackFragment.Value);
             } else {
                 SupportActionBar.SetTitle (Resource.String.MainDrawerTimer);
                 OpenFragment (trackingFragment.Value);
-                drawerAdapter.ExpandCollapse (DrawerListAdapter.TimerPageId);
             }
             SetMenuSelection (drawerAdapter.GetItemPosition (id));
 
@@ -290,12 +266,6 @@ namespace Toggl.Joey.UI.Activities
                 StartAuthActivity ();
             } else if (e.Id == DrawerListAdapter.ReportsPageId) {
                 OpenPage (DrawerListAdapter.ReportsPageId);
-            } else if (e.Id == DrawerListAdapter.ReportsWeekPageId) {
-                OpenPage (DrawerListAdapter.ReportsWeekPageId);
-            } else if (e.Id == DrawerListAdapter.ReportsMonthPageId) {
-                OpenPage (DrawerListAdapter.ReportsMonthPageId);
-            } else if (e.Id == DrawerListAdapter.ReportsYearPageId) {
-                OpenPage (DrawerListAdapter.ReportsYearPageId);
             } else if (e.Id == DrawerListAdapter.SettingsPageId) {
                 OpenPage (DrawerListAdapter.SettingsPageId);
 

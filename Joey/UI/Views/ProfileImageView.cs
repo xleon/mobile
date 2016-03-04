@@ -16,8 +16,8 @@ namespace Toggl.Joey.UI.Views
     class ProfileImageView : ImageView
     {
         private static readonly string LogTag = "ProfileImageView";
-        private static readonly int RectSize = 40;
-        //In DP!
+        private static readonly int RectSize = 56; //In DP!
+
         public ProfileImageView (Context context) : base (context)
         {
         }

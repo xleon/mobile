@@ -42,10 +42,7 @@
             android:id="@+id/DrawerListView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:divider="@drawable/DrawerListDivider"
-            android:footerDividersEnabled="false"
-            android:headerDividersEnabled="false"
-            android:dividerHeight="1dp"
+            android:divider="@null"
             android:choiceMode="singleChoice"
             android:paddingBottom="48dp" />
     </FrameLayout>

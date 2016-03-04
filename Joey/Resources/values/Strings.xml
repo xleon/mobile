@@ -181,6 +181,9 @@
     <string name="FeedbackThankYouTitle">Thank you</string>
     <string name="FeedbackThankYouOK">OK</string>
     <string name="FeedbackSendFailedText">Could not send to server. Please try again.</string>
+    <string name="ReportsToolbarMenuWeek">Week</string>
+    <string name="ReportsToolbarMenuMonth">Month</string>
+    <string name="ReportsToolbarMenuYear">Year</string>
     <string name="ReportsThisWeek">This Week</string>
     <string name="ReportsThisMonth">This Month</string>
     <string name="ReportsThisYear">This Year</string>

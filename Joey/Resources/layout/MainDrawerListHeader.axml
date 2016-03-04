@@ -1,23 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="horizontal">
+    android:orientation="vertical">
+    <Toggl.Joey.UI.Views.ProfileImageView
+        android:id="@+id/IconProfileImageView"
+        android:layout_height="56dp"
+        android:layout_width="match_parent"
+        android:gravity="center_horizontal"
+        android:layout_marginBottom="16dp"
+        android:layout_marginTop="24dp" />
     <TextView
         android:id="@+id/TitleTextView"
-        android:gravity="right|center_vertical"
-        android:layout_width="wrap_content"
-        android:layout_height="50dp"
-        android:textSize="16sp"
-        android:layout_marginRight="72dp"
-        android:layout_alignParentRight="true"
-        android:textColor="#8f8f8f" />
-    <Toggl.Joey.UI.Views.ProfileImageView
-        android:layout_alignParentRight="true"
-        android:id="@+id/IconProfileImageView"
-        android:layout_centerVertical="true"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_width="wrap_content"
-        android:layout_marginLeft="16dp"
-        android:layout_marginRight="16dp" />
-</RelativeLayout>
+        android:textSize="14sp"
+        android:text="Taavi Rehemägi"
+        android:gravity="center_horizontal"
+        android:layout_marginBottom="4dp"
+        android:textColor="#de4e4e4e" />
+    <TextView
+        android:id="@+id/EmailTextView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textSize="14sp"
+        android:text="taavi@toggl.com"
+        android:gravity="center_horizontal"
+        android:layout_marginBottom="14dp"
+        android:textColor="#de4e4e4e" />
+</LinearLayout>

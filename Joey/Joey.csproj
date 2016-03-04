@@ -409,7 +409,6 @@
     <AndroidResource Include="Resources\drawable-xhdpi\AndroidListFocusedHolo.9.png" />
     <AndroidResource Include="Resources\drawable-xhdpi\AndroidListSelectorDisabledHoloLight.9.png" />
     <AndroidResource Include="Resources\drawable-xxhdpi\AndroidListFocusedHolo.9.png" />
-    <AndroidResource Include="Resources\color\DrawerTextColor.xml" />
     <AndroidResource Include="Resources\layout\SettingsListHeaderItem.axml" />
     <AndroidResource Include="Resources\layout\SettingsListCheckboxItem.axml" />
     <AndroidResource Include="Resources\layout\SettingsListFragment.axml" />
@@ -541,7 +540,6 @@
     <AndroidResource Include="Resources\drawable-mdpi\IcKeyLeft.png" />
     <AndroidResource Include="Resources\drawable-mdpi\IcKeyRight.png" />
     <AndroidResource Include="Resources\layout\ReportsPagerFragment.axml" />
-    <AndroidResource Include="Resources\layout\MainDrawerSubListItem.axml" />
     <AndroidResource Include="Resources\layout\TagListCreateItem.axml" />
     <AndroidResource Include="Resources\drawable-hdpi\IcAddGrey.png" />
     <AndroidResource Include="Resources\drawable-mdpi\IcAddGrey.png" />
@@ -630,7 +628,6 @@
     <AndroidResource Include="Resources\menu\ProjectToolbarHome.axml" />
     <AndroidResource Include="Resources\layout\ProjectFragmenItem.axml" />
     <AndroidResource Include="Resources\layout\ProjectFragmentClientItem.axml" />
-    <AndroidResource Include="Resources\drawable\DrawerListDivider.xml" />
     <AndroidResource Include="Resources\drawable\DrawerItemSideShape.axml" />
     <AndroidResource Include="Resources\drawable\DrawerColorShape.xml" />
     <AndroidResource Include="Resources\drawable-hdpi\IcNavFeedback.png" />
@@ -753,6 +750,11 @@
     <AndroidResource Include="Resources\drawable-mdpi\ic_delete_white_24dp.png" />
     <AndroidResource Include="Resources\drawable-xhdpi\ic_delete_white_24dp.png" />
     <AndroidResource Include="Resources\drawable-xxhdpi\ic_delete_white_24dp.png" />
+    <AndroidResource Include="Resources\drawable-hdpi\IcReportsOverflow.png" />
+    <AndroidResource Include="Resources\drawable-mdpi\IcReportsOverflow.png" />
+    <AndroidResource Include="Resources\drawable-xhdpi\IcReportsOverflow.png" />
+    <AndroidResource Include="Resources\drawable-xxhdpi\IcReportsOverflow.png" />
+    <AndroidResource Include="Resources\menu\ReportsToolbarMenu.axml" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Xamarin\Android\Xamarin.Android.CSharp.targets" />
   <ItemGroup>

@@ -321,10 +321,6 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Phoebe\Phoebe.iOS.csproj">
-      <Project>{F968924D-3FFA-4927-B03E-EC0C3BFF87BC}</Project>
-      <Name>Phoebe.iOS</Name>
-    </ProjectReference>
     <ProjectReference Include="..\Contrib\Cirrious.FluentLayout\Cirrious.FluentLayout\Cirrious.FluentLayouts.Touch.csproj">
       <Project>{75D2DA9D-DFD4-49A1-98FB-FE0F0677EF0F}</Project>
       <Name>Cirrious.FluentLayouts.Touch</Name>
@@ -335,18 +331,7 @@
       <IsAppExtension>True</IsAppExtension>
     </ProjectReference>
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Data\" />
-    <Folder Include="ViewControllers\" />
-    <Folder Include="Resources\en.lproj\" />
-    <Folder Include="Theme\" />
-    <Folder Include="DataSources\" />
-    <Folder Include="Views\" />
-    <Folder Include="Net\" />
-    <Folder Include="Analytics\" />
-    <Folder Include="Logging\" />
-    <Folder Include="Views\Charting\" />
-  </ItemGroup>
+  <ItemGroup />
   <ItemGroup>
     <ImageAsset Include="Resources\Images.xcassets\AppIcons.appiconset\Contents.json">
       <InProject>false</InProject>

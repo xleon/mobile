@@ -774,13 +774,6 @@
     <AndroidResource Include="Resources\menu\ReportsToolbarMenu.axml" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Xamarin\Android\Xamarin.Android.CSharp.targets" />
-  <ItemGroup>
-    <ProjectReference Include="..\Chandler\Chandler.csproj">
-      <Project>{76D0B75F-C05C-4852-A9AA-8151618256EF}</Project>
-      <Name>Chandler</Name>
-      <IsAppExtension>True</IsAppExtension>
-    </ProjectReference>
-  </ItemGroup>
   <ItemGroup />
   <ItemGroup>
     <AndroidAsset Include="Assets\fonts\Roboto-Light.ttf" />

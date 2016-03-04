@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -117,23 +117,8 @@
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>
-    <ProjectReference Include="..\Phoebe\Phoebe.Desktop.csproj">
-      <Project>{C50664AF-B4E8-4B23-A3E4-67162EA6D895}</Project>
-      <Name>Phoebe.Desktop</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
     <None Include="packages.config" />
     <None Include="Data\RelatedModelsCollectionTest.cs" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Data\" />
-    <Folder Include="Views\" />
-    <Folder Include="Data\Models\" />
-    <Folder Include="Data\Json\" />
-    <Folder Include="Data\Json\Converters\" />
-    <Folder Include="Data\Merge\" />
-    <Folder Include="Analytics\" />
-    <Folder Include="Misc\" />
-  </ItemGroup>
+  <ItemGroup />
 </Project>

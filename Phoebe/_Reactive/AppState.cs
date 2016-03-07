@@ -145,6 +145,29 @@ namespace Toggl.Phoebe._Reactive
             return new AppState (
                        dic.ContainsKey (nameof (TimerState)) ? (TimerState)dic[nameof (TimerState)] : this.TimerState);
         }
+
+        public static AppState CreateEmpty ()
+        {
+            // Set initial pagination Date to the beginning of the next day.
+            // So, we can include all entries created -Today-.
+            var downloadFrom = Time.UtcNow.Date.AddDays (1);
+
+            var timerState =
+                new TimerState (
+                    downloadInfo: new DownloadInfo (false, true, false, downloadFrom, downloadFrom),
+                    user: new UserData { Id = Guid.Empty },
+                    workspaces: new Dictionary<Guid, WorkspaceData> (),
+                    projects: new Dictionary<Guid, ProjectData> (),
+                    workspaceUsers: new Dictionary<Guid, WorkspaceUserData> (),
+                    projectUsers: new Dictionary<Guid, ProjectUserData> (),
+                    clients: new Dictionary<Guid, ClientData> (),
+                    tasks: new Dictionary<Guid, TaskData> (),
+                    tags: new Dictionary<Guid, TagData> (),
+                    timeEntries: new Dictionary<Guid, RichTimeEntry> (),
+                    activeTimeEntry: null);
+
+            return new AppState (timerState);
+        }
     }
 
     public class RichTimeEntry

@@ -33,6 +33,8 @@ namespace Toggl.Phoebe
 
             RegisterJsonConverters ();
             ServiceContainer.Register<LoggerUserManager> ();
+
+            _Reactive.RxChain.Init (_Reactive.AppState.CreateEmpty ());
         }
 
         private static void RegisterJsonConverters ()

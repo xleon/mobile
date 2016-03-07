@@ -107,20 +107,20 @@ namespace Toggl.Phoebe._Reactive
 
         public override DataSyncMsg<T> Reduce (T state, DataMsg msg)
         {
-            var isSyncRequested = false;
             var syncData = new List<ICommonData> ();
+			var serverRequests = new List<ServerRequest> ();
             var dic = new Dictionary<string, object> ();
 
             foreach (var reducer in reducers) {
                 var propValue = reducer.Item1.GetValue (state);
                 var res = reducer.Item2.Reduce (propValue, msg);
 
-                isSyncRequested = isSyncRequested || res.IsSyncRequested;
                 dic.Add (reducer.Item1.Name, res.State);
                 syncData.AddRange (res.SyncData);
+                serverRequests.AddRange (res.ServerRequests);
             }
 
-            return new DataSyncMsg<T> (state.WithDictionary (dic), syncData, isSyncRequested);
+            return new DataSyncMsg<T> (state.WithDictionary (dic), syncData, serverRequests);
         }
 
         DataSyncMsg<object> IReducer.Reduce (object state, DataMsg msg)

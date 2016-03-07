@@ -1,10 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Toggl.Phoebe.Logging;
 using Toggl.Phoebe._Data;
 using Toggl.Phoebe._Data.Models;
 using Toggl.Phoebe._Helpers;
+using Toggl.Phoebe._Net;
 using XPlatUtils;
+using Toggl.Phoebe.Net;
 
 namespace Toggl.Phoebe._Reactive
 {
@@ -34,7 +37,7 @@ namespace Toggl.Phoebe._Reactive
         static DataSyncMsg<TimerState> TimeEntriesSync (TimerState state, DataMsg msg)
         {
             var newState = state.With (downloadInfo: state.DownloadInfo.With (isSyncing: true));
-            return DataSyncMsg.Create (newState, isSyncRequested: true);
+            return DataSyncMsg.Create (newState, request: new ServerRequest.DownloadEntries ());
         }
 
         static DataSyncMsg<TimerState> TimeEntriesLoad (TimerState state, DataMsg msg)
@@ -66,7 +69,7 @@ namespace Toggl.Phoebe._Reactive
                        state.With (
                            downloadInfo: downloadInfo,
                            timeEntries: state.UpdateTimeEntries (dbEntries)),
-                       isSyncRequested: true);
+                       request: new ServerRequest.DownloadEntries ());
         }
 
         static DataSyncMsg<TimerState> ReceivedFromServer (TimerState state, DataMsg msg)

@@ -210,32 +210,79 @@ namespace Toggl.Phoebe._Data
         }
     }
 
+    public abstract class ServerRequest
+    {
+        protected ServerRequest () {}
+
+        public class DownloadEntries : ServerRequest { }
+        public class Authenticate : ServerRequest
+        {
+            public readonly string Username;
+            public readonly string Password;
+            public Authenticate (string username, string password)
+            {
+                Username = username;
+                Password = password;
+            }
+        }
+        public class AuthenticateWithGoogle : ServerRequest
+        {
+            public readonly string AccessToken;
+            public AuthenticateWithGoogle (string accessToken)
+            {
+                AccessToken = accessToken;
+            }
+        }
+        public class SignUp : ServerRequest
+        {
+            public readonly string Email;
+            public readonly string Password;
+            public SignUp (string email, string password)
+            {
+                Email = email;
+                Password = password;
+            }
+        }
+        public class SignUpWithGoogle : ServerRequest
+        {
+            public readonly string AccessToken;
+            public SignUpWithGoogle (string accessToken)
+            {
+                AccessToken = accessToken;
+            }
+        }
+    }
+
     public class DataSyncMsg<T>
     {
         public T State { get; private set; }
-        public bool IsSyncRequested { get; private set; }
         public SyncTestOptions SyncTest { get; private set; }
         public IReadOnlyList<ICommonData> SyncData { get; private set; }
 
-        public DataSyncMsg (T state, IEnumerable<ICommonData> syncData = null, bool isSyncRequested = false, SyncTestOptions syncTest = null)
+        readonly List<ServerRequest> serverRequests;
+        public IEnumerable<ServerRequest> ServerRequests { get { return serverRequests; } }
+
+        public DataSyncMsg (T state, IEnumerable<ICommonData> syncData = null, IEnumerable<ServerRequest> serverRequests = null, SyncTestOptions syncTest = null)
         {
             State = state;
             SyncTest = syncTest;
-            IsSyncRequested = isSyncRequested;
             SyncData = syncData != null ? syncData.ToList () : new List<ICommonData> ();
+			
+            serverRequests = serverRequests != null ? serverRequests.ToList () : new List<ServerRequest> ();
         }
 
         public DataSyncMsg<T> With (SyncTestOptions syncTest)
         {
-            return new DataSyncMsg<T> (this.State, this.SyncData, this.IsSyncRequested, syncTest);
+            return new DataSyncMsg<T> (this.State, this.SyncData, this.ServerRequests, syncTest);
         }
     }
 
     public static class DataSyncMsg
     {
-        static public DataSyncMsg<T> Create<T> (T state, IEnumerable<ICommonData> syncData = null, bool isSyncRequested = false, SyncTestOptions syncTest = null)
+        static public DataSyncMsg<T> Create<T> (T state, IEnumerable<ICommonData> syncData = null, ServerRequest request = null, SyncTestOptions syncTest = null)
         {
-            return new DataSyncMsg<T> (state, syncData, isSyncRequested, syncTest);
+            var serverRequests = request != null ? new List<ServerRequest> { request } : null;
+            return new DataSyncMsg<T> (state, syncData, serverRequests, syncTest);
         }
     }
 

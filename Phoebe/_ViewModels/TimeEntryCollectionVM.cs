@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reactive;
 using System.Reactive.Linq;
-using System.Threading.Tasks;
 using Toggl.Phoebe.Logging;
 using Toggl.Phoebe._Data;
 using Toggl.Phoebe._Data.Diff;
@@ -15,7 +13,7 @@ using XPlatUtils;
 
 namespace Toggl.Phoebe._ViewModels
 {
-    public class TimeEntryCollectionVM : Toggl.Phoebe.Data.Utils.ObservableRangeCollection<IHolder>
+    public class TimeEntryCollectionVM : Data.Utils.ObservableRangeCollection<IHolder>
     {
         IDisposable disposable;
         ITimeEntryHolder lastRemovedItem;
@@ -29,7 +27,7 @@ namespace Toggl.Phoebe._ViewModels
 
         public TimeEntryCollectionVM (TimeEntryGroupMethod groupMethod, int bufferMilliseconds = 500)
         {
-            this.grouper = new TimeEntryGrouper (groupMethod);
+            grouper = new TimeEntryGrouper (groupMethod);
             disposable =
                 StoreManager
                 .Singleton
@@ -50,7 +48,7 @@ namespace Toggl.Phoebe._ViewModels
         private void UpdateItems (TimerState state)
         {
             try {
-                var timeHolders = state.TimeEntries.Values.Select (x => new TimeEntryHolder (x.Data, x.Info));
+                var timeHolders = state.TimeEntries.Values.Select (x => new TimeEntryHolder (x));
 
                 // Create the new item collection from holders (sort and add headers...)
                 var newItemCollection = CreateItemCollection (timeHolders);
@@ -94,7 +92,7 @@ namespace Toggl.Phoebe._ViewModels
 
         public void RestoreTimeEntryFromUndo ()
         {
-            RxChain.Send (new DataMsg.TimeEntriesRestoreFromUndo (lastRemovedItem.DataCollection));
+            RxChain.Send (new DataMsg.TimeEntriesRestoreFromUndo (lastRemovedItem.EntryCollection.Select (x => x.Data)));
         }
 
         public void RemoveTimeEntryWithUndo (ITimeEntryHolder timeEntryHolder)
@@ -104,7 +102,7 @@ namespace Toggl.Phoebe._ViewModels
             }
 
             Action<ITimeEntryHolder> removeTimeEntryPermanently =
-                holder => RxChain.Send (new DataMsg.TimeEntriesRemovePermanently (holder.DataCollection));
+                holder => RxChain.Send (new DataMsg.TimeEntriesRemovePermanently (holder.EntryCollection.Select (x => x.Data)));
 
             System.Timers.ElapsedEventHandler undoTimerFinished = (sender, e) => {
                 removeTimeEntryPermanently (lastRemovedItem);
@@ -116,12 +114,12 @@ namespace Toggl.Phoebe._ViewModels
                 removeTimeEntryPermanently (lastRemovedItem);
             }
 
-            if (timeEntryHolder.Data.State == TimeEntryState.Running) {
-                RxChain.Send (new DataMsg.TimeEntryStop (timeEntryHolder.Data));
+            if (timeEntryHolder.Entry.Data.State == TimeEntryState.Running) {
+                RxChain.Send (new DataMsg.TimeEntryStop (timeEntryHolder.Entry.Data));
             }
             lastRemovedItem = timeEntryHolder;
 
-            RxChain.Send (new DataMsg.TimeEntriesRemoveWithUndo (timeEntryHolder.DataCollection));
+            RxChain.Send (new DataMsg.TimeEntriesRemoveWithUndo (timeEntryHolder.EntryCollection.Select (x => x.Data)));
 
             // Create Undo timer
             if (undoTimer != null) {

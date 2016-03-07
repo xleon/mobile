@@ -3,57 +3,57 @@ using System.Collections.Generic;
 using Toggl.Phoebe._Data.Diff;
 using Toggl.Phoebe._Data.Models;
 using Toggl.Phoebe._Helpers;
+using Toggl.Phoebe._Reactive;
 
 namespace Toggl.Phoebe._ViewModels.Timer
 {
     public class TimeEntryHolder : ITimeEntryHolder
     {
         public TimeEntryInfo Info { get; set; } // TODO: Make set private again?
-        public ITimeEntryData Data { get; private set; }
-        public IList<ITimeEntryData> DataCollection
+        public RichTimeEntry Entry { get; private set; }
+        public IList<RichTimeEntry> EntryCollection
         {
             get {
-                return new[] { Data };
+                return new[] { Entry };
             }
         }
 
         public IList<string> Guids
         {
             get {
-                return new List<string> { Data.Id.ToString() };
+                return new List<string> { Entry.Data.Id.ToString() };
             }
         }
 
-        public TimeEntryHolder (ITimeEntryData data, TimeEntryInfo info)
+        public TimeEntryHolder (RichTimeEntry data)
         {
-            Data = data;
-            Info = info;
+            Entry = data;
         }
 
         public DiffComparison Compare (IDiffComparable other)
         {
-            if (object.ReferenceEquals (this, other)) {
+            if (ReferenceEquals (this, other)) {
                 return DiffComparison.Same;
             } else {
                 var other2 = other as TimeEntryHolder;
-                return other2 != null && other2.Data.Id == Data.Id
+                return other2 != null && other2.Entry.Data.Id == Entry.Data.Id
                        ? DiffComparison.Update : DiffComparison.Different;
             }
         }
 
         public DateTime GetStartTime()
         {
-            return Data.StartTime;
+            return Entry.Data.StartTime;
         }
 
         public TimeSpan GetDuration()
         {
-            return Data.GetDuration ();
+            return Entry.Data.GetDuration ();
         }
 
         public override string ToString ()
         {
-            return string.Format ("[{0:MM/dd HH:mm}, Id={1}]", Data.StartTime, Data.Id);
+            return string.Format ("[{0:MM/dd HH:mm}, Id={1}]", Entry.Data.StartTime, Entry.Data.Id);
         }
     }
 }

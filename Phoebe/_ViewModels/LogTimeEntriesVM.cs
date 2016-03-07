@@ -1,5 +1,4 @@
 ﻿using System;
-using System.ComponentModel;
 using System.Linq;
 using GalaSoft.MvvmLight;
 using PropertyChanged;
@@ -17,7 +16,7 @@ namespace Toggl.Phoebe._ViewModels
     [ImplementPropertyChanged]
     public class LogTimeEntriesVM : ViewModelBase, IDisposable
     {
-        private Subscription<Toggl.Phoebe.Data.SettingChangedMessage> subscriptionSettingChanged;
+        private Subscription<Data.SettingChangedMessage> subscriptionSettingChanged;
         private readonly System.Timers.Timer durationTimer;
         private readonly IDisposable subscriptionState;
 
@@ -30,7 +29,7 @@ namespace Toggl.Phoebe._ViewModels
             ServiceContainer.Resolve<ITracker> ().CurrentScreen = "TimeEntryList Screen";
 
             var bus = ServiceContainer.Resolve<MessageBus> ();
-            subscriptionSettingChanged = bus.Subscribe<Toggl.Phoebe.Data.SettingChangedMessage> (OnSettingChanged);
+            subscriptionSettingChanged = bus.Subscribe<Data.SettingChangedMessage> (OnSettingChanged);
             subscriptionState = StoreManager.Singleton
                                             .Observe (app => app.TimerState)
                                             .Subscribe (OnStateUpdated);
@@ -109,12 +108,12 @@ namespace Toggl.Phoebe._ViewModels
                 return;
             }
 
-            if (timeEntryHolder.Data.State == TimeEntryState.Running) {
-                RxChain.Send (new DataMsg.TimeEntryStop (timeEntryHolder.Data));
+            if (timeEntryHolder.Entry.Data.State == TimeEntryState.Running) {
+                RxChain.Send (new DataMsg.TimeEntryStop (timeEntryHolder.Entry.Data));
                 ServiceContainer.Resolve<ITracker> ().SendTimerStopEvent (TimerStopSource.App);
             }
             else {
-                RxChain.Send (new DataMsg.TimeEntryContinue (timeEntryHolder.Data));
+                RxChain.Send (new DataMsg.TimeEntryContinue (timeEntryHolder.Entry.Data));
                 ServiceContainer.Resolve<ITracker> ().SendTimerStartEvent (TimerStartSource.AppContinue);
             }
         }
@@ -156,7 +155,7 @@ namespace Toggl.Phoebe._ViewModels
         private void SyncCollectionView ()
         {
             DisposeCollection ();
-            IsGroupedMode = ServiceContainer.Resolve<Toggl.Phoebe.Data.ISettingsStore> ().GroupedTimeEntries;
+            IsGroupedMode = ServiceContainer.Resolve<Data.ISettingsStore> ().GroupedTimeEntries;
 
             Collection = new TimeEntryCollectionVM (
                 IsGroupedMode ? TimeEntryGroupMethod.Single : TimeEntryGroupMethod.ByDateAndTask);
@@ -191,7 +190,7 @@ namespace Toggl.Phoebe._ViewModels
             });
         }
 
-        private void OnSettingChanged (Toggl.Phoebe.Data.SettingChangedMessage msg)
+        private void OnSettingChanged (Data.SettingChangedMessage msg)
         {
             // Implement a GetPropertyName
             if (msg.Name == "GroupedTimeEntries") {

@@ -19,11 +19,10 @@ using Toggl.Joey.UI.Components;
 using Toggl.Joey.UI.Utils;
 using Toggl.Joey.UI.Views;
 using Toggl.Phoebe;
-using Toggl.Phoebe.Data;
-using Toggl.Phoebe.Data.Utils;
-using Toggl.Phoebe.Data.ViewModels;
+using Toggl.Phoebe._Data.Models;
+using Toggl.Phoebe._ViewModels;
+using Toggl.Phoebe._ViewModels.Timer;
 using Toggl.Phoebe.Net;
-using XPlatUtils;
 
 namespace Toggl.Joey.UI.Fragments
 {
@@ -40,7 +39,7 @@ namespace Toggl.Joey.UI.Fragments
         private View experimentEmptyView;
         private LogTimeEntriesAdapter logAdapter;
         private CoordinatorLayout coordinatorLayout;
-        private Subscription<SyncFinishedMessage> drawerSyncFinished;
+        //private Subscription<SyncFinishedMessage> drawerSyncFinished;
         private TimerComponent timerComponent;
         private TextView welcomeMessage;
         private TextView noItemsMessage;
@@ -57,7 +56,7 @@ namespace Toggl.Joey.UI.Fragments
 
         #region Binding objects and properties.
 
-        public LogTimeEntriesViewModel ViewModel { get; private set;}
+        public LogTimeEntriesVM ViewModel { get; private set;}
         public IMenuItem AddNewMenuItem { get; private set; }
         public StartStopFab StartStopBtn { get; private set;}
 
@@ -84,20 +83,20 @@ namespace Toggl.Joey.UI.Fragments
             return view;
         }
 
-        public async override void OnViewCreated (View view, Bundle savedInstanceState)
+        public override void OnViewCreated (View view, Bundle savedInstanceState)
         {
             base.OnViewCreated (view, savedInstanceState);
 
             // init viewModel
-            ViewModel = LogTimeEntriesViewModel.Init ();
+            ViewModel = new LogTimeEntriesVM (Phoebe._Reactive.StoreManager.Singleton.AppState.TimerState);
 
-            collectionBinding = this.SetBinding (() => ViewModel.Collection).WhenSourceChanges (() => {
+            collectionBinding = this.SetBinding (() => ViewModel.Collection as ObservableCollection<IHolder>).WhenSourceChanges (() => {
                 logAdapter = new LogTimeEntriesAdapter (recyclerView, ViewModel);
                 recyclerView.SetAdapter (logAdapter);
             });
             hasMoreBinging = this.SetBinding (()=> ViewModel.HasMoreItems).WhenSourceChanges (SetFooterState);
             hasErrorBinding = this.SetBinding (()=> ViewModel.HasLoadErrors).WhenSourceChanges (SetFooterState);
-            hasItemsBinding = this.SetBinding (()=> ViewModel.HasItems).WhenSourceChanges (SetFooterState);
+            hasItemsBinding = this.SetBinding (()=> ViewModel.HasMoreItems).WhenSourceChanges (SetFooterState);
             fabBinding = this.SetBinding (() => ViewModel.IsTimeEntryRunning, () => StartStopBtn.ButtonAction)
                              .ConvertSourceToTarget (isRunning => isRunning ? FABButtonState.Stop : FABButtonState.Start);
 
@@ -118,22 +117,20 @@ namespace Toggl.Joey.UI.Fragments
             // until a screenloader is added to the screen
             // is better to load the items after create
             // the viewModel and show the loader from RecyclerView
-            await ViewModel.LoadMore ();
+            ViewModel.LoadMore ();
 
-            // Subscribe to sync messages
-            var bus = ServiceContainer.Resolve<MessageBus> ();
-            drawerSyncFinished = bus.Subscribe<SyncFinishedMessage> (SyncFinished);
+            // TODO RX: Subscribe to SyncFinished
         }
 
 
-        public async void StartStopClick (object sender, EventArgs e)
+        public void StartStopClick (object sender, EventArgs e)
         {
-            // Send experiment data.
-            ViewModel.ReportExperiment (OBMExperimentManager.AndroidExperimentNumber,
-                                        OBMExperimentManager.StartButtonActionKey,
-                                        OBMExperimentManager.ClickActionValue);
+            // TODO RX: Send experiment data.
+            //ViewModel.ReportExperiment (OBMExperimentManager.AndroidExperimentNumber,
+            //                            OBMExperimentManager.StartButtonActionKey,
+            //                            OBMExperimentManager.ClickActionValue);
 
-            var timeEntryData = await ViewModel.StartStopTimeEntry ();
+            var timeEntryData = ViewModel.StartStopTimeEntry ();
             if (timeEntryData.State == TimeEntryState.Running) {
                 NewTimeEntryStartedByFAB = true;
                 var ids = new List<string> { timeEntryData.Id.ToString () };
@@ -151,11 +148,11 @@ namespace Toggl.Joey.UI.Fragments
                 return;
             }
 
-            var bus = ServiceContainer.Resolve<MessageBus> ();
-            if (drawerSyncFinished != null) {
-                bus.Unsubscribe (drawerSyncFinished);
-                drawerSyncFinished = null;
-            }
+            //var bus = ServiceContainer.Resolve<MessageBus> ();
+            //if (drawerSyncFinished != null) {
+            //    bus.Unsubscribe (drawerSyncFinished);
+            //    drawerSyncFinished = null;
+            //}
 
             // TODO: Remove bindings to ViewModel
             // check if it is needed or not.
@@ -167,25 +164,26 @@ namespace Toggl.Joey.UI.Fragments
 
         private void SetFooterState ()
         {
-            if (ViewModel.HasMoreItems && !ViewModel.HasLoadErrors) {
-                logAdapter.SetFooterState (RecyclerCollectionDataAdapter<IHolder>.RecyclerLoadState.Loading);
-            } else if (ViewModel.HasMoreItems && ViewModel.HasLoadErrors) {
-                logAdapter.SetFooterState (RecyclerCollectionDataAdapter<IHolder>.RecyclerLoadState.Retry);
-            } else if (!ViewModel.HasMoreItems && !ViewModel.HasLoadErrors) {
-                if (ViewModel.HasItems) {
-                    logAdapter.SetFooterState (RecyclerCollectionDataAdapter<IHolder>.RecyclerLoadState.Finished);
-                } else {
-                    View emptyView = emptyMessageView;
-                    // According to settings, show welcome message or no.
-                    welcomeMessage.Visibility = ServiceContainer.Resolve<ISettingsStore> ().ShowWelcome ? ViewStates.Visible : ViewStates.Gone;
-                    noItemsMessage.Visibility = ServiceContainer.Resolve<ISettingsStore> ().ShowWelcome ? ViewStates.Gone : ViewStates.Visible;
-                    if (OBMExperimentManager.IncludedInExperiment (OBMExperimentManager.AndroidExperimentNumber)) {
-                        emptyView = experimentEmptyView;
-                    }
-                    emptyView.Visibility = ViewModel.HasItems ? ViewStates.Gone : ViewStates.Visible;
-                }
-            }
-            recyclerView.Visibility = ViewModel.HasItems ? ViewStates.Visible : ViewStates.Gone;
+            // TODO RX
+            //if (ViewModel.HasMoreItems && !ViewModel.HasLoadErrors) {
+            //    logAdapter.SetFooterState (RecyclerCollectionDataAdapter<IHolder>.RecyclerLoadState.Loading);
+            //} else if (ViewModel.HasMoreItems && ViewModel.HasLoadErrors) {
+            //    logAdapter.SetFooterState (RecyclerCollectionDataAdapter<IHolder>.RecyclerLoadState.Retry);
+            //} else if (!ViewModel.HasMoreItems && !ViewModel.HasLoadErrors) {
+            //    if (ViewModel.HasMoreItems) {
+            //        logAdapter.SetFooterState (RecyclerCollectionDataAdapter<IHolder>.RecyclerLoadState.Finished);
+            //    } else {
+            //        View emptyView = emptyMessageView;
+            //        // According to settings, show welcome message or no.
+            //        welcomeMessage.Visibility = ServiceContainer.Resolve<ISettingsStore> ().ShowWelcome ? ViewStates.Visible : ViewStates.Gone;
+            //        noItemsMessage.Visibility = ServiceContainer.Resolve<ISettingsStore> ().ShowWelcome ? ViewStates.Gone : ViewStates.Visible;
+            //        if (OBMExperimentManager.IncludedInExperiment (OBMExperimentManager.AndroidExperimentNumber)) {
+            //            emptyView = experimentEmptyView;
+            //        }
+            //        emptyView.Visibility = ViewModel.HasMoreItems ? ViewStates.Gone : ViewStates.Visible;
+            //    }
+            //}
+            //recyclerView.Visibility = ViewModel.HasMoreItems ? ViewStates.Visible : ViewStates.Gone;
         }
 
         #region Menu setup
@@ -199,7 +197,9 @@ namespace Toggl.Joey.UI.Fragments
         public override bool OnOptionsItemSelected (IMenuItem item)
         {
             var i = new Intent (Activity, typeof (EditTimeEntryActivity));
-            i.PutStringArrayListExtra (EditTimeEntryActivity.ExtraGroupedTimeEntriesGuids, new List<string> { ViewModel.GetActiveTimeEntry ().Id.ToString ()});
+            i.PutStringArrayListExtra (
+                EditTimeEntryActivity.ExtraGroupedTimeEntriesGuids,
+                new List<string> { ViewModel.ActiveTimeEntry.Id.ToString ()});
             Activity.StartActivity (i);
 
             return base.OnOptionsItemSelected (item);
@@ -278,7 +278,7 @@ namespace Toggl.Joey.UI.Fragments
         }
         #endregion
 
-        private void SetupRecyclerView (LogTimeEntriesViewModel viewModel)
+        private void SetupRecyclerView (LogTimeEntriesVM viewModel)
         {
             // Touch listeners.
             itemTouchListener = new ItemTouchListener (recyclerView, this);
@@ -321,15 +321,15 @@ namespace Toggl.Joey.UI.Fragments
             private bool loading = true; // True if we are still waiting for the last set of data to load.
             private int firstVisibleItem, visibleItemCount, totalItemCount;
             private readonly LinearLayoutManager linearLayoutManager;
-            private readonly LogTimeEntriesViewModel viewModel;
+            private readonly LogTimeEntriesVM viewModel;
 
-            public ScrollListener (LinearLayoutManager linearLayoutManager, LogTimeEntriesViewModel viewModel)
+            public ScrollListener (LinearLayoutManager linearLayoutManager, LogTimeEntriesVM viewModel)
             {
                 this.linearLayoutManager = linearLayoutManager;
                 this.viewModel = viewModel;
             }
 
-            public async override void OnScrolled (RecyclerView recyclerView, int dx, int dy)
+            public override void OnScrolled (RecyclerView recyclerView, int dx, int dy)
             {
                 base.OnScrolled (recyclerView, dx, dy);
 
@@ -347,7 +347,7 @@ namespace Toggl.Joey.UI.Fragments
                 if (!loading && (totalItemCount - visibleItemCount) <= (firstVisibleItem + visibleThreshold)) {
                     loading = true;
                     // Request more entries.
-                    await viewModel.LoadMore ();
+                    viewModel.LoadMore ();
                 }
             }
 

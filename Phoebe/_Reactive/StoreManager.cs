@@ -17,6 +17,23 @@ namespace Toggl.Phoebe._Reactive
             Singleton = Singleton ?? new StoreManager (initState, reducer);
         }
 
+        private AppState appStateUnsafe;
+        private readonly object appStateLock = new object ();
+
+        public AppState AppState
+        {
+            get {
+                lock (appStateLock) {
+                    return appStateUnsafe;
+                }
+            }
+            private set {
+                lock (appStateLock) {
+                    appStateUnsafe = value;
+                }
+            }
+        }
+
         public static void Cleanup ()
         {
             Singleton = null;
@@ -27,6 +44,7 @@ namespace Toggl.Phoebe._Reactive
 
         StoreManager (AppState initState, Reducer<AppState> reducer)
         {
+            AppState = initState;
             var initSyncMsg = DataSyncMsg.Create (initState);
 
             subject1
@@ -40,6 +58,7 @@ namespace Toggl.Phoebe._Reactive
                     log.Error (GetType ().Name, ex, "Failed to update state");
                     msg = DataSyncMsg.Create (acc.State);
                 }
+                AppState = msg.State;
                 return tuple.Item2 == null ? msg : msg.With (tuple.Item2);
             })
             .Subscribe (subject2.OnNext);

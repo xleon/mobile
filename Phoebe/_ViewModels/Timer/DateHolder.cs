@@ -22,7 +22,7 @@ namespace Toggl.Phoebe._ViewModels.Timer
 
             Date = date;
             TotalDuration = totalDuration;
-            IsRunning = dataObjects.Any (g => g.Data.State == TimeEntryState.Running);
+            IsRunning = dataObjects.Any (g => g.Entry.Data.State == TimeEntryState.Running);
         }
 
         public DiffComparison Compare (IDiffComparable other)

@@ -1,11 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
-using Toggl.Phoebe._Data;
 using Toggl.Phoebe._Data.Diff;
-using Toggl.Phoebe._Data.Models;
 using Toggl.Phoebe._Helpers;
+using Toggl.Phoebe._Reactive;
 
 namespace Toggl.Phoebe._ViewModels.Timer
 {
@@ -19,60 +17,57 @@ namespace Toggl.Phoebe._ViewModels.Timer
             Guid key;
             var tempDic = new Dictionary<Guid, List<TimeEntryHolder>> ();
             foreach (var item in items) {
-                if (tempDic.TryFindKey (out key, kv => kv.Value[0].Data.IsGroupableWith (item.Data))) {
+                if (tempDic.TryFindKey (out key, kv => kv.Value[0].Entry.Data.IsGroupableWith (item.Entry.Data))) {
                     tempDic [key].Add (item);
                 } else {
-                    tempDic.Add (item.Data.Id, new List<TimeEntryHolder> { item });
+                    tempDic.Add (item.Entry.Data.Id, new List<TimeEntryHolder> { item });
                 }
             }
             foreach (var kvPair in tempDic) {
-                var cached = kvPair.Value.FirstOrDefault (x => x.Info != null);
-                yield return new TimeEntryGroup (kvPair.Value.Select (x => x.Data), cached != null ? cached.Info : null);
+                yield return new TimeEntryGroup (kvPair.Value.Select (x => x.Entry));
             }
         }
         public static IEnumerable<TimeEntryHolder> Ungroup (IEnumerable<TimeEntryGroup> groups)
         {
             foreach (var g in groups) {
-                foreach (var data in g.DataCollection) {
-                    yield return new TimeEntryHolder (data, g.Info); // Cache TimeEntryInfo
+                foreach (var data in g.EntryCollection) {
+                    yield return new TimeEntryHolder (data);
                 }
             }
         }
 
-        public TimeEntryInfo Info { get; private set; }
-        public IList<ITimeEntryData> DataCollection { get; private set; }
+        public IList<RichTimeEntry> EntryCollection { get; private set; }
 
-        public ITimeEntryData Data
+        public RichTimeEntry Entry
         {
-            get { return DataCollection [0]; }
+            get { return EntryCollection [0]; }
         }
 
         public IList<string> Guids
         {
             get {
-                return DataCollection.AsEnumerable ().Select (r => r.Id.ToString ()).ToList ();
+                return EntryCollection.AsEnumerable ().Select (r => r.Data.Id.ToString ()).ToList ();
             }
         }
 
-        public TimeEntryGroup (ITimeEntryData data)
+        public TimeEntryGroup (RichTimeEntry entry)
         {
-            DataCollection = new List<ITimeEntryData> { data };
+            EntryCollection = new List<RichTimeEntry> { entry };
         }
 
-        public TimeEntryGroup (IEnumerable<ITimeEntryData> dataCollection, TimeEntryInfo info)
+        public TimeEntryGroup (IEnumerable<RichTimeEntry> entryCollection)
         {
-            DataCollection = dataCollection.OrderByDescending (x => x.StartTime).ToList ();
-            Info = info;
+            EntryCollection = entryCollection.OrderByDescending (x => x.Data.StartTime).ToList ();
         }
 
         public DiffComparison Compare (IDiffComparable other)
         {
             var other2 = other as TimeEntryGroup;
             if (other2 != null) {
-                if (DataCollection.SequenceEqual (other2.DataCollection, object.ReferenceEquals)) {
+                if (EntryCollection.SequenceEqual (other2.EntryCollection, ReferenceEquals)) {
                     return DiffComparison.Same;
                 } else {
-                    return Data.IsGroupableWith (other2.Data) ?
+                    return Entry.Data.IsGroupableWith (other2.Entry.Data) ?
                            DiffComparison.Update : DiffComparison.Different;
                 }
             } else {
@@ -82,12 +77,12 @@ namespace Toggl.Phoebe._ViewModels.Timer
 
         public DateTime GetStartTime()
         {
-            return Data.StartTime;
+            return Entry.Data.StartTime;
         }
 
         public TimeSpan GetDuration ()
         {
-            return DataCollection.Aggregate (TimeSpan.Zero, (acc, x) => acc + x.GetDuration ());
+            return EntryCollection.Aggregate (TimeSpan.Zero, (acc, x) => acc + x.Data.GetDuration ());
         }
 
         public override string ToString ()

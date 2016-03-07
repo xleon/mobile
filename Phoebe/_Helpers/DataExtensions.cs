@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Toggl.Phoebe._Data.Models;
 using SQLite.Net.Async;
+using Toggl.Phoebe._Data.Models;
 
 namespace Toggl.Phoebe._Helpers
 {
@@ -45,7 +45,7 @@ namespace Toggl.Phoebe._Helpers
         public static string ToIdString (this CommonData data)
         {
             var id = data.RemoteId.HasValue ? data.RemoteId.ToString () : data.Id.ToString ();
-            return String.Concat (data.GetType ().Name, "#", id);
+            return string.Concat (data.GetType ().Name, "#", id);
         }
 
         public static async Task<bool> ExistWithNameAsync ( this AsyncTableQuery<ClientData> query, string name)
@@ -63,7 +63,7 @@ namespace Toggl.Phoebe._Helpers
                                    .ToListAsync().ConfigureAwait (false);
             } else {
                 existingProjects = await query
-                                   .Where (r => r.Name == projectName && r.ClientId == null)
+                                   .Where (r => r.Name == projectName)
                                    .ToListAsync().ConfigureAwait (false);
             }
             return existingProjects.Count != 0;

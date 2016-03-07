@@ -112,5 +112,26 @@ namespace Toggl.Phoebe._Data.Models
 
         [JsonIgnore]
         public string RawTags { get; set; }
+
+        public static string GetFormattedDuration (UserData user, TimeSpan duration)
+        {
+            string formattedString = duration.ToString (@"hh\:mm\:ss");
+            if (user == null) {
+                return formattedString;
+            }
+
+            if (user.DurationFormat == DurationFormat.Classic) {
+                if (duration.TotalMinutes < 1) {
+                    formattedString = duration.ToString (@"s\ \s\e\c");
+                } else if (duration.TotalMinutes > 1 && duration.TotalMinutes < 60) {
+                    formattedString = duration.ToString (@"mm\:ss\ \m\i\n");
+                } else {
+                    formattedString = duration.ToString (@"hh\:mm\:ss");
+                }
+            } else if (user.DurationFormat == DurationFormat.Decimal) {
+                formattedString = String.Format ("{0:0.00} h", duration.TotalHours);
+            }
+            return formattedString;
+        }
     }
 }

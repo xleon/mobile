@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Toggl.Phoebe._Data;
 using Toggl.Phoebe._Data.Diff;
 using Toggl.Phoebe._Data.Models;
-using XPlatUtils;
 using Toggl.Phoebe._Reactive;
 
 namespace Toggl.Phoebe._ViewModels.Timer
@@ -16,9 +14,8 @@ namespace Toggl.Phoebe._ViewModels.Timer
 
     public interface ITimeEntryHolder : IHolder
     {
-        ITimeEntryData Data { get; }
-        IList<ITimeEntryData> DataCollection { get; }
-        TimeEntryInfo Info { get; }
+        RichTimeEntry Entry { get; }
+        IList<RichTimeEntry> EntryCollection { get; }
         IList<string> Guids { get; }
 
         TimeSpan GetDuration ();
@@ -54,19 +51,11 @@ namespace Toggl.Phoebe._ViewModels.Timer
 
     public static class TimeEntryUtil
     {
-        public static TimeEntryData CreateTimeEntryDraft ()
+        public static TimeEntryData CreateTimeEntryDraft (UserData userData)
         {
-            Guid userId = Guid.Empty;
-            Guid workspaceId = Guid.Empty;
-            bool durationOnly = false;
-
-            var authManager = ServiceContainer.Resolve<Toggl.Phoebe.Net.AuthManager> ();
-            if (authManager.IsAuthenticated) {
-                var user = authManager.User;
-                userId = user.Id;
-                workspaceId = user.DefaultWorkspaceId;
-                durationOnly = user.TrackingMode == TrackingMode.Continue;
-            }
+            Guid userId = userData.Id;
+            Guid workspaceId = userData.DefaultWorkspaceId;
+            bool durationOnly = userData.TrackingMode == TrackingMode.Continue;
 
             // Create new draft object
             var newData = new TimeEntryData {

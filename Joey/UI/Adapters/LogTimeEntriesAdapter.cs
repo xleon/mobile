@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.ObjectModel;
 using Android.Content;
 using Android.Graphics;
 using Android.Graphics.Drawables;
@@ -9,10 +10,9 @@ using Android.Widget;
 using Toggl.Joey.UI.Utils;
 using Toggl.Joey.UI.Views;
 using Toggl.Phoebe;
-using Toggl.Phoebe.Data;
-using Toggl.Phoebe.Data.Models;
-using Toggl.Phoebe.Data.Utils;
-using Toggl.Phoebe.Data.ViewModels;
+using Toggl.Phoebe._Data.Models;
+using Toggl.Phoebe._ViewModels;
+using Toggl.Phoebe._ViewModels.Timer;
 using XPlatUtils;
 
 namespace Toggl.Joey.UI.Adapters
@@ -34,21 +34,21 @@ namespace Toggl.Joey.UI.Adapters
         private static readonly int ContinueThreshold = 1;
         private DateTime lastTimeEntryContinuedTime;
         private int lastUndoIndex = -1;
-        private LogTimeEntriesViewModel viewModel;
+        private LogTimeEntriesVM viewModel;
         private RecyclerLoadState footerState = RecyclerLoadState.Loading;
 
         public LogTimeEntriesAdapter (IntPtr a, Android.Runtime.JniHandleOwnership b) : base (a, b)
         {
         }
 
-        public LogTimeEntriesAdapter (RecyclerView owner, LogTimeEntriesViewModel viewModel)
+        public LogTimeEntriesAdapter (RecyclerView owner, LogTimeEntriesVM viewModel)
             : base (owner, viewModel.Collection)
         {
             this.viewModel = viewModel;
             lastTimeEntryContinuedTime = Time.UtcNow;
         }
 
-        private async void OnContinueTimeEntry (RecyclerView.ViewHolder viewHolder)
+        private void OnContinueTimeEntry (RecyclerView.ViewHolder viewHolder)
         {
             // Don't continue a new TimeEntry before
             // x seconds has passed.
@@ -57,13 +57,13 @@ namespace Toggl.Joey.UI.Adapters
             }
             lastTimeEntryContinuedTime = Time.UtcNow;
 
-            await viewModel.ContinueTimeEntryAsync (viewHolder.AdapterPosition);
+            viewModel.ContinueTimeEntry (viewHolder.AdapterPosition);
         }
 
-        private async void OnRemoveTimeEntry (RecyclerView.ViewHolder viewHolder)
+        private void OnRemoveTimeEntry (RecyclerView.ViewHolder viewHolder)
         {
             lastUndoIndex = -1;
-            await viewModel.RemoveTimeEntryAsync (viewHolder.AdapterPosition);
+            viewModel.RemoveItemWithUndo (viewHolder.AdapterPosition);
         }
 
         protected override RecyclerView.ViewHolder GetViewHolder (ViewGroup parent, int viewType)
@@ -162,12 +162,12 @@ namespace Toggl.Joey.UI.Adapters
             lastUndoIndex = -1;
         }
 
-        public async void SetItemToUndoPosition (RecyclerView.ViewHolder viewHolder)
+        public void SetItemToUndoPosition (RecyclerView.ViewHolder viewHolder)
         {
             // If another ViewHolder is visible and ready to Remove,
             // just Remove it.
             if (lastUndoIndex > -1) {
-                await viewModel.RemoveTimeEntryAsync (lastUndoIndex);
+                viewModel.RemoveItemWithUndo (lastUndoIndex);
             }
 
             // Save last selected ViewHolder index.
@@ -374,23 +374,25 @@ namespace Toggl.Joey.UI.Adapters
                 }
 
                 var color = Color.Transparent;
+				var entryData = DataSource.Entry.Data;
                 var ctx = ServiceContainer.Resolve<Context> ();
 
-                if (DataSource.Data.RemoteId.HasValue && !DataSource.Data.IsDirty) {
+                // TODO RX: IsDirty has no meaning in the new architecture
+                if (entryData.RemoteId.HasValue && !entryData.IsDirty) {
                     NotSyncedView.Visibility = ViewStates.Gone;
                 } else {
                     NotSyncedView.Visibility = ViewStates.Visible;
                 }
                 var notSyncedShape = NotSyncedView.Background as GradientDrawable;
-                if (DataSource.Data.IsDirty && DataSource.Data.RemoteId.HasValue) {
+                if (entryData.IsDirty && entryData.RemoteId.HasValue) {
                     notSyncedShape.SetColor (ctx.Resources.GetColor (Resource.Color.light_gray));
                 } else {
                     notSyncedShape.SetColor (ctx.Resources.GetColor (Resource.Color.material_red));
                 }
 
-                var info = DataSource.Info;
+                var info = DataSource.Entry.Info;
                 if (!string.IsNullOrWhiteSpace (info.ProjectData.Name)) {
-                    color = Color.ParseColor (ProjectModel.HexColors [info.Color % ProjectModel.HexColors.Length]);
+                    color = Color.ParseColor (ProjectData.HexColors [info.Color % ProjectData.HexColors.Length]);
                     ProjectTextView.SetTextColor (color);
                     ProjectTextView.Text = info.ProjectData.Name;
                 } else {
@@ -414,13 +416,13 @@ namespace Toggl.Joey.UI.Adapters
                     TaskTextView.Visibility = ViewStates.Visible;
                 }
 
-                if (string.IsNullOrWhiteSpace (info.Description)) {
+                if (string.IsNullOrWhiteSpace (entryData.Description)) {
                     DescriptionTextView.Text = ctx.GetString (Resource.String.RecentTimeEntryNoDescription);
                 } else {
-                    DescriptionTextView.Text = info.Description;
+                    DescriptionTextView.Text = entryData.Description;
                 }
 
-                BillableView.Visibility = info.IsBillable ? ViewStates.Visible : ViewStates.Gone;
+                BillableView.Visibility = entryData.IsBillable ? ViewStates.Visible : ViewStates.Gone;
 
 
                 var shape = ColorView.Background as GradientDrawable;
@@ -439,9 +441,10 @@ namespace Toggl.Joey.UI.Adapters
                 }
 
                 var duration = DataSource.GetDuration ();
-                DurationTextView.Text = TimeEntryModel.GetFormattedDuration (duration);
+                // TODO RX: Pass UserData
+                DurationTextView.Text = TimeEntryData.GetFormattedDuration (null, duration);
 
-                if (DataSource.Data.State == TimeEntryState.Running) {
+                if (DataSource.Entry.Data.State == TimeEntryState.Running) {
                     handler.RemoveCallbacks (RebindDuration);
                     handler.PostDelayed (RebindDuration, 1000 - duration.Milliseconds);
                 } else {
@@ -457,7 +460,7 @@ namespace Toggl.Joey.UI.Adapters
                     return;
                 }
 
-                if (DataSource.Data.State == TimeEntryState.Running) {
+                if (DataSource.Entry.Data.State == TimeEntryState.Running) {
                     ContinueImageButton.SetImageResource (Resource.Drawable.IcStop);
                 } else {
                     ContinueImageButton.SetImageResource (Resource.Drawable.IcPlayArrowGrey);
@@ -471,7 +474,7 @@ namespace Toggl.Joey.UI.Adapters
                     return;
                 }
 
-                var numberOfTags = DataSource.Info.NumberOfTags;
+                var numberOfTags = DataSource.Entry.Info.Tags.Count;
                 TagsView.BubbleCount = numberOfTags;
                 TagsView.Visibility = numberOfTags > 0 ? ViewStates.Visible : ViewStates.Gone;
             }
@@ -483,12 +486,12 @@ namespace Toggl.Joey.UI.Adapters
             RelativeLayout retryLayout;
             Button retryButton;
 
-            public FooterHolder (View root, LogTimeEntriesViewModel viewModel) : base (root)
+            public FooterHolder (View root, LogTimeEntriesVM viewModel) : base (root)
             {
                 retryLayout = ItemView.FindViewById<RelativeLayout> (Resource.Id.RetryLayout);
                 progressBar = ItemView.FindViewById<ProgressBar> (Resource.Id.ProgressBar);
                 retryButton = ItemView.FindViewById<Button> (Resource.Id.RetryButton);
-                retryButton.Click += async (sender, e) => await viewModel.LoadMore ();
+                retryButton.Click += (sender, e) => viewModel.LoadMore ();
             }
 
             public void Bind (RecyclerLoadState state)

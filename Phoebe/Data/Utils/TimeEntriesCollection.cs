@@ -69,7 +69,7 @@ namespace Toggl.Phoebe.Data.Utils
 
             // 4. Check diffs, modify ItemCollection and notify changes
             var diffs = Diff.Calculate (_currentHolders, newItemCollection);
-			_currentHolders = newItemCollection;
+            _currentHolders = newItemCollection;
 
             // 5. Swap remove events to delete normal items before headers.
             // iOS requierement.

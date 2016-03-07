@@ -188,9 +188,9 @@ namespace Toggl.Joey.UI.Fragments
                 welcomeMessage.Visibility = isWelcome ? ViewStates.Visible : ViewStates.Gone;
                 noItemsMessage.Visibility = isWelcome ? ViewStates.Gone : ViewStates.Visible;
 
-                if (isWelcome && isInExperiment) {
-                    emptyView = experimentEmptyView;
-                }
+                //if (isWelcome && isInExperiment) {
+                emptyView = experimentEmptyView;
+                //}
 
                 emptyView.Visibility = hasItems ? ViewStates.Gone : ViewStates.Visible;
                 recyclerView.Visibility = hasItems ? ViewStates.Visible : ViewStates.Gone;

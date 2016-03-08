@@ -189,4 +189,9 @@
   <ItemGroup>
     <Folder Include="$(MSBuildThisFileDirectory)Contrib\XPlatUtils\" />
   </ItemGroup>
+  <ItemGroup>
+    <Content Include="$(MSBuildThisFileDirectory)FodyWeavers.xml">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
 </Project>

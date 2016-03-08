@@ -8,6 +8,29 @@ namespace Toggl.Phoebe._Helpers
 {
     public static class ReactiveExtensions
     {
+        public class SimpleObserver<T> : IObserver<T>
+        {
+			readonly Action<T> onNext;
+            public void OnCompleted () { } // Do nothing
+            public void OnError (Exception error) { } // Do nothing
+            public void OnNext (T value)
+            {
+                onNext (value);
+            }
+            public SimpleObserver (Action<T> onNext)
+            {
+                this.onNext = onNext;
+            }
+        }
+
+        /// <summary>
+        /// Help method when Rx is not available
+        /// </summary>
+        public static IDisposable SubscribeSimple<T> (this IObservable<T> observable, Action<T> action)
+        {
+            return observable.Subscribe (new SimpleObserver<T> (action));
+        }
+
         /// <summary>
         /// Filters out null results from chooser function
         /// </summary>

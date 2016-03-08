@@ -232,7 +232,7 @@ namespace Toggl.Phoebe.Tests.Reactive
 
             var timerState =
                 new TimerState (
-                    downloadInfo: new DownloadInfo (false, true, false, downloadFrom, downloadFrom),
+                    downloadInfo: new DownloadResult (false, true, false, downloadFrom, downloadFrom),
                     user: userData,
                     workspaces: new Dictionary<Guid, WorkspaceData> { { WorkspaceId, workspaceData } },
                     projects: new Dictionary<Guid, ProjectData> (),

@@ -16,10 +16,13 @@ using Android.Views;
 using Android.Widget;
 using Toggl.Joey.UI.Utils;
 using Toggl.Joey.UI.Views;
+using Toggl.Phoebe;
 using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Logging;
 using Toggl.Phoebe.Net;
+using Toggl.Phoebe._Data;
+using Toggl.Phoebe._Helpers;
 using XPlatUtils;
 using DialogFragment = Android.Support.V4.App.DialogFragment;
 using Fragment = Android.Support.V4.App.Fragment;
@@ -73,24 +76,6 @@ namespace Toggl.Joey.UI.Activities
             LoginButton = FindViewById<Button> (Resource.Id.LoginButton).SetFont (Font.Roboto);
             LegalTextView = FindViewById<TextView> (Resource.Id.LegalTextView).SetFont (Font.RobotoLight);
             GoogleLoginButton = FindViewById<Button> (Resource.Id.GoogleLoginButton).SetFont (Font.Roboto);
-        }
-
-        protected override bool StartAuthActivity ()
-        {
-            var authManager = ServiceContainer.Resolve<AuthManager> ();
-            if (authManager.IsAuthenticated) {
-                // Try to avoid flickering of buttons during activity transition by
-                // faking that we're still authenticating
-                IsAuthenticating = true;
-
-                var intent = new Intent (this, typeof (MainDrawerActivity));
-                intent.AddFlags (ActivityFlags.ClearTop);
-                StartActivity (intent);
-                Finish ();
-                return true;
-            }
-
-            return false;
         }
 
         private ArrayAdapter<string> MakeEmailsAdapter ()
@@ -290,68 +275,68 @@ namespace Toggl.Joey.UI.Activities
 
             }
 
+            ServerRequest req = null;
             if (CurrentMode == Mode.Login) {
-                await TryLoginPasswordAsync ();
-            } else {
-                await TrySignupPasswordAsync ();
+                req = new ServerRequest.Authenticate (EmailEditText.Text, PasswordEditText.Text);
             }
+            else {
+                req = new ServerRequest.SignUp (EmailEditText.Text, PasswordEditText.Text);
+            }
+            Phoebe._Reactive.RxChain.Send (new DataMsg.Request (req));
         }
 
-        private async Task TryLoginPasswordAsync ()
+        private void SubscribeToStore ()
         {
-            IsAuthenticating = true;
-            var authManager = ServiceContainer.Resolve<AuthManager> ();
-            AuthResult authRes;
-            try {
-                authRes = await authManager.AuthenticateAsync (EmailEditText.Text, PasswordEditText.Text);
-            } catch (InvalidOperationException ex) {
-                var log = ServiceContainer.Resolve<ILogger> ();
-                log.Info (LogTag, ex, "Failed to authenticate user with password.");
-                return;
-            } finally {
-                IsAuthenticating = false;
-            }
+            IDisposable subscription = null;
+            var prevResult = AuthResult.None;
 
-            if (authRes != AuthResult.Success) {
-                if (authRes == AuthResult.InvalidCredentials) {
-                    PasswordEditText.Text = String.Empty;
-                }
-                PasswordEditText.RequestFocus ();
+            subscription =
+                Phoebe._Reactive.StoreManager.Singleton
+                      .Observe (x => x.TimerState)
+                      .SubscribeSimple (state => {
+                          ServiceContainer.Resolve<IPlatformUtils> ().DispatchOnUIThread (() => {
+                              if (state.AuthResult == prevResult) {
+                                  return;
+                              }
+                              prevResult = state.AuthResult;
+                              IsAuthenticating = state.AuthResult == AuthResult.Authenticating;
 
-                ShowAuthError (EmailEditText.Text, authRes, Mode.Login);
-            } else {
-                // Start the initial sync for the user
-                ServiceContainer.Resolve<ISyncManager> ().Run ();
-            }
+                              switch (state.AuthResult) {
+                                  case AuthResult.None:
+                                  case AuthResult.Authenticating:
+                                      break; // Do nothing;
 
-            StartAuthActivity ();
-        }
+                                  case AuthResult.Success:
+                                      // TODO RX: Start the initial sync for the user
+                                      //ServiceContainer.Resolve<ISyncManager> ().Run ();
 
-        private async Task TrySignupPasswordAsync ()
-        {
-            IsAuthenticating = true;
-            var authManager = ServiceContainer.Resolve<AuthManager> ();
-            AuthResult authRes;
-            try {
-                authRes = await authManager.SignupAsync (EmailEditText.Text, PasswordEditText.Text);
-            } catch (InvalidOperationException ex) {
-                var log = ServiceContainer.Resolve<ILogger> ();
-                log.Info (LogTag, ex, "Failed to signup user with password.");
-                return;
-            } finally {
-                IsAuthenticating = false;
-            }
+                                      // Try to avoid flickering of buttons during activity transition by
+                                      // faking that we're still authenticating
+                                      IsAuthenticating = true;
+                                      subscription.Dispose ();
 
-            if (authRes != AuthResult.Success) {
-                EmailEditText.RequestFocus ();
+                                      var intent = new Intent (this, typeof (MainDrawerActivity));
+                                      intent.AddFlags (ActivityFlags.ClearTop);
+                                      StartActivity (intent);
+                                      Finish ();
+                                      break;
 
-                ShowAuthError (EmailEditText.Text, authRes, Mode.Signup);
-            } else {
-                // Start the initial sync for the user
-                ServiceContainer.Resolve<ISyncManager> ().Run ();
-            }
-
-            StartAuthActivity ();
+                                  // Error cases
+                                  default:
+                                      if (CurrentMode == Mode.Login) {
+                                          if (state.AuthResult == AuthResult.InvalidCredentials) {
+                                              PasswordEditText.Text = String.Empty;
+                                          }
+                                          PasswordEditText.RequestFocus ();
+                                      }
+                                      else {
+                                          EmailEditText.RequestFocus ();
+                                      }
+                                      ShowAuthError (EmailEditText.Text, state.AuthResult, CurrentMode);
+                                      break;
+                              }
+                          });
+                      });
         }
 
         private void OnGoogleLoginButtonClick (object sender, EventArgs e)
@@ -381,11 +366,10 @@ namespace Toggl.Joey.UI.Activities
         private bool IsAuthenticating
         {
             set {
-                if (isAuthenticating == value) {
-                    return;
+                if (isAuthenticating != value) {
+                    isAuthenticating = value;
+                    SyncContent ();
                 }
-                isAuthenticating = value;
-                SyncContent ();
             }
         }
 
@@ -508,7 +492,9 @@ namespace Toggl.Joey.UI.Activities
                 base.OnCreate (savedInstanceState);
 
                 RetainInstance = true;
-                await StartAuthAsync ();
+
+                // TODO RX
+                //await StartAuthAsync ();
             }
 
             public override void OnActivityCreated (Bundle savedInstanceState)
@@ -611,10 +597,10 @@ namespace Toggl.Joey.UI.Activities
                 }
 
                 // Try to make the activity recheck auth status
-                activity = Activity as LoginActivity;
-                if (activity != null) {
-                    activity.StartAuthActivity ();
-                }
+                //activity = Activity as LoginActivity;
+                //if (activity != null) {
+                //    activity.StartAuthActivity ();
+                //}
             }
 
             private void ClearGoogleToken (Context ctx, string token)

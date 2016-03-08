@@ -190,126 +190,75 @@ namespace Toggl.Phoebe._Reactive
             }
         }
 
-        public Task AuthenticateAsync (string username, string password)
+        async Task AuthenticateAsync (string username, string password)
         {
             var log = ServiceContainer.Resolve<ILogger> ();
             var client = ServiceContainer.Resolve<ITogglClient> ();
 
             log.Info (Tag, "Authenticating with email ({0}).", username);
-            var res = AuthenticateAsync (() => client.GetUser (username, password), Net.AuthChangeReason.Login); //, AccountCredentials.Password);
-            return null;
+            await AuthenticateAsync (() => client.GetUser (username, password), Net.AuthChangeReason.Login); //, AccountCredentials.Password);
         }
 
-        public Task AuthenticateWithGoogleAsync (string accessToken)
+        async Task AuthenticateWithGoogleAsync (string accessToken)
         {
             var log = ServiceContainer.Resolve<ILogger> ();
             var client = ServiceContainer.Resolve<ITogglClient> ();
 
             log.Info (Tag, "Authenticating with Google access token.");
-            var res = AuthenticateAsync (() => client.GetUser (accessToken), Net.AuthChangeReason.Login); //, AccountCredentials.Google);
-            return null;
+            await AuthenticateAsync (() => client.GetUser (accessToken), Net.AuthChangeReason.Login); //, AccountCredentials.Google);
         }
 
-        public Task SignupAsync (string email, string password)
+        async Task SignupAsync (string email, string password)
         {
             var log = ServiceContainer.Resolve<ILogger> ();
             var client = ServiceContainer.Resolve<ITogglClient> ();
 
             log.Info (Tag, "Signing up with email ({0}).", email);
-            var res = AuthenticateAsync (() => client.Create (new UserJson () {
+            await AuthenticateAsync (() => client.Create (new UserJson {
                 Email = email,
                 Password = password,
                 Timezone = Time.TimeZoneId,
             }), Net.AuthChangeReason.Signup); //, AccountCredentials.Password);
-            return null;
         }
 
-        public Task SignupWithGoogleAsync (string accessToken)
+        async Task SignupWithGoogleAsync (string accessToken)
         {
             var log = ServiceContainer.Resolve<ILogger> ();
             var client = ServiceContainer.Resolve<ITogglClient> ();
 
             log.Info (Tag, "Signing up with email Google access token.");
-            var res = AuthenticateAsync (() => client.Create (new UserJson () {
+            await AuthenticateAsync (() => client.Create (new UserJson () {
                 GoogleAccessToken = accessToken,
                 Timezone = Time.TimeZoneId,
             }), Net.AuthChangeReason.Signup); //, AccountCredentials.Google);
-            return null;
         }
 
-        async Task<Net.AuthResult> AuthenticateAsync (Func<Task<UserJson>> getUser, Net.AuthChangeReason reason) //, AccountCredentials credentialsType)
+        async Task AuthenticateAsync (
+            Func<Task<UserJson>> getUser, Net.AuthChangeReason reason) //, AccountCredentials credentialsType)
         {
-            //if (IsAuthenticated) {
-            //    throw new InvalidOperationException ("Cannot authenticate when old credentials still present.");
-            //}
-            //if (IsAuthenticating) {
-            //    throw new InvalidOperationException ("Another authentication is still in progress.");
-            //}
-            //IsAuthenticating = true;
-
+            UserJson userJson = null;
+            var authResult = Net.AuthResult.Success;
             try {
-                UserJson userJson;
-                try {
-                    userJson = await getUser ();
-                    if (userJson == null) {
-                        //ServiceContainer.Resolve<MessageBus> ().Send (
-                        //    new Net.AuthFailedMessage (this, Net.AuthResult.InvalidCredentials));
-                        return Net.AuthResult.InvalidCredentials;
-                    } else if (userJson.DefaultWorkspaceRemoteId == 0) {
-                        //ServiceContainer.Resolve<MessageBus> ().Send (
-                        //    new Net.AuthFailedMessage (this, Net.AuthResult.NoDefaultWorkspace));
-                        return Net.AuthResult.NoDefaultWorkspace;
-                    }
-                } catch (Exception ex) {
-                    var reqEx = ex as UnsuccessfulRequestException;
-                    if (reqEx != null && (reqEx.IsForbidden || reqEx.IsValidationError)) {
-                        //ServiceContainer.Resolve<MessageBus> ().Send (
-                        //    new Net.AuthFailedMessage (this, Net.AuthResult.InvalidCredentials));
-                        return Net.AuthResult.InvalidCredentials;
-                    }
-
-                    var log = ServiceContainer.Resolve<ILogger> ();
-                    if (ex.IsNetworkFailure () || ex is TaskCanceledException) {
-                        log.Info (Tag, ex, "Failed authenticate user.");
-                    } else {
-                        log.Warning (Tag, ex, "Failed to authenticate user.");
-                    }
-
-                    //ServiceContainer.Resolve<MessageBus> ().Send (
-                    //    new Net.AuthFailedMessage (this, Net.AuthResult.NetworkError, ex));
-                    return Net.AuthResult.NetworkError;
+                userJson = await getUser ();
+                if (userJson == null) {
+                    authResult = Net.AuthResult.InvalidCredentials;
+                } else if (userJson.DefaultWorkspaceRemoteId == 0) {
+                    authResult = Net.AuthResult.NoDefaultWorkspace;
+                }
+            } catch (Exception ex) {
+                var reqEx = ex as UnsuccessfulRequestException;
+                if (reqEx != null && (reqEx.IsForbidden || reqEx.IsValidationError)) {
+                    authResult = Net.AuthResult.InvalidCredentials;
                 }
 
-				// TODO RX: Move this to StoreManager
-                // Import the user into our database:
-                //UserData userData;
-                //try {
-                //    var dataStore = ServiceContainer.Resolve<IDataStore> ();
-                //    userData = await dataStore.ExecuteInTransactionAsync (ctx => userJson.Import (ctx));
-                //} catch (Exception ex) {
-                //    var log = ServiceContainer.Resolve<ILogger> ();
-                //    log.Error (Tag, ex, "Failed to import authenticated user.");
+                var log = ServiceContainer.Resolve<ILogger> ();
+                if (ex.IsNetworkFailure () || ex is TaskCanceledException) {
+                    log.Info (Tag, ex, "Failed authenticate user.");
+                } else {
+                    log.Warning (Tag, ex, "Failed to authenticate user.");
+                }
 
-                //    //ServiceContainer.Resolve<MessageBus> ().Send (
-                //    //    new Net.AuthFailedMessage (this, Net.AuthResult.SystemError, ex));
-                //    return Net.AuthResult.SystemError;
-                //}
-
-                // TODO RX
-                //var credStore = ServiceContainer.Resolve<ISettingsStore> ();
-                //credStore.UserId = userData.Id;
-                //credStore.ApiToken = userJson.ApiToken;
-
-                // TODO RX Make this part of the response
-                //User = userData;
-                //Token = userJson.ApiToken;
-
-                //IsAuthenticated = true;
-
-                //ServiceContainer.Resolve<MessageBus> ().Send (
-                //    new Net.AuthChangedMessage (this, reason));
-            } finally {
-                //IsAuthenticating = false;
+                authResult = Net.AuthResult.NetworkError;
             }
 
             // TODO RX
@@ -324,13 +273,13 @@ namespace Toggl.Phoebe._Reactive
             //    break;
             //}
 
-            return Net.AuthResult.Success;
-
+            var userData = userJson != null ? mapper.Map<UserData> (userJson) : null;
+            RxChain.Send (new DataMsg.UserDataPut (authResult, userData));
         }
 
         async Task DownloadEntries (TimerState state)
         {
-            var startDate = state.DownloadInfo.DownloadFrom;
+            var startDate = state.DownloadResult.DownloadFrom;
             const int endDate = Literals.TimeEntryLoadDays;
 
             try {

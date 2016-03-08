@@ -166,9 +166,9 @@ namespace Toggl.Phoebe._ViewModels
             ServiceContainer.Resolve<IPlatformUtils> ().DispatchOnUIThread (() => {
 
                 IsProcessingAction = false;
-                IsAppSyncing = timerState.DownloadInfo.IsSyncing;
-                HasMoreItems = timerState.DownloadInfo.HasMore;
-                HasLoadErrors = timerState.DownloadInfo.HadErrors;
+                IsAppSyncing = timerState.DownloadResult.IsSyncing;
+                HasMoreItems = timerState.DownloadResult.HasMore;
+                HasLoadErrors = timerState.DownloadResult.HadErrors;
 
                 var data = ActiveTimeEntry = timerState.ActiveTimeEntry;
 

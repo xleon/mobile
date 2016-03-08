@@ -114,6 +114,20 @@ namespace Toggl.Phoebe._Helpers
                    : Either<T,TR>.Right (_right);
         }
 
+        public Either<TL,T> CastRight<T> ()
+        {
+            return _isLeft
+                ? Either<TL,T>.Left (_left)
+                : Either<TL,T>.Right ((T) (object)_right);
+        }
+
+        public Either<TL2,TR2> Cast<TL2,TR2> ()
+        {
+            return _isLeft
+                ? Either<TL2,TR2>.Left ((TL2) (object)_left)
+                : Either<TL2,TR2>.Right ((TR2) (object)_right);
+        }
+
         public TL ForceLeft ()
         {
             if (_isLeft) {

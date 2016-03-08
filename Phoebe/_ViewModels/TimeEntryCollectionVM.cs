@@ -53,6 +53,7 @@ namespace Toggl.Phoebe._ViewModels
                 // Create the new item collection from holders (sort and add headers...)
                 var newItemCollection = CreateItemCollection (timeHolders);
 
+                // TODO RX: Make sure there's no conflict between this and list updating on UI thread, see #1343
                 // Check diffs, modify ItemCollection and notify changes
                 var diffs = Diff.Calculate (Items, newItemCollection);
 

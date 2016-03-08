@@ -16,8 +16,8 @@ namespace Toggl.Phoebe._Reactive
         public static Reducer<AppState> Init ()
         {
             var tagReducer = new TagCompositeReducer<TimerState> ()
+            .Add (typeof (DataMsg.Request), ServerRequest)
             .Add (typeof (DataMsg.ReceivedFromServer), ReceivedFromServer)
-            .Add (typeof (DataMsg.TimeEntriesSync), TimeEntriesSync)
             .Add (typeof (DataMsg.TimeEntriesLoad), TimeEntriesLoad)
             .Add (typeof (DataMsg.TimeEntryPut), TimeEntryPut)
             .Add (typeof (DataMsg.TimeEntryDelete), TimeEntryDelete)
@@ -28,22 +28,27 @@ namespace Toggl.Phoebe._Reactive
             .Add (typeof (DataMsg.TimeEntriesRemovePermanently), TimeEntriesRemovePermanently)
             .Add (typeof (DataMsg.TagsPut), TagsPut)
             .Add (typeof (DataMsg.ClientDataPut), ClientDataPut)
-            .Add (typeof (DataMsg.ProjectDataPut), ProjectDataPut);
+            .Add (typeof (DataMsg.ProjectDataPut), ProjectDataPut)
+            .Add (typeof (DataMsg.UserDataPut), UserDataPut);
 
             return new PropertyCompositeReducer<AppState> ()
                    .Add (x => x.TimerState, tagReducer);
         }
 
-        static DataSyncMsg<TimerState> TimeEntriesSync (TimerState state, DataMsg msg)
+        static DataSyncMsg<TimerState> ServerRequest (TimerState state, DataMsg msg)
         {
-            var newState = state.With (downloadInfo: state.DownloadInfo.With (isSyncing: true));
-            return DataSyncMsg.Create (newState, request: new ServerRequest.DownloadEntries ());
+            var request = (msg as DataMsg.Request).Data;
+            var newState =
+                request is ServerRequest.DownloadEntries
+                                        ? state.With (downloadResult: state.DownloadResult.With (isSyncing: true))
+                                        : state.With (authResult: AuthResult.Authenticating);
+            return DataSyncMsg.Create (newState, request: request);
         }
 
         static DataSyncMsg<TimerState> TimeEntriesLoad (TimerState state, DataMsg msg)
         {
             var dataStore = ServiceContainer.Resolve <ISyncDataStore> ();
-            var endDate = state.DownloadInfo.NextDownloadFrom;
+            var endDate = state.DownloadResult.NextDownloadFrom;
             var startDate = GetDatesByDays (dataStore, endDate, Literals.TimeEntryLoadDays);
 
             var dbEntries = dataStore
@@ -58,7 +63,7 @@ namespace Toggl.Phoebe._Reactive
                             .ToList ();
 
             var downloadInfo =
-                state.DownloadInfo.With (
+                state.DownloadResult.With (
                     isSyncing: true,
                     downloadFrom: endDate,
                     nextDownloadFrom: dbEntries.Any ()
@@ -67,7 +72,7 @@ namespace Toggl.Phoebe._Reactive
 
             return DataSyncMsg.Create (
                        state.With (
-                           downloadInfo: downloadInfo,
+                           downloadResult: downloadInfo,
                            timeEntries: state.UpdateTimeEntries (dbEntries)),
                        request: new ServerRequest.DownloadEntries ());
         }
@@ -107,7 +112,7 @@ namespace Toggl.Phoebe._Reactive
 
             return DataSyncMsg.Create (
                     state.With (
-                        downloadInfo: state.DownloadInfo.With (isSyncing: false, hasMore: hasMore, hadErrors: false),
+                        downloadResult: state.DownloadResult.With (isSyncing: false, hasMore: hasMore, hadErrors: false),
                         workspaces: state.Update (state.Workspaces, updated),
                         projects: state.Update (state.Projects, updated),   
                         workspaceUsers: state.Update (state.WorkspaceUsers, updated),
@@ -121,7 +126,7 @@ namespace Toggl.Phoebe._Reactive
                     ));
             },
             ex => DataSyncMsg.Create (
-                state.With (downloadInfo: state.DownloadInfo.With (isSyncing: false, hadErrors: true))));
+                state.With (downloadResult: state.DownloadResult.With (isSyncing: false, hadErrors: true))));
         }
 
         static DataSyncMsg<TimerState> TimeEntryPut (TimerState state, DataMsg msg)
@@ -192,6 +197,32 @@ namespace Toggl.Phoebe._Reactive
                     projects: state.Update (state.Projects, updated),
                     projectUsers: state.Update (state.ProjectUsers, updated)
                 ), updated);
+        }
+
+        static DataSyncMsg<TimerState> UserDataPut (TimerState state, DataMsg msg)
+        {
+            return (msg as DataMsg.UserDataPut).Data.Match (
+                userData => {
+					var dataStore = ServiceContainer.Resolve<ISyncDataStore> ();
+					var updated = dataStore.Update (ctx => ctx.Put (userData));
+					
+					// This will throw an exception if user hasn't been correctly updated
+					var userDataInDb = updated.Single () as UserData;
+					
+                    // Save user data in settings
+					ServiceContainer.Resolve<Data.ISettingsStore> ().UserId = userDataInDb.Id;
+					
+					return DataSyncMsg.Create (state.With (
+                        user: userDataInDb,
+                        authResult: AuthResult.Success
+                    ));
+                },
+                ex => {
+                    return DataSyncMsg.Create (state.With (
+                        user: new UserData (),
+                        authResult: ex.AuthResult
+                    ));
+                });
         }
 
         static void CheckTimeEntryState (ITimeEntryData entryData, TimeEntryState expected, string action)

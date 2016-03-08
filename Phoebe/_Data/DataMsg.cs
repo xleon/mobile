@@ -23,6 +23,20 @@ namespace Toggl.Phoebe._Data
             RawData = Either<object, Exception>.Left (null);
         }
 
+        public sealed class Request : DataMsg
+        {
+            public ServerRequest Data
+            {
+                get { return RawData.ForceLeft () as ServerRequest; }
+                private set { RawData = Either<object, Exception>.Left ((object)value); }
+            }
+
+            public Request (ServerRequest req)
+            {
+                Data = req;
+            }
+        }
+
         public sealed class ReceivedFromServer : DataMsg
         {
             public Either<IEnumerable<CommonData>, Exception> Data
@@ -208,14 +222,43 @@ namespace Toggl.Phoebe._Data
                 Data = Either<ClientData, Exception>.Left (data);
             }
         }
+
+        public sealed class UserDataPut : DataMsg
+        {
+            public class AuthException : Exception
+            {
+                public Net.AuthResult AuthResult { get; private set; }
+                public AuthException (Net.AuthResult authResult)
+                    : base (Enum.GetName (typeof (Net.AuthResult), authResult))
+                {
+                    AuthResult = authResult;
+                }
+            }
+
+            public Either<UserData, AuthException> Data
+            {
+                get { return RawData.Cast<UserData,AuthException> (); }
+                set { RawData = value.Cast<object,Exception> (); }
+            }
+
+            public UserDataPut (Net.AuthResult authResult, UserData data = null)
+            {
+                if (authResult == Net.AuthResult.Success && data != null) {
+                    Data = Either<UserData, AuthException>.Left (data);
+                }
+                else {
+                    Data = Either<UserData, AuthException>.Right (new AuthException (authResult));
+                }
+            }
+        }
     }
 
     public abstract class ServerRequest
     {
         protected ServerRequest () {}
 
-        public class DownloadEntries : ServerRequest { }
-        public class Authenticate : ServerRequest
+        public sealed class DownloadEntries : ServerRequest { }
+        public sealed class Authenticate : ServerRequest
         {
             public readonly string Username;
             public readonly string Password;
@@ -225,7 +268,7 @@ namespace Toggl.Phoebe._Data
                 Password = password;
             }
         }
-        public class AuthenticateWithGoogle : ServerRequest
+        public sealed class AuthenticateWithGoogle : ServerRequest
         {
             public readonly string AccessToken;
             public AuthenticateWithGoogle (string accessToken)
@@ -233,7 +276,7 @@ namespace Toggl.Phoebe._Data
                 AccessToken = accessToken;
             }
         }
-        public class SignUp : ServerRequest
+        public sealed class SignUp : ServerRequest
         {
             public readonly string Email;
             public readonly string Password;
@@ -243,7 +286,7 @@ namespace Toggl.Phoebe._Data
                 Password = password;
             }
         }
-        public class SignUpWithGoogle : ServerRequest
+        public sealed class SignUpWithGoogle : ServerRequest
         {
             public readonly string AccessToken;
             public SignUpWithGoogle (string accessToken)

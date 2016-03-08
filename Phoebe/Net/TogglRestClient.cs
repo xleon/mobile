@@ -824,7 +824,6 @@ namespace Toggl.Phoebe.Net
                 Content = new StringContent (json, Encoding.UTF8, "application/json")
             });
             var response = await SendAsync (httpReq).ConfigureAwait (false);
-            Console.WriteLine ("ere!");
         }
 
         // Validator to bypass the cert requirement

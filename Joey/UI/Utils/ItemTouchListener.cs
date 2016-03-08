@@ -1,4 +1,6 @@
-﻿using Android.Support.V7.Widget;
+﻿using System;
+using Android.Runtime;
+using Android.Support.V7.Widget;
 using Android.Views;
 using Java.Lang;
 
@@ -19,6 +21,12 @@ namespace Toggl.Joey.UI.Utils
         private readonly RecyclerView recyclerView;
         private GestureDetector gestureDetector;
         private bool IsScrolling;
+
+        // Explanation of native constructor
+        // http://stackoverflow.com/questions/10593022/monodroid-error-when-calling-constructor-of-custom-view-twodscrollview/10603714#10603714
+        public ItemTouchListener (IntPtr a, JniHandleOwnership b) : base (a, b)
+        {
+        }
 
         public ItemTouchListener (RecyclerView recyclerView, IItemTouchListener listener)
         {

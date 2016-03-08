@@ -207,15 +207,21 @@ namespace Toggl.Joey.UI.Fragments
 
         public override void OnDestroyView ()
         {
-            ViewModel.Dispose ();
+            // TODO: Remove null condition in next release.
+            if (ViewModel != null) {
+                ViewModel.Dispose ();
+            }
             base.OnDestroyView ();
         }
 
         public override void OnPause ()
         {
+            // TODO: Remove null condition in next release.
             // Save Time entry state every time
             // the fragment is paused.
-            Task.Run (async () => await ViewModel.SaveAsync ());
+            if (ViewModel != null) {
+                Task.Run (async () => await ViewModel.SaveAsync ());
+            }
             base.OnPause ();
         }
 

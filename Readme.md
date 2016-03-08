@@ -46,6 +46,7 @@ the source files, just run:
 Do you want to put our app to the limits? There is a bug that and you know how to simulate it? Join to our Beta tester community and give us your feedback, just write us at [support@toggl.com](mailto:support@toggl.com)
 
 Download the last [Android Beta](https://tsfr.io/xrkvaq)
+Download the last [iOS Beta](https://tsfr.io/w7k2a8) (closed beta, contact us first!)
 
 ## We are hiring!
 

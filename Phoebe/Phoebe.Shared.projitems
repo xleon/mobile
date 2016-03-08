@@ -132,7 +132,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)Data\Views\WidgetDataView.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)DateTimeExtensions.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)DefaultTimeProvider.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)EpicTestClass.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ExceptionExtensions.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ExpressionExtensions.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)IPlatformUtils.cs" />

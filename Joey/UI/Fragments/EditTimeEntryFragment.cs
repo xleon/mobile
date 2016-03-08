@@ -283,7 +283,7 @@ namespace Toggl.Joey.UI.Fragments
         {
             // Ugly null check
             if (item == SaveMenuItem && ViewModel != null) {
-                Task.Run (async () => await ViewModel.SaveManualAsync ());
+                ViewModel.SaveManual ();
             }
 
             Activity.OnBackPressed ();

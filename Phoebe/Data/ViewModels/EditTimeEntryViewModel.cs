@@ -201,10 +201,9 @@ namespace Toggl.Phoebe.Data.ViewModels
             await TimeEntryModel.DeleteTimeEntryDataAsync (data);
         }
 
-        public async Task SaveManualAsync ()
+        public void SaveManual ()
         {
             IsManual = false;
-            await SaveAsync ();
         }
 
         private void UpdateView ()

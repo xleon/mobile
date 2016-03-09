@@ -359,7 +359,7 @@ namespace Toggl.Phoebe.Data.Models
                     WorkspaceId = workspaceId,
                 };
                 Model<TagData>.MarkDirty (newDefaultTag);
-                defaultTag = ctx.Put (newDefaultTag);                    
+                defaultTag = ctx.Put (newDefaultTag);
             }
 
             ctx.Put (new TimeEntryTagData () {

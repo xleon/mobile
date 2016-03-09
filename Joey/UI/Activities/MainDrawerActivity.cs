@@ -161,7 +161,6 @@ namespace Toggl.Joey.UI.Activities
         protected override void OnSaveInstanceState (Bundle outState)
         {
             outState.PutIntArray (PageStackExtra, pageStack.ToArray ());
-
             base.OnSaveInstanceState (outState);
         }
 

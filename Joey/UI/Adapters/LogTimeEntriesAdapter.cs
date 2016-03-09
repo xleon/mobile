@@ -3,7 +3,6 @@ using System.Timers;
 using Android.Content;
 using Android.Graphics;
 using Android.Graphics.Drawables;
-using Android.OS;
 using Android.Support.V7.Widget;
 using Android.Views;
 using Android.Widget;
@@ -22,8 +21,6 @@ namespace Toggl.Joey.UI.Adapters
     public class LogTimeEntriesAdapter : RecyclerCollectionDataAdapter<IHolder>, IUndoAdapter
     {
         public const int ViewTypeDateHeader = ViewTypeContent + 1;
-
-        private readonly Handler handler = new Handler ();
         private static readonly int ContinueThreshold = 1;
         private DateTime lastTimeEntryContinuedTime;
         private int lastUndoIndex = -1;

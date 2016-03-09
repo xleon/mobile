@@ -144,6 +144,16 @@ namespace Toggl.Joey.UI.Fragments
             }
         }
 
+        public override void OnPause()
+        {
+            // Try to delete items every time you leave
+            // this view.
+            if (logAdapter != null) {
+                logAdapter.DeleteSelectedItem ();
+            }
+            base.OnPause();
+        }
+
         public override void OnDestroyView ()
         {
             // Protect against Java side being GCed
@@ -184,13 +194,16 @@ namespace Toggl.Joey.UI.Fragments
                 var isInExperiment = OBMExperimentManager.IncludedInExperiment ();
                 var hasItems = ViewModel.HasItems == LogTimeEntriesViewModel.CollectionState.NotEmpty;
 
+                if (isWelcome && isInExperiment) {
+                    emptyView = experimentEmptyView;
+                } else {
+                    // always keeps this view hidden if it is not needed.
+                    experimentEmptyView.Visibility = ViewStates.Gone;
+                }
+
                 // According to settings, show welcome message or no.
                 welcomeMessage.Visibility = isWelcome ? ViewStates.Visible : ViewStates.Gone;
                 noItemsMessage.Visibility = isWelcome ? ViewStates.Gone : ViewStates.Visible;
-
-                if (isWelcome && isInExperiment) {
-                    emptyView = experimentEmptyView;
-                }
 
                 emptyView.Visibility = hasItems ? ViewStates.Gone : ViewStates.Visible;
                 recyclerView.Visibility = hasItems ? ViewStates.Visible : ViewStates.Gone;

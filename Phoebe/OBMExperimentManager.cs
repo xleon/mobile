@@ -16,14 +16,12 @@ namespace Toggl.Phoebe
 
         public static async void Send (string actionKey, string actionValue)
         {
-            if (InExperimentGroups (ExperimentNumber)) {
-                var experimentAction = new ExperimentAction {
-                    ExperimentId = ExperimentNumber,
-                    ActionKey = actionKey,
-                    ActionValue = actionValue
-                };
-                await experimentAction.Send();
-            }
+            var experimentAction = new ExperimentAction {
+                ExperimentId = ExperimentNumber,
+                ActionKey = actionKey,
+                ActionValue = actionValue
+            };
+            await experimentAction.Send();
         }
 
         public static bool IncludedInExperiment ()

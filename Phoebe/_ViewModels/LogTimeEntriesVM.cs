@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Collections.ObjectModel;
 using GalaSoft.MvvmLight;
 using PropertyChanged;
 using Toggl.Phoebe.Analytics;
@@ -16,6 +17,7 @@ namespace Toggl.Phoebe._ViewModels
     [ImplementPropertyChanged]
     public class LogTimeEntriesVM : ViewModelBase, IDisposable
     {
+		private TimeEntryCollectionVM timeEntryCollection;
         private Subscription<Data.SettingChangedMessage> subscriptionSettingChanged;
         private readonly System.Timers.Timer durationTimer;
         private readonly IDisposable subscriptionState;
@@ -53,8 +55,8 @@ namespace Toggl.Phoebe._ViewModels
 
         private void DisposeCollection ()
         {
-            if (Collection != null) {
-                Collection.Dispose ();
+            if (timeEntryCollection != null) {
+                timeEntryCollection.Dispose ();
             }
         }
 
@@ -77,9 +79,9 @@ namespace Toggl.Phoebe._ViewModels
 
         public string Duration { get; private set; }
 
-        public TimeEntryCollectionVM Collection { get; private set; }
+		public ITimeEntryData ActiveTimeEntry { get; private set; }
 
-        public ITimeEntryData ActiveTimeEntry { get; private set; }
+        public ObservableCollection<IHolder> Collection { get { return timeEntryCollection; } }
         #endregion
 
         #region Sync operations
@@ -102,8 +104,7 @@ namespace Toggl.Phoebe._ViewModels
         #region Time entry operations
         public void ContinueTimeEntry (int index)
         {
-            var newTimeEntry = new TimeEntryData ();
-            var timeEntryHolder = Collection.Data.ElementAt (index) as ITimeEntryHolder;
+            var timeEntryHolder = timeEntryCollection.Data.ElementAt (index) as ITimeEntryHolder;
             if (timeEntryHolder == null) {
                 return;
             }
@@ -142,13 +143,13 @@ namespace Toggl.Phoebe._ViewModels
 
         public void RemoveItemWithUndo (int index)
         {
-            Collection.RemoveTimeEntryWithUndo (
-                Collection.Data.ElementAt (index) as ITimeEntryHolder);
+            timeEntryCollection.RemoveTimeEntryWithUndo (
+                timeEntryCollection.Data.ElementAt (index) as ITimeEntryHolder);
         }
 
         public void RestoreItemFromUndo ()
         {
-            Collection.RestoreTimeEntryFromUndo ();
+            timeEntryCollection.RestoreTimeEntryFromUndo ();
         }
         #endregion
 
@@ -157,7 +158,7 @@ namespace Toggl.Phoebe._ViewModels
             DisposeCollection ();
             IsGroupedMode = ServiceContainer.Resolve<Data.ISettingsStore> ().GroupedTimeEntries;
 
-            Collection = new TimeEntryCollectionVM (
+            timeEntryCollection = new TimeEntryCollectionVM (
                 IsGroupedMode ? TimeEntryGroupMethod.Single : TimeEntryGroupMethod.ByDateAndTask);
         }
 

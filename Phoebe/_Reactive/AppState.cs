@@ -178,7 +178,7 @@ namespace Toggl.Phoebe._Reactive
                     tasks: new Dictionary<Guid, TaskData> (),
                     tags: new Dictionary<Guid, TagData> (),
                     timeEntries: new Dictionary<Guid, RichTimeEntry> (),
-                    activeTimeEntry: null);
+                    activeTimeEntry: new TimeEntryData ());
 
             return new AppState (timerState);
         }

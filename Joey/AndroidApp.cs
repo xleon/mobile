@@ -77,6 +77,9 @@ namespace Toggl.Joey
             ServiceContainer.Register<ILoggerClient> (() => new LogClient ());
             ServiceContainer.Register<ITracker> (() => new Tracker (this));
             ServiceContainer.Register<INetworkPresence> (() => new NetworkPresence (Context, (ConnectivityManager)GetSystemService (ConnectivityService)));
+
+            // This needs some services, like ITimeProvider, so run it at the end
+            Phoebe._Reactive.RxChain.Init (Phoebe._Reactive.AppState.Init ());
         }
 
         private void InitializeStartupComponents ()

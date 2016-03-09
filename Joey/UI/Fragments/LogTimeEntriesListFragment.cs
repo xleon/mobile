@@ -90,7 +90,7 @@ namespace Toggl.Joey.UI.Fragments
             // init viewModel
             ViewModel = new LogTimeEntriesVM (Phoebe._Reactive.StoreManager.Singleton.AppState.TimerState);
 
-            collectionBinding = this.SetBinding (() => ViewModel.Collection as ObservableCollection<IHolder>).WhenSourceChanges (() => {
+            collectionBinding = this.SetBinding (() => ViewModel.Collection).WhenSourceChanges (() => {
                 logAdapter = new LogTimeEntriesAdapter (recyclerView, ViewModel);
                 recyclerView.SetAdapter (logAdapter);
             });

@@ -59,7 +59,7 @@ namespace Toggl.Phoebe.Data.ViewModels
                 tagList = await GetDefaultTagList (data.WorkspaceId);
             } else {
                 data = await TimeEntryModel.GetTimeEntryDataAsync (timeEntryId);
-                tagList = await ServiceContainer.Resolve<IDataStore> ().GetTimeEntryTags (timeEntryId);;
+                tagList = await ServiceContainer.Resolve<IDataStore> ().GetTimeEntryTags (timeEntryId);
             }
 
             return new EditTimeEntryViewModel (data, tagList);
@@ -332,10 +332,12 @@ namespace Toggl.Phoebe.Data.ViewModels
 
             if (defaultTagList.Count == 0) {
                 defaultTagList = new List<TagData> ();
-                var defaultTag = await dataStore.PutAsync (new TagData {
+                var newDefaultTag = new TagData {
                     Name = DefaultTag,
                     WorkspaceId = workspaceId,
-                });
+                };
+                Model<TagData>.MarkDirty (newDefaultTag);
+                var defaultTag = await dataStore.PutAsync (newDefaultTag);
                 defaultTagList.Add (defaultTag);
             }
             return defaultTagList;

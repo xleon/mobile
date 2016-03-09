@@ -23,6 +23,7 @@ using Toggl.Phoebe.Logging;
 using Toggl.Phoebe.Net;
 using Toggl.Phoebe._Data;
 using Toggl.Phoebe._Helpers;
+using Toggl.Phoebe._Reactive;
 using XPlatUtils;
 using DialogFragment = Android.Support.V4.App.DialogFragment;
 using Fragment = Android.Support.V4.App.Fragment;
@@ -282,7 +283,7 @@ namespace Toggl.Joey.UI.Activities
             else {
                 req = new ServerRequest.SignUp (EmailEditText.Text, PasswordEditText.Text);
             }
-            Phoebe._Reactive.RxChain.Send (new DataMsg.Request (req));
+            RxChain.Send (new DataMsg.Request (req));
         }
 
         private void SubscribeToStore ()
@@ -323,18 +324,30 @@ namespace Toggl.Joey.UI.Activities
 
                                   // Error cases
                                   default:
-                                      if (CurrentMode == Mode.Login) {
-                                          if (state.AuthResult == AuthResult.InvalidCredentials) {
-                                              PasswordEditText.Text = String.Empty;
-                                          }
-                                          PasswordEditText.RequestFocus ();
-                                      }
-                                      else {
-                                          EmailEditText.RequestFocus ();
+                                      switch (CurrentMode) {
+                                          case Mode.Login:
+                                              if (state.AuthResult == AuthResult.InvalidCredentials) {
+                                                  PasswordEditText.Text = String.Empty;
+                                              }
+                                              PasswordEditText.RequestFocus ();
+                                              break;
+                                          case Mode.Signup:
+                                              EmailEditText.RequestFocus ();
+                                              break;
+                                          case Mode.LoginWithGoogle:
+                                          case Mode.SignupWithGoogle:
+                                            // TODO RX: Keep ctx and token somewhere so they can be acccessed from here
+                                            //GoogleAuthFragment.ClearGoogleToken (ctx, token);
+                                            break;
                                       }
                                       ShowAuthError (EmailEditText.Text, state.AuthResult, CurrentMode);
                                       break;
                               }
+
+                            // TODO RX: Is this still necessary?
+                            // Try to make the activity recheck auth status
+                            //var activity = Activity as LoginActivity;
+                            //if (activity != null) { activity.StartAuthActivity ();
                           });
                       });
         }
@@ -409,23 +422,30 @@ namespace Toggl.Joey.UI.Activities
 
         private enum Mode {
             Login,
-            Signup
+            Signup,
+            LoginWithGoogle,
+            SignupWithGoogle
         }
 
-        private void ShowAuthError (string email, AuthResult res, Mode mode, bool googleAuth=false)
+        private void ShowAuthError (string email, AuthResult res, Mode mode)
         {
             DialogFragment dia = null;
 
             switch (res) {
             case AuthResult.InvalidCredentials:
-                if (mode == Mode.Login && !googleAuth) {
-                    dia = new InvalidCredentialsDialogFragment ();
-                } else if (mode == Mode.Signup && !googleAuth) {
-                    dia = new SignupFailedDialogFragment ();
-                } else if (mode == Mode.Login && googleAuth) {
-                    dia = new NoAccountDialogFragment ();
-                } else if (mode == Mode.Signup && googleAuth) {
-                    dia = new SignupFailedDialogFragment ();
+                switch (mode) {
+                    case Mode.Login:
+                        dia = new InvalidCredentialsDialogFragment ();
+                        break;
+                    case Mode.Signup:
+                        dia = new SignupFailedDialogFragment ();
+                        break;
+                    case Mode.LoginWithGoogle:
+                        dia = new NoAccountDialogFragment ();
+                        break;
+                    case Mode.SignupWithGoogle:
+                        dia = new SignupFailedDialogFragment ();
+                        break;
                 }
                 break;
             case AuthResult.NoDefaultWorkspace:
@@ -493,8 +513,7 @@ namespace Toggl.Joey.UI.Activities
 
                 RetainInstance = true;
 
-                // TODO RX
-                //await StartAuthAsync ();
+                await StartAuthAsync ();
             }
 
             public override void OnActivityCreated (Bundle savedInstanceState)
@@ -528,82 +547,54 @@ namespace Toggl.Joey.UI.Activities
 
                 LoginActivity activity;
 
+				var ctx = Activity;
+                var log = ServiceContainer.Resolve<ILogger> ();
+
+                // Workaround for Android linker bug which forgets to register JNI types
+                Java.Interop.TypeManager.RegisterType ("com/google/android/gms/auth/GoogleAuthException", typeof (GoogleAuthException));
+                Java.Interop.TypeManager.RegisterType ("com/google/android/gms/auth/GooglePlayServicesAvailabilityException", typeof (GooglePlayServicesAvailabilityException));
+                Java.Interop.TypeManager.RegisterType ("com/google/android/gms/auth/UserRecoverableAuthException", typeof (UserRecoverableAuthException));
+                Java.Interop.TypeManager.RegisterType ("com/google/android/gms/auth/UserRecoverableNotifiedException", typeof (UserRecoverableNotifiedException));
+
+                String token = null;
                 try {
-                    var log = ServiceContainer.Resolve<ILogger> ();
-                    var authManager = ServiceContainer.Resolve<AuthManager> ();
-                    var ctx = Activity;
-
-                    // No point in trying to reauth when old authentication is still running.
-                    if (authManager.IsAuthenticating) {
-                        return;
-                    }
-
-                    // Workaround for Android linker bug which forgets to register JNI types
-                    Java.Interop.TypeManager.RegisterType ("com/google/android/gms/auth/GoogleAuthException", typeof (GoogleAuthException));
-                    Java.Interop.TypeManager.RegisterType ("com/google/android/gms/auth/GooglePlayServicesAvailabilityException", typeof (GooglePlayServicesAvailabilityException));
-                    Java.Interop.TypeManager.RegisterType ("com/google/android/gms/auth/UserRecoverableAuthException", typeof (UserRecoverableAuthException));
-                    Java.Interop.TypeManager.RegisterType ("com/google/android/gms/auth/UserRecoverableNotifiedException", typeof (UserRecoverableNotifiedException));
-
-                    String token = null;
-                    try {
-                        token = await Task.Factory.StartNew (() => GoogleAuthUtil.GetToken (ctx, Email, GoogleOAuthScope));
-                    } catch (GooglePlayServicesAvailabilityException exc) {
-                        var dia = GooglePlayServicesUtil.GetErrorDialog (
-                                      exc.ConnectionStatusCode, ctx, GoogleAuthRequestCode);
-                        dia.Show ();
-                    } catch (UserRecoverableAuthException exc) {
-                        StartActivityForResult (exc.Intent, GoogleAuthRequestCode);
-                    } catch (Java.IO.IOException exc) {
-                        // Connectivity error.. nothing to do really?
-                        log.Info (LogTag, exc, "Failed to login with Google due to network issues.");
-                    } catch (Exception exc) {
-                        log.Error (LogTag, exc, "Failed to get access token for '{0}'.", Email);
-                    }
-
-                    // Failed to get token
-                    if (token == null) {
-                        return;
-                    }
-
-                    try {
-                        activity = Activity as LoginActivity;
-                        if (activity != null && activity.CurrentMode == Mode.Signup) {
-                            // Signup with Google
-                            var authRes = await authManager.SignupWithGoogleAsync (token);
-                            if (authRes != AuthResult.Success) {
-                                ClearGoogleToken (ctx, token);
-                                activity.ShowAuthError (Email, authRes, Mode.Signup, true);
-                            }
-                        } else {
-                            // Authenticate client
-                            var authRes = await authManager.AuthenticateWithGoogleAsync (token);
-                            if (authRes != AuthResult.Success) {
-                                ClearGoogleToken (ctx, token);
-                                activity.ShowAuthError (Email, authRes, Mode.Login, true);
-                            }
-                        }
-                    } catch (InvalidOperationException ex) {
-                        log.Info (LogTag, ex, "Failed to authenticate user with Google login.");
-                    }
-                } finally {
-                    IsAuthenticating = false;
+                    token = await Task.Factory.StartNew (() => GoogleAuthUtil.GetToken (ctx, Email, GoogleOAuthScope));
+                } catch (GooglePlayServicesAvailabilityException exc) {
+                    var dia = GooglePlayServicesUtil.GetErrorDialog (
+                                  exc.ConnectionStatusCode, ctx, GoogleAuthRequestCode);
+                    dia.Show ();
+                } catch (UserRecoverableAuthException exc) {
+                    StartActivityForResult (exc.Intent, GoogleAuthRequestCode);
+                } catch (Java.IO.IOException exc) {
+                    // Connectivity error.. nothing to do really?
+                    log.Info (LogTag, exc, "Failed to login with Google due to network issues.");
+                } catch (Exception exc) {
+                    log.Error (LogTag, exc, "Failed to get access token for '{0}'.", Email);
                 }
 
-                // Clean up self:
-                if (Activity != null) {
-                    FragmentManager.BeginTransaction ()
-                    .Remove (this)
-                    .Commit ();
+                // Failed to get token
+                if (token == null) {
+                    return;
                 }
 
-                // Try to make the activity recheck auth status
-                //activity = Activity as LoginActivity;
-                //if (activity != null) {
-                //    activity.StartAuthActivity ();
+                activity = Activity as LoginActivity;
+                if (activity != null && activity.CurrentMode == Mode.Signup) {
+                    // Signup with Google
+                    RxChain.Send (new DataMsg.Request (new ServerRequest.SignUpWithGoogle (token)));
+                } else {
+                    // Authenticate client
+                    RxChain.Send (new DataMsg.Request (new ServerRequest.AuthenticateWithGoogle (token)));
+                }
+
+                // TODO RX: Clean up GoogleAuthFragment
+                //if (Activity != null) {
+                //    FragmentManager.BeginTransaction ()
+                //    .Remove (this)
+                //    .Commit ();
                 //}
             }
 
-            private void ClearGoogleToken (Context ctx, string token)
+            public static void ClearGoogleToken (Context ctx, string token)
             {
                 var log = ServiceContainer.Resolve<ILogger> ();
 

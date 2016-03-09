@@ -40,10 +40,10 @@ namespace Toggl.Phoebe.Tests.Reactive
                 StoreManager
                 .Singleton
                 .Observe (state => state.TimerState)
-            .Subscribe (state => {
-                Assert.True (state.TimeEntries.ContainsKey (te.Id));
-                subscription.Dispose ();
-            });
+                .Subscribe (state => {
+                    Assert.True (state.TimeEntries.ContainsKey (te.Id));
+                    subscription.Dispose ();
+                });
 
             RxChain.Send (new DataMsg.TimeEntryPut (te));
         }
@@ -60,20 +60,20 @@ namespace Toggl.Phoebe.Tests.Reactive
                 StoreManager
                 .Singleton
                 .Observe (state => state.TimerState)
-            .Subscribe (state => {
-                switch (step) {
-                case 0:
-                    var te2 = state.TimeEntries[te.Id];
-                    Assert.True (te2.Data.State == TimeEntryState.Running);
-                    step++;
-                    break;
-                case 1:
-                    var te3 = state.TimeEntries[te.Id];
-                    Assert.True (te3.Data.State == TimeEntryState.Finished);
-                    subscription.Dispose ();
-                    break;
-                }
-            });
+                .Subscribe (state => {
+                    switch (step) {
+                    case 0:
+                        var te2 = state.TimeEntries[te.Id];
+                        Assert.True (te2.Data.State == TimeEntryState.Running);
+                        step++;
+                        break;
+                    case 1:
+                        var te3 = state.TimeEntries[te.Id];
+                        Assert.True (te3.Data.State == TimeEntryState.Finished);
+                        subscription.Dispose ();
+                        break;
+                    }
+                });
 
             RxChain.Send (new DataMsg.TimeEntryPut (te));
             RxChain.Send (new DataMsg.TimeEntryStop (te));
@@ -91,20 +91,20 @@ namespace Toggl.Phoebe.Tests.Reactive
                 StoreManager
                 .Singleton
                 .Observe (state => state.TimerState)
-            .Subscribe (state => {
-                switch (step) {
-                case 0:
-                    Assert.True (state.TimeEntries.ContainsKey (te.Id));
-                    step++;
-                    break;
-                case 1:
-                    Assert.False (state.TimeEntries.ContainsKey (te.Id));
-                    // The entry should have also been deleted from the db
-                    Assert.False (db.Table<TimeEntryData> ().Any (x => x.Id == te.Id));
-                    subscription.Dispose ();
-                    break;
-                }
-            });
+                .Subscribe (state => {
+                    switch (step) {
+                        case 0:
+                            Assert.True (state.TimeEntries.ContainsKey (te.Id));
+                            step++;
+                            break;
+                        case 1:
+                            Assert.False (state.TimeEntries.ContainsKey (te.Id));
+                            // The entry should have also been deleted from the db
+                            Assert.False (db.Table<TimeEntryData> ().Any (x => x.Id == te.Id));
+                            subscription.Dispose ();
+                            break;
+                    }
+                });
 
             RxChain.Send (new DataMsg.TimeEntryPut (te));
 
@@ -124,27 +124,27 @@ namespace Toggl.Phoebe.Tests.Reactive
                 StoreManager
                 .Singleton
                 .Observe (state => state.TimerState)
-            .Subscribe (state => {
-                switch (step) {
-                // Add
-                case 0:
-                    Assert.True (state.TimeEntries.ContainsKey (te.Id));
-                    step++;
-                    break;
-                // Remove with undo
-                case 1:
-                    Assert.False (state.TimeEntries.ContainsKey (te.Id));
-                    // The entry shouldn't actually be deleted from the db
-                    Assert.True (db.Table<TimeEntryData> ().Any (x => x.Id == te.Id));
-                    step++;
-                    break;
-                // Restore from undo
-                case 2:
-                    Assert.True (state.TimeEntries.ContainsKey (te.Id));
-                    subscription.Dispose ();
-                    break;
-                }
-            });
+                .Subscribe (state => {
+                    switch (step) {
+                    // Add
+                    case 0:
+                        Assert.True (state.TimeEntries.ContainsKey (te.Id));
+                        step++;
+                        break;
+                    // Remove with undo
+                    case 1:
+                        Assert.False (state.TimeEntries.ContainsKey (te.Id));
+                        // The entry shouldn't actually be deleted from the db
+                        Assert.True (db.Table<TimeEntryData> ().Any (x => x.Id == te.Id));
+                        step++;
+                        break;
+                    // Restore from undo
+                    case 2:
+                        Assert.True (state.TimeEntries.ContainsKey (te.Id));
+                        subscription.Dispose ();
+                        break;
+                    }
+                });
 
             RxChain.Send (new DataMsg.TimeEntryPut (te));
 
@@ -168,10 +168,10 @@ namespace Toggl.Phoebe.Tests.Reactive
                 StoreManager
                 .Singleton
                 .Observe (state => state.TimerState)
-            .Subscribe (state => {
-                receivedState = state;
-                subscription.Dispose ();
-            });
+                .Subscribe (state => {
+                    receivedState = state;
+                    subscription.Dispose ();
+                });
 
 
             RxChain.Send (new DataMsg.TimeEntryPut (te));

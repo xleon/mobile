@@ -310,8 +310,7 @@ namespace Toggl.Phoebe._Data
             State = state;
             SyncTest = syncTest;
             SyncData = syncData != null ? syncData.ToList () : new List<ICommonData> ();
-			
-            serverRequests = serverRequests != null ? serverRequests.ToList () : new List<ServerRequest> ();
+            this.serverRequests = serverRequests != null ? serverRequests.ToList () : new List<ServerRequest> ();
         }
 
         public DataSyncMsg<T> With (SyncTestOptions syncTest)

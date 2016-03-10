@@ -1,6 +1,6 @@
 using System.Diagnostics;
-using UIKit;
 using Toggl.Phoebe.Analytics;
+using UIKit;
 using XPlatUtils;
 
 namespace Toggl.Ross

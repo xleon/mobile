@@ -85,19 +85,18 @@ namespace Toggl.Phoebe._ViewModels
         #endregion
 
         #region Sync operations
-        public void TriggerFullSync ()
-        {
-            IsAppSyncing = true;
 
-            var syncManager = ServiceContainer.Resolve<ISyncManager> ();
-            syncManager.Run ();
-        }
+        // TODO RX: What's the difference between LoadMore and TriggerFullSync?
+        //public void TriggerFullSync ()
 
         public void LoadMore ()
         {
-            HasMoreItems = true;
-            HasLoadErrors = false;
-            RxChain.Send (new DataMsg.TimeEntriesLoad ());
+            ServiceContainer.Resolve<IPlatformUtils> ().DispatchOnUIThread (() => {
+                IsAppSyncing = true;
+                HasMoreItems = true;
+                HasLoadErrors = false;
+				RxChain.Send (new DataMsg.TimeEntriesLoad ());
+            });
         }
         #endregion
 

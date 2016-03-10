@@ -50,7 +50,7 @@ namespace Toggl.Joey.UI.Fragments
         private ItemTouchListener itemTouchListener;
 
         // binding references
-        private Binding<bool, bool> hasItemsBinding, newMenuBinding, hasMoreBinging, hasErrorBinding;
+        private Binding<bool, bool> hasItemsBinding, newMenuBinding, hasMoreBinging, hasErrorBinding, isAppSyncingBinding;
         private Binding<ObservableCollection<IHolder>, ObservableCollection<IHolder>> collectionBinding;
         private Binding<bool, FABButtonState> fabBinding;
 
@@ -94,6 +94,7 @@ namespace Toggl.Joey.UI.Fragments
                 logAdapter = new LogTimeEntriesAdapter (recyclerView, ViewModel);
                 recyclerView.SetAdapter (logAdapter);
             });
+            isAppSyncingBinding = this.SetBinding (()=> ViewModel.IsAppSyncing).WhenSourceChanges (SyncFinished);
             hasMoreBinging = this.SetBinding (()=> ViewModel.HasMoreItems).WhenSourceChanges (SetFooterState);
             hasErrorBinding = this.SetBinding (()=> ViewModel.HasLoadErrors).WhenSourceChanges (SetFooterState);
             hasItemsBinding = this.SetBinding (()=> ViewModel.HasMoreItems).WhenSourceChanges (SetFooterState);
@@ -118,8 +119,6 @@ namespace Toggl.Joey.UI.Fragments
             // is better to load the items after create
             // the viewModel and show the loader from RecyclerView
             ViewModel.LoadMore ();
-
-            // TODO RX: Subscribe to SyncFinished
         }
 
 
@@ -254,26 +253,31 @@ namespace Toggl.Joey.UI.Fragments
         #region Sync
         public void OnRefresh ()
         {
-            ViewModel.TriggerFullSync ();
+            // TODO RX: FullSync?
+            //ViewModel.TriggerFullSync ();
+            ViewModel.LoadMore ();
         }
 
-        private void SyncFinished (SyncFinishedMessage msg)
+        private void SyncFinished ()
         {
-            if (!swipeLayout.Refreshing) {
-                return;
+            if (ViewModel.IsAppSyncing) {
+                swipeLayout.Refreshing = true;
             }
+            else {
+                swipeLayout.Refreshing = false;
 
-            swipeLayout.Refreshing = false;
+                if (ViewModel.HasLoadErrors) {
+                    int msgId = Resource.String.LastSyncHadErrors;
 
-            if (msg.HadErrors) {
-                int msgId = Resource.String.LastSyncHadErrors;
-
-                if (msg.FatalError.IsNetworkFailure ()) {
-                    msgId = Resource.String.LastSyncNoConnection;
-                } else if (msg.FatalError is TaskCanceledException) {
-                    msgId = Resource.String.LastSyncFatalError;
+                    // TODO RX
+                    //if (msg.FatalError.IsNetworkFailure ()) {
+                    //    msgId = Resource.String.LastSyncNoConnection;
+                    //}
+                    //else if (msg.FatalError is TaskCanceledException) {
+                    //    msgId = Resource.String.LastSyncFatalError;
+                    //}
+                    Snackbar.Make (coordinatorLayout, Resources.GetString (msgId), Snackbar.LengthLong).Show ();
                 }
-                Snackbar.Make (coordinatorLayout, Resources.GetString (msgId), Snackbar.LengthLong).Show ();
             }
         }
         #endregion

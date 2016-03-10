@@ -15,10 +15,8 @@ Target "clean" (fun _ ->
 )
 
 Target "core-build" (fun () ->
-    RestorePackages "Phoebe/packages.config"
-    RestorePackages "Tests/packages.config"
-    MSBuild "Phoebe/bin/Desktop/Debug" "Build" [ ("Configuration", "Debug"); ("Platform", "Any CPU") ] [ "Phoebe/Phoebe.Desktop.csproj" ] |> ignore
-    MSBuild "Tests/bin/Debug" "Build" [ ("Configuration", "Debug"); ("Platform", "Any CPU") ] [ "Tests/Tests.csproj" ] |> ignore
+    RestorePackages "Mobile.UnitTest.sln"
+    MSBuild "Tests/bin/Debug" "Build" [ ("Configuration", "Debug"); ("Platform", "Any CPU") ] [ "Mobile.UnitTest.sln" ] |> ignore
 )
 
 Target "core-tests" (fun () ->

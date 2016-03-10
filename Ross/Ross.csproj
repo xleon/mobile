@@ -23,27 +23,12 @@
     <ConsolePause>false</ConsolePause>
     <CodesignEntitlements>Entitlements.plist</CodesignEntitlements>
     <MtouchDebug>true</MtouchDebug>
-    <MtouchI18n>
-    </MtouchI18n>
+    <MtouchI18n></MtouchI18n>
     <MtouchArch>i386</MtouchArch>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <MtouchProfiling>true</MtouchProfiling>
     <MtouchUseSGen>true</MtouchUseSGen>
     <CodesignKey>iPhone Developer</CodesignKey>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|iPhoneSimulator' ">
-    <Optimize>true</Optimize>
-    <OutputPath>bin\iPhoneSimulator\Release</OutputPath>
-    <DefineConstants>__MOBILE__;__IOS__;</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <MtouchLink>None</MtouchLink>
-    <ConsolePause>false</ConsolePause>
-    <CodesignEntitlements>Entitlements.plist</CodesignEntitlements>
-    <MtouchI18n>
-    </MtouchI18n>
-    <MtouchArch>i386</MtouchArch>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|iPhone' ">
     <DebugSymbols>true</DebugSymbols>
@@ -57,8 +42,7 @@
     <CodesignEntitlements>Entitlements.plist</CodesignEntitlements>
     <MtouchDebug>true</MtouchDebug>
     <CodesignKey>iPhone Developer</CodesignKey>
-    <IpaPackageName>
-    </IpaPackageName>
+    <IpaPackageName></IpaPackageName>
     <MtouchArch>ARMv7</MtouchArch>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <MtouchProfiling>true</MtouchProfiling>
@@ -67,23 +51,6 @@
     <MtouchUseRefCounting>true</MtouchUseRefCounting>
     <MtouchLink>None</MtouchLink>
     <MtouchNoSymbolStrip>true</MtouchNoSymbolStrip>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|iPhone' ">
-    <Optimize>true</Optimize>
-    <OutputPath>bin\iPhone\Release</OutputPath>
-    <DefineConstants>__MOBILE__;__IOS__;</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <CodesignEntitlements>Entitlements.plist</CodesignEntitlements>
-    <ConsolePause>false</ConsolePause>
-    <CodesignKey>iPhone Developer</CodesignKey>
-    <MtouchI18n>
-    </MtouchI18n>
-    <MtouchArch>ARMv7, ARM64</MtouchArch>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <MtouchUseLlvm>true</MtouchUseLlvm>
-    <MtouchUseSGen>true</MtouchUseSGen>
-    <MtouchUseRefCounting>true</MtouchUseRefCounting>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Ad-Hoc|iPhone' ">
     <Optimize>true</Optimize>
@@ -96,8 +63,7 @@
     <BuildIpa>true</BuildIpa>
     <CodesignProvision>Automatic:AdHoc</CodesignProvision>
     <CodesignKey>iPhone Distribution</CodesignKey>
-    <MtouchI18n>
-    </MtouchI18n>
+    <MtouchI18n></MtouchI18n>
     <MtouchArch>ARMv7, ARM64</MtouchArch>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <MtouchUseLlvm>true</MtouchUseLlvm>
@@ -114,8 +80,7 @@
     <CodesignEntitlements>Entitlements.plist</CodesignEntitlements>
     <CodesignProvision>Automatic:AppStore</CodesignProvision>
     <CodesignKey>iPhone Distribution</CodesignKey>
-    <MtouchI18n>
-    </MtouchI18n>
+    <MtouchI18n></MtouchI18n>
     <MtouchArch>ARMv7, ARM64</MtouchArch>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <MtouchUseLlvm>true</MtouchUseLlvm>
@@ -188,8 +153,28 @@
   </ItemGroup>
   <ItemGroup>
     <BundleResource Include="Resources\en.lproj\Localizable.strings" />
-    <BundleResource Include="Resources\*.png" />
     <BundleResource Include="Resources\Fonts\icomoon.ttf" />
+    <BundleResource Include="Resources\arrowUp.png" />
+    <BundleResource Include="Resources\arrowUp%402x.png" />
+    <BundleResource Include="Resources\bg-tag.png" />
+    <BundleResource Include="Resources\bg-tag%402x.png" />
+    <BundleResource Include="Resources\bg.png" />
+    <BundleResource Include="Resources\bg%402x.png" />
+    <BundleResource Include="Resources\btn-arrow-down.png" />
+    <BundleResource Include="Resources\btn-arrow-down%402x.png" />
+    <BundleResource Include="Resources\btn-arrow-left.png" />
+    <BundleResource Include="Resources\btn-arrow-left%402x.png" />
+    <BundleResource Include="Resources\btn-arrow-right.png" />
+    <BundleResource Include="Resources\btn-arrow-right%402x.png" />
+    <BundleResource Include="Resources\btn-arrow-up.png" />
+    <BundleResource Include="Resources\btn-arrow-up%402x.png" />
+    <BundleResource Include="Resources\circle-start-pressed.png" />
+    <BundleResource Include="Resources\circle-start-pressed%402x.png" />
+    <BundleResource Include="Resources\circle-start.png" />
+    <BundleResource Include="Resources\circle-start%402x.png" />
+    <BundleResource Include="Resources\circle-stop-pressed.png" />
+    <BundleResource Include="Resources\circle-stop-pressed%402x.png" />
+    <BundleResource Include="Resources\circle-stop.png" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Info.plist" />
@@ -335,17 +320,6 @@
     <Compile Include="Theme\Style.LeftView.cs">
       <DependentUpon>Style.cs</DependentUpon>
     </Compile>
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Contrib\Cirrious.FluentLayout\Cirrious.FluentLayout\Cirrious.FluentLayouts.Touch.csproj">
-      <Project>{75D2DA9D-DFD4-49A1-98FB-FE0F0677EF0F}</Project>
-      <Name>Cirrious.FluentLayouts.Touch</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Emma\Emma.csproj">
-      <Project>{6DDC0688-0534-466A-9134-0E331AC0E998}</Project>
-      <Name>Emma</Name>
-      <IsAppExtension>True</IsAppExtension>
-    </ProjectReference>
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>

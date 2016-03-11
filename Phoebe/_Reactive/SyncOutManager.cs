@@ -260,16 +260,16 @@ namespace Toggl.Phoebe._Reactive
                 var reqEx = ex as UnsuccessfulRequestException;
                 if (reqEx != null && (reqEx.IsForbidden || reqEx.IsValidationError)) {
                     authResult = Net.AuthResult.InvalidCredentials;
-                }
-
-                var log = ServiceContainer.Resolve<ILogger> ();
-                if (ex.IsNetworkFailure () || ex is TaskCanceledException) {
-                    log.Info (Tag, ex, "Failed authenticate user.");
                 } else {
-                    log.Warning (Tag, ex, "Failed to authenticate user.");
+                    var log = ServiceContainer.Resolve<ILogger> ();
+                    if (ex.IsNetworkFailure () || ex is TaskCanceledException) {
+                        log.Info (Tag, ex, "Failed authenticate user. Network error.");
+                        authResult = Net.AuthResult.NetworkError;
+                    } else {
+                        log.Warning (Tag, ex, "Failed to authenticate user. Unknown error.");
+                        authResult = Net.AuthResult.SystemError;
+                    }
                 }
-
-                authResult = Net.AuthResult.NetworkError;
             }
 
             // TODO RX

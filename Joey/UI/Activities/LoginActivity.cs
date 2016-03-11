@@ -212,10 +212,6 @@ namespace Toggl.Joey.UI.Activities
 
         private void SetLoginBtnState ()
         {
-            if (ViewModel.CurrentLoginMode == LoginVM.LoginMode.Login) {
-                return;
-            }
-
             LoginButton.Enabled = !ViewModel.IsAuthenticating &&
                                   ViewModel.IsEmailValid (EmailEditText.Text) &&
                                   ViewModel.IsPassValid (PasswordEditText.Text);

@@ -71,7 +71,12 @@ namespace Toggl.Phoebe._Reactive
         DataSyncMsg<object> IReducer.Reduce (object state, DataMsg msg)
         {
             var res = Reduce ((T)state, msg);
-            return DataSyncMsg.Create ((object)res.State, res.SyncData);
+
+            ServerRequest request = null;
+            if (res.ServerRequests != null) {
+                request = res.ServerRequests.FirstOrDefault ();
+            }
+            return DataSyncMsg.Create ((object)res.State, res.SyncData, request);
         }
     }
 
@@ -108,7 +113,7 @@ namespace Toggl.Phoebe._Reactive
         public override DataSyncMsg<T> Reduce (T state, DataMsg msg)
         {
             var syncData = new List<ICommonData> ();
-			var serverRequests = new List<ServerRequest> ();
+            var serverRequests = new List<ServerRequest> ();
             var dic = new Dictionary<string, object> ();
 
             foreach (var reducer in reducers) {
@@ -126,7 +131,11 @@ namespace Toggl.Phoebe._Reactive
         DataSyncMsg<object> IReducer.Reduce (object state, DataMsg msg)
         {
             var res = Reduce ((T)state, msg);
-            return DataSyncMsg.Create ((object)res.State, res.SyncData);
+            ServerRequest request = null;
+            if (res.ServerRequests != null) {
+                request = res.ServerRequests.FirstOrDefault ();
+            }
+            return DataSyncMsg.Create ((object)res.State, res.SyncData, request);
         }
     }
 
@@ -167,18 +176,18 @@ namespace Toggl.Phoebe._Reactive
 
             var timerState =
                 new TimerState (
-                    authResult: Net.AuthResult.None,
-                    downloadResult: new DownloadResult (false, true, false, downloadFrom, downloadFrom),
-                    user: userData,
-                    workspaces: new Dictionary<Guid, WorkspaceData> (),
-                    projects: new Dictionary<Guid, ProjectData> (),
-                    workspaceUsers: new Dictionary<Guid, WorkspaceUserData> (),
-                    projectUsers: new Dictionary<Guid, ProjectUserData> (),
-                    clients: new Dictionary<Guid, ClientData> (),
-                    tasks: new Dictionary<Guid, TaskData> (),
-                    tags: new Dictionary<Guid, TagData> (),
-                    timeEntries: new Dictionary<Guid, RichTimeEntry> (),
-                    activeTimeEntry: new TimeEntryData ());
+                authResult: Net.AuthResult.None,
+                downloadResult: new DownloadResult (false, true, false, downloadFrom, downloadFrom),
+                user: userData,
+                workspaces: new Dictionary<Guid, WorkspaceData> (),
+                projects: new Dictionary<Guid, ProjectData> (),
+                workspaceUsers: new Dictionary<Guid, WorkspaceUserData> (),
+                projectUsers: new Dictionary<Guid, ProjectUserData> (),
+                clients: new Dictionary<Guid, ClientData> (),
+                tasks: new Dictionary<Guid, TaskData> (),
+                tags: new Dictionary<Guid, TagData> (),
+                timeEntries: new Dictionary<Guid, RichTimeEntry> (),
+                activeTimeEntry: new TimeEntryData ());
 
             return new AppState (timerState);
         }
@@ -191,12 +200,12 @@ namespace Toggl.Phoebe._Reactive
 
         public RichTimeEntry (ITimeEntryData data, TimeEntryInfo info)
         {
-			Data = (ITimeEntryData)data.Clone ();
+            Data = (ITimeEntryData)data.Clone ();
             Info = info;
         }
 
         public RichTimeEntry (TimerState timerState, ITimeEntryData data)
-            : this(data, timerState.LoadTimeEntryInfo (data))
+        : this (data, timerState.LoadTimeEntryInfo (data))
         {
         }
     }
@@ -228,11 +237,11 @@ namespace Toggl.Phoebe._Reactive
             DateTime? nextDownloadFrom = null)
         {
             return new DownloadResult (
-                isSyncing.HasValue ? isSyncing.Value : this.IsSyncing,
-                hasMore.HasValue ? hasMore.Value : this.HasMore,
-                hadErrors.HasValue ? hadErrors.Value : this.HadErrors,
-                downloadFrom.HasValue ? downloadFrom.Value : this.DownloadFrom,
-                nextDownloadFrom.HasValue ? nextDownloadFrom.Value : this.NextDownloadFrom);
+                       isSyncing.HasValue ? isSyncing.Value : this.IsSyncing,
+                       hasMore.HasValue ? hasMore.Value : this.HasMore,
+                       hadErrors.HasValue ? hadErrors.Value : this.HadErrors,
+                       downloadFrom.HasValue ? downloadFrom.Value : this.DownloadFrom,
+                       nextDownloadFrom.HasValue ? nextDownloadFrom.Value : this.NextDownloadFrom);
         }
     }
 
@@ -295,18 +304,18 @@ namespace Toggl.Phoebe._Reactive
             ITimeEntryData activeTimeEntry = null)
         {
             return new TimerState (
-                authResult ?? AuthResult,
-                downloadResult ?? DownloadResult,
-                user ?? User,
-                workspaces ?? Workspaces,
-                projects ?? Projects,
-                workspaceUsers ?? WorkspaceUsers,
-                projectUsers ?? ProjectUsers,
-                clients ?? Clients,
-                tasks ?? Tasks,
-                tags ?? Tags,
-                timeEntries ?? TimeEntries,
-                activeTimeEntry ?? ActiveTimeEntry);
+                       authResult ?? AuthResult,
+                       downloadResult ?? DownloadResult,
+                       user ?? User,
+                       workspaces ?? Workspaces,
+                       projects ?? Projects,
+                       workspaceUsers ?? WorkspaceUsers,
+                       projectUsers ?? ProjectUsers,
+                       clients ?? Clients,
+                       tasks ?? Tasks,
+                       tags ?? Tags,
+                       timeEntries ?? TimeEntries,
+                       activeTimeEntry ?? ActiveTimeEntry);
         }
 
         /// <summary>
@@ -369,24 +378,24 @@ namespace Toggl.Phoebe._Reactive
             var tagsData =
                 teData.Tags.Select (
                     x => Tags.Values.SingleOrDefault (y => y.WorkspaceId == teData.WorkspaceId && y.Name == x))
-                      // TODO: Throw exception if tag was not found?
-                      .Where (x => x != null)
-                      .ToList ();
+                // TODO: Throw exception if tag was not found?
+                .Where (x => x != null)
+                .ToList ();
 
             return new TimeEntryInfo (
-                Workspaces[teData.WorkspaceId],
-                projectData,
-                clientData,
-                taskData,
-                tagsData,
-                color);
+                       Workspaces[teData.WorkspaceId],
+                       projectData,
+                       clientData,
+                       taskData,
+                       tagsData,
+                       color);
         }
 
         public IEnumerable<ProjectData> GetUserAccessibleProjects (Guid userId)
         {
             return Projects.Values.Where (
-                p => p.IsActive && (p.IsPrivate || ProjectUsers.Values.Any (x => x.ProjectId == p.Id && x.UserId == userId)))
-                           .OrderBy (p => p.Name);
+                       p => p.IsActive && (p.IsPrivate || ProjectUsers.Values.Any (x => x.ProjectId == p.Id && x.UserId == userId)))
+                   .OrderBy (p => p.Name);
         }
 
         public TimeEntryData GetTimeEntryDraft ()

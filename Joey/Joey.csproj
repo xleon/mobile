@@ -775,6 +775,7 @@
     <AndroidResource Include="Resources\drawable-xhdpi\IcReportsOverflow.png" />
     <AndroidResource Include="Resources\drawable-xxhdpi\IcReportsOverflow.png" />
     <AndroidResource Include="Resources\menu\ReportsToolbarMenu.axml" />
+    <AndroidResource Include="Resources\drawable-ldpi\ic_menu_black_24dp.png" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Xamarin\Android\Xamarin.Android.CSharp.targets" />
   <ItemGroup>

@@ -64,6 +64,8 @@
     <string name="Today">Today</string>
     <string name="Yesterday">Yesterday</string>
     <string name="Tomorrow">Tomorrow</string>
+    <string name="LogHeaderDurationHoursMinutes">{0} h {1} min</string>
+    <string name="LogHeaderDurationMinutes">{0} min</string>	
     <string name="TimeTrackingNewTab">NEW</string>
     <string name="TimeTrackingRunningTab">RUNNING</string>
     <string name="TimeTrackingManualTab">MANUAL</string>
@@ -179,6 +181,9 @@
     <string name="FeedbackThankYouTitle">Thank you</string>
     <string name="FeedbackThankYouOK">OK</string>
     <string name="FeedbackSendFailedText">Could not send to server. Please try again.</string>
+    <string name="ReportsToolbarMenuWeek">Week</string>
+    <string name="ReportsToolbarMenuMonth">Month</string>
+    <string name="ReportsToolbarMenuYear">Year</string>
     <string name="ReportsThisWeek">This Week</string>
     <string name="ReportsThisMonth">This Month</string>
     <string name="ReportsThisYear">This Year</string>
@@ -207,7 +212,7 @@
     <string name="EditTimeEntryFragmentDescription">Description</string>
     <string name="EditTimeEntryFragmentDescriptionHint">What are you doing?</string>
     <string name="EditTimeEntryFragmentSaveButtonText">Save</string>
-    <string name="SwipeDeleteQuestion">Delete</string>
+    <string name="SwipeDeleteQuestion">Deleted</string>
     <string name="UndoBarDeletedText">Time entry deleted</string>
     <string name="UndoButtonText">UNDO</string>
     <string name="SwitchViewText">or you can</string>
@@ -229,4 +234,5 @@
     <string name="TimeEntriesListFooterError">An error occurred downloading data</string>
     <string name="TimeEntriesListFooterTryAgain">Try again</string>
     <string name="EditTimeEntrySyncFailed">This time entry has failed to sync correctly</string>
+	<string name="Experiment93Text">Start your timer here.</string>
 </resources>

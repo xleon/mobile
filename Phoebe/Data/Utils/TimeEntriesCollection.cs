@@ -51,10 +51,14 @@ namespace Toggl.Phoebe.Data.Utils
             }
         }
 
+        // TODO HACK: State should be kept with Rx.Scan but it's not possible because this method
+        // is asynchronous. It will be changed in the new architecture
+        private IList<IHolder> _currentHolders = null;
         private async Task UpdateItemsAsync (IEnumerable<TimeEntryMessage> msgs)
         {
             // 1. Get only TimeEntryHolders from current collection
-            var timeHolders = grouper.Ungroup (Items.OfType<T> ()).ToList ();
+            _currentHolders = _currentHolders ?? Items;
+            var timeHolders = grouper.Ungroup (_currentHolders.OfType<T> ()).ToList ();
 
             // 2. Remove, replace or add items from messages
             foreach (var msg in msgs) {
@@ -65,7 +69,8 @@ namespace Toggl.Phoebe.Data.Utils
             var newItemCollection = await CreateItemCollectionAsync (timeHolders, loadTimeEntryInfo);
 
             // 4. Check diffs, modify ItemCollection and notify changes
-            var diffs = Diff.Calculate (Items, newItemCollection);
+            var diffs = Diff.Calculate (_currentHolders, newItemCollection);
+            _currentHolders = newItemCollection;
 
             // 5. Swap remove events to delete normal items before headers.
             // iOS requierement.

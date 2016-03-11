@@ -7,6 +7,7 @@ using Android.OS;
 using Android.Views;
 using Android.Widget;
 using Toggl.Joey.Data;
+using Toggl.Joey.UI.Activities;
 using Toggl.Joey.UI.Fragments;
 using Toggl.Joey.UI.Utils;
 using Toggl.Phoebe;
@@ -15,15 +16,17 @@ using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Reports;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
+using Activity = Android.Support.V7.App.AppCompatActivity;
 using Fragment = Android.Support.V4.App.Fragment;
 using FragmentManager = Android.Support.V4.App.FragmentManager;
 using FragmentPagerAdapter = Android.Support.V4.App.FragmentPagerAdapter;
 using FragmentTransaction = Android.Support.V4.App.FragmentTransaction;
+using Toolbar = Android.Support.V7.Widget.Toolbar;
 using ViewPager = Android.Support.V4.View.ViewPager;
 
 namespace Toggl.Joey.UI.Fragments
 {
-    public class ReportsPagerFragment : Fragment
+    public class ReportsPagerFragment : Fragment, Toolbar.IOnMenuItemClickListener
     {
         private const string ExtraCurrentItem = "com.toggl.timer.current_item";
         private const int PagesCount = 500;
@@ -33,6 +36,7 @@ namespace Toggl.Joey.UI.Fragments
         private View previousPeriod;
         private View nextPeriod;
         private TextView timePeriod;
+        private Toolbar toolbar;
         private ZoomLevel zoomLevel = ZoomLevel.Week;
         private int backDate;
         private Context ctx;
@@ -130,6 +134,11 @@ namespace Toggl.Joey.UI.Fragments
             nextPeriod.Click += (sender, e) => NavigatePage (1);
             syncRetry.Click += async (sender, e) => await ReloadCurrent ();
 
+            var activity = (MainDrawerActivity)Activity;
+            toolbar = activity.MainToolbar;
+
+            HasOptionsMenu = true;
+
             ResetAdapter ();
             UpdatePeriod ();
 
@@ -211,6 +220,7 @@ namespace Toggl.Joey.UI.Fragments
 
         private void UpdatePeriod ()
         {
+
             timePeriod.Text = FormattedDateSelector ();
         }
 
@@ -229,6 +239,32 @@ namespace Toggl.Joey.UI.Fragments
             frag.UserVisibleHint = true;
             backDate = e.Position - StartPage;
             UpdatePeriod ();
+        }
+
+        public override void OnCreateOptionsMenu (IMenu menu, MenuInflater inflater)
+        {
+            inflater.Inflate (Resource.Menu.ReportsToolbarMenu, menu);
+            toolbar.SetOnMenuItemClickListener (this);
+            toolbar.OverflowIcon = Resources.GetDrawable (Resource.Drawable.IcReportsOverflow);
+        }
+
+        public bool OnMenuItemClick (IMenuItem item)
+        {
+            switch (item.ItemId) {
+            case Resource.Id.ReportsToolbarWeek:
+                ZoomLevel = ZoomLevel.Week;
+                toolbar.SetTitle (Resource.String.ReportsToolbarMenuWeek);
+                break;
+            case Resource.Id.ReportsToolbarMonth:
+                ZoomLevel = ZoomLevel.Month;
+                toolbar.SetTitle (Resource.String.ReportsToolbarMenuMonth);
+                break;
+            default:
+                ZoomLevel = ZoomLevel.Year;
+                toolbar.SetTitle (Resource.String.ReportsToolbarMenuYear);
+                break;
+            }
+            return true;
         }
 
         private void ShowSyncError (bool visible)

@@ -46,8 +46,9 @@ namespace Toggl.Joey.UI.Fragments
         public TogglField DescriptionField { get; private set; }
         public TogglTagsField TagsField { get; private set; }
         public IMenuItem SaveMenuItem { get; private set; }
-        public LinearLayout SyncError { get; private set; }
 
+        private View editTimeEntryContent;
+        private View editTimeEntryProgressBar;
         private TextView stopTimeEditLabel;
         private ActionBar toolbar;
 
@@ -91,6 +92,7 @@ namespace Toggl.Joey.UI.Fragments
             toolbar = activity.SupportActionBar;
             toolbar.SetDisplayHomeAsUpEnabled (true);
 
+
             var durationLayout = inflater.Inflate (Resource.Layout.DurationTextView, null);
             DurationTextView = durationLayout.FindViewById<TextView> (Resource.Id.DurationTextViewTextView);
 
@@ -114,7 +116,8 @@ namespace Toggl.Joey.UI.Fragments
 
             TagsField = view.FindViewById<TogglTagsField> (Resource.Id.TagsBit);
             BillableCheckBox = view.FindViewById<CheckBox> (Resource.Id.BillableCheckBox).SetFont (Font.RobotoLight);
-            SyncError = view.FindViewById<LinearLayout> (Resource.Id.ItemSyncError);
+            editTimeEntryProgressBar = view.FindViewById<View> (Resource.Id.EditTimeEntryProgressBar);
+            editTimeEntryContent = view.FindViewById<View> (Resource.Id.EditTimeEntryContent);
 
             HasOptionsMenu = true;
             return view;
@@ -186,16 +189,6 @@ namespace Toggl.Joey.UI.Fragments
                 var label = ViewModel.IsBillable ? GetString (Resource.String.CurrentTimeEntryEditBillableChecked) : GetString (Resource.String.CurrentTimeEntryEditBillableUnchecked);
                 BillableCheckBox.Text = label;
             });
-            saveMenuBinding = this.SetBinding (() => ViewModel.IsManual)
-            .WhenSourceChanges (() => {
-                if (SaveMenuItem != null) {
-                    SaveMenuItem.SetVisible (ViewModel.IsManual);
-                }
-            });
-
-            syncErrorBinding = this.SetBinding (() => ViewModel.SyncError).WhenSourceChanges (() => {
-                SyncError.Visibility = ViewModel.SyncError ? ViewStates.Visible : ViewStates.Gone;
-            });
 
             // Configure option menu.
             ConfigureOptionMenu ();
@@ -206,19 +199,29 @@ namespace Toggl.Joey.UI.Fragments
                 LogTimeEntriesListFragment.NewTimeEntryStartedByFAB = false;
                 OpenProjectListActivity ();
             }
+
+            // Finally set content visible.
+            editTimeEntryContent.Visibility = ViewStates.Visible;
+            editTimeEntryProgressBar.Visibility = ViewStates.Gone;
         }
 
         public override void OnDestroyView ()
         {
-            ViewModel.Dispose ();
+            // TODO: Remove null condition in next release.
+            if (ViewModel != null) {
+                ViewModel.Dispose ();
+            }
             base.OnDestroyView ();
         }
 
         public override void OnPause ()
         {
+            // TODO: Remove null condition in next release.
             // Save Time entry state every time
             // the fragment is paused.
-            Task.Run (async () => await ViewModel.SaveAsync ());
+            if (ViewModel != null) {
+                Task.Run (async () => await ViewModel.SaveAsync ());
+            }
             base.OnPause ();
         }
 
@@ -272,10 +275,13 @@ namespace Toggl.Joey.UI.Fragments
             ViewModel.ChangeTimeEntryDuration (newDuration);
         }
 
+        IMenu menu;
+        MenuInflater inflater;
+
         public override void OnCreateOptionsMenu (IMenu menu, MenuInflater inflater)
         {
-            inflater.Inflate (Resource.Menu.SaveItemMenu, menu);
-            SaveMenuItem = menu.FindItem (Resource.Id.saveItem);
+            this.menu = menu;
+            this.inflater = inflater;
             ConfigureOptionMenu ();
         }
 
@@ -283,7 +289,7 @@ namespace Toggl.Joey.UI.Fragments
         {
             // Ugly null check
             if (item == SaveMenuItem && ViewModel != null) {
-                Task.Run (async () => await ViewModel.SaveManualAsync ());
+                ViewModel.SaveManual ();
             }
 
             Activity.OnBackPressed ();
@@ -301,8 +307,11 @@ namespace Toggl.Joey.UI.Fragments
         // this method is called from two points
         private void ConfigureOptionMenu ()
         {
-            if (ViewModel != null && SaveMenuItem != null) {
-                SaveMenuItem.SetVisible (ViewModel.IsManual);
+            if (ViewModel != null && menu != null) {
+                if (ViewModel.IsManual) {
+                    inflater.Inflate (Resource.Menu.SaveItemMenu, menu);
+                    SaveMenuItem = menu.FindItem (Resource.Id.saveItem);
+                }
             }
         }
     }

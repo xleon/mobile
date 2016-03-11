@@ -28,7 +28,7 @@ namespace Toggl.Ross.ViewControllers
         readonly static NSString EntryCellId = new NSString ("EntryCellId");
         readonly static NSString SectionHeaderId = new NSString ("SectionHeaderId");
 
-        private SimpleEmptyView emptyView;
+        private SimpleEmptyView defaultEmptyView;
         private UIView obmEmptyView;
         private UIView reloadView;
         private UIButton durationButton;
@@ -37,7 +37,8 @@ namespace Toggl.Ross.ViewControllers
         private UIActivityIndicatorView defaultFooterView;
 
         private Binding<string, string> durationBinding;
-        private Binding<bool, bool> syncBinding, hasMoreBinding, hasErrorBinding, isRunningBinding, hasItemsBinding, loadMoreBinding;
+        private Binding<bool, bool> syncBinding, hasMoreBinding, hasErrorBinding, isRunningBinding;
+        private Binding<LogTimeEntriesViewModel.CollectionState, LogTimeEntriesViewModel.CollectionState> hasItemsBinding, loadMoreBinding;
         private Binding<ObservableCollection<IHolder>, ObservableCollection<IHolder>> collectionBinding;
 
         protected LogTimeEntriesViewModel ViewModel {get; set;}
@@ -54,7 +55,7 @@ namespace Toggl.Ross.ViewControllers
                 Image.IconNav.ImageWithRenderingMode (UIImageRenderingMode.AlwaysOriginal),
                 UIBarButtonItemStyle.Plain, OnNavigationButtonTouched);
 
-            emptyView = new SimpleEmptyView {
+            defaultEmptyView = new SimpleEmptyView {
                 Title = "LogEmptyTitle".Tr (),
                 Message = "LogEmptyMessage".Tr (),
             };
@@ -114,7 +115,7 @@ namespace Toggl.Ross.ViewControllers
             });
             hasMoreBinding = this.SetBinding (() => ViewModel.HasMoreItems).WhenSourceChanges (SetFooterState);
             hasErrorBinding = this.SetBinding (() => ViewModel.HasLoadErrors).WhenSourceChanges (SetFooterState);
-            hasItemsBinding = this.SetBinding (() => ViewModel.HasItems).WhenSourceChanges (SetFooterState);
+            hasItemsBinding = this.SetBinding (() => ViewModel.HasItems).WhenSourceChanges (SetCollectionState);
             loadMoreBinding = this.SetBinding (() => ViewModel.HasItems).WhenSourceChanges (LoadMoreIfNeeded);
             collectionBinding = this.SetBinding (() => ViewModel.Collection).WhenSourceChanges (() => {
                 TableView.Source = new TimeEntriesSource (this, ViewModel);
@@ -130,16 +131,18 @@ namespace Toggl.Ross.ViewControllers
             await ViewModel.LoadMore ();
         }
 
-        protected override void Dispose (bool disposing)
+        public override void ViewWillDisappear (bool animated)
         {
-            ViewModel.Dispose ();
-            base.Dispose (disposing);
+            if (IsMovingFromParentViewController) {
+                ViewModel.Dispose ();
+            }
+            base.ViewWillDisappear (animated);
         }
 
         public override void ViewDidLayoutSubviews ()
         {
             base.ViewDidLayoutSubviews ();
-            emptyView.Frame = new CGRect (25f, (View.Frame.Size.Height - 200f) / 2, View.Frame.Size.Width - 50f, 200f);
+            defaultEmptyView.Frame = new CGRect (25f, (View.Frame.Size.Height - 200f) / 2, View.Frame.Size.Width - 50f, 200f);
             obmEmptyView.Frame = new CGRect (25f, 15f, View.Frame.Size.Width - 50f, 200f);
             reloadView.Bounds = new CGRect (0f, 0f, View.Frame.Size.Width, 70f);
             reloadView.Center = new CGPoint (View.Center.X, reloadView.Center.Y);
@@ -153,8 +156,7 @@ namespace Toggl.Ross.ViewControllers
         private async void OnActionButtonTouchUpInside (object sender, EventArgs e)
         {
             // Send experiment data.
-            ViewModel.ReportExperiment (OBMExperimentManager.iOSExperimentNumber,
-                                        OBMExperimentManager.StartButtonActionKey,
+            ViewModel.ReportExperiment (OBMExperimentManager.StartButtonActionKey,
                                         OBMExperimentManager.ClickActionValue);
 
             var entry = await ViewModel.StartStopTimeEntry ();
@@ -201,16 +203,26 @@ namespace Toggl.Ross.ViewControllers
             } else if (ViewModel.HasMoreItems && ViewModel.HasLoadErrors) {
                 TableView.TableFooterView = reloadView;
             } else if (!ViewModel.HasMoreItems && !ViewModel.HasLoadErrors) {
-                if (ViewModel.HasItems) {
-                    TableView.TableFooterView = new UIView ();
-                } else {
-                    emptyView.Title = ServiceContainer.Resolve<ISettingsStore> ().ShowWelcome ? "LogWelcomeTitle".Tr () : "LogEmptyTitle".Tr ();
-                    if (OBMExperimentManager.IncludedInExperiment (OBMExperimentManager.iOSExperimentNumber)) {
-                        TableView.TableFooterView = obmEmptyView;
-                    } else {
-                        TableView.TableFooterView = emptyView;
-                    }
+                SetCollectionState ();
+            }
+        }
+
+        private void SetCollectionState ()
+        {
+            if (ViewModel.HasItems != LogTimeEntriesViewModel.CollectionState.NotReady) {
+                UIView emptyView = defaultEmptyView; // Default empty view.
+                var isWelcome = ServiceContainer.Resolve<ISettingsStore> ().ShowWelcome;
+                var isInExperiment = OBMExperimentManager.IncludedInExperiment ();
+                var hasItems = ViewModel.HasItems == LogTimeEntriesViewModel.CollectionState.NotEmpty;
+
+                // According to settings, show welcome message or no.
+                ((SimpleEmptyView)emptyView).Title = isWelcome ? "LogWelcomeTitle".Tr () : "LogEmptyTitle".Tr ();
+
+                if (isWelcome && isInExperiment) {
+                    emptyView = obmEmptyView;
                 }
+
+                TableView.TableFooterView = hasItems ? new UIView () : emptyView;
             }
         }
 
@@ -339,7 +351,8 @@ namespace Toggl.Ross.ViewControllers
             private readonly UILabel durationLabel;
             private readonly UIImageView runningImageView;
             private Timer timer;
-            private ITimeEntryHolder holder;
+            private bool isRunning;
+            private TimeSpan duration;
             private Action<TimeEntryCell> OnContinueAction;
 
             public TimeEntryCell (IntPtr ptr) : base (ptr)
@@ -439,36 +452,40 @@ namespace Toggl.Ross.ViewControllers
                     SetNeedsLayout ();
                 }
 
+                // Set duration
+                duration = dataSource.GetDuration ();
+                isRunning = dataSource.Data.State == TimeEntryState.Running;
+
                 RebindTags (dataSource);
-                RebindDuration (dataSource);
+                RebindDuration ();
                 LayoutIfNeeded ();
-                holder = dataSource;
             }
 
             // Rebind duration with the saved state "lastDataSource"
             // TODO: Try to find a stateless method.
-            private void RebindDuration (ITimeEntryHolder dataSource)
+            private void RebindDuration ()
             {
-                var duration = dataSource.GetDuration ();
-                durationLabel.Text = TimeEntryModel.GetFormattedDuration (duration);
-                runningImageView.Hidden = dataSource.Data.State != TimeEntryState.Running;
-
                 if (timer != null) {
                     timer.Stop ();
                     timer.Elapsed -= OnDurationElapsed;
                     timer = null;
                 }
 
-                if (dataSource.Data.State == TimeEntryState.Running) {
+                if (isRunning) {
                     timer = new Timer (1000 - duration.Milliseconds);
                     timer.Elapsed += OnDurationElapsed;
                     timer.Start ();
                 }
+
+                durationLabel.Text = TimeEntryModel.GetFormattedDuration (duration);
+                runningImageView.Hidden = !isRunning;
             }
 
             private void OnDurationElapsed (object sender, ElapsedEventArgs e)
             {
-                InvokeOnMainThread (() => RebindDuration (holder));
+                // Update duration with new time.
+                duration = duration.Add (TimeSpan.FromMilliseconds (timer.Interval));
+                InvokeOnMainThread (() => RebindDuration ());
             }
 
             private void RebindTags (ITimeEntryHolder dataSource)

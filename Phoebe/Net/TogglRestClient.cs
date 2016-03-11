@@ -674,7 +674,7 @@ namespace Toggl.Phoebe.Net
         public Task<UserJson> CreateUser (UserJson jsonObject)
         {
             var url = new Uri (v8Url, jsonObject.GoogleAccessToken != null ? "signups?app_name=toggl_mobile" : "signups");
-            jsonObject.CreatedWith = Platform.DefaultCreatedWith;
+            jsonObject.CreatedWith = String.Format ("{0}-obm-{1}", Platform.DefaultCreatedWith, OBMExperimentManager.ExperimentNumber);
             return CreateObject (url, jsonObject);
         }
 

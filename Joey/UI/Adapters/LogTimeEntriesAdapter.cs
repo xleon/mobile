@@ -374,7 +374,7 @@ namespace Toggl.Joey.UI.Adapters
                 }
 
                 var color = Color.Transparent;
-				var entryData = DataSource.Entry.Data;
+                var entryData = DataSource.Entry.Data;
                 var ctx = ServiceContainer.Resolve<Context> ();
 
                 // TODO RX: IsDirty has no meaning in the new architecture

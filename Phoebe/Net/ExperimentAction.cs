@@ -27,9 +27,9 @@ namespace Toggl.Phoebe.Net
 
                 var log = ServiceContainer.Resolve<ILogger> ();
                 if (ex.IsNetworkFailure() ) {
-                    log.Info (Tag, ex, "Failed to send obm action.");
+                    log.Info (Tag, ex, "Network failure. Failed to send obm action.");
                 } else {
-                    log.Warning (Tag, ex, "Failed to send obm action.");
+                    log.Warning (Tag, ex, "Server error. Failed to send obm action.");
                 }
                 return false;
             }

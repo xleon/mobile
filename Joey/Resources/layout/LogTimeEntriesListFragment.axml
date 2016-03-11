@@ -70,7 +70,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textAlignment="center"
-            android:text="@string/NoItemsText"
+            android:text="@string/Experiment93Text"
             android:layout_centerInParent="true"
             android:textColor="@color/material_black"
             android:textSize="20sp"

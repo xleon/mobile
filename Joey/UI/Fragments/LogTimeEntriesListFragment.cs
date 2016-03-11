@@ -28,8 +28,8 @@ namespace Toggl.Joey.UI.Fragments
 {
     public class LogTimeEntriesListFragment : Fragment,
     SwipeDismissCallback.IDismissListener,
-                            ItemTouchListener.IItemTouchListener,
-                            SwipeRefreshLayout.IOnRefreshListener
+                        ItemTouchListener.IItemTouchListener,
+                        SwipeRefreshLayout.IOnRefreshListener
     {
         public static bool NewTimeEntryStartedByFAB;
 

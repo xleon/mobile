@@ -180,6 +180,15 @@ namespace Toggl.Phoebe.Net
 
             var changes = await client.GetChanges (lastRun).ConfigureAwait (false);
 
+            // TODO: OBM data that comes in user object from this changes
+            // is totally wrong. In that way, we should keep this info before
+            // before process the object.
+            var user = ServiceContainer.Resolve<AuthManager> ().User;
+            if (user != null) {
+                changes.User.OBM.Included = user.ExperimentIncluded;
+                changes.User.OBM.Number = user.ExperimentNumber;
+            }
+
             // Import data (in parallel batches)
             var userData = await store.ExecuteInTransactionAsync (ctx => changes.User.Import (ctx));
             await store.ExecuteInTransactionAsync (ctx => {

@@ -47,6 +47,8 @@ Do you want to put our app to the limits? There is a bug that and you know how t
 
 Download the last [Android Beta](https://tsfr.io/xrkvaq)
 
+Download the last [iOS Beta](https://tsfr.io/w7k2a8) (closed beta, contact us first!)
+
 ## We are hiring!
 
 Check out our [jobs page](http://jobs.toggl.com/) for current open positions.

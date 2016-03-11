@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -17,6 +17,8 @@
     <AndroidManifest>Properties\AndroidManifest.xml</AndroidManifest>
     <TargetFrameworkVersion>v5.0</TargetFrameworkVersion>
     <JavaMaximumHeapSize>1G</JavaMaximumHeapSize>
+    <NuGetPackageImportStamp>
+    </NuGetPackageImportStamp>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -44,6 +46,10 @@
     <RunCodeAnalysis>false</RunCodeAnalysis>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="PropertyChanged, Version=1.50.4.0, Culture=neutral, PublicKeyToken=ee3ee20bcf148ddd, processorArchitecture=MSIL">
+      <HintPath>..\packages\PropertyChanged.Fody.1.50.4\lib\dotnet\PropertyChanged.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Xml" />
     <Reference Include="System.Core" />
@@ -70,44 +76,17 @@
     <Reference Include="SQLite.Net.Async">
       <HintPath>..\packages\SQLite.Net.Async-PCL.3.1.1\lib\portable-win8+net45+wp8+wpa81+MonoAndroid1+MonoTouch1\SQLite.Net.Async.dll</HintPath>
     </Reference>
-    <Reference Include="Xamarin.Android.Support.v4">
-      <HintPath>..\packages\Xamarin.Android.Support.v4.23.1.1.0\lib\MonoAndroid403\Xamarin.Android.Support.v4.dll</HintPath>
+    <Reference Include="System.Reactive.Interfaces">
+      <HintPath>..\packages\Rx-Interfaces.2.2.5\lib\portable-windows8+net45+wp8\System.Reactive.Interfaces.dll</HintPath>
     </Reference>
-    <Reference Include="Xamarin.Android.Support.v7.RecyclerView">
-      <HintPath>..\packages\Xamarin.Android.Support.v7.RecyclerView.23.1.1.0\lib\MonoAndroid403\Xamarin.Android.Support.v7.RecyclerView.dll</HintPath>
+    <Reference Include="System.Reactive.Core">
+      <HintPath>..\packages\Rx-Core.2.2.5\lib\portable-windows8+net45+wp8\System.Reactive.Core.dll</HintPath>
     </Reference>
-    <Reference Include="Xamarin.GooglePlayServices.Basement">
-      <HintPath>..\packages\Xamarin.GooglePlayServices.Basement.29.0.0\lib\MonoAndroid41\Xamarin.GooglePlayServices.Basement.dll</HintPath>
+    <Reference Include="System.Reactive.Linq">
+      <HintPath>..\packages\Rx-Linq.2.2.5\lib\portable-windows8+net45+wp8\System.Reactive.Linq.dll</HintPath>
     </Reference>
-    <Reference Include="Xamarin.GooglePlayServices.Base">
-      <HintPath>..\packages\Xamarin.GooglePlayServices.Base.29.0.0\lib\MonoAndroid41\Xamarin.GooglePlayServices.Base.dll</HintPath>
-    </Reference>
-    <Reference Include="Xamarin.GooglePlayServices.Wearable">
-      <HintPath>..\packages\Xamarin.GooglePlayServices.Wearable.29.0.0\lib\MonoAndroid41\Xamarin.GooglePlayServices.Wearable.dll</HintPath>
-    </Reference>
-    <Reference Include="Xamarin.GooglePlayServices.Plus">
-      <HintPath>..\packages\Xamarin.GooglePlayServices.Plus.29.0.0\lib\MonoAndroid41\Xamarin.GooglePlayServices.Plus.dll</HintPath>
-    </Reference>
-    <Reference Include="Xamarin.GooglePlayServices.Measurement">
-      <HintPath>..\packages\Xamarin.GooglePlayServices.Measurement.29.0.0\lib\MonoAndroid41\Xamarin.GooglePlayServices.Measurement.dll</HintPath>
-    </Reference>
-    <Reference Include="Xamarin.GooglePlayServices.Gcm">
-      <HintPath>..\packages\Xamarin.GooglePlayServices.Gcm.29.0.0\lib\MonoAndroid41\Xamarin.GooglePlayServices.Gcm.dll</HintPath>
-    </Reference>
-    <Reference Include="Xamarin.GooglePlayServices.Analytics">
-      <HintPath>..\packages\Xamarin.GooglePlayServices.Analytics.29.0.0\lib\MonoAndroid41\Xamarin.GooglePlayServices.Analytics.dll</HintPath>
-    </Reference>
-    <Reference Include="Xamarin.Android.Wearable">
-      <HintPath>..\packages\Xamarin.Android.Wear.1.3.0.2\lib\MonoAndroid50\Xamarin.Android.Wearable.dll</HintPath>
-    </Reference>
-    <Reference Include="Xamarin.Android.Support.v7.AppCompat">
-      <HintPath>..\packages\Xamarin.Android.Support.v7.AppCompat.23.1.1.0\lib\MonoAndroid403\Xamarin.Android.Support.v7.AppCompat.dll</HintPath>
-    </Reference>
-    <Reference Include="Xamarin.Android.Support.v7.MediaRouter">
-      <HintPath>..\packages\Xamarin.Android.Support.v7.MediaRouter.23.1.1.0\lib\MonoAndroid403\Xamarin.Android.Support.v7.MediaRouter.dll</HintPath>
-    </Reference>
-    <Reference Include="Xamarin.Android.Support.Design">
-      <HintPath>..\packages\Xamarin.Android.Support.Design.23.1.1.0\lib\MonoAndroid403\Xamarin.Android.Support.Design.dll</HintPath>
+    <Reference Include="System.Reactive.PlatformServices">
+      <HintPath>..\packages\Rx-PlatformServices.2.2.5\lib\portable-windows8+net45+wp8\System.Reactive.PlatformServices.dll</HintPath>
     </Reference>
     <Reference Include="Newtonsoft.Json">
       <HintPath>..\packages\Newtonsoft.Json.8.0.2\lib\portable-net40+sl5+wp80+win8+wpa81\Newtonsoft.Json.dll</HintPath>
@@ -115,6 +94,66 @@
     <Reference Include="Mindscape.Raygun4Net.Xamarin.Android">
       <HintPath>..\packages\Mindscape.Raygun4Net.5.3.0\lib\MonoAndroid2.2\Mindscape.Raygun4Net.Xamarin.Android.dll</HintPath>
     </Reference>
+    <Reference Include="Xamarin.Android.Support.v4">
+      <HintPath>..\packages\Xamarin.Android.Support.v4.23.1.1.1\lib\MonoAndroid403\Xamarin.Android.Support.v4.dll</HintPath>
+    </Reference>
+    <Reference Include="Xamarin.Android.Support.v7.RecyclerView">
+      <HintPath>..\packages\Xamarin.Android.Support.v7.RecyclerView.23.1.1.1\lib\MonoAndroid403\Xamarin.Android.Support.v7.RecyclerView.dll</HintPath>
+    </Reference>
+    <Reference Include="Xamarin.Android.Support.Design">
+      <HintPath>..\packages\Xamarin.Android.Support.Design.23.1.1.1\lib\MonoAndroid403\Xamarin.Android.Support.Design.dll</HintPath>
+    </Reference>
+    <Reference Include="Xamarin.Android.Support.v7.AppCompat">
+      <HintPath>..\packages\Xamarin.Android.Support.v7.AppCompat.23.1.1.1\lib\MonoAndroid403\Xamarin.Android.Support.v7.AppCompat.dll</HintPath>
+    </Reference>
+    <Reference Include="Xamarin.Android.Support.v7.MediaRouter">
+      <HintPath>..\packages\Xamarin.Android.Support.v7.MediaRouter.23.1.1.1\lib\MonoAndroid403\Xamarin.Android.Support.v7.MediaRouter.dll</HintPath>
+    </Reference>
+    <Reference Include="Xamarin.Android.Wearable">
+      <HintPath>..\packages\Xamarin.Android.Wear.1.3.0.3\lib\MonoAndroid50\Xamarin.Android.Wearable.dll</HintPath>
+    </Reference>
+    <Reference Include="Xamarin.GooglePlayServices.Analytics">
+      <HintPath>..\packages\Xamarin.GooglePlayServices.Analytics.29.0.0.1\lib\MonoAndroid41\Xamarin.GooglePlayServices.Analytics.dll</HintPath>
+    </Reference>
+    <Reference Include="Xamarin.GooglePlayServices.Wearable">
+      <HintPath>..\packages\Xamarin.GooglePlayServices.Wearable.29.0.0.1\lib\MonoAndroid41\Xamarin.GooglePlayServices.Wearable.dll</HintPath>
+    </Reference>
+    <Reference Include="Xamarin.GooglePlayServices.Basement">
+      <HintPath>..\packages\Xamarin.GooglePlayServices.Basement.29.0.0.1\lib\MonoAndroid41\Xamarin.GooglePlayServices.Basement.dll</HintPath>
+    </Reference>
+    <Reference Include="Xamarin.GooglePlayServices.Plus">
+      <HintPath>..\packages\Xamarin.GooglePlayServices.Plus.29.0.0.1\lib\MonoAndroid41\Xamarin.GooglePlayServices.Plus.dll</HintPath>
+    </Reference>
+    <Reference Include="Xamarin.GooglePlayServices.Base">
+      <HintPath>..\packages\Xamarin.GooglePlayServices.Base.29.0.0.1\lib\MonoAndroid41\Xamarin.GooglePlayServices.Base.dll</HintPath>
+    </Reference>
+    <Reference Include="Xamarin.GooglePlayServices.Measurement">
+      <HintPath>..\packages\Xamarin.GooglePlayServices.Measurement.29.0.0.1\lib\MonoAndroid41\Xamarin.GooglePlayServices.Measurement.dll</HintPath>
+    </Reference>
+    <Reference Include="Xamarin.GooglePlayServices.Gcm">
+      <HintPath>..\packages\Xamarin.GooglePlayServices.Gcm.29.0.0.1\lib\MonoAndroid41\Xamarin.GooglePlayServices.Gcm.dll</HintPath>
+    </Reference>
+    <Reference Include="AutoMapper">
+      <HintPath>..\packages\AutoMapper.4.2.1\lib\portable-net45+win+wpa81+MonoAndroid10+Xamarin.iOS10+MonoTouch10\AutoMapper.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Collections" />
+    <Reference Include="System.Collections.Concurrent" />
+    <Reference Include="System.ComponentModel" />
+    <Reference Include="System.Dynamic.Runtime" />
+    <Reference Include="System.Runtime" />
+    <Reference Include="System.Globalization" />
+    <Reference Include="System.Linq" />
+    <Reference Include="System.Linq.Expressions" />
+    <Reference Include="System.Linq.Queryable" />
+    <Reference Include="System.Text.RegularExpressions" />
+    <Reference Include="System.Reflection" />
+    <Reference Include="System.Reflection.Extensions" />
+    <Reference Include="System.Diagnostics.Debug" />
+    <Reference Include="System.ObjectModel" />
+    <Reference Include="System.Runtime.Extensions" />
+    <Reference Include="System.Threading" />
+    <Reference Include="System.Threading.Tasks" />
+    <Reference Include="Microsoft.CSharp" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -203,7 +242,9 @@
     <None Include="Resources\AboutResources.txt" />
     <None Include="Assets\AboutAssets.txt" />
     <None Include="Properties\AndroidManifest.xml" />
-    <None Include="packages.config" />
+    <None Include="packages.config">
+      <SubType>Designer</SubType>
+    </None>
     <None Include="Proguard.cfg" />
   </ItemGroup>
   <ItemGroup>
@@ -409,7 +450,6 @@
     <AndroidResource Include="Resources\drawable-xhdpi\AndroidListFocusedHolo.9.png" />
     <AndroidResource Include="Resources\drawable-xhdpi\AndroidListSelectorDisabledHoloLight.9.png" />
     <AndroidResource Include="Resources\drawable-xxhdpi\AndroidListFocusedHolo.9.png" />
-    <AndroidResource Include="Resources\color\DrawerTextColor.xml" />
     <AndroidResource Include="Resources\layout\SettingsListHeaderItem.axml" />
     <AndroidResource Include="Resources\layout\SettingsListCheckboxItem.axml" />
     <AndroidResource Include="Resources\layout\SettingsListFragment.axml" />
@@ -541,7 +581,6 @@
     <AndroidResource Include="Resources\drawable-mdpi\IcKeyLeft.png" />
     <AndroidResource Include="Resources\drawable-mdpi\IcKeyRight.png" />
     <AndroidResource Include="Resources\layout\ReportsPagerFragment.axml" />
-    <AndroidResource Include="Resources\layout\MainDrawerSubListItem.axml" />
     <AndroidResource Include="Resources\layout\TagListCreateItem.axml" />
     <AndroidResource Include="Resources\drawable-hdpi\IcAddGrey.png" />
     <AndroidResource Include="Resources\drawable-mdpi\IcAddGrey.png" />
@@ -630,7 +669,6 @@
     <AndroidResource Include="Resources\menu\ProjectToolbarHome.axml" />
     <AndroidResource Include="Resources\layout\ProjectFragmenItem.axml" />
     <AndroidResource Include="Resources\layout\ProjectFragmentClientItem.axml" />
-    <AndroidResource Include="Resources\drawable\DrawerListDivider.xml" />
     <AndroidResource Include="Resources\drawable\DrawerItemSideShape.axml" />
     <AndroidResource Include="Resources\drawable\DrawerColorShape.xml" />
     <AndroidResource Include="Resources\drawable-hdpi\IcNavFeedback.png" />
@@ -753,46 +791,13 @@
     <AndroidResource Include="Resources\drawable-mdpi\ic_delete_white_24dp.png" />
     <AndroidResource Include="Resources\drawable-xhdpi\ic_delete_white_24dp.png" />
     <AndroidResource Include="Resources\drawable-xxhdpi\ic_delete_white_24dp.png" />
+    <AndroidResource Include="Resources\drawable-hdpi\IcReportsOverflow.png" />
+    <AndroidResource Include="Resources\drawable-mdpi\IcReportsOverflow.png" />
+    <AndroidResource Include="Resources\drawable-xhdpi\IcReportsOverflow.png" />
+    <AndroidResource Include="Resources\drawable-xxhdpi\IcReportsOverflow.png" />
+    <AndroidResource Include="Resources\menu\ReportsToolbarMenu.axml" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Xamarin\Android\Xamarin.Android.CSharp.targets" />
-  <ItemGroup>
-    <ProjectReference Include="..\Phoebe\Phoebe.Android.csproj">
-      <Project>{FF67B529-C11B-4FE0-AA1B-CD77141816BB}</Project>
-      <Name>Phoebe.Android</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Chandler\Chandler.csproj">
-      <Project>{76D0B75F-C05C-4852-A9AA-8151618256EF}</Project>
-      <Name>Chandler</Name>
-      <IsAppExtension>True</IsAppExtension>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="UI\" />
-    <Folder Include="UI\Activities\" />
-    <Folder Include="UI\Fragments\" />
-    <Folder Include="UI\Adapters\" />
-    <Folder Include="Data\" />
-    <Folder Include="Net\" />
-    <Folder Include="Resources\menu\" />
-    <Folder Include="Resources\drawable-hdpi\" />
-    <Folder Include="Resources\drawable-mdpi\" />
-    <Folder Include="Resources\drawable-xhdpi\" />
-    <Folder Include="Resources\drawable-xxhdpi\" />
-    <Folder Include="UI\Utils\" />
-    <Folder Include="UI\Components\" />
-    <Folder Include="Resources\color\" />
-    <Folder Include="UI\Views\" />
-    <Folder Include="Assets\fonts\" />
-    <Folder Include="Resources\anim\" />
-    <Folder Include="UI\Text\" />
-    <Folder Include="Analytics\" />
-    <Folder Include="Logging\" />
-    <Folder Include="Resources\xml\" />
-    <Folder Include="Widget\" />
-    <Folder Include="Resources\values-v21\" />
-    <Folder Include="Resources\drawable-v21\" />
-    <Folder Include="Wear\" />
-  </ItemGroup>
   <ItemGroup>
     <AndroidAsset Include="Assets\fonts\Roboto-Light.ttf" />
     <AndroidAsset Include="Assets\fonts\Roboto-Medium.ttf" />
@@ -801,4 +806,15 @@
   <ItemGroup>
     <ProguardConfiguration Include="Proguard.cfg" />
   </ItemGroup>
+  <ItemGroup>
+    <Content Include="FodyWeavers.xml" />
+  </ItemGroup>
+  <Import Project="..\Phoebe\Phoebe.Shared.projitems" Label="Shared" />
+  <Import Project="..\packages\Fody.1.29.4\build\dotnet\Fody.targets" Condition="Exists('..\packages\Fody.1.29.4\build\dotnet\Fody.targets')" />
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('..\packages\Fody.1.29.4\build\dotnet\Fody.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Fody.1.29.4\build\dotnet\Fody.targets'))" />
+  </Target>
 </Project>

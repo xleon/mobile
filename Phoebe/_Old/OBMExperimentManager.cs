@@ -5,28 +5,29 @@ namespace Toggl.Phoebe
 {
     public static class OBMExperimentManager
     {
-        public const int AndroidExperimentNumber = 93;
-        public const int iOSExperimentNumber = 83;
+        #if __ANDROID__
+        public const int ExperimentNumber = 93;
+        #else
+        public const int ExperimentNumber = 83;
+        #endif
 
         public const string StartButtonActionKey = "startButton";
         public const string ClickActionValue = "click";
 
-        public static async void Send (int experimentNumber, string actionKey, string actionValue)
+        public static async void Send (string actionKey, string actionValue)
         {
-            if (InExperimentGroups (experimentNumber)) {
-                var experimentAction = new ExperimentAction {
-                    ExperimentId = experimentNumber,
-                    ActionKey = actionKey,
-                    ActionValue = actionValue
-                };
-                await experimentAction.Send();
-            }
+            var experimentAction = new ExperimentAction {
+                ExperimentId = ExperimentNumber,
+                ActionKey = actionKey,
+                ActionValue = actionValue
+            };
+            await experimentAction.Send();
         }
 
-        public static bool IncludedInExperiment (int experimentNumber)
+        public static bool IncludedInExperiment ()
         {
             var userData = ServiceContainer.Resolve<AuthManager>().User;
-            return userData.ExperimentIncluded && userData.ExperimentNumber == experimentNumber;
+            return userData.ExperimentIncluded && userData.ExperimentNumber == ExperimentNumber;
         }
 
         public static bool InExperimentGroups (int experimentNumber)

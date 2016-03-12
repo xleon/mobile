@@ -253,7 +253,6 @@
     <Folder Include="$(MSBuildThisFileDirectory)Contrib\XPlatUtils\" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="$(MSBuildThisFileDirectory)_Reactive\.DS_Store" />
     <None Include="$(MSBuildThisFileDirectory)Data\.DS_Store" />
     <None Include="$(MSBuildThisFileDirectory)Data\Utils\.DS_Store" />
     <None Include="$(MSBuildThisFileDirectory)Data\ViewModels\.DS_Store" />

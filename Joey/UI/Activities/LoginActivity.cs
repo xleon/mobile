@@ -303,17 +303,12 @@ namespace Toggl.Joey.UI.Activities
             base.OnActivityResult (requestCode, resultCode, data);
 
             if (requestCode == RC_SIGN_IN) {
-                if (resultCode != Result.Ok) {
-                    mShouldResolve = false;
-                    GoogleSignInResult result = Auth.GoogleSignInApi.GetSignInResultFromIntent (data);
-                    if (result.IsSuccess) {
-                        // Signed in successfully, show authenticated UI.
-                        GoogleSignInAccount acct = result.SignInAccount;
-                        ViewModel.TryLoginWithGoogle (acct.IdToken);
-                    } else {
-                        // Signed out, show unauthenticated UI.
-                        // Report bug
-                    }
+                GoogleSignInResult result = Auth.GoogleSignInApi.GetSignInResultFromIntent (data);
+                if (result.IsSuccess) {
+                    GoogleSignInAccount acct = result.SignInAccount;
+                    ViewModel.TryLoginWithGoogle (acct.IdToken);
+                } else {
+                    ShowAuthError (string.Empty, AuthResult.GoogleError, LoginVM.LoginMode.Login);
                 }
             }
         }
@@ -346,10 +341,10 @@ namespace Toggl.Joey.UI.Activities
                         mGoogleApiClient.Connect ();
                     }
                 } else {
-                    //ShowErrorDialog (result);
+                    ShowAuthError (string.Empty, AuthResult.GoogleError, LoginVM.LoginMode.Login);
                 }
             } else {
-                //UpdateUI (false);
+                ShowAuthError (string.Empty, AuthResult.GoogleError, LoginVM.LoginMode.Login);
             }
         }
 
@@ -366,19 +361,23 @@ namespace Toggl.Joey.UI.Activities
         }
         #endregion
 
-        private void ShowAuthError (string email, AuthResult res, LoginVM.LoginMode mode, bool googleAuth=false)
+        private void ShowAuthError (string email, AuthResult res, LoginVM.LoginMode mode)
         {
             DialogFragment dia = null;
 
             switch (res) {
             case AuthResult.InvalidCredentials:
-                if (mode == LoginVM.LoginMode.Login && !googleAuth) {
+                if (mode == LoginVM.LoginMode.Login) {
                     ShowMsgDialog (Resource.String.LoginInvalidCredentialsDialogTitle, Resource.String.LoginInvalidCredentialsDialogText);
                 } else if (mode == LoginVM.LoginMode.Signup) {
                     ShowMsgDialog (Resource.String.LoginSignupFailedDialogTitle, Resource.String.LoginSignupFailedDialogText);
-                } else if (mode == LoginVM.LoginMode.Login && googleAuth) {
-                    ShowMsgDialog (Resource.String.LoginNoAccountDialogTitle, Resource.String.LoginNoAccountDialogText);
                 }
+                break;
+            case AuthResult.NoGoogleAccount:
+                ShowMsgDialog (Resource.String.LoginNoAccountDialogTitle, Resource.String.LoginNoAccountDialogText);
+                break;
+            case AuthResult.GoogleError:
+                ShowMsgDialog (Resource.String.LoginGoogleErrorTitle, Resource.String.LoginGoogleErrorText);
                 break;
             case AuthResult.NoDefaultWorkspace:
                 dia = new NoWorkspaceDialogFragment (email);

@@ -207,7 +207,7 @@ namespace Toggl.Phoebe._Reactive
             var client = ServiceContainer.Resolve<ITogglClient> ();
 
             log.Info (Tag, "Authenticating with email ({0}).", username);
-            await AuthenticateAsync (() => client.GetUser (username, password), Net.AuthChangeReason.Login); //, AccountCredentials.Password);
+            await AuthenticateAsync (() => client.GetUser (username, password), Net.AuthChangeReason.Login);
         }
 
         async Task AuthenticateWithGoogleAsync (string accessToken)
@@ -216,7 +216,7 @@ namespace Toggl.Phoebe._Reactive
             var client = ServiceContainer.Resolve<ITogglClient> ();
 
             log.Info (Tag, "Authenticating with Google access token.");
-            await AuthenticateAsync (() => client.GetUser (accessToken), Net.AuthChangeReason.Login); //, AccountCredentials.Google);
+            await AuthenticateAsync (() => client.GetUser (accessToken), Net.AuthChangeReason.LoginGoogle);
         }
 
         async Task SignupAsync (string email, string password)
@@ -241,7 +241,7 @@ namespace Toggl.Phoebe._Reactive
             await AuthenticateAsync (() => client.Create (new UserJson () {
                 GoogleAccessToken = accessToken,
                 Timezone = Time.TimeZoneId,
-            }), Net.AuthChangeReason.Signup); //, AccountCredentials.Google);
+            }), Net.AuthChangeReason.SignupGoogle); //, AccountCredentials.Google);
         }
 
         async Task AuthenticateAsync (
@@ -252,7 +252,7 @@ namespace Toggl.Phoebe._Reactive
             try {
                 userJson = await getUser ();
                 if (userJson == null) {
-                    authResult = Net.AuthResult.InvalidCredentials;
+                    authResult = (reason == Net.AuthChangeReason.LoginGoogle) ? Net.AuthResult.NoGoogleAccount : Net.AuthResult.InvalidCredentials;
                 } else if (userJson.DefaultWorkspaceRemoteId == 0) {
                     authResult = Net.AuthResult.NoDefaultWorkspace;
                 }

@@ -19,3 +19,4 @@ packages
 Resource.designer.cs
 node_modules
 .bitrise*
+.*yml

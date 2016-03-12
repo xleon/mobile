@@ -29,6 +29,8 @@
     <string name="LoginSignupFailedDialogOk">Ok</string>
     <string name="LoginNoAccountDialogTitle">Log in failed</string>
     <string name="LoginNoAccountDialogText">Could not find any accounts associated with this Google account. Please try again.</string>
+    <string name="LoginGoogleErrorTitle">Log in with Google failed.</string>
+    <string name="LoginGoogleErrorText">There was an error trying to login you with Google. Please try again.</string>	
     <string name="LoginNoAccountDialogOk">Ok</string>
     <string name="LoginNetworkErrorDialogTitle">Network failure</string>
     <string name="LoginNetworkErrorDialogText">Could not communicate with Toggl servers. Please try again.</string>

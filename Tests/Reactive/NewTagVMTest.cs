@@ -50,12 +50,12 @@ namespace Toggl.Phoebe.Tests.Reactive
             viewModel.SaveTag (new SyncTestOptions (false, (state, sent, queued) => {
                 try {
                     TagData tag = null;
-                    Assert.NotNull (tag = state.TimerState.Tags.Values.SingleOrDefault (
-                                              x => x.WorkspaceId == Util.WorkspaceId && x.Name == name));
+                    Assert.That (tag = state.TimerState.Tags.Values.SingleOrDefault (
+                                           x => x.WorkspaceId == Util.WorkspaceId && x.Name == name), Is.Not.Null);
 
                     // Check item has been correctly saved in database
-                    Assert.NotNull (dataStore.Table<TagData> ().SingleOrDefault (
-                                        x => x.WorkspaceId == Util.WorkspaceId && x.Name == name && x.Id == tag.Id));
+                    Assert.That (dataStore.Table<TagData> ().SingleOrDefault (
+                                     x => x.WorkspaceId == Util.WorkspaceId && x.Name == name && x.Id == tag.Id), Is.Not.Null);
 
                     tcs.SetResult (true);
                 } catch (Exception ex) {

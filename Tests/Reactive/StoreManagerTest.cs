@@ -92,13 +92,13 @@ namespace Toggl.Phoebe.Tests.Reactive
             .Subscribe (state => {
                 switch (step) {
                 case 0:
-                    Assert.True (state.TimeEntries.ContainsKey (te.Id));
+                    Assert.That (state.TimeEntries.ContainsKey (te.Id), Is.True);
                     step++;
                     break;
                 case 1:
-                    Assert.False (state.TimeEntries.ContainsKey (te.Id));
+                    Assert.That (state.TimeEntries.ContainsKey (te.Id), Is.False);
                     // The entry should have also been deleted from the db
-                    Assert.False (db.Table<TimeEntryData> ().Any (x => x.Id == te.Id));
+                    Assert.That (db.Table<TimeEntryData> ().Any (x => x.Id == te.Id), Is.False);
                     subscription.Dispose ();
                     break;
                 }
@@ -126,19 +126,19 @@ namespace Toggl.Phoebe.Tests.Reactive
                 switch (step) {
                 // Add
                 case 0:
-                    Assert.True (state.TimeEntries.ContainsKey (te.Id));
+                    Assert.That (state.TimeEntries.ContainsKey (te.Id), Is.True);
                     step++;
                     break;
                 // Remove with undo
                 case 1:
-                    Assert.False (state.TimeEntries.ContainsKey (te.Id));
+                    Assert.That (state.TimeEntries.ContainsKey (te.Id), Is.False);
                     // The entry shouldn't actually be deleted from the db
-                    Assert.True (db.Table<TimeEntryData> ().Any (x => x.Id == te.Id));
+                    Assert.That (db.Table<TimeEntryData> ().Any (x => x.Id == te.Id), Is.True);
                     step++;
                     break;
                 // Restore from undo
                 case 2:
-                    Assert.True (state.TimeEntries.ContainsKey (te.Id));
+                    Assert.That (state.TimeEntries.ContainsKey (te.Id), Is.True);
                     subscription.Dispose ();
                     break;
                 }
@@ -193,7 +193,7 @@ namespace Toggl.Phoebe.Tests.Reactive
                 .Singleton
                 .Observe (state => state.TimerState)
             .Subscribe (state => {
-                Assert.True (state.TimeEntries.ContainsKey (te.Id));
+                Assert.That (state.TimeEntries.ContainsKey (te.Id), Is.True);
                 subscription1.Dispose ();
             });
 
@@ -204,13 +204,13 @@ namespace Toggl.Phoebe.Tests.Reactive
             .Subscribe (state => {
                 switch (step) {
                 case 0:
-                    Assert.True (state.TimeEntries.ContainsKey (te.Id));
+                    Assert.That (state.TimeEntries.ContainsKey (te.Id), Is.True);
                     step++;
                     break;
                 case 1:
-                    Assert.False (state.TimeEntries.ContainsKey (te.Id));
+                    Assert.That (state.TimeEntries.ContainsKey (te.Id), Is.False);
                     // The entry should have also been deleted from the db
-                    Assert.False (db.Table<TimeEntryData> ().Any (x => x.Id == te.Id));
+                    Assert.That (db.Table<TimeEntryData> ().Any (x => x.Id == te.Id), Is.False);
                     subscription2.Dispose ();
                     break;
                 }

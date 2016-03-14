@@ -317,6 +317,11 @@ namespace Toggl.Phoebe._Data
         {
             return new DataSyncMsg<T> (this.State, this.SyncData, this.ServerRequests, syncTest);
         }
+
+        public DataSyncMsg<U> Cast<U> ()
+        {
+            return new DataSyncMsg<U> ((U)(object)this.State, this.SyncData, this.serverRequests, this.SyncTest);
+        }
     }
 
     public static class DataSyncMsg

@@ -31,8 +31,7 @@ namespace Toggl.Phoebe._Reactive
 
         DataSyncMsg<object> IReducer.Reduce (object state, DataMsg msg)
         {
-            var res = Reduce ((T)state, msg);
-            return DataSyncMsg.Create ((object)res.State, res.SyncData);
+            return Reduce ((T)state, msg).Cast<object> ();
         }
 
         protected Reducer () { }
@@ -70,13 +69,7 @@ namespace Toggl.Phoebe._Reactive
 
         DataSyncMsg<object> IReducer.Reduce (object state, DataMsg msg)
         {
-            var res = Reduce ((T)state, msg);
-
-            ServerRequest request = null;
-            if (res.ServerRequests != null) {
-                request = res.ServerRequests.FirstOrDefault ();
-            }
-            return DataSyncMsg.Create ((object)res.State, res.SyncData, request);
+            return Reduce ((T)state, msg).Cast<object> ();
         }
     }
 
@@ -130,12 +123,7 @@ namespace Toggl.Phoebe._Reactive
 
         DataSyncMsg<object> IReducer.Reduce (object state, DataMsg msg)
         {
-            var res = Reduce ((T)state, msg);
-            ServerRequest request = null;
-            if (res.ServerRequests != null) {
-                request = res.ServerRequests.FirstOrDefault ();
-            }
-            return DataSyncMsg.Create ((object)res.State, res.SyncData, request);
+            return Reduce ((T)state, msg).Cast<object> ();
         }
     }
 

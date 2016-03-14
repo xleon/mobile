@@ -13,7 +13,7 @@ namespace Toggl.Phoebe.Tests
         protected string databasePath;
         private MainThreadSynchronizationContext syncContext;
 
-        [TestFixtureSetUp]
+        [OneTimeSetUpAttribute]
         public virtual void Init ()
         {
             syncContext = new MainThreadSynchronizationContext ();
@@ -31,7 +31,7 @@ namespace Toggl.Phoebe.Tests
             ServiceContainer.RegisterScoped<INetworkPresence> (new Reactive.NetWorkPresenceMock ());
         }
 
-        [TestFixtureTearDown]
+        [OneTimeTearDownAttribute]
         public virtual void Cleanup ()
         {
             ServiceContainer.Clear ();

@@ -124,7 +124,9 @@ namespace Toggl.Joey.UI.Activities
             }
 
             // Google API client
-            GoogleSignInOptions gso = new GoogleSignInOptions.Builder (GoogleSignInOptions.DefaultSignIn).RequestEmail ().Build ();
+            GoogleSignInOptions gso = new GoogleSignInOptions.Builder (GoogleSignInOptions.DefaultSignIn)
+            .RequestEmail ()
+            .Build ();
             mGoogleApiClient = new GoogleApiClient.Builder (this)
             .EnableAutoManage (this, this)
             .AddConnectionCallbacks (this)
@@ -306,7 +308,7 @@ namespace Toggl.Joey.UI.Activities
                 GoogleSignInResult result = Auth.GoogleSignInApi.GetSignInResultFromIntent (data);
                 if (result.IsSuccess) {
                     GoogleSignInAccount acct = result.SignInAccount;
-                    ViewModel.TryLoginWithGoogle (acct.IdToken);
+                    ViewModel.TryLoginWithGoogle (acct.Id);
                 } else {
                     ShowAuthError (string.Empty, AuthResult.GoogleError, LoginVM.LoginMode.Login);
                 }

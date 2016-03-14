@@ -33,16 +33,16 @@ namespace Toggl.Phoebe.Tests.Data.Mapper
 
             var commonData = mapper.Map<CommonData> (commonJson);
 
-            Assert.AreEqual (commonData.RemoteId, commonJson.RemoteId);
-            Assert.AreEqual (commonData.ModifiedAt, commonJson.ModifiedAt.ToUtc());
-            Assert.AreEqual (commonData.DeletedAt, null);
-            Assert.AreEqual (commonData.IsDirty, false);
-            Assert.AreEqual (commonData.RemoteRejected, false);
-            Assert.AreEqual (commonData.Id, Guid.Empty);
+            Assert.That (commonData.RemoteId, Is.EqualTo (commonJson.RemoteId));
+            Assert.That (commonData.ModifiedAt, Is.EqualTo (commonJson.ModifiedAt.ToUtc()));
+            Assert.That (commonData.DeletedAt, Is.Null);
+            Assert.That (commonData.IsDirty, Is.False);
+            Assert.That (commonData.RemoteRejected, Is.False);
+            Assert.That (commonData.Id, Is.EqualTo (Guid.Empty));
 
             commonJson.DeletedAt = DateTime.Now;
             commonData = mapper.Map<CommonData> (commonJson);
-            Assert.AreEqual (commonData.DeletedAt, commonJson.DeletedAt.ToUtc ());
+            Assert.That (commonData.DeletedAt, Is.EqualTo (commonJson.DeletedAt.ToUtc ()));
         }
 
         [Test]
@@ -60,16 +60,16 @@ namespace Toggl.Phoebe.Tests.Data.Mapper
 
             var clientData = mapper.Map<ClientData> (clientJson);
 
-            Assert.AreEqual (clientData.RemoteId, clientJson.RemoteId);
-            Assert.AreEqual (clientData.ModifiedAt, clientJson.ModifiedAt.ToUtc());
-            Assert.AreEqual (clientData.DeletedAt, null);
-            Assert.AreEqual (clientData.IsDirty, false);
-            Assert.AreEqual (clientData.RemoteRejected, false);
-            Assert.AreEqual (clientData.Id, Guid.Empty);
+            Assert.That (clientData.RemoteId, Is.EqualTo (clientJson.RemoteId));
+            Assert.That (clientData.ModifiedAt, Is.EqualTo (clientJson.ModifiedAt.ToUtc()));
+            Assert.That (clientData.DeletedAt, Is.Null);
+            Assert.That (clientData.IsDirty, Is.False);
+            Assert.That (clientData.RemoteRejected, Is.False);
+            Assert.That (clientData.Id, Is.EqualTo (Guid.Empty));
 
             clientJson.DeletedAt = DateTime.Now;
             clientData = mapper.Map<ClientData> (clientJson);
-            Assert.AreEqual (clientData.DeletedAt, clientJson.DeletedAt.ToUtc ());
+            Assert.That (clientData.DeletedAt, Is.EqualTo (clientJson.DeletedAt.ToUtc ()));
         }
 
         [Test]
@@ -85,9 +85,9 @@ namespace Toggl.Phoebe.Tests.Data.Mapper
 
             var clientData = mapper.Map<ClientData> (clientJson);
 
-            Assert.AreEqual (clientData.Name, clientJson.Name);
-            Assert.AreEqual (clientData.WorkspaceRemoteId, clientJson.WorkspaceRemoteId);
-            Assert.AreEqual (clientData.WorkspaceId, Guid.Empty);
+            Assert.That (clientData.Name, Is.EqualTo (clientJson.Name));
+            Assert.That (clientData.WorkspaceRemoteId, Is.EqualTo (clientJson.WorkspaceRemoteId));
+            Assert.That (clientData.WorkspaceId, Is.EqualTo (Guid.Empty));
         }
 
         [Test]
@@ -110,17 +110,17 @@ namespace Toggl.Phoebe.Tests.Data.Mapper
 
             var projectData = mapper.Map<ProjectData> (projectJson);
 
-            Assert.AreEqual (projectData.Name, projectJson.Name);
-            Assert.AreEqual (projectData.IsActive, projectJson.IsActive);
-            Assert.AreEqual (projectData.IsPrivate, projectJson.IsPrivate);
-            Assert.AreEqual (projectData.IsBillable, projectJson.IsBillable);
-            Assert.AreEqual (projectData.IsTemplate, projectJson.IsTemplate);
-            Assert.AreEqual (projectData.UseTasksEstimate, projectJson.UseTasksEstimate);
-            Assert.AreEqual (projectData.Color, int.Parse (projectJson.Color));
-            Assert.AreEqual (projectData.ClientRemoteId, projectJson.ClientRemoteId);
-            Assert.AreEqual (projectData.ClientId, Guid.Empty);
-            Assert.AreEqual (projectData.WorkspaceRemoteId, projectJson.WorkspaceRemoteId);
-            Assert.AreEqual (projectData.WorkspaceId, Guid.Empty);
+            Assert.That (projectData.Name, Is.EqualTo (projectJson.Name));
+            Assert.That (projectData.IsActive, Is.EqualTo (projectJson.IsActive));
+            Assert.That (projectData.IsPrivate, Is.EqualTo (projectJson.IsPrivate));
+            Assert.That (projectData.IsBillable, Is.EqualTo (projectJson.IsBillable));
+            Assert.That (projectData.IsTemplate, Is.EqualTo (projectJson.IsTemplate));
+            Assert.That (projectData.UseTasksEstimate, Is.EqualTo (projectJson.UseTasksEstimate));
+            Assert.That (projectData.Color, Is.EqualTo (int.Parse (projectJson.Color)));
+            Assert.That (projectData.ClientRemoteId, Is.EqualTo (projectJson.ClientRemoteId));
+            Assert.That (projectData.ClientId, Is.EqualTo (Guid.Empty));
+            Assert.That (projectData.WorkspaceRemoteId, Is.EqualTo (projectJson.WorkspaceRemoteId));
+            Assert.That (projectData.WorkspaceId, Is.EqualTo (Guid.Empty));
         }
 
         [Test]
@@ -136,9 +136,9 @@ namespace Toggl.Phoebe.Tests.Data.Mapper
 
             var tagData = mapper.Map<TagData> (tagJson);
 
-            Assert.AreEqual (tagData.Name, tagJson.Name);
-            Assert.AreEqual (tagData.WorkspaceRemoteId, tagJson.WorkspaceRemoteId);
-            Assert.AreEqual (tagData.WorkspaceId, Guid.Empty);
+            Assert.That (tagData.Name, Is.EqualTo (tagJson.Name));
+            Assert.That (tagData.WorkspaceRemoteId, Is.EqualTo (tagJson.WorkspaceRemoteId));
+            Assert.That (tagData.WorkspaceId, Is.EqualTo (Guid.Empty));
 
         }
 
@@ -158,13 +158,13 @@ namespace Toggl.Phoebe.Tests.Data.Mapper
 
             var taskData = mapper.Map<TaskData> (taskJson);
 
-            Assert.AreEqual (taskData.Name, taskJson.Name);
-            Assert.AreEqual (taskData.WorkspaceRemoteId, taskJson.WorkspaceRemoteId);
-            Assert.AreEqual (taskData.WorkspaceId, Guid.Empty);
-            Assert.AreEqual (taskData.ProjectId, Guid.Empty);
-            Assert.AreEqual (taskData.ProjectRemoteId, taskJson.ProjectRemoteId);
-            Assert.AreEqual (taskData.IsActive, taskJson.IsActive);
-            Assert.AreEqual (taskData.Estimate, taskJson.Estimate);
+            Assert.That (taskData.Name, Is.EqualTo (taskJson.Name));
+            Assert.That (taskData.WorkspaceRemoteId, Is.EqualTo (taskJson.WorkspaceRemoteId));
+            Assert.That (taskData.WorkspaceId, Is.EqualTo (Guid.Empty));
+            Assert.That (taskData.ProjectId, Is.EqualTo (Guid.Empty));
+            Assert.That (taskData.ProjectRemoteId, Is.EqualTo (taskJson.ProjectRemoteId));
+            Assert.That (taskData.IsActive, Is.EqualTo (taskJson.IsActive));
+            Assert.That (taskData.Estimate, Is.EqualTo (taskJson.Estimate));
         }
 
         [Test]
@@ -184,14 +184,14 @@ namespace Toggl.Phoebe.Tests.Data.Mapper
 
             var workspaceUserData = mapper.Map<WorkspaceUserData> (workspaceUserJson);
 
-            Assert.AreEqual (workspaceUserData.IsActive, workspaceUserJson.IsActive);
-            Assert.AreEqual (workspaceUserData.IsAdmin, workspaceUserJson.IsAdmin);
-            Assert.AreEqual (workspaceUserData.UserRemoteId, workspaceUserJson.UserRemoteId);
-            Assert.AreEqual (workspaceUserData.WorkspaceRemoteId, workspaceUserJson.WorkspaceRemoteId);
-            Assert.AreEqual (workspaceUserData.WorkspaceId, Guid.Empty);
-            Assert.AreEqual (workspaceUserData.Email, workspaceUserJson.Email);
-            Assert.AreEqual (workspaceUserData.UserRemoteId, workspaceUserJson.UserRemoteId);
-            Assert.AreEqual (workspaceUserData.UserId, Guid.Empty);
+            Assert.That (workspaceUserData.IsActive, Is.EqualTo (workspaceUserJson.IsActive));
+            Assert.That (workspaceUserData.IsAdmin, Is.EqualTo (workspaceUserJson.IsAdmin));
+            Assert.That (workspaceUserData.UserRemoteId, Is.EqualTo (workspaceUserJson.UserRemoteId));
+            Assert.That (workspaceUserData.WorkspaceRemoteId, Is.EqualTo (workspaceUserJson.WorkspaceRemoteId));
+            Assert.That (workspaceUserData.WorkspaceId, Is.EqualTo (Guid.Empty));
+            Assert.That (workspaceUserData.Email, Is.EqualTo (workspaceUserJson.Email));
+            Assert.That (workspaceUserData.UserRemoteId, Is.EqualTo (workspaceUserJson.UserRemoteId));
+            Assert.That (workspaceUserData.UserId, Is.EqualTo (Guid.Empty));
         }
 
         [Test]
@@ -215,16 +215,16 @@ namespace Toggl.Phoebe.Tests.Data.Mapper
 
             var wData = mapper.Map<WorkspaceData> (workspaceJson);
 
-            Assert.AreEqual (wData.IsPremium, workspaceJson.IsPremium);
-            Assert.AreEqual (wData.DefaultRate, workspaceJson.DefaultRate);
-            Assert.AreEqual (wData.DefaultCurrency, workspaceJson.DefaultCurrency);
-            Assert.AreEqual (wData.IsAdmin, workspaceJson.IsAdmin);
-            Assert.AreEqual (wData.Name, workspaceJson.Name);
-            Assert.AreEqual (wData.LogoUrl, workspaceJson.LogoUrl);
-            Assert.AreEqual (wData.OnlyAdminsMayCreateProjects, workspaceJson.OnlyAdminsMayCreateProjects);
-            Assert.AreEqual (wData.OnlyAdminsSeeBillableRates, workspaceJson.OnlyAdminsSeeBillableRates);
-            Assert.AreEqual (wData.RoundingMode, workspaceJson.RoundingMode);
-            Assert.AreEqual (wData.RoundingPercision, workspaceJson.RoundingPercision);
+            Assert.That (wData.IsPremium, Is.EqualTo (workspaceJson.IsPremium));
+            Assert.That (wData.DefaultRate, Is.EqualTo (workspaceJson.DefaultRate));
+            Assert.That (wData.DefaultCurrency, Is.EqualTo (workspaceJson.DefaultCurrency));
+            Assert.That (wData.IsAdmin, Is.EqualTo (workspaceJson.IsAdmin));
+            Assert.That (wData.Name, Is.EqualTo (workspaceJson.Name));
+            Assert.That (wData.LogoUrl, Is.EqualTo (workspaceJson.LogoUrl));
+            Assert.That (wData.OnlyAdminsMayCreateProjects, Is.EqualTo (workspaceJson.OnlyAdminsMayCreateProjects));
+            Assert.That (wData.OnlyAdminsSeeBillableRates, Is.EqualTo (workspaceJson.OnlyAdminsSeeBillableRates));
+            Assert.That (wData.RoundingMode, Is.EqualTo (workspaceJson.RoundingMode));
+            Assert.That (wData.RoundingPercision, Is.EqualTo (workspaceJson.RoundingPercision));
         }
 
         [Test]
@@ -261,24 +261,24 @@ namespace Toggl.Phoebe.Tests.Data.Mapper
 
             var userData = mapper.Map<UserData> (userJson);
 
-            Assert.AreEqual (userData.ApiToken, userJson.ApiToken);
-            Assert.AreEqual (userData.DateFormat, userJson.DateFormat);
-            Assert.AreEqual (userData.DefaultWorkspaceId, Guid.Empty);
-            Assert.AreEqual (userData.DefaultWorkspaceRemoteId, userJson.DefaultWorkspaceRemoteId);
-            Assert.AreEqual (userData.DurationFormat, userJson.DurationFormat);
-            Assert.AreEqual (userData.Email, userJson.Email);
-            Assert.AreEqual (userData.ExperimentIncluded, userJson.OBM.Included);
-            Assert.AreEqual (userData.ExperimentNumber, userJson.OBM.Number);
-            Assert.AreEqual (userData.GoogleAccessToken, userJson.GoogleAccessToken);
-            Assert.AreEqual (userData.ImageUrl, userJson.ImageUrl);
-            Assert.AreEqual (userData.Locale, userJson.Locale);
-            Assert.AreEqual (userData.Name, userJson.Name);
-            Assert.AreEqual (userData.SendProductEmails, userJson.SendProductEmails);
-            Assert.AreEqual (userData.SendTimerNotifications, userJson.SendTimerNotifications);
-            Assert.AreEqual (userData.StartOfWeek, userJson.StartOfWeek);
-            Assert.AreEqual (userData.SendWeeklyReport, userJson.SendWeeklyReport);
-            Assert.AreEqual (userData.TimeFormat, userJson.TimeFormat);
-            Assert.AreEqual (userData.Timezone, userJson.Timezone);
+            Assert.That (userData.ApiToken, Is.EqualTo (userJson.ApiToken));
+            Assert.That (userData.DateFormat, Is.EqualTo (userJson.DateFormat));
+            Assert.That (userData.DefaultWorkspaceId, Is.EqualTo (Guid.Empty));
+            Assert.That (userData.DefaultWorkspaceRemoteId, Is.EqualTo (userJson.DefaultWorkspaceRemoteId));
+            Assert.That (userData.DurationFormat, Is.EqualTo (userJson.DurationFormat));
+            Assert.That (userData.Email, Is.EqualTo (userJson.Email));
+            Assert.That (userData.ExperimentIncluded, Is.EqualTo (userJson.OBM.Included));
+            Assert.That (userData.ExperimentNumber, Is.EqualTo (userJson.OBM.Number));
+            Assert.That (userData.GoogleAccessToken, Is.EqualTo (userJson.GoogleAccessToken));
+            Assert.That (userData.ImageUrl, Is.EqualTo (userJson.ImageUrl));
+            Assert.That (userData.Locale, Is.EqualTo (userJson.Locale));
+            Assert.That (userData.Name, Is.EqualTo (userJson.Name));
+            Assert.That (userData.SendProductEmails, Is.EqualTo (userJson.SendProductEmails));
+            Assert.That (userData.SendTimerNotifications, Is.EqualTo (userJson.SendTimerNotifications));
+            Assert.That (userData.StartOfWeek, Is.EqualTo (userJson.StartOfWeek));
+            Assert.That (userData.SendWeeklyReport, Is.EqualTo (userJson.SendWeeklyReport));
+            Assert.That (userData.TimeFormat, Is.EqualTo (userJson.TimeFormat));
+            Assert.That (userData.Timezone, Is.EqualTo (userJson.Timezone));
         }
 
         [Test]
@@ -309,28 +309,28 @@ namespace Toggl.Phoebe.Tests.Data.Mapper
 
             var teData = mapper.Map<TimeEntryData> (teJson);
 
-            Assert.AreEqual (teData.Description, teJson.Description);
-            Assert.AreEqual (teData.DurationOnly, teJson.DurationOnly);
-            Assert.AreEqual (teData.IsBillable, teJson.IsBillable);
-            Assert.AreEqual (teData.ProjectId, Guid.Empty);
-            Assert.AreEqual (teData.ProjectRemoteId, teJson.ProjectRemoteId);
-            Assert.AreEqual (teData.StartTime, teJson.StartTime.ToUtc ());
-            Assert.AreEqual (teData.StopTime, teJson.StopTime.ToUtc ());
-            Assert.AreEqual (teData.State, TimeEntryState.Finished);
-            Assert.AreEqual (teData.Tags, tags);
-            Assert.AreEqual (teData.TaskId, Guid.Empty);
-            Assert.AreEqual (teData.TaskRemoteId, teJson.TaskRemoteId);
-            Assert.AreEqual (teData.UserId, Guid.Empty);
-            Assert.AreEqual (teData.UserRemoteId, teJson.UserRemoteId);
-            Assert.AreEqual (teData.WorkspaceId, Guid.Empty);
-            Assert.AreEqual (teData.WorkspaceRemoteId, teJson.WorkspaceRemoteId);
+            Assert.That (teData.Description, Is.EqualTo (teJson.Description));
+            Assert.That (teData.DurationOnly, Is.EqualTo (teJson.DurationOnly));
+            Assert.That (teData.IsBillable, Is.EqualTo (teJson.IsBillable));
+            Assert.That (teData.ProjectId, Is.EqualTo (Guid.Empty));
+            Assert.That (teData.ProjectRemoteId, Is.EqualTo (teJson.ProjectRemoteId));
+            Assert.That (teData.StartTime, Is.EqualTo (teJson.StartTime.ToUtc ()));
+            Assert.That (teData.StopTime, Is.EqualTo (teJson.StopTime.ToUtc ()));
+            Assert.That (teData.State, Is.EqualTo (TimeEntryState.Finished));
+            Assert.That (teData.Tags, Is.EqualTo (tags));
+            Assert.That (teData.TaskId, Is.EqualTo (Guid.Empty));
+            Assert.That (teData.TaskRemoteId, Is.EqualTo (teJson.TaskRemoteId));
+            Assert.That (teData.UserId, Is.EqualTo (Guid.Empty));
+            Assert.That (teData.UserRemoteId, Is.EqualTo (teJson.UserRemoteId));
+            Assert.That (teData.WorkspaceId, Is.EqualTo (Guid.Empty));
+            Assert.That (teData.WorkspaceRemoteId, Is.EqualTo (teJson.WorkspaceRemoteId));
 
             teJson.Duration = runningDuration;
             teData = mapper.Map<TimeEntryData> (teJson);
 
             //TODO: check startTime.
-            Assert.AreEqual (teData.StopTime, null);
-            Assert.AreEqual (teData.State, TimeEntryState.Running);
+            Assert.That (teData.StopTime, Is.Null);
+            Assert.That (teData.State, Is.EqualTo (TimeEntryState.Running));
         }
 
         private class PlatformUtils : IPlatformUtils

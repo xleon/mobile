@@ -39,7 +39,7 @@ namespace Toggl.Phoebe.Tests.Reactive
                 .Singleton
                 .Observe (state => state.TimerState)
             .Subscribe (state => {
-                Assert.True (state.TimeEntries.ContainsKey (te.Id));
+                Assert.That (state.TimeEntries.ContainsKey (te.Id), Is.True);
                 subscription.Dispose ();
             });
 
@@ -62,12 +62,12 @@ namespace Toggl.Phoebe.Tests.Reactive
                 switch (step) {
                 case 0:
                     var te2 = state.TimeEntries[te.Id];
-                    Assert.True (te2.Data.State == TimeEntryState.Running);
+                    Assert.That (te2.Data.State == TimeEntryState.Running, Is.True);
                     step++;
                     break;
                 case 1:
                     var te3 = state.TimeEntries[te.Id];
-                    Assert.True (te3.Data.State == TimeEntryState.Finished);
+                    Assert.That (te3.Data.State == TimeEntryState.Finished, Is.True);
                     subscription.Dispose ();
                     break;
                 }

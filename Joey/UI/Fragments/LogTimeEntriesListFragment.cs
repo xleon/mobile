@@ -20,6 +20,8 @@ using Toggl.Joey.UI.Views;
 using Toggl.Phoebe._Data.Models;
 using Toggl.Phoebe._ViewModels;
 using Toggl.Phoebe._ViewModels.Timer;
+using Toggl.Phoebe.Data;
+using XPlatUtils;
 
 namespace Toggl.Joey.UI.Fragments
 {
@@ -47,7 +49,9 @@ namespace Toggl.Joey.UI.Fragments
         private ItemTouchListener itemTouchListener;
 
         // binding references
-        private Binding<bool, bool> hasItemsBinding, newMenuBinding, hasMoreBinging, hasErrorBinding, isAppSyncingBinding;
+        private Binding<bool, bool> newMenuBinding;
+        private Binding<int, int> hasItemsBinding;
+		private Binding<LogTimeEntriesVM.LoadInfoType, LogTimeEntriesVM.LoadInfoType> loadInfoBinding;
         private Binding<ObservableCollection<IHolder>, ObservableCollection<IHolder>> collectionBinding;
         private Binding<bool, FABButtonState> fabBinding;
 
@@ -91,17 +95,15 @@ namespace Toggl.Joey.UI.Fragments
                 logAdapter = new LogTimeEntriesAdapter (recyclerView, ViewModel);
                 recyclerView.SetAdapter (logAdapter);
             });
-            isAppSyncingBinding = this.SetBinding (()=> ViewModel.IsAppSyncing).WhenSourceChanges (SyncFinished);
-            hasMoreBinging = this.SetBinding (()=> ViewModel.HasMoreItems).WhenSourceChanges (SetFooterState);
-            hasErrorBinding = this.SetBinding (()=> ViewModel.HasLoadErrors).WhenSourceChanges (SetFooterState);
-            hasItemsBinding = this.SetBinding (()=> ViewModel.HasMoreItems).WhenSourceChanges (SetFooterState);
-            fabBinding = this.SetBinding (() => ViewModel.IsTimeEntryRunning, () => StartStopBtn.ButtonAction)
+            hasItemsBinding = this.SetBinding (()=> ViewModel.Collection.Count).WhenSourceChanges (SetCollectionState);
+            loadInfoBinding = this.SetBinding (()=> ViewModel.LoadInfo).WhenSourceChanges (OnLoadInfoChanged);
+            fabBinding = this.SetBinding (() => ViewModel.IsEntryRunning, () => StartStopBtn.ButtonAction)
                          .ConvertSourceToTarget (isRunning => isRunning ? FABButtonState.Stop : FABButtonState.Start);
 
-            newMenuBinding = this.SetBinding (() => ViewModel.IsTimeEntryRunning)
+            newMenuBinding = this.SetBinding (() => ViewModel.IsEntryRunning)
             .WhenSourceChanges (() => {
                 if (AddNewMenuItem != null) {
-                    AddNewMenuItem.SetVisible (!ViewModel.IsTimeEntryRunning);
+                    AddNewMenuItem.SetVisible (!ViewModel.IsEntryRunning);
                 }
             });
 
@@ -126,15 +128,17 @@ namespace Toggl.Joey.UI.Fragments
             //                            OBMExperimentManager.StartButtonActionKey,
             //                            OBMExperimentManager.ClickActionValue);
 
-            var timeEntryData = ViewModel.StartStopTimeEntry ();
-            if (timeEntryData.State == TimeEntryState.Running) {
-                NewTimeEntryStartedByFAB = true;
-                var ids = new List<string> { timeEntryData.Id.ToString () };
-                var intent = new Intent (Activity, typeof (EditTimeEntryActivity));
-                intent.PutStringArrayListExtra (EditTimeEntryActivity.ExtraGroupedTimeEntriesGuids, ids);
-                intent.PutExtra (EditTimeEntryActivity.IsGrouped,  false);
-                StartActivity (intent);
-            }
+            ViewModel.StartStopTimeEntry ();
+            // TODO RX: Run action when the entry is updated
+            //var timeEntryData = ViewModel.StartStopTimeEntry ();
+            //if (timeEntryData.State == TimeEntryState.Running) {
+            //    NewTimeEntryStartedByFAB = true;
+            //    var ids = new List<string> { timeEntryData.Id.ToString () };
+            //    var intent = new Intent (Activity, typeof (EditTimeEntryActivity));
+            //    intent.PutStringArrayListExtra (EditTimeEntryActivity.ExtraGroupedTimeEntriesGuids, ids);
+            //    intent.PutExtra (EditTimeEntryActivity.IsGrouped,  false);
+            //    StartActivity (intent);
+            //}
         }
 
         public override void OnDestroyView ()
@@ -158,30 +162,6 @@ namespace Toggl.Joey.UI.Fragments
             base.OnDestroyView ();
         }
 
-        private void SetFooterState ()
-        {
-            // TODO RX
-            //if (ViewModel.HasMoreItems && !ViewModel.HasLoadErrors) {
-            //    logAdapter.SetFooterState (RecyclerCollectionDataAdapter<IHolder>.RecyclerLoadState.Loading);
-            //} else if (ViewModel.HasMoreItems && ViewModel.HasLoadErrors) {
-            //    logAdapter.SetFooterState (RecyclerCollectionDataAdapter<IHolder>.RecyclerLoadState.Retry);
-            //} else if (!ViewModel.HasMoreItems && !ViewModel.HasLoadErrors) {
-            //    if (ViewModel.HasMoreItems) {
-            //        logAdapter.SetFooterState (RecyclerCollectionDataAdapter<IHolder>.RecyclerLoadState.Finished);
-            //    } else {
-            //        View emptyView = emptyMessageView;
-            //        // According to settings, show welcome message or no.
-            //        welcomeMessage.Visibility = ServiceContainer.Resolve<ISettingsStore> ().ShowWelcome ? ViewStates.Visible : ViewStates.Gone;
-            //        noItemsMessage.Visibility = ServiceContainer.Resolve<ISettingsStore> ().ShowWelcome ? ViewStates.Gone : ViewStates.Visible;
-            //        if (OBMExperimentManager.IncludedInExperiment (OBMExperimentManager.AndroidExperimentNumber)) {
-            //            emptyView = experimentEmptyView;
-            //        }
-            //        emptyView.Visibility = ViewModel.HasMoreItems ? ViewStates.Gone : ViewStates.Visible;
-            //    }
-            //}
-            //recyclerView.Visibility = ViewModel.HasMoreItems ? ViewStates.Visible : ViewStates.Gone;
-        }
-
         #region Menu setup
         public override void OnCreateOptionsMenu (IMenu menu, MenuInflater inflater)
         {
@@ -195,7 +175,7 @@ namespace Toggl.Joey.UI.Fragments
             var i = new Intent (Activity, typeof (EditTimeEntryActivity));
             i.PutStringArrayListExtra (
                 EditTimeEntryActivity.ExtraGroupedTimeEntriesGuids,
-                new List<string> { ViewModel.ActiveTimeEntry.Id.ToString ()});
+                new List<string> { ViewModel.ActiveEntry.Data.Id.ToString ()});
             Activity.StartActivity (i);
 
             return base.OnOptionsItemSelected (item);
@@ -206,7 +186,7 @@ namespace Toggl.Joey.UI.Fragments
         private void ConfigureOptionMenu ()
         {
             if (ViewModel != null && AddNewMenuItem != null) {
-                AddNewMenuItem.SetVisible (!ViewModel.IsTimeEntryRunning);
+                AddNewMenuItem.SetVisible (!ViewModel.IsEntryRunning);
             }
         }
         #endregion
@@ -255,14 +235,14 @@ namespace Toggl.Joey.UI.Fragments
             ViewModel.LoadMore ();
         }
 
-        private void SyncFinished ()
+        private void OnLoadInfoChanged ()
         {
-            if (ViewModel.IsAppSyncing) {
+            if (ViewModel.LoadInfo.IsSyncing) {
                 swipeLayout.Refreshing = true;
             } else {
                 swipeLayout.Refreshing = false;
 
-                if (ViewModel.HasLoadErrors) {
+                if (ViewModel.LoadInfo.HadErrors) {
                     int msgId = Resource.String.LastSyncHadErrors;
 
                     // TODO RX
@@ -275,6 +255,46 @@ namespace Toggl.Joey.UI.Fragments
                     Snackbar.Make (coordinatorLayout, Resources.GetString (msgId), Snackbar.LengthLong).Show ();
                 }
             }
+
+            SetFooterState ();
+        }
+
+        private void SetFooterState ()
+        {
+            var info = ViewModel.LoadInfo;
+            if (info.HasMore && !info.HadErrors) {
+                logAdapter.SetFooterState (RecyclerCollectionDataAdapter<IHolder>.RecyclerLoadState.Loading);
+            } else if (info.HasMore && info.HadErrors) {
+                logAdapter.SetFooterState (RecyclerCollectionDataAdapter<IHolder>.RecyclerLoadState.Retry);
+            } else if (!info.HasMore && !info.HadErrors) {
+                logAdapter.SetFooterState (RecyclerCollectionDataAdapter<IHolder>.RecyclerLoadState.Finished);
+            }
+        }
+
+        private void SetCollectionState ()
+        {
+            // TODO RX: Check not ready state?
+            //if (info.HasItems != LogTimeEntriesViewModel.CollectionState.NotReady) {
+
+            View emptyView = emptyMessageView;
+            var isWelcome = ServiceContainer.Resolve<ISettingsStore> ().ShowWelcome;
+            var hasItems = ViewModel.Collection.Count > 0;
+			
+            // TODO RX: OBM Experiments
+            //var isInExperiment = OBMExperimentManager.IncludedInExperiment ();
+            //if (isWelcome && isInExperiment) {
+            //    emptyView = experimentEmptyView;
+            //} else {
+                // always keeps this view hidden if it is not needed.
+                experimentEmptyView.Visibility = ViewStates.Gone;
+            //}
+
+            // According to settings, show welcome message or no.
+            welcomeMessage.Visibility = isWelcome ? ViewStates.Visible : ViewStates.Gone;
+            noItemsMessage.Visibility = isWelcome ? ViewStates.Gone : ViewStates.Visible;
+
+            emptyView.Visibility = hasItems ? ViewStates.Gone : ViewStates.Visible;
+            recyclerView.Visibility = hasItems ? ViewStates.Visible : ViewStates.Gone;
         }
         #endregion
 

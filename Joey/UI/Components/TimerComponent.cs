@@ -3,6 +3,7 @@ using Android.Widget;
 using GalaSoft.MvvmLight.Helpers;
 using Toggl.Joey.UI.Utils;
 using Toggl.Joey.UI.Views;
+using Toggl.Phoebe._Reactive;
 using Toggl.Phoebe._ViewModels;
 using Activity = Android.Support.V4.App.FragmentActivity;
 using Fragment = Android.Support.V4.App.Fragment;
@@ -23,7 +24,8 @@ namespace Toggl.Joey.UI.Components
         public LogTimeEntriesVM ViewModel { get; private set; }
 
         private Binding<bool, bool> isRunningBinding;
-        private Binding<string, string> descBinding, durationBinding, projectBinding;
+        private Binding<string, string> durationBinding;
+        private Binding<RichTimeEntry, RichTimeEntry> entryBinding;
 
         private Activity activity;
         private bool hide;
@@ -69,20 +71,26 @@ namespace Toggl.Joey.UI.Components
             ViewModel = viewModel;
 
             // TODO: investigate why WhenSourceChanges doesn't work. :(
-            isRunningBinding = this.SetBinding (() => ViewModel.IsTimeEntryRunning, () => IsRunning);
+            isRunningBinding = this.SetBinding (() => ViewModel.IsEntryRunning, () => IsRunning);
             durationBinding = this.SetBinding (() => ViewModel.Duration, () => DurationTextView.Text);
-            descBinding = this.SetBinding (() => ViewModel.Description, () => DescriptionTextView.Text)
-                              .ConvertSourceToTarget (desc => desc != string.Empty ? desc : activity.ApplicationContext.Resources.GetText (Resource.String.TimerComponentNoDescription));
-            projectBinding = this.SetBinding (() => ViewModel.ProjectName, () => ProjectTextView.Text)
-                                 .ConvertSourceToTarget (proj => proj != string.Empty ? proj : activity.ApplicationContext.Resources.GetText (Resource.String.TimerComponentNoProject));
+            entryBinding = this.SetBinding (() => ViewModel.ActiveEntry)
+                               .WhenSourceChanges (OnActiveEntryChanged);
+        }
+
+        private void OnActiveEntryChanged ()
+        {
+            var entry = ViewModel.ActiveEntry;
+            DescriptionTextView.Text = !string.IsNullOrEmpty(entry.Data.Description)
+                ? entry.Data.Description : activity.ApplicationContext.Resources.GetText (Resource.String.TimerComponentNoDescription);
+            ProjectTextView.Text = !string.IsNullOrEmpty(entry.Info.ProjectData.Name)
+                ? entry.Info.ProjectData.Name : activity.ApplicationContext.Resources.GetText (Resource.String.TimerComponentNoProject);
         }
 
         public void DetachBindind ()
         {
             isRunningBinding.Detach ();
             durationBinding.Detach ();
-            descBinding.Detach ();
-            projectBinding.Detach ();
+            entryBinding.Detach ();
         }
     }
 }

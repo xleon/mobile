@@ -32,7 +32,7 @@ namespace Toggl.Phoebe.Tests.Reactive
         }
     }
 
-    public class NetWorkPresenceMock : Toggl.Phoebe.Net.INetworkPresence
+    public class NetWorkPresenceMock : Net.INetworkPresence
     {
         public bool IsNetworkPresent { get { return false; } }
 
@@ -54,11 +54,9 @@ namespace Toggl.Phoebe.Tests.Reactive
 
         public Task<T> Create<T> (T jsonObject) where T : CommonJson
         {
-            return Task.Run (() => {
-                ReceivedItems.Add (jsonObject);
-                jsonObject.RemoteId = rnd.Next (100);
-                return jsonObject;
-            });
+            ReceivedItems.Add (jsonObject);
+            jsonObject.RemoteId = rnd.Next (100);
+            return Task.FromResult (jsonObject);
         }
         public Task<T> Get<T> (long id) where T : CommonJson
         {
@@ -232,18 +230,18 @@ namespace Toggl.Phoebe.Tests.Reactive
 
             var timerState =
                 new TimerState (
-                    authResult: Net.AuthResult.None,
-                    downloadResult: new DownloadResult (false, true, false, downloadFrom, downloadFrom),
-                    user: userData,
-                    workspaces: new Dictionary<Guid, WorkspaceData> { { WorkspaceId, workspaceData } },
-                    projects: new Dictionary<Guid, ProjectData> (),
-                    workspaceUsers: new Dictionary<Guid, WorkspaceUserData> (),
-                    projectUsers: new Dictionary<Guid, ProjectUserData> (),
-                    clients: new Dictionary<Guid, ClientData> (),
-                    tasks: new Dictionary<Guid, TaskData> (),
-                    tags: new Dictionary<Guid, TagData> (),
-                    timeEntries: new Dictionary<Guid, RichTimeEntry> (),
-                    activeTimeEntry: new TimeEntryData ());
+                authResult: Net.AuthResult.None,
+                downloadResult: new DownloadResult (false, true, false, downloadFrom, downloadFrom),
+                user: userData,
+            workspaces: new Dictionary<Guid, WorkspaceData> { { WorkspaceId, workspaceData } },
+            projects: new Dictionary<Guid, ProjectData> (),
+            workspaceUsers: new Dictionary<Guid, WorkspaceUserData> (),
+            projectUsers: new Dictionary<Guid, ProjectUserData> (),
+            clients: new Dictionary<Guid, ClientData> (),
+            tasks: new Dictionary<Guid, TaskData> (),
+            tags: new Dictionary<Guid, TagData> (),
+            timeEntries: new Dictionary<Guid, RichTimeEntry> (),
+            activeTimeEntry: new TimeEntryData ());
 
             return new AppState (timerState);
         }

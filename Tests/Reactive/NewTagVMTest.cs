@@ -8,6 +8,7 @@ using Toggl.Phoebe._Reactive;
 using Toggl.Phoebe._ViewModels;
 using XPlatUtils;
 using Toggl.Phoebe.Analytics;
+using System.Threading.Tasks;
 
 namespace Toggl.Phoebe.Tests.Reactive
 {
@@ -40,31 +41,29 @@ namespace Toggl.Phoebe.Tests.Reactive
         }
 
         [Test]
-        public void TestSaveTag ()
+        public async Task TestSaveTag ()
         {
             var name = "MyTag";
             var tcs = Util.CreateTask<bool> ();
 
-            RunAsync (async () => {
-                viewModel.TagName = name;
-                viewModel.SaveTag (new SyncTestOptions (false, (state, sent, queued) => {
-                    try {
-                        TagData tag = null;
-                        Assert.NotNull (tag = state.TimerState.Tags.Values.SingleOrDefault (
-                            x => x.WorkspaceId == Util.WorkspaceId && x.Name == name));
+            viewModel.TagName = name;
+            viewModel.SaveTag (new SyncTestOptions (false, (state, sent, queued) => {
+                try {
+                    TagData tag = null;
+                    Assert.That (tag = state.TimerState.Tags.Values.SingleOrDefault (
+                                           x => x.WorkspaceId == Util.WorkspaceId && x.Name == name), Is.Not.Null);
 
-                        // Check item has been correctly saved in database
-                        Assert.NotNull (dataStore.Table<TagData> ().SingleOrDefault (
-                            x => x.WorkspaceId == Util.WorkspaceId && x.Name == name && x.Id == tag.Id));
+                    // Check item has been correctly saved in database
+                    Assert.That (dataStore.Table<TagData> ().SingleOrDefault (
+                                     x => x.WorkspaceId == Util.WorkspaceId && x.Name == name && x.Id == tag.Id), Is.Not.Null);
 
-                        tcs.SetResult (true);
-                    }
-                    catch (Exception ex) {
-                        tcs.SetException (ex);
-                    }                        
-                }));
-                await tcs.Task;
-            });
+                    tcs.SetResult (true);
+                } catch (Exception ex) {
+                    tcs.SetException (ex);
+                }
+            }));
+
+            await tcs.Task;
         }
     }
 }

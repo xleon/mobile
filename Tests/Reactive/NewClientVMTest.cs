@@ -1,11 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using NUnit.Framework;
-using Toggl.Phoebe.Tests;
 using Toggl.Phoebe._Data;
-using Toggl.Phoebe._Data.Json;
 using Toggl.Phoebe._Data.Models;
 using Toggl.Phoebe._Net;
 using Toggl.Phoebe._Reactive;
@@ -44,31 +41,29 @@ namespace Toggl.Phoebe.Tests.Reactive
         }
 
         [Test]
-        public void TestSaveClient ()
+        public async Task TestSaveClient ()
         {
             var name = "MyClient";
             var tcs = Util.CreateTask<bool> ();
 
-            RunAsync (async () => {
-                viewModel.ClientName = name;
-                viewModel.SaveClient (new SyncTestOptions (false, (state, sent, queued) => {
-                    try {
-                        ClientData client = null;
-                        Assert.NotNull (client = state.TimerState.Clients.Values.SingleOrDefault (
-                            x => x.WorkspaceId == Util.WorkspaceId && x.Name == name));
+            viewModel.ClientName = name;
+            viewModel.SaveClient (new SyncTestOptions (false, (state, sent, queued) => {
+                try {
+                    ClientData client = null;
+                    Assert.That (client = state.TimerState.Clients.Values.SingleOrDefault (
+                                              x => x.WorkspaceId == Util.WorkspaceId && x.Name == name), Is.Not.Null);
 
-                        // Check item has been correctly saved in database
-                        Assert.NotNull (dataStore.Table<ClientData> ().SingleOrDefault (
-                            x => x.WorkspaceId == Util.WorkspaceId && x.Name == name && x.Id == client.Id));
+                    // Check item has been correctly saved in database
+                    Assert.That (dataStore.Table<ClientData> ().SingleOrDefault (
+                                     x => x.WorkspaceId == Util.WorkspaceId && x.Name == name && x.Id == client.Id), Is.Not.Null);
 
-                        tcs.SetResult (true);
-                    }
-                    catch (Exception ex) {
-                        tcs.SetException (ex);
-                    }                        
-                }));
-                await tcs.Task;
-            });
+                    tcs.SetResult (true);
+                } catch (Exception ex) {
+                    tcs.SetException (ex);
+                }
+            }));
+
+            await tcs.Task;
         }
     }
 }

@@ -8,6 +8,7 @@ using Toggl.Phoebe._Reactive;
 using Toggl.Phoebe._ViewModels;
 using XPlatUtils;
 using Toggl.Phoebe.Analytics;
+using System.Threading.Tasks;
 
 namespace Toggl.Phoebe.Tests.Reactive
 {
@@ -40,40 +41,37 @@ namespace Toggl.Phoebe.Tests.Reactive
         }
 
         [Test]
-        public void TestSaveProject ()
+        public async Task TestSaveProject ()
         {
-			var pcolor = 2;
+            var pcolor = 2;
             var pname = "MyProject";
             var tcs = Util.CreateTask<bool> ();
 
-            RunAsync (async () => {
-                viewModel.SaveProject (pname, pcolor, new SyncTestOptions (false, (state, sent, queued) => {
-                    try {
-                        ProjectData project = null;
-                        Assert.NotNull (project = state.TimerState.Projects.Values.SingleOrDefault (
-                            x => x.WorkspaceId == Util.WorkspaceId && x.Name == pname && x.Color == pcolor));
+            viewModel.SaveProject (pname, pcolor, new SyncTestOptions (false, (state, sent, queued) => {
+                try {
+                    ProjectData project = null;
+                    Assert.That (project = state.TimerState.Projects.Values.SingleOrDefault (
+                                               x => x.WorkspaceId == Util.WorkspaceId && x.Name == pname && x.Color == pcolor), Is.Not.Null);
 
-                        // Check project has been correctly saved in database
-                        Assert.NotNull (dataStore.Table<ProjectData> ().SingleOrDefault (
-                            x => x.WorkspaceId == Util.WorkspaceId && x.Name == pname && x.Color == pcolor && x.Id == project.Id));
+                    // Check project has been correctly saved in database
+                    Assert.That (dataStore.Table<ProjectData> ().SingleOrDefault (
+                                     x => x.WorkspaceId == Util.WorkspaceId && x.Name == pname && x.Color == pcolor && x.Id == project.Id), Is.Not.Null);
 
-                        // ProjectUserData
-                        Assert.NotNull (state.TimerState.ProjectUsers.Values.SingleOrDefault (x => x.ProjectId == project.Id));
-                        Assert.NotNull (dataStore.Table<ProjectUserData> ().SingleOrDefault (x => x.ProjectId == project.Id));
+                    // ProjectUserData
+                    Assert.That (state.TimerState.ProjectUsers.Values.SingleOrDefault (x => x.ProjectId == project.Id), Is.Not.Null);
+                    Assert.That (dataStore.Table<ProjectUserData> ().SingleOrDefault (x => x.ProjectId == project.Id), Is.Not.Null);
 
-                        tcs.SetResult (true);
-                    }
-                    catch (Exception ex) {
-                        tcs.SetException (ex);
-                    }                        
-                }));
-                await tcs.Task;
-            });
+                    tcs.SetResult (true);
+                } catch (Exception ex) {
+                    tcs.SetException (ex);
+                }
+            }));
+            await tcs.Task;
         }
 
 
         [Test]
-        public void TestSetClient ()
+        public async Task TestSetClient ()
         {
             var pcolor = 5;
             var pname = "MyProject2";
@@ -83,21 +81,19 @@ namespace Toggl.Phoebe.Tests.Reactive
             };
             var tcs = Util.CreateTask<bool> ();
 
-            RunAsync (async () => {
-                viewModel.SetClient (client);
-                viewModel.SaveProject (pname, pcolor, new SyncTestOptions (false, (state, sent, queued) => {
-                    try {
-                        Assert.NotNull (state.TimerState.Projects.Values.SingleOrDefault (
-                            x => x.Name == pname && x.ClientId == client.Id));
+            viewModel.SetClient (client);
+            viewModel.SaveProject (pname, pcolor, new SyncTestOptions (false, (state, sent, queued) => {
+                try {
+                    Assert.That (state.TimerState.Projects.Values.SingleOrDefault (
+                                     x => x.Name == pname && x.ClientId == client.Id), Is.Not.Null);
 
-                        tcs.SetResult (true);
-                    }
-                    catch (Exception ex) {
-                        tcs.SetException (ex);
-                    }                        
-                }));                
-                await tcs.Task;
-            });
+                    tcs.SetResult (true);
+                } catch (Exception ex) {
+                    tcs.SetException (ex);
+                }
+            }));
+
+            await tcs.Task;
         }
     }
 }

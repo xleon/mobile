@@ -165,7 +165,6 @@
     <Compile Include="UI\Adapters\SettingsAdapter.cs" />
     <Compile Include="UI\Fragments\SettingsListFragment.cs" />
     <Compile Include="UI\Fragments\ForcedUpgradeDialogFragment.cs" />
-    <Compile Include="UI\Activities\EditTimeEntryActivity.cs" />
     <Compile Include="UI\Fragments\EditTimeEntryFragment.cs" />
     <Compile Include="UI\Utils\DateTimeExtensions.cs" />
     <Compile Include="Net\NetworkPresence.cs" />
@@ -188,7 +187,6 @@
     <Compile Include="Widget\RemotesViewsFactory.cs" />
     <Compile Include="Widget\WidgetStartStopService.cs" />
     <Compile Include="UI\Views\NotificationImageView.cs" />
-    <Compile Include="UI\Activities\NewProjectActivity.cs" />
     <Compile Include="UI\Fragments\NewProjectFragment.cs" />
     <Compile Include="UI\Views\ColorPickerRecyclerView.cs" />
     <Compile Include="UI\Views\TogglField.cs" />
@@ -196,7 +194,6 @@
     <Compile Include="UI\Utils\RecycledBindableViewHolder.cs" />
     <Compile Include="UI\Adapters\LogTimeEntriesAdapter.cs" />
     <Compile Include="UI\Fragments\LogTimeEntriesListFragment.cs" />
-    <Compile Include="UI\Activities\ProjectListActivity.cs" />
     <Compile Include="UI\Fragments\ProjectListFragment.cs" />
     <Compile Include="UI\Adapters\ProjectListAdapter.cs" />
     <Compile Include="UI\Utils\ItemTouchListener.cs" />

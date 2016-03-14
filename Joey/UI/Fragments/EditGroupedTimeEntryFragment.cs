@@ -170,9 +170,8 @@ namespace Toggl.Joey.UI.Fragments
 
         private void OnProjectEditTextClick (object sender, EventArgs e)
         {
-            var intent = new Intent (Activity, typeof (ProjectListActivity));
-            intent.PutExtra (BaseActivity.IntentWorkspaceIdArgument, ViewModel.WorkspaceId.ToString ());
-            StartActivityForResult (intent, 0);
+            var frg = ProjectListFragment.NewInstance (ViewModel.WorkspaceId.ToString());
+            ((MainDrawerActivity)Activity).OpenSubView (frg, frg.Tag);
         }
 
         public override async void OnActivityResult (int requestCode, int resultCode, Intent data)

@@ -90,6 +90,9 @@ namespace Toggl.Joey.UI.Fragments
 
             ColorPicker = view.FindViewById<ColorPickerRecyclerView> (Resource.Id.NewProjectColorPickerRecyclerView);
             HasOptionsMenu = true;
+
+            ((MainDrawerActivity)Activity).ToolbarMode = MainDrawerActivity.ToolbarModes.SubView;
+
             return view;
         }
 

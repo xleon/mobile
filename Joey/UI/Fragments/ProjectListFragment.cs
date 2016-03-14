@@ -89,6 +89,8 @@ namespace Toggl.Joey.UI.Fragments
             newProjectFab.Click += OnNewProjectFabClick;
             tabLayout.SetOnTabSelectedListener (this);
 
+            ((MainDrawerActivity)Activity).ToolbarMode = MainDrawerActivity.ToolbarModes.SubView;
+
             return view;
         }
 
@@ -142,9 +144,11 @@ namespace Toggl.Joey.UI.Fragments
         private void OnNewProjectFabClick (object sender, EventArgs e)
         {
             // Show create project activity instead
-            var intent = new Intent (Activity, typeof (NewProjectActivity));
-            intent.PutExtra (NewProjectActivity.WorkspaceIdArgument, viewModel.CurrentWorkspaceId.ToString ());
-            StartActivityForResult (intent, ProjectCreatedRequestCode);
+            var frg = NewProjectFragment.NewInstance (viewModel.CurrentWorkspaceId.ToString());
+            ((MainDrawerActivity)Activity).OpenSubView (frg, frg.Tag);
+//            var intent = new Intent (Activity, typeof (NewProjectActivity));
+//            intent.PutExtra (NewProjectActivity.WorkspaceIdArgument, viewModel.CurrentWorkspaceId.ToString ());
+//            StartActivityForResult (intent, ProjectCreatedRequestCode);
         }
 
         private void OnItemSelected (CommonData m)

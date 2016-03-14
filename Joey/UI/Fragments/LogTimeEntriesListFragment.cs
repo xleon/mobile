@@ -138,6 +138,7 @@ namespace Toggl.Joey.UI.Fragments
                     AddNewMenuItem.SetVisible (!ViewModel.IsTimeEntryRunning);
                 }
             });
+            ((MainDrawerActivity)Activity).ToolbarMode = MainDrawerActivity.ToolbarModes.Normal;
 
             // Pass ViewModel to TimerComponent.
             timerComponent.SetViewModel (ViewModel);
@@ -166,12 +167,11 @@ namespace Toggl.Joey.UI.Fragments
             var timeEntryData = await ViewModel.StartStopTimeEntry ();
             if (timeEntryData.State == TimeEntryState.Running) {
                 NewTimeEntry = true;
-
-                var ids = new List<string> { timeEntryData.Id.ToString () };
-                var intent = new Intent (Activity, typeof (EditTimeEntryActivity));
-                intent.PutStringArrayListExtra (EditTimeEntryActivity.ExtraGroupedTimeEntriesGuids, ids);
-                intent.PutExtra (EditTimeEntryActivity.IsGrouped,  false);
-                StartActivity (intent);
+                NewTimeEntryStartedByFAB = true;
+                var frg = EditTimeEntryFragment.NewInstance (timeEntryData.Id.ToString ());
+                ((MainDrawerActivity)Activity).OpenSubView (frg, frg.Tag);
+                // TODO open-edit
+                // timeEntryData.Id.ToString ()
             }
         }
 
@@ -253,10 +253,10 @@ namespace Toggl.Joey.UI.Fragments
         public override bool OnOptionsItemSelected (IMenuItem item)
         {
             NewTimeEntry = true;
-            var i = new Intent (Activity, typeof (EditTimeEntryActivity));
-            i.PutStringArrayListExtra (EditTimeEntryActivity.ExtraGroupedTimeEntriesGuids, new List<string> { ViewModel.GetActiveTimeEntry ().Id.ToString ()});
-            Activity.StartActivity (i);
-
+            //TODO open-edit
+            var frg = EditTimeEntryFragment.NewInstance (ViewModel.GetActiveTimeEntry ().Id.ToString());
+            ((MainDrawerActivity)Activity).OpenSubView (frg, frg.Tag);
+            // new List<string> { ViewModel.GetActiveTimeEntry ().Id.ToString ()}
             return base.OnOptionsItemSelected (item);
         }
 
@@ -281,12 +281,10 @@ namespace Toggl.Joey.UI.Fragments
         #region IRecyclerViewOnItemClickListener implementation
         public void OnItemClick (RecyclerView parent, View clickedView, int position)
         {
-            var intent = new Intent (Activity, typeof (EditTimeEntryActivity));
+            // TODO: open-edit
             IList<string> guids = ((ITimeEntryHolder)ViewModel.Collection.ElementAt (position)).Guids;
-            intent.PutStringArrayListExtra (EditTimeEntryActivity.ExtraGroupedTimeEntriesGuids, guids);
-            intent.PutExtra (EditTimeEntryActivity.IsGrouped, guids.Count > 1);
-
-            StartActivity (intent);
+            var frg = EditTimeEntryFragment.NewInstance (guids[0]);
+            ((MainDrawerActivity)Activity).OpenSubView (frg, frg.Tag);
         }
 
         public void OnItemLongClick (RecyclerView parent, View clickedView, int position)

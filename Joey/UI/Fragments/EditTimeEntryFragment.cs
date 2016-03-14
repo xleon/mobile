@@ -90,7 +90,7 @@ namespace Toggl.Joey.UI.Fragments
         {
             var view = inflater.Inflate (Resource.Layout.EditTimeEntryFragment, container, false);
             var activityToolbar = view.FindViewById<Toolbar> (Resource.Id.EditTimeEntryFragmentToolbar);
-            var activity = (Activity)Activity;
+            var activity = (MainDrawerActivity)Activity;
 
             activity.SetSupportActionBar (activityToolbar);
             toolbar = activity.SupportActionBar;
@@ -122,6 +122,8 @@ namespace Toggl.Joey.UI.Fragments
             BillableCheckBox = view.FindViewById<CheckBox> (Resource.Id.BillableCheckBox).SetFont (Font.RobotoLight);
             editTimeEntryProgressBar = view.FindViewById<View> (Resource.Id.EditTimeEntryProgressBar);
             editTimeEntryContent = view.FindViewById<View> (Resource.Id.EditTimeEntryContent);
+
+            ((MainDrawerActivity)Activity).ToolbarMode = MainDrawerActivity.ToolbarModes.SubView;
 
             HasOptionsMenu = true;
             return view;
@@ -236,9 +238,8 @@ namespace Toggl.Joey.UI.Fragments
 
         private void OpenProjectListActivity ()
         {
-            var intent = new Intent (Activity, typeof (ProjectListActivity));
-            intent.PutExtra (BaseActivity.IntentWorkspaceIdArgument, ViewModel.WorkspaceId.ToString ());
-            StartActivityForResult (intent, 0);
+            var frg = ProjectListFragment.NewInstance (ViewModel.WorkspaceId.ToString());
+            ((MainDrawerActivity)Activity).OpenSubView (frg, frg.Tag);
         }
 
         public override async void OnActivityResult (int requestCode, int resultCode, Intent data)

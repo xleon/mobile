@@ -147,16 +147,31 @@ namespace Toggl.Joey.UI.Activities
             }
         }
 
+        public void OpenSubView (Fragment frag, string tag)
+        {
+            FragmentManager.BeginTransaction ()
+            .Add (frag, tag)
+            .AddToBackStack (tag)
+            .Attach (frag)
+            .Commit ();
+            OpenFragment (frag);
+        }
+
         private void AdjustToolbar()
         {
             switch (toolbarMode) {
             case MainDrawerActivity.ToolbarModes.Timer:
                 SupportActionBar.SetDisplayShowTitleEnabled (false);
+                MainToolbar.Visibility = ViewStates.Visible;
                 Timer.Hide = false;
                 break;
             case MainDrawerActivity.ToolbarModes.Normal:
+                MainToolbar.Visibility = ViewStates.Visible;
                 Timer.Hide = true;
                 SupportActionBar.SetDisplayShowTitleEnabled (true);
+                break;
+            case MainDrawerActivity.ToolbarModes.SubView:
+                MainToolbar.Visibility = ViewStates.Gone;
                 break;
             }
         }
@@ -186,18 +201,11 @@ namespace Toggl.Joey.UI.Activities
 
         public override bool OnOptionsItemSelected (IMenuItem item)
         {
-            return DrawerToggle.OnOptionsItemSelected (item) || base.OnOptionsItemSelected (item);
-        }
-
-        public override void OnBackPressed ()
-        {
-            if (pageStack.Count > 0) {
-                pageStack.RemoveAt (pageStack.Count - 1);
-                var pageId = pageStack.Count > 0 ? pageStack [pageStack.Count - 1] : DrawerListAdapter.TimerPageId;
-                OpenPage (pageId);
-            } else {
-                base.OnBackPressed ();
+            if (ToolbarMode == ToolbarModes.SubView) {
+                OnBackPressed ();
+                return true;
             }
+            return DrawerToggle.OnOptionsItemSelected (item) || base.OnOptionsItemSelected (item);
         }
 
         private void SetMenuSelection (int pos)
@@ -246,20 +254,33 @@ namespace Toggl.Joey.UI.Activities
         {
             authManager.Forget ();
             StartAuthActivity ();
+        
+        public override void OnBackPressed ()
+        {
+            if (pageStack.Count > 0) {
+                pageStack.RemoveAt (pageStack.Count - 1);
+                var pageId = pageStack.Count > 0 ? pageStack [pageStack.Count - 1] : DrawerListAdapter.TimerPageId;
+                OpenPage (pageId);
+            } else {
+                base.OnBackPressed ();
+            }
         }
 
         private void OpenFragment (Fragment fragment)
         {
             var old = FragmentManager.FindFragmentById (Resource.Id.ContentFrameLayout);
+
             if (old == null) {
                 FragmentManager.BeginTransaction ()
                 .Add (Resource.Id.ContentFrameLayout, fragment)
+                .AddToBackStack (fragment.Tag)
                 .Commit ();
             } else if (old != fragment) {
                 // The detach/attach is a workaround for https://code.google.com/p/android/issues/detail?id=42601
                 FragmentManager.BeginTransaction ()
                 .Detach (old)
                 .Replace (Resource.Id.ContentFrameLayout, fragment)
+                .AddToBackStack (fragment.Tag)
                 .Attach (fragment)
                 .Commit ();
             }
@@ -282,7 +303,6 @@ namespace Toggl.Joey.UI.Activities
 
             if (e.Id == DrawerListAdapter.TimerPageId) {
                 OpenPage (DrawerListAdapter.TimerPageId);
-
             } else if (e.Id == DrawerListAdapter.LogoutPageId) {
                 ForgetCurrentUser();
             } else if (e.Id == DrawerListAdapter.ReportsPageId) {
@@ -306,7 +326,8 @@ namespace Toggl.Joey.UI.Activities
 
         public enum ToolbarModes {
             Normal,
-            Timer
+            Timer,
+            SubView
         }
     }
 }

@@ -49,13 +49,6 @@ namespace Toggl.Phoebe._ViewModels
             durationTimer = new System.Timers.Timer ();
             durationTimer.Elapsed += DurationTimerCallback;
 
-			subscriptionState =
-                StoreManager.Singleton
-                            .Observe (app => app.TimerState)
-                            .Scan<TimerState, Tuple<TimerState, DownloadResult>> (
-                                null, (tuple, state) => Tuple.Create (state, tuple != null ? tuple.Item2 : null))
-                            .Subscribe (tuple => UpdateState (tuple.Item1, tuple.Item2));
-
             ServiceContainer.Resolve<ITracker> ().CurrentScreen = "TimeEntryList Screen";
 
             // RX TODO: Remove MessageBus
@@ -65,8 +58,14 @@ namespace Toggl.Phoebe._ViewModels
                     ResetCollection ();
             });
 
-			ResetCollection ();
-            UpdateState (timerState);
+            ResetCollection ();
+			subscriptionState =
+				StoreManager.Singleton
+				            .Observe (app => app.TimerState)
+                            .StartWith (timerState)
+				            .Scan<TimerState, Tuple<TimerState, DownloadResult>> (
+					            null, (tuple, state) => Tuple.Create (state, tuple != null ? tuple.Item2 : null))
+				            .Subscribe (tuple => UpdateState (tuple.Item1, tuple.Item2));
         }
 
         private void ResetCollection ()
@@ -147,11 +146,11 @@ namespace Toggl.Phoebe._ViewModels
             // TODO: Add analytic event?
         }
 
-        private void UpdateState (TimerState timerState, DownloadResult prevDownloadResult = null)
+        private void UpdateState (TimerState timerState, DownloadResult prevDownloadResult)
         {
             ServiceContainer.Resolve<IPlatformUtils> ().DispatchOnUIThread (() => {
                 // Check if DownloadResult has changed
-                if (prevDownloadResult == null || prevDownloadResult != timerState.DownloadResult) {
+                if (LoadInfo == null || prevDownloadResult != timerState.DownloadResult) {
                     LoadInfo = new LoadInfoType (
                         timerState.DownloadResult.IsSyncing,
                         timerState.DownloadResult.HasMore,
@@ -160,16 +159,21 @@ namespace Toggl.Phoebe._ViewModels
                 }
 
                 // Check if ActiveTimeEntry has changed
-                if (ActiveEntry != null || ActiveEntry.Data != timerState.ActiveTimeEntry) {
-                    ActiveEntry = timerState.TimeEntries[timerState.ActiveTimeEntry.Id];
-
-                    // Check if an entry is running.
-                    if (IsEntryRunning = ActiveEntry.Data.State == TimeEntryState.Running) {
-                        durationTimer.Start ();
+                if (ActiveEntry == null || ActiveEntry.Data != timerState.ActiveTimeEntry) {
+                    if (timerState.ActiveTimeEntry.Id == Guid.Empty) {
+                        ActiveEntry = new RichTimeEntry (timerState, new TimeEntryData ());
                     }
                     else {
-                        durationTimer.Stop ();
-                        Duration = TimeSpan.FromSeconds (0).ToString ().Substring (0, 8);
+                        ActiveEntry = timerState.TimeEntries[timerState.ActiveTimeEntry.Id];
+
+                        // Check if an entry is running.
+                        if (IsEntryRunning = ActiveEntry.Data.State == TimeEntryState.Running) {
+                            durationTimer.Start ();
+                        }
+                        else {
+                            durationTimer.Stop ();
+                            Duration = TimeSpan.FromSeconds (0).ToString ().Substring (0, 8);
+                        }
                     }
                 }
             });

@@ -359,6 +359,7 @@ namespace Toggl.Phoebe._Reactive
 
         public TimeEntryInfo LoadTimeEntryInfo (ITimeEntryData teData)
         {
+            var workspaceData = teData.WorkspaceId != Guid.Empty ? Workspaces[teData.WorkspaceId] : new WorkspaceData ();
             var projectData = teData.ProjectId != Guid.Empty ? Projects[teData.ProjectId] : new ProjectData ();
             var clientData = projectData.ClientId != Guid.Empty ? Clients[projectData.ClientId] : new ClientData ();
             var taskData = teData.TaskId != Guid.Empty ? Tasks[teData.TaskId] : new TaskData ();
@@ -371,7 +372,7 @@ namespace Toggl.Phoebe._Reactive
                 .ToList ();
 
             return new TimeEntryInfo (
-                       Workspaces[teData.WorkspaceId],
+                       workspaceData,
                        projectData,
                        clientData,
                        taskData,

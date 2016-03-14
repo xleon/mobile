@@ -248,6 +248,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)Build.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)IPlatformUtils.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ServiceContainer.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)_ViewModels\LoginVM.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="$(MSBuildThisFileDirectory)Contrib\XPlatUtils\" />

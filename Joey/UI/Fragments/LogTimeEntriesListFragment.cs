@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Threading.Tasks;
 using Android.Content;
 using Android.OS;
 using Android.Support.Design.Widget;
@@ -18,18 +17,16 @@ using Toggl.Joey.UI.Adapters;
 using Toggl.Joey.UI.Components;
 using Toggl.Joey.UI.Utils;
 using Toggl.Joey.UI.Views;
-using Toggl.Phoebe;
 using Toggl.Phoebe._Data.Models;
 using Toggl.Phoebe._ViewModels;
 using Toggl.Phoebe._ViewModels.Timer;
-using Toggl.Phoebe.Net;
 
 namespace Toggl.Joey.UI.Fragments
 {
     public class LogTimeEntriesListFragment : Fragment,
-    SwipeDismissCallback.IDismissListener,
-                        ItemTouchListener.IItemTouchListener,
-                        SwipeRefreshLayout.IOnRefreshListener
+        SwipeDismissCallback.IDismissListener,
+        ItemTouchListener.IItemTouchListener,
+        SwipeRefreshLayout.IOnRefreshListener
     {
         public static bool NewTimeEntryStartedByFAB;
 
@@ -99,10 +96,10 @@ namespace Toggl.Joey.UI.Fragments
             hasErrorBinding = this.SetBinding (()=> ViewModel.HasLoadErrors).WhenSourceChanges (SetFooterState);
             hasItemsBinding = this.SetBinding (()=> ViewModel.HasMoreItems).WhenSourceChanges (SetFooterState);
             fabBinding = this.SetBinding (() => ViewModel.IsTimeEntryRunning, () => StartStopBtn.ButtonAction)
-                             .ConvertSourceToTarget (isRunning => isRunning ? FABButtonState.Stop : FABButtonState.Start);
+                         .ConvertSourceToTarget (isRunning => isRunning ? FABButtonState.Stop : FABButtonState.Start);
 
             newMenuBinding = this.SetBinding (() => ViewModel.IsTimeEntryRunning)
-                                 .WhenSourceChanges (() => {
+            .WhenSourceChanges (() => {
                 if (AddNewMenuItem != null) {
                     AddNewMenuItem.SetVisible (!ViewModel.IsTimeEntryRunning);
                 }
@@ -262,8 +259,7 @@ namespace Toggl.Joey.UI.Fragments
         {
             if (ViewModel.IsAppSyncing) {
                 swipeLayout.Refreshing = true;
-            }
-            else {
+            } else {
                 swipeLayout.Refreshing = false;
 
                 if (ViewModel.HasLoadErrors) {
@@ -352,15 +348,6 @@ namespace Toggl.Joey.UI.Fragments
                     loading = true;
                     // Request more entries.
                     viewModel.LoadMore ();
-                }
-            }
-
-            public override void OnScrollStateChanged (RecyclerView recyclerView, int newState)
-            {
-                base.OnScrollStateChanged (recyclerView, newState);
-                if (newState == 1) {
-                    var adapter = (IUndoAdapter) recyclerView.GetAdapter ();
-                    adapter.SetItemsToNormalPosition ();
                 }
             }
         }

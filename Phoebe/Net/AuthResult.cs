@@ -5,7 +5,9 @@
         Authenticating,
         Success,
         InvalidCredentials,
+        NoGoogleAccount,
         NoDefaultWorkspace,
+        GoogleError,
         NetworkError,
         SystemError
     }

@@ -30,7 +30,7 @@ namespace Toggl.Phoebe._Reactive
             Singleton = null;
         }
 
-		readonly string Tag = typeof (SyncOutManager).Name;
+        readonly string Tag = typeof (SyncOutManager).Name;
         readonly JsonMapper mapper;
         readonly Toggl.Phoebe.Net.INetworkPresence networkPresence;
         readonly ISyncDataStore dataStore;
@@ -51,29 +51,25 @@ namespace Toggl.Phoebe._Reactive
             .Subscribe ();
 
             requestManager
-                // Make sure requests are run one after the other
-                .Synchronize ()
-                .SelectAsync (async x => {
-                    if (x.Item1 is ServerRequest.DownloadEntries) {
-                        await DownloadEntries (x.Item2.TimerState);
-                    }
-                    else if (x.Item1 is ServerRequest.Authenticate) {
-                        var req = x.Item1 as ServerRequest.Authenticate;
-                        await AuthenticateAsync (req.Username, req.Password);
-                    }
-                    else if (x.Item1 is ServerRequest.AuthenticateWithGoogle) {
-                        var req = x.Item1 as ServerRequest.AuthenticateWithGoogle;
-                        await AuthenticateWithGoogleAsync (req.AccessToken);
-                    }
-                    else if (x.Item1 is ServerRequest.SignUp) {
-                        var req = x.Item1 as ServerRequest.SignUp;
-                        await SignupAsync (req.Email, req.Password);
-                    }
-                    else if (x.Item1 is ServerRequest.SignUpWithGoogle) {
-                        var req = x.Item1 as ServerRequest.SignUpWithGoogle;
-                        await SignupWithGoogleAsync (req.AccessToken);
-                    }
-                });
+            // Make sure requests are run one after the other
+            .Synchronize ()
+            .SelectAsync (async x => {
+                if (x.Item1 is ServerRequest.DownloadEntries) {
+                    await DownloadEntries (x.Item2.TimerState);
+                } else if (x.Item1 is ServerRequest.Authenticate) {
+                    var req = x.Item1 as ServerRequest.Authenticate;
+                    await AuthenticateAsync (req.Username, req.Password);
+                } else if (x.Item1 is ServerRequest.AuthenticateWithGoogle) {
+                    var req = x.Item1 as ServerRequest.AuthenticateWithGoogle;
+                    await AuthenticateWithGoogleAsync (req.AccessToken);
+                } else if (x.Item1 is ServerRequest.SignUp) {
+                    var req = x.Item1 as ServerRequest.SignUp;
+                    await SignupAsync (req.Email, req.Password);
+                } else if (x.Item1 is ServerRequest.SignUpWithGoogle) {
+                    var req = x.Item1 as ServerRequest.SignUpWithGoogle;
+                    await SignupWithGoogleAsync (req.AccessToken);
+                }
+            });
         }
 
         void log (Exception ex, string msg = "Failed to send data to server")
@@ -87,8 +83,8 @@ namespace Toggl.Phoebe._Reactive
             var remoteObjects = new List<CommonData> ();
             var enqueuedItems = new List<DataJsonMsg> ();
             var isConnected = syncMsg.SyncTest != null
-                ? syncMsg.SyncTest.IsConnectionAvailable
-                : networkPresence.IsNetworkPresent;
+                              ? syncMsg.SyncTest.IsConnectionAvailable
+                              : networkPresence.IsNetworkPresent;
 
             // Try to empty queue first
             bool queueEmpty = await tryEmptyQueue (remoteObjects, isConnected);
@@ -120,8 +116,23 @@ namespace Toggl.Phoebe._Reactive
 
             if (isConnected) {
                 // TODO: Discard duplicated requests?
-                foreach (var req in syncMsg.ServerRequests) {
-                    requestManager.OnNext (Tuple.Create (req, syncMsg.State));
+                foreach (var x in syncMsg.ServerRequests) {
+                    //requestManager.OnNext (Tuple.Create (req, syncMsg.State));syncMsg.State
+                    if (x is ServerRequest.DownloadEntries) {
+                        await DownloadEntries (syncMsg.State.TimerState);
+                    } else if (x is ServerRequest.Authenticate) {
+                        var req = x as ServerRequest.Authenticate;
+                        await AuthenticateAsync (req.Username, req.Password);
+                    } else if (x is ServerRequest.AuthenticateWithGoogle) {
+                        var req = x as ServerRequest.AuthenticateWithGoogle;
+                        await AuthenticateWithGoogleAsync (req.AccessToken);
+                    } else if (x is ServerRequest.SignUp) {
+                        var req = x as ServerRequest.SignUp;
+                        await SignupAsync (req.Email, req.Password);
+                    } else if (x is ServerRequest.SignUpWithGoogle) {
+                        var req = x as ServerRequest.SignUpWithGoogle;
+                        await SignupWithGoogleAsync (req.AccessToken);
+                    }
                 }
             }
 
@@ -196,7 +207,7 @@ namespace Toggl.Phoebe._Reactive
             var client = ServiceContainer.Resolve<ITogglClient> ();
 
             log.Info (Tag, "Authenticating with email ({0}).", username);
-            await AuthenticateAsync (() => client.GetUser (username, password), Net.AuthChangeReason.Login); //, AccountCredentials.Password);
+            await AuthenticateAsync (() => client.GetUser (username, password), Net.AuthChangeReason.Login);
         }
 
         async Task AuthenticateWithGoogleAsync (string accessToken)
@@ -205,7 +216,7 @@ namespace Toggl.Phoebe._Reactive
             var client = ServiceContainer.Resolve<ITogglClient> ();
 
             log.Info (Tag, "Authenticating with Google access token.");
-            await AuthenticateAsync (() => client.GetUser (accessToken), Net.AuthChangeReason.Login); //, AccountCredentials.Google);
+            await AuthenticateAsync (() => client.GetUser (accessToken), Net.AuthChangeReason.LoginGoogle);
         }
 
         async Task SignupAsync (string email, string password)
@@ -230,7 +241,7 @@ namespace Toggl.Phoebe._Reactive
             await AuthenticateAsync (() => client.Create (new UserJson () {
                 GoogleAccessToken = accessToken,
                 Timezone = Time.TimeZoneId,
-            }), Net.AuthChangeReason.Signup); //, AccountCredentials.Google);
+            }), Net.AuthChangeReason.SignupGoogle); //, AccountCredentials.Google);
         }
 
         async Task AuthenticateAsync (
@@ -241,7 +252,7 @@ namespace Toggl.Phoebe._Reactive
             try {
                 userJson = await getUser ();
                 if (userJson == null) {
-                    authResult = Net.AuthResult.InvalidCredentials;
+                    authResult = (reason == Net.AuthChangeReason.LoginGoogle) ? Net.AuthResult.NoGoogleAccount : Net.AuthResult.InvalidCredentials;
                 } else if (userJson.DefaultWorkspaceRemoteId == 0) {
                     authResult = Net.AuthResult.NoDefaultWorkspace;
                 }
@@ -249,16 +260,16 @@ namespace Toggl.Phoebe._Reactive
                 var reqEx = ex as UnsuccessfulRequestException;
                 if (reqEx != null && (reqEx.IsForbidden || reqEx.IsValidationError)) {
                     authResult = Net.AuthResult.InvalidCredentials;
-                }
-
-                var log = ServiceContainer.Resolve<ILogger> ();
-                if (ex.IsNetworkFailure () || ex is TaskCanceledException) {
-                    log.Info (Tag, ex, "Failed authenticate user.");
                 } else {
-                    log.Warning (Tag, ex, "Failed to authenticate user.");
+                    var log = ServiceContainer.Resolve<ILogger> ();
+                    if (ex.IsNetworkFailure () || ex is TaskCanceledException) {
+                        log.Info (Tag, ex, "Failed authenticate user. Network error.");
+                        authResult = Net.AuthResult.NetworkError;
+                    } else {
+                        log.Warning (Tag, ex, "Failed to authenticate user. Unknown error.");
+                        authResult = Net.AuthResult.SystemError;
+                    }
                 }
-
-                authResult = Net.AuthResult.NetworkError;
             }
 
             // TODO RX
@@ -329,10 +340,10 @@ namespace Toggl.Phoebe._Reactive
 
                     foreach (var tag in entry.Tags) {
                         if (state.Tags.Values.All (x => x.WorkspaceRemoteId != entry.WorkspaceRemoteId || x.Name != tag) &&
-                            newTags.All (x => x.WorkspaceRemoteId != entry.WorkspaceRemoteId || x.Name != tag)) {
+                                newTags.All (x => x.WorkspaceRemoteId != entry.WorkspaceRemoteId || x.Name != tag)) {
                             // TODO: How to get the tag without a remote id?
                             //newTags.Add (await client.Get<TagJson> (tagRemoteId));
-							throw new NotImplementedException ();
+                            throw new NotImplementedException ();
                         }
                     }
                 }

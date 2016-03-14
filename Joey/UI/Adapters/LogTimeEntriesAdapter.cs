@@ -1,12 +1,12 @@
 ﻿using System;
-using System.Collections.ObjectModel;
+using System.Timers;
 using Android.Content;
 using Android.Graphics;
 using Android.Graphics.Drawables;
-using Android.OS;
 using Android.Support.V7.Widget;
 using Android.Views;
 using Android.Widget;
+using Toggl.Joey.UI.Activities;
 using Toggl.Joey.UI.Utils;
 using Toggl.Joey.UI.Views;
 using Toggl.Phoebe;
@@ -17,20 +17,9 @@ using XPlatUtils;
 
 namespace Toggl.Joey.UI.Adapters
 {
-    public interface IUndoAdapter
-    {
-        void SetItemsToNormalPosition ();
-
-        void SetItemToUndoPosition (RecyclerView.ViewHolder item);
-
-        bool IsUndo (int position);
-    }
-
     public class LogTimeEntriesAdapter : RecyclerCollectionDataAdapter<IHolder>, IUndoAdapter
     {
         public const int ViewTypeDateHeader = ViewTypeContent + 1;
-
-        private readonly Handler handler = new Handler ();
         private static readonly int ContinueThreshold = 1;
         private DateTime lastTimeEntryContinuedTime;
         private int lastUndoIndex = -1;
@@ -42,7 +31,7 @@ namespace Toggl.Joey.UI.Adapters
         }
 
         public LogTimeEntriesAdapter (RecyclerView owner, LogTimeEntriesVM viewModel)
-            : base (owner, viewModel.Collection)
+        : base (owner, viewModel.Collection)
         {
             this.viewModel = viewModel;
             lastTimeEntryContinuedTime = Time.UtcNow;
@@ -50,6 +39,8 @@ namespace Toggl.Joey.UI.Adapters
 
         private void OnContinueTimeEntry (RecyclerView.ViewHolder viewHolder)
         {
+            DeleteSelectedItem ();
+
             // Don't continue a new TimeEntry before
             // x seconds has passed.
             if (Time.UtcNow < lastTimeEntryContinuedTime + TimeSpan.FromSeconds (ContinueThreshold)) {
@@ -60,12 +51,6 @@ namespace Toggl.Joey.UI.Adapters
             viewModel.ContinueTimeEntry (viewHolder.AdapterPosition);
         }
 
-        private void OnRemoveTimeEntry (RecyclerView.ViewHolder viewHolder)
-        {
-            lastUndoIndex = -1;
-            viewModel.RemoveItemWithUndo (viewHolder.AdapterPosition);
-        }
-
         protected override RecyclerView.ViewHolder GetViewHolder (ViewGroup parent, int viewType)
         {
             View view;
@@ -73,10 +58,10 @@ namespace Toggl.Joey.UI.Adapters
 
             if (viewType == ViewTypeDateHeader) {
                 view = LayoutInflater.FromContext (ServiceContainer.Resolve<Context> ()).Inflate (Resource.Layout.LogTimeEntryListSectionHeader, parent, false);
-                holder = new HeaderListItemHolder (handler, view);
+                holder = new HeaderListItemHolder (view);
             } else {
                 view = LayoutInflater.FromContext (ServiceContainer.Resolve<Context> ()).Inflate (Resource.Layout.LogTimeEntryListItem, parent, false);
-                holder = new TimeEntryListItemHolder (handler, this, view);
+                holder = new TimeEntryListItemHolder (this, view);
             }
 
             return holder;
@@ -117,18 +102,6 @@ namespace Toggl.Joey.UI.Adapters
             return type;
         }
 
-        public override void OnViewDetachedFromWindow (Java.Lang.Object holder)
-        {
-            if (holder is TimeEntryListItemHolder) {
-                var mHolder = (TimeEntryListItemHolder)holder;
-                mHolder.DataSource = null;
-            } else if (holder is HeaderListItemHolder) {
-                var mHolder = (HeaderListItemHolder)holder;
-                mHolder.DisposeDataSource ();
-            }
-            base.OnViewDetachedFromWindow (holder);
-        }
-
         public void SetFooterState (RecyclerLoadState state)
         {
             // TODO: Once the footer is in the "finished" state.
@@ -137,13 +110,12 @@ namespace Toggl.Joey.UI.Adapters
             if (footerState == RecyclerLoadState.Finished) {
                 return;
             }
-
             footerState = state;
             NotifyItemChanged (ItemCount - 1);
         }
 
         #region IUndo interface implementation
-        public void SetItemsToNormalPosition ()
+        private void SetItemsToNormalPosition ()
         {
             var linearLayout = (LinearLayoutManager)Owner.GetLayoutManager ();
             var firstVisible = linearLayout.FindFirstVisibleItemPosition ();
@@ -162,12 +134,30 @@ namespace Toggl.Joey.UI.Adapters
             lastUndoIndex = -1;
         }
 
+        public void DeleteSelectedItem ()
+        {
+            var linearLayout = (LinearLayoutManager)Owner.GetLayoutManager ();
+            var firstVisible = linearLayout.FindFirstVisibleItemPosition ();
+            var lastVisible = linearLayout.FindLastVisibleItemPosition ();
+
+            for (int i = firstVisible; i < lastVisible + 1; i++) {
+                var holder = Owner.FindViewHolderForLayoutPosition (i);
+                if (holder is TimeEntryListItemHolder) {
+                    var tHolder = (TimeEntryListItemHolder)holder;
+                    if (!tHolder.IsNormalState) {
+                        viewModel.RemoveTimeEntry (i);
+                    }
+                }
+            }
+            lastUndoIndex = -1;
+        }
+
         public void SetItemToUndoPosition (RecyclerView.ViewHolder viewHolder)
         {
             // If another ViewHolder is visible and ready to Remove,
             // just Remove it.
             if (lastUndoIndex > -1) {
-                viewModel.RemoveItemWithUndo (lastUndoIndex);
+                viewModel.RemoveTimeEntry (lastUndoIndex);
             }
 
             // Save last selected ViewHolder index.
@@ -193,51 +183,64 @@ namespace Toggl.Joey.UI.Adapters
         protected override RecyclerView.ViewHolder GetFooterHolder (ViewGroup parent)
         {
             var view = LayoutInflater.FromContext (parent.Context).Inflate (
-                Resource.Layout.TimeEntryListFooter, parent, false);
+                           Resource.Layout.TimeEntryListFooter, parent, false);
             return new FooterHolder (view, viewModel);
         }
 
         [Shadow (ShadowAttribute.Mode.Top | ShadowAttribute.Mode.Bottom)]
-        public class HeaderListItemHolder : RecycledBindableViewHolder<DateHolder>
+        public class HeaderListItemHolder : RecyclerView.ViewHolder
         {
-            private readonly Handler handler;
-
             public TextView DateGroupTitleTextView { get; private set; }
-
             public TextView DateGroupDurationTextView { get; private set; }
+
+            private Timer timer;
+            private bool isRunning;
+            private TimeSpan duration;
+            private DateTime date;
 
             public HeaderListItemHolder (IntPtr a, Android.Runtime.JniHandleOwnership b) : base (a, b)
             {
             }
 
-            public HeaderListItemHolder (Handler handler, View root) : base (root)
+            public HeaderListItemHolder (View root) : base (root)
             {
-                this.handler = handler;
                 DateGroupTitleTextView = root.FindViewById<TextView> (Resource.Id.DateGroupTitleTextView).SetFont (Font.RobotoMedium);
                 DateGroupDurationTextView = root.FindViewById<TextView> (Resource.Id.DateGroupDurationTextView).SetFont (Font.Roboto);
             }
 
-            protected override void Rebind ()
+            public void Bind (DateHolder data)
             {
-                DateGroupTitleTextView.Text = GetRelativeDateString (DataSource.Date);
-                RebindDuration ();
+                date = data.Date;
+                duration = data.TotalDuration;
+                isRunning = data.IsRunning;
+                SetContentData ();
             }
 
-            private void RebindDuration ()
+            private void SetContentData ()
             {
-                if (DataSource == null || Handle == IntPtr.Zero) {
-                    return;
+                if (timer != null) {
+                    timer.Stop ();
+                    timer.Elapsed -= OnDurationElapsed;
+                    timer = null;
                 }
 
-                var duration = DataSource.TotalDuration;
-                DateGroupDurationTextView.Text = duration.ToString (@"hh\:mm\:ss");
-
-                if (DataSource.IsRunning) {
-                    handler.RemoveCallbacks (RebindDuration);
-                    handler.PostDelayed (RebindDuration, 1000 - duration.Milliseconds);
-                } else {
-                    handler.RemoveCallbacks (RebindDuration);
+                if (isRunning) {
+                    timer = new Timer (60000 - duration.Seconds * 1000 - duration.Milliseconds);
+                    timer.Elapsed += OnDurationElapsed;
+                    timer.Start ();
                 }
+
+                DateGroupTitleTextView.Text = GetRelativeDateString (date);
+                DateGroupDurationTextView.Text = FormatDuration (duration);
+            }
+
+            private void OnDurationElapsed (object sender, ElapsedEventArgs e)
+            {
+                // Update duration with new time.
+                duration = duration.Add (TimeSpan.FromMilliseconds (timer.Interval));
+                BaseActivity.CurrentActivity.RunOnUiThread (() => {
+                    SetContentData ();
+                });
             }
 
             private static string GetRelativeDateString (DateTime dateTime)
@@ -245,24 +248,56 @@ namespace Toggl.Joey.UI.Adapters
                 var ctx = ServiceContainer.Resolve<Context> ();
                 var ts = Time.Now.Date - dateTime.Date;
                 switch (ts.Days) {
-                    case 0:
+                case 0:
                     return ctx.Resources.GetString (Resource.String.Today);
-                    case 1:
+                case 1:
                     return ctx.Resources.GetString (Resource.String.Yesterday);
-                    case -1:
+                case -1:
                     return ctx.Resources.GetString (Resource.String.Tomorrow);
-                    default:
+                default:
                     return dateTime.ToDeviceDateString ();
                 }
+            }
+
+            private string FormatDuration (TimeSpan dr)
+            {
+                var ctx = ServiceContainer.Resolve<Context> ();
+                if (dr.TotalHours >= 1f) {
+                    return string.Format (
+                               ctx.Resources.GetString (Resource.String.LogHeaderDurationHoursMinutes),
+                               (int)dr.TotalHours,
+                               dr.Minutes
+                           );
+                }
+                if (dr.Minutes > 0) {
+                    return string.Format (
+                               ctx.Resources.GetString (Resource.String.LogHeaderDurationMinutes),
+                               dr.Minutes
+                           );
+                }
+                return string.Empty;
+            }
+
+            protected override void Dispose (bool disposing)
+            {
+                if (disposing) {
+                    if (timer != null) {
+                        timer.Stop ();
+                        timer.Elapsed -= OnDurationElapsed;
+                        timer = null;
+                    }
+                }
+                base.Dispose (disposing);
             }
         }
 
         private class TimeEntryListItemHolder : RecyclerView.ViewHolder, View.IOnTouchListener
         {
-            private readonly Handler handler;
             private readonly LogTimeEntriesAdapter owner;
+            private Timer timer;
+            private bool isRunning;
+            private TimeSpan duration;
 
-            public ITimeEntryHolder DataSource { get; set; }
             public View ColorView { get; private set; }
             public TextView ProjectTextView { get; private set; }
             public TextView ClientTextView { get; private set; }
@@ -277,16 +312,14 @@ namespace Toggl.Joey.UI.Adapters
             public View SwipeLayout { get; private set; }
             public View PreUndoLayout { get; private set; }
             public View UndoLayout { get; private set; }
-            public View RemoveButton { get; private set; }
             public View UndoButton { get; private set; }
 
             public TimeEntryListItemHolder (IntPtr a, Android.Runtime.JniHandleOwnership b) : base (a, b)
             {
             }
 
-            public TimeEntryListItemHolder (Handler handler, LogTimeEntriesAdapter owner, View root) : base (root)
+            public TimeEntryListItemHolder (LogTimeEntriesAdapter owner, View root) : base (root)
             {
-                this.handler = handler;
                 this.owner = owner;
 
                 ColorView = root.FindViewById<View> (Resource.Id.ColorView);
@@ -302,41 +335,36 @@ namespace Toggl.Joey.UI.Adapters
                 SwipeLayout = root.FindViewById<RelativeLayout> (Resource.Id.swipe_layout);
                 PreUndoLayout = root.FindViewById<FrameLayout> (Resource.Id.pre_undo_layout);
                 UndoButton = root.FindViewById<LinearLayout> (Resource.Id.undo_layout);
-                RemoveButton = root.FindViewById (Resource.Id.remove_button);
                 UndoButton = root.FindViewById (Resource.Id.undo_button);
                 UndoLayout = root.FindViewById (Resource.Id.undo_layout);
 
                 ContinueImageButton.SetOnTouchListener (this);
                 UndoButton.SetOnTouchListener (this);
-                RemoveButton.SetOnTouchListener (this);
             }
 
             bool View.IOnTouchListener.OnTouch (View v, MotionEvent e)
             {
                 bool returnValue = true;
                 switch (e.Action) {
-                    case MotionEventActions.Down:
-                        returnValue = ! (v == ContinueImageButton);
+                case MotionEventActions.Down:
+                    returnValue = ! (v == ContinueImageButton);
                     break;
 
-                    case MotionEventActions.Up:
-                        if (v == ContinueImageButton) {
-                            owner.OnContinueTimeEntry (this);
-                            returnValue = false;
-                        }
-                        if (v == RemoveButton) {
-                            owner.OnRemoveTimeEntry (this);
-                            returnValue = true;
-                        }
-                        if (v == UndoButton) {
-                            owner.SetItemsToNormalPosition();
-                            returnValue = true;
-                        }
+                case MotionEventActions.Up:
+                    if (v == ContinueImageButton) {
+                        owner.OnContinueTimeEntry (this);
+                        returnValue = false;
+                    }
+                    if (v == UndoButton) {
+                        owner.SetItemsToNormalPosition ();
+                        returnValue = true;
+                    }
                     break;
                 }
                 return returnValue;
             }
 
+            #region Undo cell methods.
             public bool IsNormalState
             {
                 get {
@@ -364,17 +392,16 @@ namespace Toggl.Joey.UI.Adapters
                 SwipeLayout.Visibility = ViewStates.Gone;
                 SwipeLayout.SetX (ItemView.Width);
             }
+            #endregion
 
             public void Bind (ITimeEntryHolder datasource)
             {
-                DataSource = datasource;
-
-                if (DataSource == null || Handle == IntPtr.Zero) {
+                if (datasource == null || Handle == IntPtr.Zero) {
                     return;
                 }
 
                 var color = Color.Transparent;
-                var entryData = DataSource.Entry.Data;
+                var entryData = datasource.Entry.Data;
                 var ctx = ServiceContainer.Resolve<Context> ();
 
                 // TODO RX: IsDirty has no meaning in the new architecture
@@ -390,7 +417,7 @@ namespace Toggl.Joey.UI.Adapters
                     notSyncedShape.SetColor (ctx.Resources.GetColor (Resource.Color.material_red));
                 }
 
-                var info = DataSource.Entry.Info;
+                var info = datasource.Entry.Info;
                 if (!string.IsNullOrWhiteSpace (info.ProjectData.Name)) {
                     color = Color.ParseColor (ProjectData.HexColors [info.Color % ProjectData.HexColors.Length]);
                     ProjectTextView.SetTextColor (color);
@@ -424,59 +451,63 @@ namespace Toggl.Joey.UI.Adapters
 
                 BillableView.Visibility = entryData.IsBillable ? ViewStates.Visible : ViewStates.Gone;
 
-
                 var shape = ColorView.Background as GradientDrawable;
                 if (shape != null) {
                     shape.SetColor (color);
                 }
 
-                RebindTags ();
+                // Show start/stop btn
+                if (datasource.Entry.Data.State == TimeEntryState.Running) {
+                    ContinueImageButton.SetImageResource (Resource.Drawable.IcStop);
+                } else {
+                    ContinueImageButton.SetImageResource (Resource.Drawable.IcPlayArrowGrey);
+                }
+
+                // Set tag number
+                var numberOfTags = datasource.Entry.Data.Tags.Count;
+                TagsView.BubbleCount = numberOfTags;
+                TagsView.Visibility = numberOfTags > 0 ? ViewStates.Visible : ViewStates.Gone;
+
+                // Set duration
+                duration = datasource.GetDuration ();
+                isRunning = datasource.Entry.Data.State == TimeEntryState.Running;
                 RebindDuration ();
             }
 
             private void RebindDuration ()
             {
-                if (DataSource == null || Handle == IntPtr.Zero) {
-                    return;
+                if (timer != null) {
+                    timer.Stop ();
+                    timer.Elapsed -= OnDurationElapsed;
+                    timer = null;
                 }
 
-                var duration = DataSource.GetDuration ();
-                // TODO RX: Pass UserData
+                if (isRunning) {
+                    timer = new Timer (1000 - duration.Milliseconds);
+                    timer.Elapsed += OnDurationElapsed;
+                    timer.Start ();
+                }
+
                 DurationTextView.Text = TimeEntryData.GetFormattedDuration (null, duration);
-
-                if (DataSource.Entry.Data.State == TimeEntryState.Running) {
-                    handler.RemoveCallbacks (RebindDuration);
-                    handler.PostDelayed (RebindDuration, 1000 - duration.Milliseconds);
-                } else {
-                    handler.RemoveCallbacks (RebindDuration);
-                }
-
-                ShowStopButton ();
             }
 
-            private void ShowStopButton ()
+            private void OnDurationElapsed (object sender, ElapsedEventArgs e)
             {
-                if (DataSource == null || Handle == IntPtr.Zero) {
-                    return;
-                }
-
-                if (DataSource.Entry.Data.State == TimeEntryState.Running) {
-                    ContinueImageButton.SetImageResource (Resource.Drawable.IcStop);
-                } else {
-                    ContinueImageButton.SetImageResource (Resource.Drawable.IcPlayArrowGrey);
-                }
+                // Update duration with new time.
+                duration = duration.Add (TimeSpan.FromMilliseconds (timer.Interval));
+                BaseActivity.CurrentActivity.RunOnUiThread (() => RebindDuration ());
             }
 
-            private void RebindTags ()
+            protected override void Dispose (bool disposing)
             {
-                // Protect against Java side being GCed
-                if (Handle == IntPtr.Zero) {
-                    return;
+                if (disposing) {
+                    if (timer != null) {
+                        timer.Stop ();
+                        timer.Elapsed -= OnDurationElapsed;
+                        timer = null;
+                    }
                 }
-
-                var numberOfTags = DataSource.Entry.Info.Tags.Count;
-                TagsView.BubbleCount = numberOfTags;
-                TagsView.Visibility = numberOfTags > 0 ? ViewStates.Visible : ViewStates.Gone;
+                base.Dispose (disposing);
             }
         }
 

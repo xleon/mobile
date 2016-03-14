@@ -22,6 +22,16 @@ namespace Toggl.Joey.UI.Activities
         public static readonly string ExtraTimeEntryId = "com.toggl.timer.time_entry_id";
         public static readonly string ExtraGroupedTimeEntriesGuids = "com.toggl.timer.grouped_time_entry_id";
 
+        // Explanation of native constructor
+        // http://stackoverflow.com/questions/10593022/monodroid-error-when-calling-constructor-of-custom-view-twodscrollview/10603714#10603714
+        public EditTimeEntryActivity (System.IntPtr a, Android.Runtime.JniHandleOwnership b) : base (a, b)
+        {
+        }
+
+        public EditTimeEntryActivity ()
+        {
+        }
+
         protected override void OnCreateActivity (Bundle state)
         {
             base.OnCreateActivity (state);

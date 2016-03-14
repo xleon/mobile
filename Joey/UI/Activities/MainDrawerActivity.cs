@@ -67,6 +67,16 @@ namespace Toggl.Joey.UI.Activities
         public Toolbar MainToolbar { get; set; }
 
 
+        // Explanation of native constructor
+        // http://stackoverflow.com/questions/10593022/monodroid-error-when-calling-constructor-of-custom-view-twodscrollview/10603714#10603714
+        public MainDrawerActivity (IntPtr a, Android.Runtime.JniHandleOwnership b) : base (a, b)
+        {
+        }
+
+        public MainDrawerActivity ()
+        {
+        }
+
         protected override void OnCreateActivity (Bundle state)
         {
             base.OnCreateActivity (state);

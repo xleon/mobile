@@ -20,6 +20,12 @@ namespace Toggl.Joey.UI.Adapters
         private List<DrawerItem> rowItems;
         private readonly AuthManager authManager;
 
+        // Explanation of native constructor
+        // http://stackoverflow.com/questions/10593022/monodroid-error-when-calling-constructor-of-custom-view-twodscrollview/10603714#10603714
+        public DrawerListAdapter (IntPtr a, Android.Runtime.JniHandleOwnership b) : base (a, b)
+        {
+        }
+
         public DrawerListAdapter ()
         {
             rowItems = new List<DrawerItem> () {
@@ -118,6 +124,12 @@ namespace Toggl.Joey.UI.Adapters
             public ImageView IconImageView { get; private set; }
 
             public TextView TitleTextView { get; private set; }
+
+            // Explanation of native constructor
+            // http://stackoverflow.com/questions/10593022/monodroid-error-when-calling-constructor-of-custom-view-twodscrollview/10603714#10603714
+            public DrawerItemViewHolder (IntPtr a, Android.Runtime.JniHandleOwnership b) : base (a, b)
+            {
+            }
 
             public DrawerItemViewHolder (View root) : base (root)
             {

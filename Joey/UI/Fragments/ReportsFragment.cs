@@ -357,6 +357,12 @@ namespace Toggl.Joey.UI.Fragments
             private int focus = -1;
             private Controller controller;
 
+            // Explanation of native constructor
+            // http://stackoverflow.com/questions/10593022/monodroid-error-when-calling-constructor-of-custom-view-twodscrollview/10603714#10603714
+            public ReportProjectAdapter (IntPtr a, Android.Runtime.JniHandleOwnership b) : base (a, b)
+            {
+            }
+
             public ReportProjectAdapter (Controller controller, List<ReportProject> dataView)
             {
                 this.controller = controller;

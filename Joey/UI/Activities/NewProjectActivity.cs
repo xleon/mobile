@@ -14,6 +14,16 @@ namespace Toggl.Joey.UI.Activities
     {
         public static readonly string WorkspaceIdArgument = "com.toggl.timer.workspace_id";
 
+        // Explanation of native constructor
+        // http://stackoverflow.com/questions/10593022/monodroid-error-when-calling-constructor-of-custom-view-twodscrollview/10603714#10603714
+        public NewProjectActivity (System.IntPtr a, Android.Runtime.JniHandleOwnership b) : base (a, b)
+        {
+        }
+
+        public NewProjectActivity ()
+        {
+        }
+
         protected override void OnCreateActivity (Bundle state)
         {
             base.OnCreateActivity (state);

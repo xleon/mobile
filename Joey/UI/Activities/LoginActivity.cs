@@ -61,6 +61,16 @@ namespace Toggl.Joey.UI.Activities
 
         protected Button GoogleLoginButton { get; private set; }
 
+        // Explanation of native constructor
+        // http://stackoverflow.com/questions/10593022/monodroid-error-when-calling-constructor-of-custom-view-twodscrollview/10603714#10603714
+        public LoginActivity (IntPtr a, Android.Runtime.JniHandleOwnership b) : base (a, b)
+        {
+        }
+
+		public LoginActivity ()
+		{
+		}
+
         private void FindViews ()
         {
             ScrollView = FindViewById<ScrollView> (Resource.Id.ScrollView);

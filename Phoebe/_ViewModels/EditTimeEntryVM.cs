@@ -26,7 +26,7 @@ namespace Toggl.Phoebe._ViewModels
             durationTimer.Elapsed += DurationTimerCallback;
 
             this.timerState = timerState;
-			IsManual = timeData.Id == Guid.Empty;
+            IsManual = timeData.Id == Guid.Empty;
             richData = new RichTimeEntry (timerState, timeData);
 
             UpdateView (x => {
@@ -40,9 +40,9 @@ namespace Toggl.Phoebe._ViewModels
 
             // Save previous state.
             previousData = IsManual
-				// Hack to force tag saving even if there're no other changes
-                ? new RichTimeEntry (timerState, richData.Data.With (x => x.Tags = new List<string> ()))
-                : new RichTimeEntry (richData.Data, richData.Info);
+                           // Hack to force tag saving even if there're no other changes
+                           ? new RichTimeEntry (timerState, richData.Data.With (x => x.Tags = new List<string> ()))
+                           : new RichTimeEntry (richData.Data, richData.Info);
 
             ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Edit Time Entry";
         }
@@ -78,35 +78,39 @@ namespace Toggl.Phoebe._ViewModels
         #region viewModel State properties
         public bool IsManual { get; private set; }
 
-        public string Duration {
+        public string Duration
+        {
             get {
                 // TODO: check substring function for long times
                 return TimeSpan.FromSeconds (richData.Data.GetDuration ().TotalSeconds)
-                               .ToString ().Substring (0, 8);
+                       .ToString ().Substring (0, 8);
             }
         }
 
-        public DateTime StartData {
+        public DateTime StartData
+        {
             get {
                 return richData.Data.StartTime == DateTime.MinValue
-                               ? DateTime.UtcNow.AddMinutes (-1).ToLocalTime ()
-                               : richData.Data.StartTime.ToLocalTime ();
+                       ? DateTime.UtcNow.AddMinutes (-1).ToLocalTime ()
+                       : richData.Data.StartTime.ToLocalTime ();
             }
         }
 
-        public DateTime StopDate {
+        public DateTime StopDate
+        {
             get {
                 return richData.Data.StopTime.HasValue
-                           ? richData.Data.StopTime.Value.ToLocalTime ()
-                           : DateTime.UtcNow.ToLocalTime ();
+                       ? richData.Data.StopTime.Value.ToLocalTime ()
+                       : DateTime.UtcNow.ToLocalTime ();
             }
         }
 
-        public string ProjectColorHex {
+        public string ProjectColorHex
+        {
             get {
                 return richData.Info.ProjectData.Id != Guid.Empty
-                               ? ProjectData.HexColors[richData.Info.ProjectData.Color % ProjectData.HexColors.Length]
-                               : ProjectData.HexColors[ProjectData.DefaultColor];
+                       ? ProjectData.HexColors[richData.Info.ProjectData.Color % ProjectData.HexColors.Length]
+                       : ProjectData.HexColors[ProjectData.DefaultColor];
             }
         }
 
@@ -152,7 +156,7 @@ namespace Toggl.Phoebe._ViewModels
                 if (diffTime.TotalSeconds > 0) {
                     x.StartTime = x.StartTime.Truncate (TimeSpan.TicksPerMinute);
                     x.StopTime = ((DateTime)x.StopTime).Truncate (TimeSpan.TicksPerMinute);
-				}
+                }
             });
             ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Change Stop Time";
         }
@@ -220,10 +224,10 @@ namespace Toggl.Phoebe._ViewModels
                 if (changedProperties.Length == 0) {
                     // TODO: This should update all properties, check
                     RaisePropertyChanged ();
-                }
-                else {
-					foreach (var prop in changedProperties)
-						RaisePropertyChanged (prop);
+                } else {
+                    foreach (var prop in changedProperties) {
+                        RaisePropertyChanged (prop);
+                    }
                 }
             });
         }
@@ -239,12 +243,12 @@ namespace Toggl.Phoebe._ViewModels
 
                     richData = new RichTimeEntry (
                         timerState,
-                        richData.Data.With (x => {
-                            x.WorkspaceId = workspace.Id;
-                            x.IsBillable = workspace.IsPremium && x.IsBillable;
-                            x.Tags = UpdateTagsWithWorkspace (timerState, x.Id, workspace.Id, TagList)
-                                .Select (t => t.Name).ToList ();
-                        })
+                    richData.Data.With (x => {
+                        x.WorkspaceId = workspace.Id;
+                        x.IsBillable = workspace.IsPremium && x.IsBillable;
+                        x.Tags = UpdateTagsWithWorkspace (timerState, x.Id, workspace.Id, TagList)
+                                 .Select (t => t.Name).ToList ();
+                    })
                     );
                 }
             }
@@ -254,9 +258,9 @@ namespace Toggl.Phoebe._ViewModels
         {
             // Update on UI Thread
             ServiceContainer.Resolve<IPlatformUtils> ().DispatchOnUIThread (() => {
-				var duration = richData.Data.GetDuration ();
+                var duration = richData.Data.GetDuration ();
                 // Hack to ensure the timer triggers every second even if there're some extra milliseconds
-				durationTimer.Interval = 1000 - duration.Milliseconds;
+                durationTimer.Interval = 1000 - duration.Milliseconds;
                 RaisePropertyChanged (nameof (Duration));
             });
         }
@@ -268,7 +272,7 @@ namespace Toggl.Phoebe._ViewModels
             }
 
             var defaultTagList = timerState.Tags.Values.Where (
-                r => r.Name == DefaultTag && r.WorkspaceId == workspaceId).ToList ();
+                                     r => r.Name == DefaultTag && r.WorkspaceId == workspaceId).ToList ();
 
             if (defaultTagList.Count == 0) {
                 defaultTagList = new List<TagData> { new TagData (workspaceId, DefaultTag) };

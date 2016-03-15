@@ -28,7 +28,7 @@ namespace Toggl.Phoebe._ViewModels
                 IsActive = true,
                 IsPrivate = true
             };
-			ServiceContainer.Resolve<ITracker> ().CurrentScreen = "New Project";
+            ServiceContainer.Resolve<ITracker> ().CurrentScreen = "New Project";
         }
 
         public void Dispose ()

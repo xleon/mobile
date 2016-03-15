@@ -34,12 +34,12 @@ namespace Toggl.Phoebe._ViewModels
                     r => r.WorkspaceId == workspace.Id && r.Name == TagName);
 
             var tag = existing
-                ?? new TagData {
-                    Id = Guid.NewGuid (),
-                    Name = TagName,
-                    WorkspaceId = workspace.Id,
-                    WorkspaceRemoteId = workspace.RemoteId.HasValue ? workspace.RemoteId.Value : 0
-                };
+            ?? new TagData {
+                Id = Guid.NewGuid (),
+                Name = TagName,
+                WorkspaceId = workspace.Id,
+                WorkspaceRemoteId = workspace.RemoteId.HasValue ? workspace.RemoteId.Value : 0
+            };
 
             RxChain.Send (new DataMsg.TagsPut (new[] { tag }), testOptions);
             return tag;

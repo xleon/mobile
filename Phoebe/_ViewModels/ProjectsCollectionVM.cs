@@ -31,17 +31,17 @@ namespace Toggl.Phoebe._ViewModels
             var userData = ServiceContainer.Resolve<AuthManager> ().User;
 
             clients = timerState.Clients.Values
-                                .OrderBy (r => r.Name).ToList ();
+                      .OrderBy (r => r.Name).ToList ();
 
             tasks = timerState.Tasks.Values
-                              .Where (r => r.IsActive)
-                              .OrderBy (r => r.Name).ToList ();
+                    .Where (r => r.IsActive)
+                    .OrderBy (r => r.Name).ToList ();
 
             projects = timerState.GetUserAccessibleProjects (userData.Id).Select (
-                p => new SuperProjectData (
-                    p,
-                    clients.FirstOrDefault (c => c.Id == p.ClientId),
-                    tasks.Count (t => t.ProjectId == p.Id))).ToList ();
+                           p => new SuperProjectData (
+                p,
+                clients.FirstOrDefault (c => c.Id == p.ClientId),
+                tasks.Count (t => t.ProjectId == p.Id))).ToList ();
 
             // Create collection
             CreateSortedCollection (projects);

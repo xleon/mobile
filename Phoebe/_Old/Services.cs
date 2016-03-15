@@ -22,7 +22,7 @@ namespace Toggl.Phoebe
                 ServiceContainer.Register<WidgetSyncManager> (() => new WidgetSyncManager ());
             }
             ServiceContainer.Register<IPushClient> (() => new PushRestClient (Build.ApiUrl));
-			// TODO RX: Remove old IDataStore
+            // TODO RX: Remove old IDataStore
             ServiceContainer.Register<IDataStore> (CreateDataStore);
             ServiceContainer.Register<_Data.ISyncDataStore> (CreateSyncDataStore);
             ServiceContainer.Register<LogStore> ();

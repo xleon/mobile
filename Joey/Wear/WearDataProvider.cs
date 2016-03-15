@@ -43,16 +43,16 @@ namespace Toggl.Joey.Wear
             var userId = ServiceContainer.Resolve<AuthManager> ().GetUserId ();
 
             var entries = await store.Table<TimeEntryData>()
-                                     .Where (r => r.State != TimeEntryState.New
+                          .Where (r => r.State != TimeEntryState.New
                                   && r.DeletedAt == null
                                   && r.UserId == userId)
-                                     .OrderByDescending (r => r.StartTime)
-                                     .ToListAsync();
+                          .OrderByDescending (r => r.StartTime)
+                          .ToListAsync();
 
             var uniqueEntries = entries.GroupBy (x  => new {x.ProjectId, x.Description })
-                                       .Select (grp => grp.First())
-                                       .Take (itemCount)
-                                       .ToList();
+            .Select (grp => grp.First())
+            .Take (itemCount)
+            .ToList();
 
             var simpleEntries = new List<SimpleTimeEntryData> ();
             foreach (var entry in uniqueEntries) {
@@ -68,15 +68,15 @@ namespace Toggl.Joey.Wear
                 var colorString = ProjectModel.HexColors [color % ProjectModel.HexColors.Length];
 
                 simpleEntries.Add (
-                    new SimpleTimeEntryData {
-                        Id = entry.Id,
-                        IsRunning = entry.State == TimeEntryState.Running,
-                        Description = entry.Description,
-                        Project = projectName,
-                        ProjectColor = colorString,
-                        StartTime = entry.StartTime,
-                        StopTime = entry.StopTime ?? DateTime.MinValue
-                    });
+                new SimpleTimeEntryData {
+                    Id = entry.Id,
+                    IsRunning = entry.State == TimeEntryState.Running,
+                    Description = entry.Description,
+                    Project = projectName,
+                    ProjectColor = colorString,
+                    StartTime = entry.StartTime,
+                    StopTime = entry.StopTime ?? DateTime.MinValue
+                });
             }
             return simpleEntries;
         }

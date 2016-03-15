@@ -51,7 +51,7 @@ namespace Toggl.Joey.UI.Fragments
         // binding references
         private Binding<bool, bool> newMenuBinding;
         private Binding<int, int> hasItemsBinding;
-		private Binding<LogTimeEntriesVM.LoadInfoType, LogTimeEntriesVM.LoadInfoType> loadInfoBinding;
+        private Binding<LogTimeEntriesVM.LoadInfoType, LogTimeEntriesVM.LoadInfoType> loadInfoBinding;
         private Binding<ObservableCollection<IHolder>, ObservableCollection<IHolder>> collectionBinding;
         private Binding<bool, FABButtonState> fabBinding;
 
@@ -279,14 +279,14 @@ namespace Toggl.Joey.UI.Fragments
             View emptyView = emptyMessageView;
             var isWelcome = ServiceContainer.Resolve<ISettingsStore> ().ShowWelcome;
             var hasItems = ViewModel.Collection.Count > 0;
-			
+
             // TODO RX: OBM Experiments
             //var isInExperiment = OBMExperimentManager.IncludedInExperiment ();
             //if (isWelcome && isInExperiment) {
             //    emptyView = experimentEmptyView;
             //} else {
-                // always keeps this view hidden if it is not needed.
-                experimentEmptyView.Visibility = ViewStates.Gone;
+            // always keeps this view hidden if it is not needed.
+            experimentEmptyView.Visibility = ViewStates.Gone;
             //}
 
             // According to settings, show welcome message or no.

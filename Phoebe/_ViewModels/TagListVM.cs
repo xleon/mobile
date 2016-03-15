@@ -37,8 +37,8 @@ namespace Toggl.Phoebe._ViewModels
 
             var selectedTags =
                 timerState.Tags.Values.Where (
-                        r => r.WorkspaceId == workspaceId &&
-                            previousSelectedIds.Contains (r.Id)).ToList ();
+                    r => r.WorkspaceId == workspaceId &&
+                    previousSelectedIds.Contains (r.Id)).ToList ();
 
             selectedTags.Sort (
                 (a, b) => string.Compare (a?.Name ?? "", b?.Name ?? "", StringComparison.Ordinal));

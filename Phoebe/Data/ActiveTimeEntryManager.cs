@@ -77,9 +77,9 @@ namespace Toggl.Phoebe.Data
         {
             var store = ServiceContainer.Resolve<IDataStore> ();
             var teList = await store.Table<TimeEntryData> ()
-                                    .Where (r => r.State == TimeEntryState.Running && r.DeletedAt == null)
-                                    .OrderByDescending (r => r.StartTime)
-                                    .ToListAsync ();
+                         .Where (r => r.State == TimeEntryState.Running && r.DeletedAt == null)
+                         .OrderByDescending (r => r.StartTime)
+                         .ToListAsync ();
 
             ActiveTimeEntry = teList.Any () ? teList.FirstOrDefault () : TimeEntryModel.GetDraft ();
             IsRunning = ActiveTimeEntry.State == TimeEntryState.Running;

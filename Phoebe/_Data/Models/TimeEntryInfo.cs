@@ -39,13 +39,13 @@ namespace Toggl.Phoebe._Data.Models
             int? color = null)
         {
             return new TimeEntryInfo (
-                wsData ?? this.WorkspaceData,
-                projectData ?? this.ProjectData,
-                clientData ?? this.ClientData,
-                taskData ?? this.TaskData,
-                tags ?? this.Tags,
-                color.HasValue ? color.Value : this.Color
-            );
+                       wsData ?? this.WorkspaceData,
+                       projectData ?? this.ProjectData,
+                       clientData ?? this.ClientData,
+                       taskData ?? this.TaskData,
+                       tags ?? this.Tags,
+                       color.HasValue ? color.Value : this.Color
+                   );
         }
     }
 }

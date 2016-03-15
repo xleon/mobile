@@ -107,9 +107,9 @@ namespace Toggl.Joey
         private void HandleTimeEntryPropertyChanged (string prop)
         {
             if (prop == TimeEntryModel.PropertyProject
-                || prop == TimeEntryModel.PropertyTask
-                || prop == TimeEntryModel.PropertyDescription
-                || prop == TimeEntryModel.PropertyStartTime) {
+                    || prop == TimeEntryModel.PropertyTask
+                    || prop == TimeEntryModel.PropertyDescription
+                    || prop == TimeEntryModel.PropertyStartTime) {
                 SyncNotification ();
             }
         }
@@ -168,9 +168,9 @@ namespace Toggl.Joey
                 var correction = ServiceContainer.Resolve<TimeCorrectionManager> ().Correction;
                 var startTime = currentTimeEntry.StartTime - correction;
                 runningBuilder
-                    .SetContentTitle (GetProjectName (currentTimeEntry))
-                    .SetContentText (GetDescription (currentTimeEntry))
-                    .SetWhen ((long)startTime.ToUnix ().TotalMilliseconds);
+                .SetContentTitle (GetProjectName (currentTimeEntry))
+                .SetContentText (GetDescription (currentTimeEntry))
+                .SetWhen ((long)startTime.ToUnix ().TotalMilliseconds);
 
                 notificationManager.Notify (RunningNotifId, runningBuilder.Build ());
             }
@@ -209,15 +209,15 @@ namespace Toggl.Joey
             var pendingStopIntent = PendingIntent.GetBroadcast (ctx, 0, stopIntent, PendingIntentFlags.UpdateCurrent);
 
             return new NotificationCompat.Builder (ctx)
-                                         .SetAutoCancel (false)
-                                         .SetUsesChronometer (true)
-                                         .SetOngoing (true)
-                                         .SetSmallIcon (Resource.Drawable.IcNotificationIcon)
-                                         // TODO: Removed Stop button from notification until
-                                         // find a fiable solution
-                                         // .AddAction (Resource.Drawable.IcActionStop, res.GetString (Resource.String.RunningNotificationStopButton), pendingStopIntent)
-                                         // .AddAction (Resource.Drawable.IcActionEdit, res.GetString (Resource.String.RunningNotificationEditButton), editIntent)
-                                         .SetContentIntent (pendingOpenIntent);
+                   .SetAutoCancel (false)
+                   .SetUsesChronometer (true)
+                   .SetOngoing (true)
+                   .SetSmallIcon (Resource.Drawable.IcNotificationIcon)
+                   // TODO: Removed Stop button from notification until
+                   // find a fiable solution
+                   // .AddAction (Resource.Drawable.IcActionStop, res.GetString (Resource.String.RunningNotificationStopButton), pendingStopIntent)
+                   // .AddAction (Resource.Drawable.IcActionEdit, res.GetString (Resource.String.RunningNotificationEditButton), editIntent)
+                   .SetContentIntent (pendingOpenIntent);
         }
 
         private static NotificationCompat.Builder CreateIdleNotificationBuilder (Context ctx)
@@ -230,12 +230,12 @@ namespace Toggl.Joey
             var pendingOpenIntent = PendingIntent.GetActivity (ctx, 0, openIntent, 0);
 
             return new NotificationCompat.Builder (ctx)
-                                         .SetAutoCancel (false)
-                                         .SetOngoing (true)
-                                         .SetSmallIcon (Resource.Drawable.IcNotificationIconIdle)
-                                         .SetContentIntent (pendingOpenIntent)
-                                         .SetContentTitle (res.GetString (Resource.String.IdleNotificationTitle))
-                                         .SetContentText (res.GetString (Resource.String.IdleNotificationText));
+                   .SetAutoCancel (false)
+                   .SetOngoing (true)
+                   .SetSmallIcon (Resource.Drawable.IcNotificationIconIdle)
+                   .SetContentIntent (pendingOpenIntent)
+                   .SetContentTitle (res.GetString (Resource.String.IdleNotificationTitle))
+                   .SetContentText (res.GetString (Resource.String.IdleNotificationText));
         }
     }
 }

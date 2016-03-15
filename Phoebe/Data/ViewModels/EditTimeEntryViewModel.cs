@@ -300,22 +300,22 @@ namespace Toggl.Phoebe.Data.ViewModels
             var existingTagRelations = new List<TimeEntryTagData> ();
 
             var relations = await dataStore.Table<TimeEntryTagData> ()
-                                           .Where (r => r.TimeEntryId == timeEntry.Id && r.DeletedAt == null)
-                                           .ToListAsync();
+                            .Where (r => r.TimeEntryId == timeEntry.Id && r.DeletedAt == null)
+                            .ToListAsync();
             existingTagRelations = new List<TimeEntryTagData> (relations);
 
             existingTagRelations.ForEach ((obj) => Console.WriteLine (obj.Id + " " + obj.TagId + " " + obj.TimeEntryId));
             // Delete unused tag relations:
             existingTagRelations.Where (r => !newTagList.Exists (t => t.Id == r.TagId))
-                                .ForEach (async (obj) => await dataStore.DeleteAsync (obj));
+            .ForEach (async (obj) => await dataStore.DeleteAsync (obj));
             // Add new relationships.
             newTagList.Where (t => !existingTagRelations.Exists (r => r.TagId == t.Id))
-                      .ForEach (async (obj) => await dataStore.PutAsync (new TimeEntryTagData {TagId = obj.Id, TimeEntryId = timeEntry.Id }));
+            .ForEach (async (obj) => await dataStore.PutAsync (new TimeEntryTagData {TagId = obj.Id, TimeEntryId = timeEntry.Id }));
 
 
             relations = await dataStore.Table<TimeEntryTagData> ()
-                                       .Where (r => r.TimeEntryId == timeEntry.Id && r.DeletedAt == null)
-                                       .ToListAsync();
+                        .Where (r => r.TimeEntryId == timeEntry.Id && r.DeletedAt == null)
+                        .ToListAsync();
             existingTagRelations = new List<TimeEntryTagData> (relations);
             return timeEntry;
         }
@@ -328,8 +328,8 @@ namespace Toggl.Phoebe.Data.ViewModels
 
             var dataStore = ServiceContainer.Resolve<IDataStore> ();
             var defaultTagList = await dataStore.Table<TagData> ()
-                                                .Where (r => r.Name == DefaultTag && r.WorkspaceId == workspaceId && r.DeletedAt == null)
-                                                .ToListAsync();
+                                 .Where (r => r.Name == DefaultTag && r.WorkspaceId == workspaceId && r.DeletedAt == null)
+                                 .ToListAsync();
 
             if (defaultTagList.Count == 0) {
                 defaultTagList = new List<TagData> ();
@@ -350,8 +350,8 @@ namespace Toggl.Phoebe.Data.ViewModels
 
             // Get new workspace tag list.
             var tagList = await dataStore.Table<TagData> ()
-                                         .Where (r => r.WorkspaceId == workspaceId && r.DeletedAt == null)
-                                         .ToListAsync();
+                          .Where (r => r.WorkspaceId == workspaceId && r.DeletedAt == null)
+                          .ToListAsync();
 
             // Get new tags to create and existing tags from previous workspace.
             var tagsToCreate = new List<TagData> (oldTagList.Where (t => tagList.IndexOf (n => n.Name.Equals (t.Name)) == -1));
@@ -368,8 +368,8 @@ namespace Toggl.Phoebe.Data.ViewModels
 
             // Delete existing tag relationships from relationship table.
             var oldRelationships = await dataStore.Table<TimeEntryTagData> ()
-                                                  .Where (t => t.TimeEntryId == timeEntryId && t.DeletedAt == null)
-                                                  .ToListAsync ();
+                                   .Where (t => t.TimeEntryId == timeEntryId && t.DeletedAt == null)
+                                   .ToListAsync ();
             oldRelationships.ForEach (async (r) => await dataStore.DeleteAsync (r));
 
             // Create and save new relationships

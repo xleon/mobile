@@ -97,8 +97,8 @@ namespace Toggl.Phoebe
                 // Query local data:
                 var store = ServiceContainer.Resolve<IDataStore> ();
                 var entries = await store.Table<TimeEntryData> ()
-                                         .OrderByDescending (r => r.StartTime) .Where (r => r.DeletedAt == null && r.State != TimeEntryState.New)
-                                         .Take (4).ToListAsync ().ConfigureAwait (false);
+                              .OrderByDescending (r => r.StartTime) .Where (r => r.DeletedAt == null && r.State != TimeEntryState.New)
+                              .Take (4).ToListAsync ().ConfigureAwait (false);
 
                 var widgetEntries = new List<WidgetEntryData>();
 

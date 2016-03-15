@@ -36,8 +36,8 @@ namespace Toggl.Phoebe._ViewModels
         private readonly System.Timers.Timer durationTimer;
         private readonly IDisposable subscriptionState;
 
-		public bool IsGroupedMode { get; private set; }
-		public string Duration { get; private set; }
+        public bool IsGroupedMode { get; private set; }
+        public string Duration { get; private set; }
         public bool IsEntryRunning { get; private set; }
         public LoadInfoType LoadInfo { get; private set; }
         public RichTimeEntry ActiveEntry { get; private set; }
@@ -54,18 +54,19 @@ namespace Toggl.Phoebe._ViewModels
             // RX TODO: Remove MessageBus
             var bus = ServiceContainer.Resolve<MessageBus> ();
             subscriptionSettingChanged = bus.Subscribe<Data.SettingChangedMessage> (msg => {
-                if (msg.Name == "GroupedTimeEntries")
+                if (msg.Name == "GroupedTimeEntries") {
                     ResetCollection ();
+                }
             });
 
             ResetCollection ();
-			subscriptionState =
-				StoreManager.Singleton
-				            .Observe (app => app.TimerState)
-                            .StartWith (timerState)
-				            .Scan<TimerState, Tuple<TimerState, DownloadResult>> (
-					            null, (tuple, state) => Tuple.Create (state, tuple != null ? tuple.Item2 : null))
-				            .Subscribe (tuple => UpdateState (tuple.Item1, tuple.Item2));
+            subscriptionState =
+                StoreManager.Singleton
+                .Observe (app => app.TimerState)
+                .StartWith (timerState)
+                .Scan<TimerState, Tuple<TimerState, DownloadResult>> (
+                    null, (tuple, state) => Tuple.Create (state, tuple != null ? tuple.Item2 : null))
+                .Subscribe (tuple => UpdateState (tuple.Item1, tuple.Item2));
         }
 
         private void ResetCollection ()
@@ -162,15 +163,13 @@ namespace Toggl.Phoebe._ViewModels
                 if (ActiveEntry == null || ActiveEntry.Data != timerState.ActiveTimeEntry) {
                     if (timerState.ActiveTimeEntry.Id == Guid.Empty) {
                         ActiveEntry = new RichTimeEntry (timerState, new TimeEntryData ());
-                    }
-                    else {
+                    } else {
                         ActiveEntry = timerState.TimeEntries[timerState.ActiveTimeEntry.Id];
 
                         // Check if an entry is running.
                         if (IsEntryRunning = ActiveEntry.Data.State == TimeEntryState.Running) {
                             durationTimer.Start ();
-                        }
-                        else {
+                        } else {
                             durationTimer.Stop ();
                             Duration = TimeSpan.FromSeconds (0).ToString ().Substring (0, 8);
                         }

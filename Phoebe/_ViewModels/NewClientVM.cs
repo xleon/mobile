@@ -16,7 +16,7 @@ namespace Toggl.Phoebe._ViewModels
 
         public NewClientVM (TimerState timerState, Guid workspaceId)
         {
-			var workspace = timerState.Workspaces[workspaceId];
+            var workspace = timerState.Workspaces[workspaceId];
             this.timerState = timerState;
             model = new ClientData {
                 Id = Guid.NewGuid (),
@@ -38,8 +38,8 @@ namespace Toggl.Phoebe._ViewModels
             var clientName = ClientName;
             var existing =
                 timerState.Clients.Values
-                          .SingleOrDefault (
-                              r => r.WorkspaceId == model.WorkspaceId && r.Name == clientName);
+                .SingleOrDefault (
+                    r => r.WorkspaceId == model.WorkspaceId && r.Name == clientName);
 
             if (existing != null) {
                 model = existing;
@@ -48,7 +48,7 @@ namespace Toggl.Phoebe._ViewModels
             }
 
             RxChain.Send (new DataMsg.ClientDataPut (model), testOptions);
-            
+
             return model;
         }
     }

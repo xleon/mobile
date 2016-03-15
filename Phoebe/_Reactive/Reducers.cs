@@ -40,8 +40,8 @@ namespace Toggl.Phoebe._Reactive
             var request = (msg as DataMsg.Request).Data;
             var newState =
                 request is ServerRequest.DownloadEntries
-                                        ? state.With (downloadResult: state.DownloadResult.With (isSyncing: true))
-                                        : state.With (authResult: AuthResult.Authenticating);
+                ? state.With (downloadResult: state.DownloadResult.With (isSyncing: true))
+                : state.With (authResult: AuthResult.Authenticating);
             return DataSyncMsg.Create (newState, request: request);
         }
 
@@ -110,20 +110,20 @@ namespace Toggl.Phoebe._Reactive
 
                 var hasMore = receivedData.OfType<TimeEntryData> ().Any ();
 
-            return DataSyncMsg.Create (
-                    state.With (
-                        downloadResult: state.DownloadResult.With (isSyncing: false, hasMore: hasMore, hadErrors: false),
-                        workspaces: state.Update (state.Workspaces, updated),
-                        projects: state.Update (state.Projects, updated),   
-                        workspaceUsers: state.Update (state.WorkspaceUsers, updated),
-                        projectUsers: state.Update (state.ProjectUsers, updated),
-                        clients: state.Update (state.Clients, updated),
-                        tasks: state.Update (state.Tasks, updated),
-                        tags: state.Update (state.Tags, updated),
-                        // TODO: Check if the updated entries are within the current scroll view
-                        // Probably it's better to do this check in UpdateTimeEntries
-                        timeEntries: state.UpdateTimeEntries (updated)
-                    ));
+                return DataSyncMsg.Create (
+                           state.With (
+                               downloadResult: state.DownloadResult.With (isSyncing: false, hasMore: hasMore, hadErrors: false),
+                               workspaces: state.Update (state.Workspaces, updated),
+                               projects: state.Update (state.Projects, updated),
+                               workspaceUsers: state.Update (state.WorkspaceUsers, updated),
+                               projectUsers: state.Update (state.ProjectUsers, updated),
+                               clients: state.Update (state.Clients, updated),
+                               tasks: state.Update (state.Tasks, updated),
+                               tags: state.Update (state.Tags, updated),
+                               // TODO: Check if the updated entries are within the current scroll view
+                               // Probably it's better to do this check in UpdateTimeEntries
+                               timeEntries: state.UpdateTimeEntries (updated)
+                           ));
             },
             ex => DataSyncMsg.Create (
                 state.With (downloadResult: state.DownloadResult.With (isSyncing: false, hadErrors: true))));
@@ -154,8 +154,8 @@ namespace Toggl.Phoebe._Reactive
 
             // TODO: Check updated.Count == 1?
             return DataSyncMsg.Create (
-                state.With (timeEntries: state.UpdateTimeEntries (updated)),
-                updated);
+                       state.With (timeEntries: state.UpdateTimeEntries (updated)),
+                       updated);
         }
 
         static DataSyncMsg<TimerState> TagsPut (TimerState state, DataMsg msg)
@@ -193,36 +193,36 @@ namespace Toggl.Phoebe._Reactive
             });
 
             return DataSyncMsg.Create (
-                state.With (
-                    projects: state.Update (state.Projects, updated),
-                    projectUsers: state.Update (state.ProjectUsers, updated)
-                ), updated);
+                       state.With (
+                           projects: state.Update (state.Projects, updated),
+                           projectUsers: state.Update (state.ProjectUsers, updated)
+                       ), updated);
         }
 
         static DataSyncMsg<TimerState> UserDataPut (TimerState state, DataMsg msg)
         {
             return (msg as DataMsg.UserDataPut).Data.Match (
-                userData => {
-					var dataStore = ServiceContainer.Resolve<ISyncDataStore> ();
-					var updated = dataStore.Update (ctx => ctx.Put (userData));
-					
-					// This will throw an exception if user hasn't been correctly updated
-					var userDataInDb = updated.Single () as UserData;
-					
-                    // Save user data in settings
-					ServiceContainer.Resolve<Data.ISettingsStore> ().UserId = userDataInDb.Id;
-					
-					return DataSyncMsg.Create (state.With (
-                        user: userDataInDb,
-                        authResult: AuthResult.Success
-                    ));
-                },
-                ex => {
-                    return DataSyncMsg.Create (state.With (
-                        user: new UserData (),
-                        authResult: ex.AuthResult
-                    ));
-                });
+            userData => {
+                var dataStore = ServiceContainer.Resolve<ISyncDataStore> ();
+                var updated = dataStore.Update (ctx => ctx.Put (userData));
+
+                // This will throw an exception if user hasn't been correctly updated
+                var userDataInDb = updated.Single () as UserData;
+
+                // Save user data in settings
+                ServiceContainer.Resolve<Data.ISettingsStore> ().UserId = userDataInDb.Id;
+
+                return DataSyncMsg.Create (state.With (
+                                               user: userDataInDb,
+                                               authResult: AuthResult.Success
+                                           ));
+            },
+            ex => {
+                return DataSyncMsg.Create (state.With (
+                                               user: new UserData (),
+                                               authResult: ex.AuthResult
+                                           ));
+            });
         }
 
         static void CheckTimeEntryState (ITimeEntryData entryData, TimeEntryState expected, string action)

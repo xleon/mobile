@@ -10,7 +10,7 @@ namespace Toggl.Phoebe._Helpers
     {
         public class SimpleObserver<T> : IObserver<T>
         {
-			readonly Action<T> onNext;
+            readonly Action<T> onNext;
             public void OnCompleted () { } // Do nothing
             public void OnError (Exception error) { } // Do nothing
             public void OnNext (T value)

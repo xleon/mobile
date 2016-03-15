@@ -18,8 +18,8 @@ namespace Toggl.Phoebe._ViewModels
     {
         public ProjectListVM (TimerState timerState, Guid workspaceId)
         {
-			CurrentWorkspaceId = workspaceId;
-			ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Select Project";
+            CurrentWorkspaceId = workspaceId;
+            ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Select Project";
 
             // TODO: Change settings for a better library like James Montemagno version
             // and define default values to avoid this code.
@@ -32,18 +32,18 @@ namespace Toggl.Phoebe._ViewModels
 
             ProjectList = new ProjectsCollectionVM (
                 timerState, (ProjectsCollectionVM.SortProjectsBy)savedSort, workspaceId);
-            
+
             WorkspaceList = timerState.Workspaces.Values.OrderBy (r => r.Name).ToList ();
             CurrentWorkspaceIndex = WorkspaceList.IndexOf (p => p.Id == workspaceId);
 
             // Search stream
             Observable.FromEventPattern<string> (ev => onSearch += ev, ev => onSearch -= ev)
-                      .Throttle (TimeSpan.FromMilliseconds (300))
-                      .DistinctUntilChanged ()
-                      .Subscribe (
-                          p => ServiceContainer.Resolve<IPlatformUtils> ().DispatchOnUIThread (
-                              () => { ProjectList.ProjectNameFilter = p.EventArgs; }),
-                          ex => ServiceContainer.Resolve<ILogger> ().Error ("Search", ex, null));
+            .Throttle (TimeSpan.FromMilliseconds (300))
+            .DistinctUntilChanged ()
+            .Subscribe (
+                p => ServiceContainer.Resolve<IPlatformUtils> ().DispatchOnUIThread (
+            () => { ProjectList.ProjectNameFilter = p.EventArgs; }),
+            ex => ServiceContainer.Resolve<ILogger> ().Error ("Search", ex, null));
         }
 
         public void Dispose ()

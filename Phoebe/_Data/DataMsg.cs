@@ -229,7 +229,7 @@ namespace Toggl.Phoebe._Data
             {
                 public Net.AuthResult AuthResult { get; private set; }
                 public AuthException (Net.AuthResult authResult)
-                    : base (Enum.GetName (typeof (Net.AuthResult), authResult))
+                : base (Enum.GetName (typeof (Net.AuthResult), authResult))
                 {
                     AuthResult = authResult;
                 }
@@ -245,8 +245,7 @@ namespace Toggl.Phoebe._Data
             {
                 if (authResult == Net.AuthResult.Success && data != null) {
                     Data = Either<UserData, AuthException>.Left (data);
-                }
-                else {
+                } else {
                     Data = Either<UserData, AuthException>.Right (new AuthException (authResult));
                 }
             }
@@ -320,7 +319,7 @@ namespace Toggl.Phoebe._Data
 
         public DataSyncMsg<U> Cast<U> ()
         {
-            return new DataSyncMsg<U> ((U)(object)this.State, this.SyncData, this.serverRequests, this.SyncTest);
+            return new DataSyncMsg<U> ((U) (object)this.State, this.SyncData, this.serverRequests, this.SyncTest);
         }
     }
 

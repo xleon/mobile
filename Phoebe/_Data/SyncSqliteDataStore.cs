@@ -184,8 +184,7 @@ namespace Toggl.Phoebe._Data
                 // TODO: Is it there a better way for this?
                 try {
                     return conn.Get (selector);
-                }
-                catch {
+                } catch {
                     return null;
                 }
             }

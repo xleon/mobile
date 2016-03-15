@@ -74,16 +74,16 @@ namespace Toggl.Joey.UI.Components
             isRunningBinding = this.SetBinding (() => ViewModel.IsEntryRunning, () => IsRunning);
             durationBinding = this.SetBinding (() => ViewModel.Duration, () => DurationTextView.Text);
             entryBinding = this.SetBinding (() => ViewModel.ActiveEntry)
-                               .WhenSourceChanges (OnActiveEntryChanged);
+                           .WhenSourceChanges (OnActiveEntryChanged);
         }
 
         private void OnActiveEntryChanged ()
         {
             var entry = ViewModel.ActiveEntry;
-            DescriptionTextView.Text = !string.IsNullOrEmpty(entry.Data.Description)
-                ? entry.Data.Description : activity.ApplicationContext.Resources.GetText (Resource.String.TimerComponentNoDescription);
-            ProjectTextView.Text = !string.IsNullOrEmpty(entry.Info.ProjectData.Name)
-                ? entry.Info.ProjectData.Name : activity.ApplicationContext.Resources.GetText (Resource.String.TimerComponentNoProject);
+            DescriptionTextView.Text = !string.IsNullOrEmpty (entry.Data.Description)
+                                       ? entry.Data.Description : activity.ApplicationContext.Resources.GetText (Resource.String.TimerComponentNoDescription);
+            ProjectTextView.Text = !string.IsNullOrEmpty (entry.Info.ProjectData.Name)
+                                   ? entry.Info.ProjectData.Name : activity.ApplicationContext.Resources.GetText (Resource.String.TimerComponentNoProject);
         }
 
         public void DetachBindind ()

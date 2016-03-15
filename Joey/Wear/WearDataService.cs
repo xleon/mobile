@@ -43,8 +43,8 @@ namespace Toggl.Joey.Wear
         private void Init (Context ctx)
         {
             googleApiClient = new GoogleApiClient.Builder (ctx)
-                                                 .AddApi (WearableClass.API)
-                                                 .Build ();
+            .AddApi (WearableClass.API)
+            .Build ();
             googleApiClient.Connect ();
         }
 
@@ -201,11 +201,11 @@ namespace Toggl.Joey.Wear
         {
             get {
                 return WearableClass
-                    .NodeApi
-                    .GetConnectedNodes (googleApiClient)
-                    .Await ()
-                    .JavaCast<INodeApiGetConnectedNodesResult> ()
-                    .Nodes;
+                       .NodeApi
+                       .GetConnectedNodes (googleApiClient)
+                       .Await ()
+                       .JavaCast<INodeApiGetConnectedNodesResult> ()
+                       .Nodes;
             }
         }
 

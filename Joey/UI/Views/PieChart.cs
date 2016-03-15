@@ -421,6 +421,12 @@ namespace Toggl.Joey.UI.Views
             private float endAngle;
             private float radius;
 
+            // Explanation of native constructor
+            // http://stackoverflow.com/questions/10593022/monodroid-error-when-calling-constructor-of-custom-view-twodscrollview/10603714#10603714
+            public SliceView (IntPtr a, Android.Runtime.JniHandleOwnership b) : base (a, b)
+            {
+            }
+
             public SliceView (Context context) : base (context)
             {
                 var dm = context.Resources.DisplayMetrics;

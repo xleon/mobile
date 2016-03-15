@@ -35,6 +35,12 @@ namespace Toggl.Joey.Widget
             }
         }
 
+        // Explanation of native constructor
+        // http://stackoverflow.com/questions/10593022/monodroid-error-when-calling-constructor-of-custom-view-twodscrollview/10603714#10603714
+        public RemotesViewsFactory (IntPtr a, Android.Runtime.JniHandleOwnership b) : base (a, b)
+        {
+        }
+
         public RemotesViewsFactory (Context ctx)
         {
             context = ctx;

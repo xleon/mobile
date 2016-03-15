@@ -99,6 +99,12 @@ namespace Toggl.Joey.UI.Adapters
             private ProjectListAdapter adapter;
             private ProjectsCollection.SuperProjectData projectData;
 
+            // Explanation of native constructor
+            // http://stackoverflow.com/questions/10593022/monodroid-error-when-calling-constructor-of-custom-view-twodscrollview/10603714#10603714
+            public ProjectItemHolder (IntPtr a, Android.Runtime.JniHandleOwnership b) : base (a, b)
+            {
+            }
+
             public ProjectItemHolder (ProjectListAdapter adapter, View root) : base (root)
             {
                 this.adapter = adapter;

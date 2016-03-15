@@ -38,6 +38,12 @@ namespace Toggl.Joey.UI.Views
         private PointF tapInitialPos;
         private bool isZooming;
 
+        // Explanation of native constructor
+        // http://stackoverflow.com/questions/10593022/monodroid-error-when-calling-constructor-of-custom-view-twodscrollview/10603714#10603714
+        public BarChart (IntPtr a, Android.Runtime.JniHandleOwnership b) : base (a, b)
+        {
+        }
+
         public BarChart (Context context, IAttributeSet attrs) : base (context, attrs)
         {
             Initialize (context);

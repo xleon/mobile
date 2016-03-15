@@ -17,6 +17,12 @@ namespace Toggl.Joey.UI.Views
         public const int HorizontalList = LinearLayoutManager.Horizontal;
         public const int VerticalList = LinearLayoutManager.Vertical;
 
+        // Explanation of native constructor
+        // http://stackoverflow.com/questions/10593022/monodroid-error-when-calling-constructor-of-custom-view-twodscrollview/10603714#10603714
+        public DividerItemDecoration (IntPtr a, JniHandleOwnership b) : base (a, b)
+        {
+        }
+
         public DividerItemDecoration (Context context, int orientation)
         {
             var a = context.ObtainStyledAttributes (Attrs);

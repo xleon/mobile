@@ -15,6 +15,16 @@ namespace Toggl.Joey.UI.Activities
     {
         private static readonly string fragmentTag = "projectlist_fragment";
 
+        // Explanation of native constructor
+        // http://stackoverflow.com/questions/10593022/monodroid-error-when-calling-constructor-of-custom-view-twodscrollview/10603714#10603714
+        public ProjectListActivity (System.IntPtr a, Android.Runtime.JniHandleOwnership b) : base (a, b)
+        {
+        }
+
+        public ProjectListActivity ()
+        {
+        }
+
         protected override void OnCreateActivity (Bundle state)
         {
             base.OnCreateActivity (state);

@@ -29,6 +29,16 @@ namespace Toggl.Joey.UI.Activities
         /// </summary>
         public static BaseActivity CurrentActivity { get; private set; }
 
+        // Explanation of native constructor
+        // http://stackoverflow.com/questions/10593022/monodroid-error-when-calling-constructor-of-custom-view-twodscrollview/10603714#10603714
+        protected BaseActivity (IntPtr a, Android.Runtime.JniHandleOwnership b) : base (a, b)
+        {
+        }
+
+        protected BaseActivity ()
+        {
+        }
+
         private void OnSyncStarted (SyncStartedMessage msg)
         {
             if (Handle == IntPtr.Zero) {

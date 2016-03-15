@@ -65,8 +65,8 @@ namespace Toggl.Phoebe.Tests.Staging
             new DataMsg.TimeEntryPut (te), new SyncTestOptions (false, (_, sent, queued) => {
                 try {
                     // As there's no connection, message should have been enqueued
-                    Assert.True (queued.Any (x => x.LocalId == te.Id));
-                    Assert.AreEqual (0, sent.Count);
+                    Assert.That (queued.Any (x => x.LocalId == te.Id), Is.True);
+                    Assert.That (0, Is.EqualTo (sent.Count));
                     tcs.SetResult (true);
                 } catch (Exception ex) {
                     tcs.SetException (ex);

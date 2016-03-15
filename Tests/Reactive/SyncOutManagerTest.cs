@@ -40,8 +40,8 @@ namespace Toggl.Phoebe.Tests.Reactive
             new DataMsg.TimeEntryPut (te), new SyncTestOptions (false, (_, sent, queued) => {
                 try {
                     // As there's no connection, message should have been enqueued
-                    Assert.True (queued.Any (x => x.LocalId == te.Id));
-                    Assert.AreEqual (0, sent.Count);
+                    Assert.That (queued.Any (x => x.LocalId == te.Id), Is.True);
+                    Assert.That (0, Is.EqualTo (sent.Count));
                     tcs.SetResult (true);
                 } catch (Exception ex) {
                     tcs.SetException (ex);
@@ -61,8 +61,8 @@ namespace Toggl.Phoebe.Tests.Reactive
             new DataMsg.TimeEntryPut (te), new SyncTestOptions (true, (_, sent, queued) => {
                 try {
                     // As there's connection, message should have been sent
-                    Assert.False (queued.Any (x => x.LocalId == te.Id));
-                    Assert.AreEqual (1, sent.Count);
+                    Assert.That (queued.Any (x => x.LocalId == te.Id), Is.False);
+                    Assert.That (1, Is.EqualTo (sent.Count));
                     tcs.SetResult (true);
                 } catch (Exception ex) {
                     tcs.SetException (ex);
@@ -83,8 +83,8 @@ namespace Toggl.Phoebe.Tests.Reactive
             new DataMsg.TimeEntryPut (te), new SyncTestOptions (false, (_, sent, queued) => {
                 try {
                     // As there's no connection, message should have been enqueued
-                    Assert.True (queued.Any (x => x.LocalId == te.Id));
-                    Assert.AreEqual (0, sent.Count);
+                    Assert.That (queued.Any (x => x.LocalId == te.Id), Is.True);
+                    Assert.That (0, Is.EqualTo (sent.Count));
                 } catch (Exception ex) {
                     tcs.SetException (ex);
                 }
@@ -94,8 +94,8 @@ namespace Toggl.Phoebe.Tests.Reactive
             new DataMsg.TimeEntryPut (te2), new SyncTestOptions (true, (_, sent, queued) => {
                 try {
                     // As there's connection, messages should have been sent
-                    Assert.False (queued.Any (x => x.LocalId == te.Id || x.LocalId == te2.Id));
-                    Assert.True (sent.Count > 0);
+                    Assert.That (queued.Any (x => x.LocalId == te.Id || x.LocalId == te2.Id), Is.False);
+                    Assert.That (sent.Count > 0, Is.True);
                     tcs.SetResult (true);
                 } catch (Exception ex) {
                     tcs.SetException (ex);

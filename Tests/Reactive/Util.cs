@@ -49,8 +49,13 @@ namespace Toggl.Phoebe.Tests.Reactive
 
     public class ToggleClientMock : ITogglClient
     {
+        public static string fakeUserEmail = "test@toggl.com";
+        public static string fakeUserPassword = "123";
+        public static string fakeGoogleId = "12345";
+
         public Random rnd = new Random ();
         public IList<CommonJson> ReceivedItems = new List<CommonJson> ();
+
 
         public Task<T> Create<T> (T jsonObject) where T : CommonJson
         {
@@ -85,12 +90,33 @@ namespace Toggl.Phoebe.Tests.Reactive
         }
         public Task<UserJson> GetUser (string username, string password)
         {
-            throw new NotImplementedException ();
+            Task.Delay (500);
+            if (username == fakeUserEmail && password == fakeUserPassword) {
+                var user = new UserJson () {
+                    Email = fakeUserEmail,
+                    Password = fakeUserPassword,
+                    Name = "Test",
+                    DefaultWorkspaceRemoteId = 123
+                };
+                return Task.FromResult (user);
+            }
+            return null;
         }
+
         public Task<UserJson> GetUser (string googleAccessToken)
         {
-            throw new NotImplementedException ();
+            if (googleAccessToken == fakeGoogleId) {
+                var user = new UserJson () {
+                    Email = fakeUserEmail,
+                    Password = fakeUserPassword,
+                    Name = "Test",
+                    DefaultWorkspaceRemoteId = 123
+                };
+                return Task.FromResult (user);
+            }
+            return null;
         }
+
         public Task<List<ClientJson>> ListWorkspaceClients (long workspaceId)
         {
             throw new NotImplementedException ();

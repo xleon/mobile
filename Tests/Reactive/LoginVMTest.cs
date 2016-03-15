@@ -19,7 +19,7 @@ namespace Toggl.Phoebe.Tests.Reactive
         readonly ToggleClientMock togglClient = new ToggleClientMock ();
         readonly PlatformUtils platformUtils = new PlatformUtils();
         ISyncDataStore dataStore;
-
+        as
         public override void Init ()
         {
             base.Init ();

@@ -84,6 +84,11 @@ namespace Toggl.Joey.UI.Activities
                 Finish ();
                 return true;
             }
+            // TODO: RX Remove
+            else {
+                var client = ServiceContainer.Resolve<Phoebe._Net.ITogglClient> () as Phoebe._Net.TogglRestClient;
+                client.Authenticate (user.ApiToken);
+            }
             return false;
         }
 

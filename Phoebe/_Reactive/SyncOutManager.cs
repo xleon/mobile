@@ -272,8 +272,7 @@ namespace Toggl.Phoebe._Reactive
                 }
             }
 
-            // TODO RX
-            // Ping analytics service
+            // TODO RX: Ping analytics service
             //var tracker = ServiceContainer.Resolve<ITracker> ();
             //switch (reason) {
             //    case Net.AuthChangeReason.Login:
@@ -284,12 +283,18 @@ namespace Toggl.Phoebe._Reactive
             //    break;
             //}
 
-            var userData = userJson != null ? mapper.Map<UserData> (userJson) : null;
+            UserData userData = null;
+            if (userJson != null) {
+                userData = mapper.Map<UserData> (userJson);
+                var client = ServiceContainer.Resolve<ITogglClient> () as TogglRestClient;
+                client.Authenticate (userJson.ApiToken);
+            }
             RxChain.Send (new DataMsg.UserDataPut (authResult, userData));
         }
 
         async Task DownloadEntries (TimerState state)
         {
+            long? clientRemoteId = null;
             var startDate = state.DownloadResult.DownloadFrom;
             const int endDate = Literals.TimeEntryLoadDays;
 
@@ -311,7 +316,6 @@ namespace Toggl.Phoebe._Reactive
                     }
 
                     if (entry.ProjectRemoteId.HasValue) {
-                        long? clientRemoteId = null;
                         var projectData = state.Projects.Values.FirstOrDefault (x => x.RemoteId == entry.ProjectRemoteId);
 
                         if (projectData != null) {
@@ -325,9 +329,14 @@ namespace Toggl.Phoebe._Reactive
                             clientRemoteId = projectJson.RemoteId;
                         }
 
-                        if (state.Clients.Values.All (x => x.RemoteId != clientRemoteId) &&
-                                newClients.All (x => x.RemoteId != clientRemoteId)) {
-                            newClients.Add (await client.Get<ClientJson> (clientRemoteId.Value));
+                        if (clientRemoteId.HasValue) {
+                            if (state.Clients.Values.All (x => x.RemoteId != clientRemoteId) &&
+                                    newClients.All (x => x.RemoteId != clientRemoteId)) {
+                                var c = await client.Get<ClientJson> (clientRemoteId.Value);
+                                // TODO RX: I'm getting null results here, why does this happen?
+                                if (c != null)
+                                    newClients.Add (c);
+                            }
                         }
                     }
 
@@ -341,12 +350,13 @@ namespace Toggl.Phoebe._Reactive
                     foreach (var tag in entry.Tags) {
                         if (state.Tags.Values.All (x => x.WorkspaceRemoteId != entry.WorkspaceRemoteId || x.Name != tag) &&
                                 newTags.All (x => x.WorkspaceRemoteId != entry.WorkspaceRemoteId || x.Name != tag)) {
-                            // TODO: How to get the tag without a remote id?
+                            // TODO RX: How to get the tag without a remote id?
                             //newTags.Add (await client.Get<TagJson> (tagRemoteId));
-                            throw new NotImplementedException ();
                         }
                     }
                 }
+
+                // TODO: Check if any of the received items is null?
 
                 RxChain.Send (new DataMsg.ReceivedFromServer (
                                   jsonEntries.Select (mapper.Map<TimeEntryData>).Cast<CommonData> ()

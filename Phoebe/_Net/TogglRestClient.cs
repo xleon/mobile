@@ -5,6 +5,8 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Net.Security;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -31,9 +33,9 @@ namespace Toggl.Phoebe._Net
         public void Authenticate (string authToken)
         {
             this.authToken = authToken;
-            if (string.IsNullOrEmpty (authToken)) {
-                throw new NotSupportedException ("Wrong Auth Token!");
-            }
+            //if (string.IsNullOrEmpty (authToken)) {
+            //    throw new NotSupportedException ("Wrong Auth Token!");
+            //}
         }
 
         private HttpClient MakeHttpClient ()
@@ -43,6 +45,8 @@ namespace Toggl.Phoebe._Net
             var client = new HttpClient () {
                 Timeout = TimeSpan.FromSeconds (10),
             };
+
+            ServicePointManager.ServerCertificateValidationCallback = Validator;
             var headers = client.DefaultRequestHeaders;
             headers.UserAgent.Clear ();
             headers.UserAgent.Add (new ProductInfoHeaderValue (Platform.AppIdentifier, Platform.AppVersion));
@@ -232,7 +236,9 @@ namespace Toggl.Phoebe._Net
 
         private async Task PrepareResponse (HttpResponseMessage resp, TimeSpan requestTime)
         {
+            // TODO RX: Eliminate MessageBus
             ServiceContainer.Resolve<MessageBus> ().Send (new TogglHttpResponseMessage (this, resp, requestTime));
+
             if (!resp.IsSuccessStatusCode) {
                 string content = string.Empty;
                 if (resp.Content != null) {
@@ -479,7 +485,7 @@ namespace Toggl.Phoebe._Net
         public Task<TimeEntryJson> CreateTimeEntry (TimeEntryJson jsonObject)
         {
             var url = new Uri (v8Url, "time_entries");
-            jsonObject.CreatedWith = Platform.DefaultCreatedWith;
+            jsonObject.CreatedWith = String.Format ("{0}-obm-{1}", Platform.DefaultCreatedWith, OBMExperimentManager.ExperimentNumber);
             return CreateObject (url, jsonObject);
         }
 
@@ -497,20 +503,7 @@ namespace Toggl.Phoebe._Net
 
         public Task<List<TimeEntryJson>> ListTimeEntries (DateTime start, DateTime end)
         {
-            var url = new Uri (v8Url,
-                               string.Format ("time_entries?start_date={0}&end_date={1}",
-                                              WebUtility.UrlEncode (start.ToUtc ().ToString ("o")),
-                                              WebUtility.UrlEncode (end.ToUtc ().ToString ("o"))));
-            return ListObjects<TimeEntryJson> (url);
-        }
-
-        public Task<List<TimeEntryJson>> ListTimeEntries (DateTime end, int days)
-        {
-            var url = new Uri (v8Url,
-                               string.Format ("time_entries?end_date={0}&num_of_days={1}",
-                                              WebUtility.UrlEncode (end.ToUtc ().ToString ("o")),
-                                              days));
-            return ListObjects<TimeEntryJson> (url);
+            return ListTimeEntries (start, end, CancellationToken.None);
         }
 
         public Task<List<TimeEntryJson>> ListTimeEntries (DateTime start, DateTime end, CancellationToken cancellationToken)
@@ -521,6 +514,11 @@ namespace Toggl.Phoebe._Net
                                               WebUtility.UrlEncode (end.ToUtc ().ToString ("o"))));
             return ListObjects<TimeEntryJson> (url, cancellationToken);
         }
+		
+		public Task<List<TimeEntryJson>> ListTimeEntries (DateTime end, int days)
+		{
+			return ListTimeEntries (end, days, CancellationToken.None);
+		}
 
         public Task<List<TimeEntryJson>> ListTimeEntries (DateTime end, int days, CancellationToken cancellationToken)
         {
@@ -726,7 +724,7 @@ namespace Toggl.Phoebe._Net
             since = since.ToUtc ();
             var relUrl = "me?with_related_data=true";
             if (since.HasValue) {
-                relUrl = string.Format ("{0}&since={1}", relUrl, (long) (since.Value - UnixStart).TotalSeconds);
+                relUrl = string.Format ("{0}&since={1}", relUrl, (long)(since.Value - UnixStart).TotalSeconds);
             }
             var url = new Uri (v8Url, relUrl);
 
@@ -738,16 +736,16 @@ namespace Toggl.Phoebe._Net
             var respData = await httpResp.Content.ReadAsStringAsync ().ConfigureAwait (false);
             var json = JObject.Parse (respData);
 
-            var user = json ["data"].ToObject<UserJson> ();
+            var user = json["data"].ToObject<UserJson> ();
             return new UserRelatedJson () {
-                Timestamp = UnixStart + TimeSpan.FromSeconds ((long)json ["since"]),
+                Timestamp = UnixStart + TimeSpan.FromSeconds ((long)json["since"]),
                 User = user,
-                Workspaces = GetChangesObjects<WorkspaceJson> (json ["data"] ["workspaces"]),
-                Tags = GetChangesObjects<TagJson> (json ["data"] ["tags"]),
-                Clients = GetChangesObjects<ClientJson> (json ["data"] ["clients"]),
-                Projects = GetChangesObjects<ProjectJson> (json ["data"] ["projects"]),
-                Tasks = GetChangesObjects<TaskJson> (json ["data"] ["tasks"]),
-                TimeEntries = GetChangesTimeEntryObjects (json ["data"] ["time_entries"], user),
+                Workspaces = GetChangesObjects<WorkspaceJson> (json["data"]["workspaces"]),
+                Tags = GetChangesObjects<TagJson> (json["data"]["tags"]),
+                Clients = GetChangesObjects<ClientJson> (json["data"]["clients"]),
+                Projects = GetChangesObjects<ProjectJson> (json["data"]["projects"]),
+                Tasks = GetChangesObjects<TaskJson> (json["data"]["tasks"]),
+                TimeEntries = GetChangesTimeEntryObjects (json["data"]["time_entries"], user),
             };
         }
 
@@ -798,6 +796,14 @@ namespace Toggl.Phoebe._Net
                 Content = new StringContent (json, Encoding.UTF8, "application/json")
             });
             var response = await SendAsync (httpReq).ConfigureAwait (false);
+        }
+
+        // Validator to bypass the cert requirement
+        // related with the staging endpoint.
+        // more options: http://www.mono-project.com/archived/usingtrustedrootsrespectfully/
+        public static bool Validator (object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)
+        {
+            return true;
         }
 
         private class Wrapper<T>

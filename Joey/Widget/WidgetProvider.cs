@@ -26,17 +26,6 @@ namespace Toggl.Joey.Widget
 
         private static HandlerThread workerThread;
         private static Handler workerQueue;
-        private IWidgetUpdateService updateService;
-
-        private IWidgetUpdateService UpdateService
-        {
-            get {
-                if (updateService == null) {
-                    updateService = ServiceContainer.Resolve<IWidgetUpdateService> ();
-                }
-                return updateService;
-            }
-        }
 
         public WidgetProvider()
         {
@@ -61,7 +50,7 @@ namespace Toggl.Joey.Widget
         public override void OnReceive (Context context, Intent intent)
         {
             String action = intent.Action;
-
+            /*
             if (action == RefreshListAction && UpdateService.IsUserLogged) {
                 ScheduleUpdate (context, action);
             }
@@ -69,14 +58,14 @@ namespace Toggl.Joey.Widget
             if (action == RefreshCompleteAction) {
                 ScheduleUpdate (context, action);
             }
-
+            */
             base.OnReceive (context, intent);
         }
 
         private void SetupWidget (Context ctx)
         {
             RemoteViews views;
-
+            /*
             var wm = AppWidgetManager.GetInstance (ctx);
             var cn = new ComponentName (ctx, Java.Lang.Class.FromType (typeof (WidgetProvider)));
             var ids = wm.GetAppWidgetIds (cn);
@@ -108,10 +97,12 @@ namespace Toggl.Joey.Widget
 
             // Update widget view.
             wm.UpdateAppWidget (ids, views);
+            */
         }
 
         private void SetupRunningBtn (Context ctx, RemoteViews views)
         {
+            /*
             var entry = new WidgetSyncManager.WidgetEntryData();
             var isRunning = false;
 
@@ -151,6 +142,7 @@ namespace Toggl.Joey.Widget
                 views.SetChronometer (Resource.Id.Chronometer, baseTime, "00:%s", false);
                 views.SetTextViewText (Resource.Id.Chronometer, "00:00:00");
             }
+            */
         }
 
         private PendingIntent StartStopButtonIntent (Context ctx)

@@ -18,6 +18,8 @@ namespace Toggl.Joey.Wear
 
         public static async Task StartStopTimeEntry (Context ctx)
         {
+            await Task.Delay (5);
+            /*
             var manager = ServiceContainer.Resolve<ActiveTimeEntryManager> ();
             var active = manager.ActiveTimeEntry;
             if (manager.ActiveTimeEntry.State == TimeEntryState.Running) {
@@ -28,6 +30,7 @@ namespace Toggl.Joey.Wear
                 await TimeEntryModel.StartAsync (active);
                 ServiceContainer.Resolve<ITracker> ().SendTimerStartEvent (TimerStartSource.WatchStart);
             }
+            */
         }
 
         public static async Task ContinueTimeEntry (Guid timeEntryId)

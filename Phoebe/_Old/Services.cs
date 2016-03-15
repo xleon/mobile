@@ -14,28 +14,18 @@ namespace Toggl.Phoebe
             ServiceContainer.Register<MessageBus> ();
             ServiceContainer.Register<UpgradeManger> ();
             ServiceContainer.Register<AuthManager> ();
-            ServiceContainer.Register<ActiveTimeEntryManager> ();
             ServiceContainer.Register<DataCache> ();
             ServiceContainer.Register<ForeignRelationManager> ();
             ServiceContainer.Register<ISyncManager> (() => new SyncManager ());
-            if (ServiceContainer.Resolve<IPlatformUtils> ().IsWidgetAvailable) {
-                ServiceContainer.Register<WidgetSyncManager> (() => new WidgetSyncManager ());
-            }
             ServiceContainer.Register<IPushClient> (() => new PushRestClient (Build.ApiUrl));
-            // TODO RX: Remove old IDataStore
-            ServiceContainer.Register<IDataStore> (CreateDataStore);
             ServiceContainer.Register<_Data.ISyncDataStore> (CreateSyncDataStore);
             ServiceContainer.Register<LogStore> ();
             ServiceContainer.Register<TimeCorrectionManager> ();
 
             // Core services that are most likelly to be overriden by UI code:
             var restApiUrl = ServiceContainer.Resolve<ISettingsStore> ().IsStagingMode ? Build.StagingUrl : Build.ApiUrl;
-            // TODO RX: Remove old ITogglClient
-            ServiceContainer.Register<ITogglClient> (() => new TogglRestClient (restApiUrl));
             ServiceContainer.Register<_Net.ITogglClient> (() => new _Net.TogglRestClient (restApiUrl));
             ServiceContainer.Register<IReportsClient> (() => new ReportsRestClient (Build.ReportsApiUrl));
-
-            RegisterJsonConverters ();
             ServiceContainer.Register<LoggerUserManager> ();
         }
 

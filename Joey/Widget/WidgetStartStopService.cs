@@ -21,8 +21,9 @@ namespace Toggl.Joey.Widget
         {
         }
 
-        public async override void OnStart (Intent intent, int startId)
+        public override void OnStart (Intent intent, int startId)
         {
+            /*
             try {
                 var action = intent.Action;
                 var widgetManager = ServiceContainer.Resolve<WidgetSyncManager>();
@@ -45,11 +46,12 @@ namespace Toggl.Joey.Widget
                 WakefulBroadcastReceiver.CompleteWakefulIntent (intent);
                 StopSelf (startId);
             }
+            */
         }
 
         public override StartCommandResult OnStartCommand (Intent intent, StartCommandFlags flags, int startId)
         {
-            OnStart (intent, startId);
+            //OnStart (intent, startId);
             return StartCommandResult.Sticky;
         }
 

@@ -45,7 +45,7 @@ namespace Toggl.Joey.Widget
 
         public override StartCommandResult OnStartCommand (Intent intent, StartCommandFlags flags, int startId)
         {
-            Task.Run (async () => await ServiceContainer.Resolve<WidgetSyncManager>().SyncWidgetData ());
+            //Task.Run (async () => await ServiceContainer.Resolve<WidgetSyncManager>().SyncWidgetData ());
             return StartCommandResult.Sticky;
         }
 

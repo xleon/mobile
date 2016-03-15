@@ -33,7 +33,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)_Old\ExceptionExtensions.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)_Old\ExpressionExtensions.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)_Old\ITimeProvider.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)_Old\IWidgetUpdateService.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)_Old\Message.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)_Old\MessageBus.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)_Old\ModelViewManager.cs" />
@@ -47,7 +46,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)_Old\TimeCorrectionManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)_Old\TrackingMode.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)_Old\UpgradeManager.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)_Old\WidgetSyncManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)_Net\ITogglClient.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)_Net\TogglHttpResponseMessage.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)_Net\TogglRestClient.cs" />
@@ -105,7 +103,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)Analytics\SettingName.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Analytics\TimerStartSource.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Analytics\TimerStopSource.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Data\ActiveTimeEntryManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Data\DataAction.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Data\DataCache.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Data\DataChangeMessage.cs" />
@@ -208,7 +205,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)Data\ViewModels\CreateTagViewModel.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Data\ViewModels\EditTimeEntryGroupViewModel.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Data\ViewModels\EditTimeEntryViewModel.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Data\ViewModels\LogTimeEntriesViewModel.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Data\ViewModels\NewProjectViewModel.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Data\ViewModels\ProjectListViewModel.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Data\ViewModels\TagListViewModel.cs" />

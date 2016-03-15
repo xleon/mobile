@@ -52,15 +52,17 @@ namespace Toggl.Joey.Wear
         {
             base.OnCreate ();
             Init (this);
-            var manager = ServiceContainer.Resolve<ActiveTimeEntryManager> ();
-            manager.PropertyChanged += OnActiveTimeEntryManagerPropertyChanged;
+            //var manager = ServiceContainer.Resolve<ActiveTimeEntryManager> ();
+            //manager.PropertyChanged += OnActiveTimeEntryManagerPropertyChanged;
         }
 
-        private async void OnActiveTimeEntryManagerPropertyChanged (object sender, PropertyChangedEventArgs args)
+        private void OnActiveTimeEntryManagerPropertyChanged (object sender, PropertyChangedEventArgs args)
         {
+            /*
             if (args.PropertyName == ActiveTimeEntryManager.PropertyActiveTimeEntry) {
                 await UpdateSharedTimeEntryList ();
             }
+            */
         }
 
         public override void OnDataChanged (DataEventBuffer dataEvents)

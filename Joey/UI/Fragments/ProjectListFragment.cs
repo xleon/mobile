@@ -157,11 +157,7 @@ namespace Toggl.Joey.UI.Fragments
             Guid taskId = Guid.Empty;
 
             if (m is ProjectData) {
-                if (m is ProjectsCollection.SuperProjectData) {
-                    if (! ((ProjectsCollection.SuperProjectData)m).IsEmpty) {
-                        projectId = m.Id;
-                    }
-                } else {
+                if (! (m is ProjectsCollection.SuperProjectData && ((ProjectsCollection.SuperProjectData)m).IsEmpty)) {
                     projectId = m.Id;
                 }
             } else if (m is TaskData) {

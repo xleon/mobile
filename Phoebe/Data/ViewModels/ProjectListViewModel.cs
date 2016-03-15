@@ -25,7 +25,7 @@ namespace Toggl.Phoebe.Data.ViewModels
         ProjectListViewModel (Guid workspaceId)
         {
             CurrentWorkspaceId = workspaceId;
-            MostUsedProjects = new List<CommonProjectData> ();
+            TopProjects = new List<CommonProjectData> ();
             ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Select Project";
         }
 
@@ -51,6 +51,7 @@ namespace Toggl.Phoebe.Data.ViewModels
 
             await vm.PopulateMostUsedProjects ();
 
+
             // Search stream
             Observable.FromEventPattern<string> (ev => vm.onSearch += ev, ev => vm.onSearch -= ev)
             .Throttle (TimeSpan.FromMilliseconds (300))
@@ -64,7 +65,7 @@ namespace Toggl.Phoebe.Data.ViewModels
             return vm;
         }
 
-        public async Task PopulateMostUsedProjects ()
+        public async Task PopulateMostUsedProjects () //Load all potential top projects at once.
         {
             var store = ServiceContainer.Resolve<IDataStore> ();
             var settingsStore = ServiceContainer.Resolve<ISettingsStore> ();
@@ -74,18 +75,17 @@ namespace Toggl.Phoebe.Data.ViewModels
                                 .Where (r => r.DeletedAt == null
                                         && r.UserId == settingsStore.UserId
                                         && r.State != TimeEntryState.New
-                                        && r.ProjectId != null
-                                        && r.WorkspaceId == CurrentWorkspaceId )
+                                        && r.ProjectId != null)
                                 .ToListAsync ()
                                 .ConfigureAwait (false);
 
             var uniqueRows = recentEntries
             .GroupBy (p => new {p.ProjectId, p.TaskId})
             .Select (g => g.First ())
-            .Take (3)
             .ToList ();
 
-            MostUsedProjects.Clear ();
+            AllTopProjects = new List<CommonProjectData> ();
+
             foreach (var entry in uniqueRows) {
 
                 var project = new ProjectModel (entry.ProjectId ?? Guid.Empty);
@@ -94,8 +94,9 @@ namespace Toggl.Phoebe.Data.ViewModels
                 await project.LoadAsync ();
                 await task.LoadAsync ();
                 var client = project.Client == null ? String.Empty : project.Client.Name;
-                MostUsedProjects.Add (new CommonProjectData (project.Data, client, task.Data ?? null));
+                AllTopProjects.Add (new CommonProjectData (project.Data, client, task.Data ?? null));
             }
+            TopProjects = AllTopProjects.Where (r => r.WorkspaceId == CurrentWorkspaceId).Take (3).ToList ();
         }
 
         public void Dispose ()
@@ -108,13 +109,14 @@ namespace Toggl.Phoebe.Data.ViewModels
 
         public ProjectsCollection ProjectList { get; private set; }
 
-        public List<CommonProjectData> MostUsedProjects { get; private set; }
+        public List<CommonProjectData> TopProjects { get; private set; }
 
         public int CurrentWorkspaceIndex { get; private set; }
 
         public Guid CurrentWorkspaceId { get; private set; }
 
         #endregion
+        public List<CommonProjectData> AllTopProjects { get; private set; }
 
         private event EventHandler<string> onSearch;
 
@@ -133,8 +135,8 @@ namespace Toggl.Phoebe.Data.ViewModels
         public void ChangeWorkspaceByIndex (int newIndex)
         {
             CurrentWorkspaceId = WorkspaceList [newIndex].Id;
-            PopulateMostUsedProjects ();
             ProjectList.WorkspaceId = WorkspaceList [newIndex].Id;
+            TopProjects = AllTopProjects.Where (r => r.WorkspaceId == CurrentWorkspaceId).Take (3).ToList ();
             CurrentWorkspaceIndex = newIndex;
         }
     }

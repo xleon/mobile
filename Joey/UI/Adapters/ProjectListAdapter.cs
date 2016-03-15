@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Android.Content;
 using Android.Graphics;
 using Android.Support.V7.Widget;
@@ -8,10 +9,9 @@ using Toggl.Joey.UI.Utils;
 using Toggl.Joey.UI.Views;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
+using Toggl.Phoebe.Data.ViewModels;
 using Toggl.Phoebe.Data.Views;
 using XPlatUtils;
-using System.Collections.Generic;
-using Toggl.Phoebe.Data.ViewModels;
 
 namespace Toggl.Joey.UI.Adapters
 {
@@ -64,7 +64,7 @@ namespace Toggl.Joey.UI.Adapters
             var viewType = GetItemViewType (position);
 
             if (viewType == ViewTypeTopProjects) {
-                ((TopProjectsHolder)holder).Bind (viewModel.MostUsedProjects);
+                ((TopProjectsHolder)holder).Bind (viewModel.TopProjects);
             } else if (viewType == ViewTypeTask) {
                 ((TaskItemHolder)holder).Bind ((TaskData)GetItem (position - 1));
             } else if (viewType == ViewTypeClient) {
@@ -113,11 +113,8 @@ namespace Toggl.Joey.UI.Adapters
         {
             readonly TextView HeaderTextView;
             readonly LinearLayout ProjectsContainer;
-            private List<LinearLayout> ProjectListLayouts;
-
             private ViewGroup parent;
-            private View Root;
-
+            private List<CommonProjectData> projectList;
             private ProjectListAdapter adapter;
 
             public TopProjectsHolder (ProjectListAdapter adapter, View root) : base (root)
@@ -129,13 +126,16 @@ namespace Toggl.Joey.UI.Adapters
 
             public void Bind (List<CommonProjectData> projects)
             {
-                HeaderTextView.Visibility = projects.Count == 0 ? ViewStates.Gone : ViewStates.Visible;
-                ProjectsContainer.Visibility = projects.Count == 0 ? ViewStates.Gone : ViewStates.Visible;
+                this.projectList = projects;
+
+                HeaderTextView.Visibility = projectList.Count == 0 ? ViewStates.Gone : ViewStates.Visible;
+                ProjectsContainer.Visibility = projectList.Count == 0 ? ViewStates.Gone : ViewStates.Visible;
+
+                var inflater = LayoutInflater.FromContext (ServiceContainer.Resolve<Context> ());
 
                 ProjectsContainer.RemoveAllViews ();
-                var inflater = LayoutInflater.FromContext (ServiceContainer.Resolve<Context> ());
-                foreach (var project in projects) {
 
+                foreach (var project in projectList) {
                     var view = inflater.Inflate (Resource.Layout.ProjectListUsedProjectItem, parent, false);
 
                     var projectTextView = view.FindViewById<TextView> (Resource.Id.ProjectTextView);
@@ -154,8 +154,8 @@ namespace Toggl.Joey.UI.Adapters
                     projectTextView.SetTextColor (color);
 
                     view.Click += (sender, e) => {
-                        if (project.Task == null) {
-                            adapter.HandleItemSelection.Invoke (project);
+                        if (project.Task.Name == null) {
+                            adapter.HandleItemSelection.Invoke ((ProjectData)project);
                         } else {
                             adapter.HandleItemSelection.Invoke (project.Task);
                         }

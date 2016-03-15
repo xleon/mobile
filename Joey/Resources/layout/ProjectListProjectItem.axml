@@ -52,9 +52,11 @@
             android:layout_gravity="center"
             android:paddingRight="25dp"
             android:paddingLeft="25dp"
-            android:textColor="@android:color/background_dark"
+            android:textColor="#4dd965"
+            android:textSize="16sp"
             android:textAllCaps="false"
-            android:text="3 tasks ⌃"
+            android:drawableRight="@drawable/ic_arrow_down_green"
+            android:drawablePadding="6dp"
             android:background="@null" />
     </LinearLayout>
 </RelativeLayout>

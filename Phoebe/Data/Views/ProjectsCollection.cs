@@ -36,12 +36,11 @@ namespace Toggl.Phoebe.Data.Views
             var userData = ServiceContainer.Resolve<AuthManager> ().User;
 
             var projectsTask = store.GetUserAccessibleProjects (userData.Id);
-            var mostUsedProjectsTask = store.GetMostUsedProjects (userData.Id);
             var clientsTask = store.Table<ClientData> ().Where (r => r.DeletedAt == null)
                               .OrderBy (r => r.Name).ToListAsync ();
             var tasksTask = store.Table<TaskData> ().Where (r => r.DeletedAt == null && r.IsActive)
                             .OrderBy (r => r.Name).ToListAsync();
-            await Task.WhenAll (projectsTask, mostUsedProjectsTask, tasksTask, clientsTask);
+            await Task.WhenAll (projectsTask, tasksTask, clientsTask);
 
             v.clients = clientsTask.Result;
             v.tasks = tasksTask.Result;
@@ -128,7 +127,7 @@ namespace Toggl.Phoebe.Data.Views
             Reset (data);
         }
 
-        public void AddTasks (ProjectData project)
+        public bool AddTasks (ProjectData project)
         {
             // Remove previous tasks
             var oldTaskIndex = this.IndexOf (p => p is TaskData);
@@ -140,7 +139,10 @@ namespace Toggl.Phoebe.Data.Views
             var newTaskIndex = this.IndexOf (p => p.Id == project.Id) + 1;
             if (oldTaskIndex != newTaskIndex) {
                 InsertRange (tasks.Where (p => p.ProjectId == project.Id), newTaskIndex);
+                return true;
             }
+
+            return false;
         }
 
         public class SuperProjectData : ProjectData

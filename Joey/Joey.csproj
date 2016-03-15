@@ -807,8 +807,17 @@
     <AndroidResource Include="Resources\drawable-xhdpi\arrow_step_1.png" />
     <AndroidResource Include="Resources\drawable-xxhdpi\arrow_step_1.png" />
     <AndroidResource Include="Resources\drawable\BlackCursor.xml" />
+    <AndroidResource Include="Resources\drawable-hdpi\ic_arrow_down_green.png" />
+    <AndroidResource Include="Resources\drawable-mdpi\ic_arrow_down_green.png" />
+    <AndroidResource Include="Resources\drawable-xhdpi\ic_arrow_down_green.png" />
+    <AndroidResource Include="Resources\drawable-xxhdpi\ic_arrow_down_green.png" />
+    <AndroidResource Include="Resources\drawable-hdpi\ic_arrow_up_green.png" />
+    <AndroidResource Include="Resources\drawable-mdpi\ic_arrow_up_green.png" />
+    <AndroidResource Include="Resources\drawable-xhdpi\ic_arrow_up_green.png" />
+    <AndroidResource Include="Resources\drawable-xxhdpi\ic_arrow_up_green.png" />
     <AndroidResource Include="Resources\layout\ProjectListUsedProjectItem.axml" />
     <AndroidResource Include="Resources\layout\ProjectListMostUsedList.axml" />
+    <AndroidResource Include="Resources\drawable\TaskToggle.axml" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Xamarin\Android\Xamarin.Android.CSharp.targets" />
   <ItemGroup>

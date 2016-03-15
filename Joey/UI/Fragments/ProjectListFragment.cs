@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Android.App;
 using Android.Content;
@@ -9,18 +10,17 @@ using Android.Views;
 using Android.Widget;
 using Toggl.Joey.UI.Activities;
 using Toggl.Joey.UI.Adapters;
+using Toggl.Joey.UI.Utils;
 using Toggl.Joey.UI.Views;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.ViewModels;
 using Toggl.Phoebe.Data.Views;
+using XPlatUtils;
 using ActionBar = Android.Support.V7.App.ActionBar;
 using Activity = Android.Support.V7.App.AppCompatActivity;
 using Fragment = Android.Support.V4.App.Fragment;
 using SearchView = Android.Support.V7.Widget.SearchView;
 using Toolbar = Android.Support.V7.Widget.Toolbar;
-using System.Collections.Generic;
-using XPlatUtils;
-using Toggl.Joey.UI.Utils;
 
 namespace Toggl.Joey.UI.Fragments
 {

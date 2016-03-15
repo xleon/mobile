@@ -113,7 +113,6 @@ namespace Toggl.Joey.UI.Adapters
         {
             readonly TextView HeaderTextView;
             readonly LinearLayout ProjectsContainer;
-            private ViewGroup parent;
             private List<CommonProjectData> projectList;
             private ProjectListAdapter adapter;
 
@@ -136,7 +135,7 @@ namespace Toggl.Joey.UI.Adapters
                 ProjectsContainer.RemoveAllViews ();
 
                 foreach (var project in projectList) {
-                    var view = inflater.Inflate (Resource.Layout.ProjectListUsedProjectItem, parent, false);
+                    var view = inflater.Inflate (Resource.Layout.ProjectListUsedProjectItem, null, false);
 
                     var projectTextView = view.FindViewById<TextView> (Resource.Id.ProjectTextView);
                     var clientTextView = view.FindViewById<TextView> (Resource.Id.ClientTextView);
@@ -172,7 +171,7 @@ namespace Toggl.Joey.UI.Adapters
             protected TextView ClientTextView { get; private set; }
             protected Button TasksButton { get; private set; }
             protected ImageView TasksImageView { get; private set; }
-
+            private bool expanded = false;
             private ProjectListAdapter adapter;
             private ProjectsCollection.SuperProjectData projectData;
 
@@ -189,8 +188,25 @@ namespace Toggl.Joey.UI.Adapters
                 ProjectTextView = root.FindViewById<TextView> (Resource.Id.ProjectTextView).SetFont (Font.Roboto);
                 ClientTextView = root.FindViewById<TextView> (Resource.Id.ClientTextView).SetFont (Font.RobotoLight);
                 TasksButton = root.FindViewById<Button> (Resource.Id.TasksButton);
-                TasksButton.Click += (sender, e) => adapter.collectionView.AddTasks (projectData);
+                TasksButton.Click += TaskClick;
                 root.SetOnClickListener (this);
+            }
+
+            private bool Expanded
+            {
+                get {
+                    return expanded;
+                } set {
+                    expanded = value;
+                    TasksButton.SetCompoundDrawablesWithIntrinsicBounds (0, 0,
+                            expanded ? Resource.Drawable.ic_arrow_down_green : Resource.Drawable.ic_arrow_up_green,
+                            0);
+                }
+            }
+
+            private void TaskClick (object sender, EventArgs e)
+            {
+                Expanded = adapter.collectionView.AddTasks (projectData);
             }
 
             public void OnClick (View v)
@@ -229,7 +245,14 @@ namespace Toggl.Joey.UI.Adapters
                 ClientTextView.Text = projectData.ClientName;
                 ClientTextView.Visibility = showClient ? ViewStates.Visible : ViewStates.Gone;
                 TasksButton.Visibility = projectData.TaskNumber > 0 ? ViewStates.Visible : ViewStates.Gone;
-                TasksButton.Selected = false;
+
+                if (projectData.TaskNumber > 0) {
+                    TasksButton.Text = String.Format (
+                                           ServiceContainer.Resolve<Context> ().Resources.GetText (Resource.String.ProjectsTasks),
+                                           projectData.TaskNumber
+                                       );
+                    TasksButton.Selected = false;
+                }
             }
         }
 

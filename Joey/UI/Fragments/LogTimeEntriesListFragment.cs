@@ -219,6 +219,7 @@ namespace Toggl.Joey.UI.Fragments
 
         private void SetCollectionState ()
         {
+            // TODO RX OfflineMode needs to show the experiment screen.
             if (ViewModel.HasItems != LogTimeEntriesViewModel.CollectionState.NotReady) {
                 View emptyView = emptyMessageView;
                 var isWelcome = ServiceContainer.Resolve<ISettingsStore> ().ShowWelcome;

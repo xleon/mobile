@@ -133,6 +133,8 @@ namespace Toggl.Phoebe.Tests
             public bool IsStagingMode { get; set; }
 
             public bool ShowWelcome { get; set; }
+
+            public bool OfflineMode { get; set; }
         }
     }
 }

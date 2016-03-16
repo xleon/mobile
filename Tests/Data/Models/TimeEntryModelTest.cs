@@ -107,7 +107,6 @@ namespace Toggl.Phoebe.Tests.Data.Models
                 parent = await TimeEntryModel.SaveTimeEntryDataAsync (parent);
 
                 var entry = await TimeEntryModel.ContinueAsync (parent);
-                Assert.AreEqual (parent.Id, entry.Id);
                 Assert.IsNull (entry.StopTime);
                 Assert.AreEqual (TimeEntryState.Running, entry.State);
             });
@@ -477,7 +476,6 @@ namespace Toggl.Phoebe.Tests.Data.Models
                 var entry = await TimeEntryModel.ContinueAsync (parent.Data);
                 Assert.NotNull (entry);
                 Assert.AreNotSame (parent.Data, entry);
-                Assert.AreEqual (parent.Data.Id, entry.Id);
                 Assert.IsNull (entry.StopTime);
                 Assert.AreEqual (TimeEntryState.Running, entry.State);
             });

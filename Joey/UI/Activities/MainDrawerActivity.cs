@@ -91,7 +91,6 @@ namespace Toggl.Joey.UI.Activities
             DrawerUserName = DrawerUserView.FindViewById<TextView> (Resource.Id.TitleTextView);
             DrawerEmail = DrawerUserView.FindViewById<TextView> (Resource.Id.EmailTextView);
             DrawerImage = DrawerUserView.FindViewById<ProfileImageView> (Resource.Id.IconProfileImageView);
-            DrawerListView.AddHeaderView (DrawerUserView);
             DrawerListView.Adapter = drawerAdapter = new DrawerListAdapter ();
             DrawerListView.ItemClick += OnDrawerListViewItemClick;
 
@@ -110,6 +109,9 @@ namespace Toggl.Joey.UI.Activities
                 // TODO: Improve this dirty solution?
             };
 
+            if (!ServiceContainer.Resolve<AuthManager> ().OfflineMode) {
+                DrawerListView.AddHeaderView (DrawerUserView);
+            }
             Timer.OnCreate (this);
 
             var lp = new Android.Support.V7.App.ActionBar.LayoutParams (ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.MatchParent, (int)GravityFlags.Right);

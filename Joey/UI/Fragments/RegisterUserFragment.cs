@@ -223,8 +223,6 @@ namespace Toggl.Joey.UI.Fragments
             }
         }
 
-
-
         private void ShowAuthError (string email, AuthResult res, bool googleAuth=false)
         {
             var dia = new ErrorDialogFragment (res);

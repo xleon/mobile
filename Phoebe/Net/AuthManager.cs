@@ -262,7 +262,6 @@ namespace Toggl.Phoebe.Net
         public async Task<AuthResult> ActivateRealUser (Func<Task<UserJson>> getUser)
         {
             var log = ServiceContainer.Resolve<ILogger> ();
-            var client = ServiceContainer.Resolve<ITogglClient> ();
             var credStore = ServiceContainer.Resolve<ISettingsStore> ();
 
             try {

@@ -240,6 +240,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)IPlatformUtils.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ServiceContainer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)_ViewModels\LoginVM.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)_ViewModels\ClientListVM.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="$(MSBuildThisFileDirectory)Contrib\XPlatUtils\" />

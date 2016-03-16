@@ -7,8 +7,8 @@ using Android.Views.InputMethods;
 using GalaSoft.MvvmLight.Helpers;
 using Toggl.Joey.UI.Activities;
 using Toggl.Joey.UI.Views;
-using Toggl.Phoebe.Data.DataObjects;
-using Toggl.Phoebe.Data.ViewModels;
+using Toggl.Phoebe._Data.Models;
+using Toggl.Phoebe._ViewModels;
 using ActionBar = Android.Support.V7.App.ActionBar;
 using Activity = Android.Support.V7.App.AppCompatActivity;
 using AlertDialog = Android.Support.V7.App.AlertDialog;
@@ -26,7 +26,7 @@ namespace Toggl.Joey.UI.Fragments
         public TogglField ProjectBit { get; private set; }
         public TogglField SelectClientBit { get; private set; }
         public ColorPickerRecyclerView ColorPicker { get; private set; }
-        public NewProjectViewModel ViewModel { get; private set; }
+        public NewProjectVM ViewModel { get; private set; }
 
         // Binding to avoid weak references
         // to be collected by the
@@ -93,10 +93,10 @@ namespace Toggl.Joey.UI.Fragments
             return view;
         }
 
-        public async override void OnViewCreated (View view, Bundle savedInstanceState)
+        public override void OnViewCreated (View view, Bundle savedInstanceState)
         {
             base.OnViewCreated (view, savedInstanceState);
-            ViewModel = await NewProjectViewModel.Init (WorkspaceId);
+            ViewModel = new NewProjectVM (Phoebe._Reactive.StoreManager.Singleton.AppState.TimerState, WorkspaceId);
             clientBinding = this.SetBinding (() => ViewModel.ClientName, () => SelectClientBit.TextField.Text);
         }
 
@@ -117,7 +117,7 @@ namespace Toggl.Joey.UI.Fragments
             }, 100);
         }
 
-        private async void SaveButtonHandler (object sender, EventArgs e)
+        private void SaveButtonHandler (object sender, EventArgs e)
         {
             // TODO: Deactivate Save btn.
             // If name is empty.
@@ -132,7 +132,7 @@ namespace Toggl.Joey.UI.Fragments
             }
 
             // If name exists.
-            var existsName = await ViewModel.ExistProjectWithName (projectName);
+            var existsName = ViewModel.ExistProjectWithName (projectName);
             if (existsName) {
                 new AlertDialog.Builder (Activity)
                 .SetTitle (Resource.String.NewProjectDuplicateDialogTitle)
@@ -143,16 +143,16 @@ namespace Toggl.Joey.UI.Fragments
             }
 
             // Save project and send result.
-            var newProjectData = await ViewModel.SaveProject (projectName, ColorPicker.Adapter.SelectedColor);
+            var newProjectData = ViewModel.SaveProject (projectName, ColorPicker.Adapter.SelectedColor);
             var resultIntent = new Intent ();
             resultIntent.PutExtra (BaseActivity.IntentProjectIdArgument, newProjectData.Id.ToString ());
             Activity.SetResult (Result.Ok, resultIntent);
             Activity.Finish();
         }
 
-        private async void SelectClientBitClickedHandler (object sender, EventArgs e)
+        private void SelectClientBitClickedHandler (object sender, EventArgs e)
         {
-            if (await ClientListViewModel.ContainsClients (WorkspaceId)) {
+            if (ViewModel.ContainsClients (WorkspaceId)) {
                 ClientListDialogFragment.NewInstance (WorkspaceId)
                 .SetClientSelectListener (this)
                 .Show (FragmentManager, "clients_dialog");

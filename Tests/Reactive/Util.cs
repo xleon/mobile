@@ -57,34 +57,34 @@ namespace Toggl.Phoebe.Tests.Reactive
         public IList<CommonJson> ReceivedItems = new List<CommonJson> ();
 
 
-        public Task<T> Create<T> (T jsonObject) where T : CommonJson
+        public Task<T> Create<T> (string authToken, T jsonObject) where T : CommonJson
         {
             ReceivedItems.Add (jsonObject);
             jsonObject.RemoteId = rnd.Next (100);
             return Task.FromResult (jsonObject);
         }
-        public Task<T> Get<T> (long id) where T : CommonJson
+        public Task<T> Get<T> (string authToken, long id) where T : CommonJson
         {
             throw new NotImplementedException ();
         }
-        public Task<List<T>> List<T> () where T : CommonJson
+        public Task<List<T>> List<T> (string authToken) where T : CommonJson
         {
             throw new NotImplementedException ();
         }
-        public Task<T> Update<T> (T jsonObject) where T : CommonJson
+        public Task<T> Update<T> (string authToken, T jsonObject) where T : CommonJson
         {
             return Task.Run (() => {
                 ReceivedItems.Add (jsonObject);
                 return jsonObject;
             });
         }
-        public Task Delete<T> (T jsonObject) where T : CommonJson
+        public Task Delete<T> (string authToken, T jsonObject) where T : CommonJson
         {
             return Task.Run (() => {
                 ReceivedItems.Add (jsonObject);
             });
         }
-        public Task Delete<T> (IEnumerable<T> jsonObjects) where T : CommonJson
+        public Task Delete<T> (string authToken, IEnumerable<T> jsonObjects) where T : CommonJson
         {
             throw new NotImplementedException ();
         }
@@ -117,55 +117,55 @@ namespace Toggl.Phoebe.Tests.Reactive
             return null;
         }
 
-        public Task<List<ClientJson>> ListWorkspaceClients (long workspaceId)
+        public Task<List<ClientJson>> ListWorkspaceClients (string authToken, long workspaceId)
         {
             throw new NotImplementedException ();
         }
-        public Task<List<ProjectJson>> ListWorkspaceProjects (long workspaceId)
+        public Task<List<ProjectJson>> ListWorkspaceProjects (string authToken, long workspaceId)
         {
             throw new NotImplementedException ();
         }
-        public Task<List<WorkspaceUserJson>> ListWorkspaceUsers (long workspaceId)
+        public Task<List<WorkspaceUserJson>> ListWorkspaceUsers (string authToken, long workspaceId)
         {
             throw new NotImplementedException ();
         }
-        public Task<List<TaskJson>> ListWorkspaceTasks (long workspaceId)
+        public Task<List<TaskJson>> ListWorkspaceTasks (string authToken, long workspaceId)
         {
             throw new NotImplementedException ();
         }
-        public Task<List<TaskJson>> ListProjectTasks (long projectId)
+        public Task<List<TaskJson>> ListProjectTasks (string authToken, long projectId)
         {
             throw new NotImplementedException ();
         }
-        public Task<List<ProjectUserJson>> ListProjectUsers (long projectId)
+        public Task<List<ProjectUserJson>> ListProjectUsers (string authToken, long projectId)
         {
             throw new NotImplementedException ();
         }
-        public Task<List<TimeEntryJson>> ListTimeEntries (DateTime start, DateTime end, System.Threading.CancellationToken cancellationToken)
+        public Task<List<TimeEntryJson>> ListTimeEntries (string authToken, DateTime start, DateTime end, System.Threading.CancellationToken cancellationToken)
         {
             throw new NotImplementedException ();
         }
-        public Task<List<TimeEntryJson>> ListTimeEntries (DateTime start, DateTime end)
+        public Task<List<TimeEntryJson>> ListTimeEntries (string authToken, DateTime start, DateTime end)
         {
             throw new NotImplementedException ();
         }
-        public Task<List<TimeEntryJson>> ListTimeEntries (DateTime end, int days, System.Threading.CancellationToken cancellationToken)
+        public Task<List<TimeEntryJson>> ListTimeEntries (string authToken, DateTime end, int days, System.Threading.CancellationToken cancellationToken)
         {
             throw new NotImplementedException ();
         }
-        public Task<List<TimeEntryJson>> ListTimeEntries (DateTime end, int days)
+        public Task<List<TimeEntryJson>> ListTimeEntries (string authToken, DateTime end, int days)
         {
             throw new NotImplementedException ();
         }
-        public Task<UserRelatedJson> GetChanges (DateTime? since)
+        public Task<UserRelatedJson> GetChanges (string authToken, DateTime? since)
         {
             throw new NotImplementedException ();
         }
-        public Task CreateFeedback (FeedbackJson jsonObject)
+        public Task CreateFeedback (string authToken, FeedbackJson jsonObject)
         {
             throw new NotImplementedException ();
         }
-        public Task CreateExperimentAction (ActionJson jsonObject)
+        public Task CreateExperimentAction (string authToken, ActionJson jsonObject)
         {
             throw new NotImplementedException ();
         }

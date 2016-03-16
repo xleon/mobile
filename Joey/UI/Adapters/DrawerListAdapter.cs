@@ -72,6 +72,7 @@ namespace Toggl.Joey.UI.Adapters
                 }
             };
             authManager = ServiceContainer.Resolve<AuthManager> ();
+            rowItems = FilterVisible (rowItems);
         }
 
         private List<DrawerItem> FilterVisible (List<DrawerItem> list)
@@ -81,7 +82,6 @@ namespace Toggl.Joey.UI.Adapters
                                             ! (item.VMode == VisibilityMode.Offline && !authManager.OfflineMode);
 
             return list.Where (filter)
-                   .Select (item => item.With (item.SubItems.Where (filter).ToList ()))
                    .ToList ();
         }
 

@@ -193,10 +193,6 @@ namespace Toggl.Joey.UI.Fragments
                 var label = ViewModel.IsBillable ? GetString (Resource.String.CurrentTimeEntryEditBillableChecked) : GetString (Resource.String.CurrentTimeEntryEditBillableUnchecked);
                 BillableCheckBox.Text = label;
             });
-            var authManager = ServiceContainer.Resolve<AuthManager> ();
-            syncErrorBinding = this.SetBinding (() => ViewModel.SyncError).WhenSourceChanges (() => {
-                SyncError.Visibility = (ViewModel.SyncError && !authManager.OfflineMode) ? ViewStates.Visible : ViewStates.Gone;
-            });
 
             // Configure option menu.
             ConfigureOptionMenu ();

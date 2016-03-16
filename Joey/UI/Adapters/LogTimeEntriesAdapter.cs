@@ -406,7 +406,7 @@ namespace Toggl.Joey.UI.Adapters
                 var ctx = ServiceContainer.Resolve<Context> ();
 
                 var authManager = ServiceContainer.Resolve<AuthManager> ();
-                if (authManager.OfflineMode || (DataSource.Data.RemoteId.HasValue && !DataSource.Data.IsDirty)) {
+                if (authManager.OfflineMode || (datasource.Data.RemoteId.HasValue && !datasource.Data.IsDirty)) {
                     NotSyncedView.Visibility = ViewStates.Gone;
                 } else {
                     NotSyncedView.Visibility = ViewStates.Visible;
@@ -531,9 +531,7 @@ namespace Toggl.Joey.UI.Adapters
                 progressBar.Visibility = ViewStates.Gone;
                 retryLayout.Visibility = ViewStates.Gone;
 
-                if (authManager.OfflineMode) {
-                    loadState = RecyclerLoadState.Finished;
-                } else if (state == RecyclerLoadState.Loading) {
+                if (state == RecyclerLoadState.Loading) {
                     progressBar.Visibility = ViewStates.Visible;
                 } else if (state == RecyclerLoadState.Retry) {
                     retryLayout.Visibility = ViewStates.Visible;

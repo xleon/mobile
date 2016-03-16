@@ -225,7 +225,6 @@ namespace Toggl.Joey.UI.Activities
                 OpenFragment (feedbackFragment.Value);
             } else if (id == DrawerListAdapter.RegisterUserPageId) {
                 SupportActionBar.SetTitle (Resource.String.MainDrawerSignup);
-                drawerAdapter.ExpandCollapse (DrawerListAdapter.RegisterUserPageId);
                 OpenFragment (registerUserFragment.Value);
             } else {
                 SupportActionBar.SetTitle (Resource.String.MainDrawerTimer);

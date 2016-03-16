@@ -777,7 +777,6 @@
     <AndroidResource Include="Resources\drawable-xxhdpi\IcReportsOverflow.png" />
     <AndroidResource Include="Resources\menu\ReportsToolbarMenu.axml" />
     <AndroidResource Include="Resources\drawable-ldpi\ic_menu_black_24dp.png" />
-    <AndroidResource Include="Resources\layout\CreateUserFragment.axml" />
     <AndroidResource Include="Resources\layout\RegisterUserFragment.axml" />
     <AndroidResource Include="Resources\layout\IntroLayout.axml" />
     <AndroidResource Include="Resources\drawable-hdpi\img_reports.png" />

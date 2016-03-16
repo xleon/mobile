@@ -195,8 +195,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)Data\Utils\DateHolder.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Data\Utils\ObservableRangeCollection.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Data\Utils\PropertyChangeTracker.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Data\Utils\TimeEntriesCollection.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Data\Utils\TimeEntriesFeed.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Data\Utils\TimeEntryGroup.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Data\Utils\TimeEntryHolder.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Data\Utils\TimeEntryInfo.cs" />
@@ -217,9 +215,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)Logging\LogLevel.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Logging\LogStore.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Net\AuthChangeReason.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Net\AuthChangedMessage.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Net\AuthFailedMessage.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Net\AuthManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Net\AuthResult.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Net\ExperimentAction.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Net\FeedbackMessage.cs" />

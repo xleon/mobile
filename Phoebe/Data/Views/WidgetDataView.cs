@@ -24,7 +24,7 @@ namespace Toggl.Phoebe.Data.Views
             IsLoading = true;
 
             try {
-                userData = ServiceContainer.Resolve<AuthManager> ().User;
+                userData = new UserData (); //ServiceContainer.Resolve<AuthManager> ().User;
                 var store = ServiceContainer.Resolve<IDataStore> ();
                 queryStartDate = Time.UtcNow - TimeSpan.FromDays (9);
                 var recentEntries = await store.Table<TimeEntryData> ()

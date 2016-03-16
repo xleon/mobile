@@ -8,6 +8,7 @@ using Android.Views;
 using Android.Widget;
 using Toggl.Joey.UI.Utils;
 using Toggl.Joey.UI.Views;
+using Toggl.Phoebe._Reactive;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
 
@@ -111,7 +112,7 @@ namespace Toggl.Joey.UI.Fragments
 
             datePicker.Init (date.Year, date.Month - 1, date.Day, this);
             if (Build.VERSION.SdkInt >= BuildVersionCodes.Lollipop) {
-                var userData = ServiceContainer.Resolve<AuthManager> ().User;
+                var userData = StoreManager.Singleton.AppState.TimerState.User;
                 datePicker.FirstDayOfWeek =  ((int) userData.StartOfWeek) + 1; // FirstDayOfWeek must be between 1 - 7, Our days go from 0 - 6.
             }
         }

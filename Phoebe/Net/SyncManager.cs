@@ -15,16 +15,10 @@ namespace Toggl.Phoebe.Net
     public class SyncManager : ISyncManager
     {
         private static readonly string Tag = "SyncManager";
-#pragma warning disable 0414
-        private readonly Subscription<AuthChangedMessage> subscriptionAuthChanged;
-#pragma warning restore 0414
         private Subscription<DataChangeMessage> subscriptionDataChange;
 
         public SyncManager ()
         {
-            var bus = ServiceContainer.Resolve<MessageBus> ();
-            subscriptionAuthChanged = bus.Subscribe<AuthChangedMessage> (OnAuthChanged);
-            subscriptionDataChange = bus.Subscribe<DataChangeMessage> (OnDataChange);
         }
 
         private void OnDataChange (DataChangeMessage msg)
@@ -39,21 +33,25 @@ namespace Toggl.Phoebe.Net
             Run (SyncMode.Auto);
         }
 
-        private void OnAuthChanged (AuthChangedMessage msg)
+        private void OnAuthChanged ()
         {
+            /*
             if (msg.AuthManager.IsAuthenticated) {
                 return;
             }
-
+            */
             // Reset last run on logout
             LastRun = null;
         }
 
         public async void Run (SyncMode mode = SyncMode.Full)
         {
+            /*
             if (!ServiceContainer.Resolve<AuthManager> ().IsAuthenticated) {
                 return;
             }
+            */
+
             if (IsRunning) {
                 return;
             }
@@ -183,11 +181,13 @@ namespace Toggl.Phoebe.Net
             // TODO: OBM data that comes in user object from this changes
             // is totally wrong. In that way, we should keep this info before
             // before process the object.
+            /*
             var user = ServiceContainer.Resolve<AuthManager> ().User;
             if (user != null) {
                 changes.User.OBM.Included = user.ExperimentIncluded;
                 changes.User.OBM.Number = user.ExperimentNumber;
             }
+            */
 
             // Import data (in parallel batches)
             var userData = await store.ExecuteInTransactionAsync (ctx => changes.User.Import (ctx));
@@ -345,25 +345,25 @@ namespace Toggl.Phoebe.Net
         where T : CommonData, new()
         {
             var store = ServiceContainer.Resolve<IDataStore> ();
-            object query;
+            object query = store.Table<T> ();
 
             if (typeof (T) == typeof (WorkspaceUserData)) {
                 // Exclude intermediate models which we've created from assumptions (for current user
                 // and without remote id) from returned models.
-                var userId = ServiceContainer.Resolve<AuthManager> ().GetUserId ();
-                query = store.Table<WorkspaceUserData> ()
-                        .Where (r => r.UserId != userId || r.RemoteId != null);
+                //var userId = ServiceContainer.Resolve<AuthManager> ().GetUserId ();
+                //query = store.Table<WorkspaceUserData> ()
+                // .Where (r => r.UserId != userId || r.RemoteId != null);
             } else if (typeof (T) == typeof (ProjectUserData)) {
                 // Exclude intermediate models which we've created from assumptions (for current user
                 // and without remote id) from returned models.
-                var userId = ServiceContainer.Resolve<AuthManager> ().GetUserId ();
-                query = store.Table<ProjectUserData> ()
-                        .Where (r => r.UserId != userId || r.RemoteId != null);
+                //var userId = ServiceContainer.Resolve<AuthManager> ().GetUserId ();
+                //query = store.Table<ProjectUserData> ()
+                // .Where (r => r.UserId != userId || r.RemoteId != null);
             } else if (typeof (T) == typeof (TimeEntryData)) {
                 // Only sync non-draft time entries for current user:
-                var userId = ServiceContainer.Resolve<AuthManager> ().GetUserId ();
-                query = store.Table<TimeEntryData> ()
-                        .Where (r => r.UserId == userId && r.State != TimeEntryState.New);
+                //var userId = ServiceContainer.Resolve<AuthManager> ().GetUserId ();
+                //query = store.Table<TimeEntryData> ()
+                // .Where (r => r.UserId == userId && r.State != TimeEntryState.New);
             } else {
                 query = store.Table<T> ();
             }

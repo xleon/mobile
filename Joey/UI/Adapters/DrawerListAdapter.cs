@@ -18,7 +18,6 @@ namespace Toggl.Joey.UI.Adapters
         public static readonly int LogoutPageId = 3;
         public static readonly int FeedbackPageId = 4;
         private List<DrawerItem> rowItems;
-        private readonly AuthManager authManager;
 
         public DrawerListAdapter ()
         {
@@ -54,7 +53,6 @@ namespace Toggl.Joey.UI.Adapters
                     IsEnabled = true,
                 }
             };
-            authManager = ServiceContainer.Resolve<AuthManager> ();
         }
 
         public override View GetView (int position, View convertView, ViewGroup parent)

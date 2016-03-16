@@ -113,12 +113,14 @@ namespace Toggl.Joey.Wear
                     Log.Info ("WearIntegration", "Connecting");
                 }
 
+                /*
                 var authManager = ServiceContainer.Resolve<AuthManager> ();
                 if (!authManager.IsAuthenticated) {
                     Log.Info ("WearIntegration", "Is not authenticated");
                     NotifyNotLoggedIn();
                     return;
                 }
+                */
 
                 var path = message.Path;
 

@@ -83,9 +83,6 @@ namespace Toggl.Joey.UI.Activities
             DrawerListView.Adapter = drawerAdapter = new DrawerListAdapter ();
             DrawerListView.ItemClick += OnDrawerListViewItemClick;
 
-            var authManager = ServiceContainer.Resolve<AuthManager> ();
-            authManager.PropertyChanged += OnUserChangedEvent;
-
             DrawerLayout = FindViewById<DrawerLayout> (Resource.Id.DrawerLayout);
             DrawerToggle = new ActionBarDrawerToggle (this, DrawerLayout, MainToolbar, Resource.String.EntryName, Resource.String.EntryName);
 
@@ -149,13 +146,11 @@ namespace Toggl.Joey.UI.Activities
 
         private void OnUserChangedEvent (object sender, PropertyChangedEventArgs args)
         {
-            var userData = ServiceContainer.Resolve<AuthManager> ().User;
-            if (userData == null) {
-                return;
-            }
+            /*
             DrawerUserName.Text = userData.Name;
             DrawerEmail.Text = userData.Email;
             DrawerImage.ImageUrl = userData.ImageUrl;
+            */
         }
 
         protected override void OnSaveInstanceState (Bundle outState)
@@ -260,8 +255,8 @@ namespace Toggl.Joey.UI.Activities
                 OpenPage (DrawerListAdapter.TimerPageId);
 
             } else if (e.Id == DrawerListAdapter.LogoutPageId) {
-                var authManager = ServiceContainer.Resolve<AuthManager> ();
-                authManager.Forget ();
+                //var authManager = ServiceContainer.Resolve<AuthManager> ();
+                //authManager.Forget ();
                 StartAuthActivity ();
             } else if (e.Id == DrawerListAdapter.ReportsPageId) {
                 OpenPage (DrawerListAdapter.ReportsPageId);

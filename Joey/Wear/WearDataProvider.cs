@@ -43,7 +43,7 @@ namespace Toggl.Joey.Wear
         public static async Task<List<SimpleTimeEntryData>> GetTimeEntryData ()
         {
             var store = ServiceContainer.Resolve<IDataStore> ();
-            var userId = ServiceContainer.Resolve<AuthManager> ().GetUserId ();
+            var userId = Guid.Empty; //ServiceContainer.Resolve<AuthManager> ().GetUserId ();
 
             var entries = await store.Table<TimeEntryData>()
                           .Where (r => r.State != TimeEntryState.New

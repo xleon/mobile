@@ -95,11 +95,13 @@ namespace Toggl.Phoebe.Data.Json.Converters
         private static Guid GetUserLocalId (IDataStoreContext ctx, long id)
         {
             if (id == 0) {
+                /*
                 var authManager = ServiceContainer.Resolve<AuthManager> ();
                 if (authManager.User == null) {
                     throw new ArgumentException ("Cannot import TimeEntry with missing user when no authenticated user.", "id");
                 }
                 return authManager.User.Id;
+                */
             }
             return GetLocalId<UserData> (ctx, id);
         }

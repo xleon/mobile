@@ -13,7 +13,6 @@ namespace Toggl.Phoebe
         {
             ServiceContainer.Register<MessageBus> ();
             ServiceContainer.Register<UpgradeManger> ();
-            ServiceContainer.Register<AuthManager> ();
             ServiceContainer.Register<DataCache> ();
             ServiceContainer.Register<ForeignRelationManager> ();
             ServiceContainer.Register<ISyncManager> (() => new SyncManager ());

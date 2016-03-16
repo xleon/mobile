@@ -218,12 +218,13 @@ namespace Toggl.Phoebe.Net
 
         private HttpRequestMessage SetupRequest (HttpRequestMessage req)
         {
+            /*
             var authManager = ServiceContainer.Resolve<AuthManager> ();
             if (authManager.Token != null) {
                 req.Headers.Authorization = new AuthenticationHeaderValue ("Basic",
                         Convert.ToBase64String (Encoding.ASCII.GetBytes (
                                                     string.Format ("{0}:api_token", authManager.Token))));
-            }
+            }*/
             return req;
         }
 
@@ -498,7 +499,6 @@ namespace Toggl.Phoebe.Net
         public Task<TimeEntryJson> GetTimeEntry (long id)
         {
             var url = new Uri (v8Url, String.Format ("time_entries/{0}", id.ToString ()));
-            var user = ServiceContainer.Resolve<AuthManager> ().User;
             return GetObject<TimeEntryJson> (url);
         }
 
@@ -541,14 +541,12 @@ namespace Toggl.Phoebe.Net
                                String.Format ("time_entries?end_date={0}&num_of_days={1}",
                                               WebUtility.UrlEncode (end.ToUtc ().ToString ("o")),
                                               days));
-            var user = ServiceContainer.Resolve<AuthManager> ().User;
             return ListObjects<TimeEntryJson> (url, cancellationToken);
         }
 
         public Task<TimeEntryJson> UpdateTimeEntry (TimeEntryJson jsonObject)
         {
             var url = new Uri (v8Url, String.Format ("time_entries/{0}", jsonObject.Id.Value.ToString ()));
-            var user = ServiceContainer.Resolve<AuthManager> ().User;
             return UpdateObject (url, jsonObject);
         }
 
@@ -680,11 +678,12 @@ namespace Toggl.Phoebe.Net
 
         public Task<UserJson> GetUser (long id)
         {
+            /*
             var authManager = ServiceContainer.Resolve<AuthManager> ();
             if (authManager.Token == null || authManager.User.RemoteId != (long?)id) {
                 throw new NotSupportedException ("Can only update currently logged in user.");
             }
-
+            */
             var url = new Uri (v8Url, "me");
             return GetObject<UserJson> (url);
         }
@@ -733,11 +732,12 @@ namespace Toggl.Phoebe.Net
 
         public Task<UserJson> UpdateUser (UserJson jsonObject)
         {
+            /*
             var authManager = ServiceContainer.Resolve<AuthManager> ();
             if (authManager.User == null || authManager.User.RemoteId != jsonObject.Id) {
                 throw new NotSupportedException ("Can only update currently logged in user.");
             }
-
+            */
             var url = new Uri (v8Url, "me");
             return UpdateObject (url, jsonObject);
         }

@@ -8,18 +8,11 @@ namespace Toggl.Phoebe.Analytics
 {
     public abstract class BaseTracker : ITracker, IDisposable
     {
-        private Subscription<AuthChangedMessage> subscriptionAuthChanged;
-        private Subscription<SyncFinishedMessage> subscriptionSyncFinished;
-        private Subscription<ExperimentChangedMessage> subscriptionExperimentChanged;
         private Plan userPlan;
 
         public BaseTracker ()
         {
             var bus = ServiceContainer.Resolve<MessageBus> ();
-            subscriptionAuthChanged = bus.Subscribe<AuthChangedMessage> (OnAuthChanged);
-            subscriptionSyncFinished = bus.Subscribe<SyncFinishedMessage> (OnSyncFinished);
-            subscriptionExperimentChanged = bus.Subscribe<ExperimentChangedMessage> (OnExperimentChanged);
-
             var experiment = ServiceContainer.Resolve<ExperimentManager> ().CurrentExperiment;
             CurrentExperiment = experiment != null ? experiment.Id : null;
         }
@@ -38,20 +31,7 @@ namespace Toggl.Phoebe.Analytics
         protected virtual void Dispose (bool disposing)
         {
             if (disposing) {
-                var bus = ServiceContainer.Resolve<MessageBus> ();
 
-                if (subscriptionAuthChanged != null) {
-                    bus.Unsubscribe (subscriptionAuthChanged);
-                    subscriptionAuthChanged = null;
-                }
-                if (subscriptionSyncFinished != null) {
-                    bus.Unsubscribe (subscriptionSyncFinished);
-                    subscriptionSyncFinished = null;
-                }
-                if (subscriptionExperimentChanged != null) {
-                    bus.Unsubscribe (subscriptionExperimentChanged);
-                    subscriptionExperimentChanged = null;
-                }
             }
         }
 
@@ -249,6 +229,7 @@ namespace Toggl.Phoebe.Analytics
         protected abstract void SendEvent (string category, string action, string label=null, long value=0);
         protected abstract void SetCustomDimension (int idx, string value);
 
+        /*
         private void OnAuthChanged (AuthChangedMessage msg)
         {
             // Start a new session whenever the user changes, exception being signup where the user just created an account
@@ -257,6 +238,7 @@ namespace Toggl.Phoebe.Analytics
                 StartNewSession ();
             }
         }
+        */
 
         private async void OnSyncFinished (SyncFinishedMessage msg)
         {

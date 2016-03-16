@@ -2,13 +2,14 @@
 using System.Diagnostics;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Toggl.Phoebe.Data.Json;
 using XPlatUtils;
 
-namespace Toggl.Phoebe.Net
+namespace Toggl.Phoebe._Net
 {
     public class ReportsRestClient : IReportsClient
     {
@@ -35,16 +36,11 @@ namespace Toggl.Phoebe.Net
             return client;
         }
 
-        private HttpRequestMessage SetupRequest (HttpRequestMessage req)
+        private HttpRequestMessage SetupRequest (string authToken, HttpRequestMessage req)
         {
-            /*
-            var authManager = ServiceContainer.Resolve<AuthManager> ();
-            if (authManager.Token != null) {
-                req.Headers.Authorization = new AuthenticationHeaderValue ("Basic",
-                        Convert.ToBase64String (Encoding.ASCII.GetBytes (
-                                                    string.Format ("{0}:api_token", authManager.Token))));
-            }
-            */
+            req.Headers.Authorization = new AuthenticationHeaderValue ("Basic",
+                    Convert.ToBase64String (Encoding.ASCII.GetBytes (
+                                                string.Format ("{0}:api_token", authToken))));
             return req;
         }
 
@@ -71,15 +67,15 @@ namespace Toggl.Phoebe.Net
 
         #region IReportClient implementation
 
-        public async Task<ReportJson> GetReports (long userRemoteId, DateTime startDate, DateTime endDate, long workspaceId)
+        public async Task<ReportJson> GetReports (string authToken, long userRemoteId, DateTime startDate, DateTime endDate, long workspaceId)
         {
             var start = startDate.ToString ("yyyy-MM-dd");
             var end = endDate.ToString ("yyyy-MM-dd");
             var relUrl = "summary?billable=both&order_field=duration&order_desc=true&user_agent=toggl_mobile&subgrouping_ids=true&bars_count=31";
-            relUrl = String.Format ("{0}&since={1}&until={2}&user_ids={3}&workspace_id={4}", relUrl, start, end, userRemoteId, workspaceId);
+            relUrl = string.Format ("{0}&since={1}&until={2}&user_ids={3}&workspace_id={4}", relUrl, start, end, userRemoteId, workspaceId);
             var url = new Uri (reportsv2Url, relUrl);
 
-            var httpReq = SetupRequest (new HttpRequestMessage () {
+            var httpReq = SetupRequest (authToken, new HttpRequestMessage () {
                 Method = HttpMethod.Get,
                 RequestUri = url,
             });

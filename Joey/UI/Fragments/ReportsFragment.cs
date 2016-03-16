@@ -9,9 +9,9 @@ using Android.Views;
 using Android.Widget;
 using Toggl.Joey.UI.Utils;
 using Toggl.Joey.UI.Views;
-using Toggl.Phoebe.Data;
-using Toggl.Phoebe.Data.Models;
-using Toggl.Phoebe.Data.Reports;
+using Toggl.Phoebe._Data.Models;
+using Toggl.Phoebe._Reactive;
+using Toggl.Phoebe._Reports;
 using Fragment = Android.Support.V4.App.Fragment;
 
 namespace Toggl.Joey.UI.Fragments
@@ -54,6 +54,10 @@ namespace Toggl.Joey.UI.Fragments
             set;
         }
 
+        public ReportsFragment (IntPtr jref, Android.Runtime.JniHandleOwnership xfer) : base (jref, xfer)
+        {
+        }
+
         public ReportsFragment ()
         {
         }
@@ -63,7 +67,6 @@ namespace Toggl.Joey.UI.Fragments
             var args = new Bundle ();
             args.PutInt (ReportPeriodArgument, period);
             args.PutInt (ReportZoomArgument, (int)zoom);
-
             Arguments = args;
         }
 
@@ -112,7 +115,7 @@ namespace Toggl.Joey.UI.Fragments
 
         public event EventHandler PositionChanged;
 
-        public event EventHandler<ReportsFragment.LoadReadyEventArgs> LoadReady;
+        public event EventHandler<LoadReadyEventArgs> LoadReady;
 
         public int Position
         {
@@ -149,7 +152,7 @@ namespace Toggl.Joey.UI.Fragments
                 var data = new SummaryReportView {
                     Period = ZoomLevel,
                 };
-                await data.Load (Period);
+                await data.Load (StoreManager.Singleton.AppState.TimerState.User, Period);
                 IsError = data.IsError;
                 if (controller != null) {
                     controller.Data = data;
@@ -334,8 +337,8 @@ namespace Toggl.Joey.UI.Fragments
 
                     if (data == null) {
                         // Reset everything to blank
-                        totalValue.Text = String.Empty;
-                        billableValue.Text = String.Empty;
+                        totalValue.Text = string.Empty;
+                        billableValue.Text = string.Empty;
                         barChart.Reset (null);
                         pieChart.Reset (null);
                         listView.Adapter = null;
@@ -431,7 +434,7 @@ namespace Toggl.Joey.UI.Fragments
             {
                 if (String.IsNullOrEmpty (DataSource.Project)) {
                     NameTextView.SetText (Resource.String.ReportsListViewNoProject);
-                } else if (DataSource.Color == ProjectModel.GroupedProjectColorIndex) {
+                } else if (DataSource.Color == ProjectData.GroupedProjectColorIndex) {
                     NameTextView.Text = _root.Context.Resources.GetQuantityString (
                                             Resource.Plurals.GroupedReportProjectCell,
                                             int.Parse (DataSource.Project),
@@ -444,7 +447,7 @@ namespace Toggl.Joey.UI.Fragments
                 DurationTextView.Text = DataSource.FormattedTotalTime;
                 var squareDrawable = new GradientDrawable ();
                 squareDrawable.SetCornerRadius (5);
-                var color = (DataSource.Color == ProjectModel.GroupedProjectColorIndex) ? ProjectModel.GroupedProjectColor : ProjectModel.HexColors [ DataSource.Color % ProjectModel.HexColors.Length];
+                var color = (DataSource.Color == ProjectData.GroupedProjectColorIndex) ? ProjectData.GroupedProjectColor : ProjectData.HexColors [ DataSource.Color % ProjectData.HexColors.Length];
                 squareDrawable.SetColor (Color.ParseColor (color));
                 ColorSquareView.SetBackgroundDrawable (squareDrawable);
             }

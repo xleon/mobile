@@ -6,15 +6,13 @@ using Android.Content.PM;
 using Android.OS;
 using Android.Support.V4.App;
 using Android.Support.V4.Widget;
-using Android.Text.Format;
 using Android.Views;
 using Android.Widget;
 using Toggl.Joey.UI.Adapters;
 using Toggl.Joey.UI.Components;
 using Toggl.Joey.UI.Fragments;
 using Toggl.Joey.UI.Views;
-using Toggl.Phoebe;
-using Toggl.Phoebe.Data;
+using Toggl.Phoebe._Data.Models;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
 using ActionBarDrawerToggle = Android.Support.V7.App.ActionBarDrawerToggle;
@@ -44,7 +42,6 @@ namespace Toggl.Joey.UI.Activities
         private readonly Lazy<ReportsPagerFragment> reportFragment = new Lazy<ReportsPagerFragment> ();
         private readonly Lazy<FeedbackFragment> feedbackFragment = new Lazy<FeedbackFragment> ();
         private readonly List<int> pageStack = new List<int> ();
-        private readonly Handler handler = new Handler ();
         private DrawerListAdapter drawerAdapter;
         private ToolbarModes toolbarMode;
 

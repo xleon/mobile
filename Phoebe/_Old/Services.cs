@@ -39,7 +39,6 @@ namespace Toggl.Phoebe
             ServiceContainer.Register<UserJsonConverter> ();
             ServiceContainer.Register<WorkspaceJsonConverter> ();
             ServiceContainer.Register<WorkspaceUserJsonConverter> ();
-            ServiceContainer.Register<ReportJsonConverter> ();
         }
 
         private static IDataStore CreateDataStore ()

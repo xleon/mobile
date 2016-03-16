@@ -58,7 +58,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)_Data\DataMsg.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)_Data\Duration.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)_Data\ISyncDataStore.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)_Data\ReportTypes.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)_Data\StartStopMessage.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)_Data\SyncSqliteDataStore.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)_Data\Diff\Diff.cs" />
@@ -130,7 +129,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)Data\DataObjects\CommonData.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Data\DataObjects\ProjectData.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Data\DataObjects\ProjectUserData.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Data\DataObjects\ReportData.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Data\DataObjects\TagData.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Data\DataObjects\TaskData.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Data\DataObjects\TimeCorrectionData.cs" />
@@ -160,7 +158,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)Data\Json\Converters\ProjectJsonConverter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Data\Json\Converters\ProjectUserJsonConverter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Data\Json\Converters\RelationRemoteIdMissingException.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Data\Json\Converters\ReportJsonConverter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Data\Json\Converters\TagJsonConverter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Data\Json\Converters\TaskJsonConverter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Data\Json\Converters\TimeEntryJsonConverter.cs" />
@@ -191,7 +188,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)Data\Models\UserModel.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Data\Models\WorkspaceModel.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Data\Models\WorkspaceUserModel.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Data\Reports\SummaryReportView.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Data\Utils\DateHolder.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Data\Utils\ObservableRangeCollection.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Data\Utils\PropertyChangeTracker.cs" />
@@ -241,9 +237,13 @@
     <Compile Include="$(MSBuildThisFileDirectory)ServiceContainer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)_ViewModels\LoginVM.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)_ViewModels\ClientListVM.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)_Net\ReportsRestClient.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)_Net\IReportsClient.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)_Reports\SummaryReportView.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="$(MSBuildThisFileDirectory)Contrib\XPlatUtils\" />
+    <Folder Include="$(MSBuildThisFileDirectory)_Reports\" />
   </ItemGroup>
   <ItemGroup>
     <None Include="$(MSBuildThisFileDirectory)Data\.DS_Store" />

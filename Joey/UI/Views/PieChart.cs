@@ -4,12 +4,11 @@ using System.Linq;
 using Android.Animation;
 using Android.Content;
 using Android.Graphics;
-using Android.Text;
 using Android.Util;
 using Android.Views;
 using Android.Widget;
-using Toggl.Phoebe.Data.Models;
-using Toggl.Phoebe.Data.Reports;
+using Toggl.Phoebe._Data.Models;
+using Toggl.Phoebe._Reports;
 
 namespace Toggl.Joey.UI.Views
 {
@@ -168,10 +167,10 @@ namespace Toggl.Joey.UI.Views
 
                     slice.Visibility = ViewStates.Gone;
                     slice.Radius = defaultRadius;
-                    if (project.Color == ProjectModel.GroupedProjectColorIndex) {
-                        slice.Color = Color.ParseColor (ProjectModel.GroupedProjectColor);
+                    if (project.Color == ProjectData.GroupedProjectColorIndex) {
+                        slice.Color = Color.ParseColor (ProjectData.GroupedProjectColor);
                     } else {
-                        slice.Color = Color.ParseColor (ProjectModel.HexColors [project.Color % ProjectModel.HexColors.Length]);
+                        slice.Color = Color.ParseColor (ProjectData.HexColors [project.Color % ProjectData.HexColors.Length]);
                     }
                     slice.StartAngle = startAngle;
                     startAngle += percentOfAll * 360;

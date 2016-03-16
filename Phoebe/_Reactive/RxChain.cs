@@ -23,14 +23,14 @@ namespace Toggl.Phoebe._Reactive
             // Full
             default:
                 StoreManager.Init (initState, Reducers.Init ());
-                SyncOutManager.Init ();
+                SyncManager.Init ();
                 break;
             }
         }
 
         public static void Cleanup ()
         {
-            SyncOutManager.Cleanup ();
+            SyncManager.Cleanup ();
             StoreManager.Cleanup ();
         }
 

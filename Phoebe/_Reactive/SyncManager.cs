@@ -15,14 +15,14 @@ using XPlatUtils;
 
 namespace Toggl.Phoebe._Reactive
 {
-    public class SyncOutManager
+    public class SyncManager
     {
         public const string QueueId = "SYNC_OUT";
-        public static SyncOutManager Singleton { get; private set; }
+        public static SyncManager Singleton { get; private set; }
 
         public static void Init ()
         {
-            Singleton = Singleton ?? new SyncOutManager ();
+            Singleton = Singleton ?? new SyncManager ();
         }
 
         public static void Cleanup ()
@@ -30,7 +30,7 @@ namespace Toggl.Phoebe._Reactive
             Singleton = null;
         }
 
-        readonly string Tag = typeof (SyncOutManager).Name;
+        readonly string Tag = typeof (SyncManager).Name;
         readonly JsonMapper mapper;
         readonly Toggl.Phoebe.Net.INetworkPresence networkPresence;
         readonly ISyncDataStore dataStore;
@@ -38,7 +38,7 @@ namespace Toggl.Phoebe._Reactive
         readonly Subject<Tuple<ServerRequest, AppState>> requestManager = new Subject<Tuple<ServerRequest, AppState>> ();
 
 
-        SyncOutManager ()
+        SyncManager ()
         {
             mapper = new JsonMapper ();
             networkPresence = ServiceContainer.Resolve<Toggl.Phoebe.Net.INetworkPresence> ();
@@ -53,7 +53,9 @@ namespace Toggl.Phoebe._Reactive
             requestManager
             // Make sure requests are run one after the other
             .Synchronize ()
+            // TODO: Use Throttle here?
             .SelectAsync (async x => {
+                // TODO RX: Check connection? Throw exception if not connected or just dismiss?
                 if (x.Item1 is ServerRequest.DownloadEntries) {
                     await DownloadEntries (x.Item2.TimerState);
                 } else if (x.Item1 is ServerRequest.Authenticate) {
@@ -69,7 +71,8 @@ namespace Toggl.Phoebe._Reactive
                     var req = x.Item1 as ServerRequest.SignUpWithGoogle;
                     await SignupWithGoogleAsync (req.AccessToken);
                 }
-            });
+            })
+            .Subscribe ();
         }
 
         void log (Exception ex, string msg = "Failed to send data to server")
@@ -114,26 +117,8 @@ namespace Toggl.Phoebe._Reactive
                 RxChain.Send (new DataMsg.ReceivedFromServer (remoteObjects));
             }
 
-            if (isConnected) {
-                // TODO: Discard duplicated requests?
-                foreach (var x in syncMsg.ServerRequests) {
-                    //requestManager.OnNext (Tuple.Create (req, syncMsg.State));syncMsg.State
-                    if (x is ServerRequest.DownloadEntries) {
-                        await DownloadEntries (syncMsg.State.TimerState);
-                    } else if (x is ServerRequest.Authenticate) {
-                        var req = x as ServerRequest.Authenticate;
-                        await AuthenticateAsync (req.Username, req.Password);
-                    } else if (x is ServerRequest.AuthenticateWithGoogle) {
-                        var req = x as ServerRequest.AuthenticateWithGoogle;
-                        await AuthenticateWithGoogleAsync (req.AccessToken);
-                    } else if (x is ServerRequest.SignUp) {
-                        var req = x as ServerRequest.SignUp;
-                        await SignupAsync (req.Email, req.Password);
-                    } else if (x is ServerRequest.SignUpWithGoogle) {
-                        var req = x as ServerRequest.SignUpWithGoogle;
-                        await SignupWithGoogleAsync (req.AccessToken);
-                    }
-                }
+            foreach (var req in syncMsg.ServerRequests) {
+                requestManager.OnNext (Tuple.Create (req, syncMsg.State));
             }
 
             if (syncMsg.SyncTest != null) {
@@ -326,16 +311,13 @@ namespace Toggl.Phoebe._Reactive
                                 projectJson = await client.Get<ProjectJson> (entry.ProjectRemoteId.Value);
                                 newProjects.Add (projectJson);
                             }
-                            clientRemoteId = projectJson.RemoteId;
+                            clientRemoteId = (projectJson as ProjectJson).ClientRemoteId;
                         }
 
                         if (clientRemoteId.HasValue) {
                             if (state.Clients.Values.All (x => x.RemoteId != clientRemoteId) &&
                                     newClients.All (x => x.RemoteId != clientRemoteId)) {
-                                var c = await client.Get<ClientJson> (clientRemoteId.Value);
-                                // TODO RX: I'm getting null results here, why does this happen?
-                                if (c != null)
-                                    newClients.Add (c);
+                                newClients.Add (await client.Get<ClientJson> (clientRemoteId.Value));
                             }
                         }
                     }

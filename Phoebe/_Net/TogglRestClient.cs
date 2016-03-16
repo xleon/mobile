@@ -514,11 +514,11 @@ namespace Toggl.Phoebe._Net
                                               WebUtility.UrlEncode (end.ToUtc ().ToString ("o"))));
             return ListObjects<TimeEntryJson> (url, cancellationToken);
         }
-		
-		public Task<List<TimeEntryJson>> ListTimeEntries (DateTime end, int days)
-		{
-			return ListTimeEntries (end, days, CancellationToken.None);
-		}
+
+        public Task<List<TimeEntryJson>> ListTimeEntries (DateTime end, int days)
+        {
+            return ListTimeEntries (end, days, CancellationToken.None);
+        }
 
         public Task<List<TimeEntryJson>> ListTimeEntries (DateTime end, int days, CancellationToken cancellationToken)
         {
@@ -724,7 +724,7 @@ namespace Toggl.Phoebe._Net
             since = since.ToUtc ();
             var relUrl = "me?with_related_data=true";
             if (since.HasValue) {
-                relUrl = string.Format ("{0}&since={1}", relUrl, (long)(since.Value - UnixStart).TotalSeconds);
+                relUrl = string.Format ("{0}&since={1}", relUrl, (long) (since.Value - UnixStart).TotalSeconds);
             }
             var url = new Uri (v8Url, relUrl);
 

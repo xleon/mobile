@@ -26,7 +26,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)_Reactive\Reducers.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)_Reactive\RxChain.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)_Reactive\StoreManager.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)_Reactive\SyncOutManager.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)_Reactive\SyncManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)_Old\AccessLevel.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)_Old\DateTimeExtensions.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)_Old\DefaultTimeProvider.cs" />

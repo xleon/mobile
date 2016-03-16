@@ -83,6 +83,7 @@ namespace Toggl.Phoebe._Reactive
 
         async Task EnqueueOrSend (DataSyncMsg<AppState> syncMsg)
         {
+            var authToken = syncMsg.State.TimerState.User.ApiToken;
             var remoteObjects = new List<CommonData> ();
             var enqueuedItems = new List<DataJsonMsg> ();
             var isConnected = syncMsg.SyncTest != null
@@ -90,7 +91,7 @@ namespace Toggl.Phoebe._Reactive
                               : networkPresence.IsNetworkPresent;
 
             // Try to empty queue first
-            bool queueEmpty = await tryEmptyQueue (remoteObjects, isConnected);
+            bool queueEmpty = await tryEmptyQueue (authToken, remoteObjects, isConnected);
 
             // Deal with messages
             foreach (var msg in syncMsg.SyncData) {
@@ -98,7 +99,7 @@ namespace Toggl.Phoebe._Reactive
 
                 if (queueEmpty && isConnected) {
                     try {
-                        await SendMessage (remoteObjects, msg.Id, exported);
+                        await SendMessage (authToken, remoteObjects, msg.Id, exported);
                     } catch (Exception ex) {
                         log (ex);
                         Enqueue (msg.Id, exported, enqueuedItems);
@@ -126,7 +127,7 @@ namespace Toggl.Phoebe._Reactive
             }
         }
 
-        async Task<bool> tryEmptyQueue (List<CommonData> remoteObjects, bool isConnected)
+        async Task<bool> tryEmptyQueue (string authToken, List<CommonData> remoteObjects, bool isConnected)
         {
             string json = null;
             if (dataStore.TryPeek (QueueId, out json)) {
@@ -134,7 +135,7 @@ namespace Toggl.Phoebe._Reactive
                     try {
                         do {
                             var jsonMsg = JsonConvert.DeserializeObject<DataJsonMsg> (json);
-                            await SendMessage (remoteObjects, jsonMsg.LocalId, jsonMsg.Data);
+                            await SendMessage (authToken, remoteObjects, jsonMsg.LocalId, jsonMsg.Data);
 
                             // If we sent the message successfully, remove it from the queue
                             dataStore.TryDequeue (QueueId, out json);
@@ -165,21 +166,21 @@ namespace Toggl.Phoebe._Reactive
             }
         }
 
-        async Task SendMessage (List<CommonData> remoteObjects, Guid localId, CommonJson json)
+        async Task SendMessage (string authToken, List<CommonData> remoteObjects, Guid localId, CommonJson json)
         {
             if (json.DeletedAt == null) {
                 if (json.RemoteId != null) {
                     // TODO: Save the response to remoteObjects here too?
-                    await client.Update (json);
+                    await client.Update (authToken, json);
                 } else {
-                    var res = await client.Create (json);
+                    var res = await client.Create (authToken, json);
                     var resData = mapper.Map (res);
                     resData.Id = localId;
                     remoteObjects.Add (resData);
                 }
             } else {
                 if (json.RemoteId != null) {
-                    await client.Delete (json);
+                    await client.Delete (authToken, json);
                 } else {
                     // TODO: Make sure the item has not been assigned a remoteId by a previous item in the queue
                 }
@@ -210,7 +211,7 @@ namespace Toggl.Phoebe._Reactive
             var client = ServiceContainer.Resolve<ITogglClient> ();
 
             log.Info (Tag, "Signing up with email ({0}).", email);
-            await AuthenticateAsync (() => client.Create (new UserJson {
+            await AuthenticateAsync (() => client.Create (string.Empty, new UserJson {
                 Email = email,
                 Password = password,
                 Timezone = Time.TimeZoneId,
@@ -223,7 +224,7 @@ namespace Toggl.Phoebe._Reactive
             var client = ServiceContainer.Resolve<ITogglClient> ();
 
             log.Info (Tag, "Signing up with email Google access token.");
-            await AuthenticateAsync (() => client.Create (new UserJson () {
+            await AuthenticateAsync (() => client.Create (string.Empty, new UserJson () {
                 GoogleAccessToken = accessToken,
                 Timezone = Time.TimeZoneId,
             }), Net.AuthChangeReason.SignupGoogle); //, AccountCredentials.Google);
@@ -268,23 +269,19 @@ namespace Toggl.Phoebe._Reactive
             //    break;
             //}
 
-            UserData userData = null;
-            if (userJson != null) {
-                userData = mapper.Map<UserData> (userJson);
-                var client = ServiceContainer.Resolve<ITogglClient> () as TogglRestClient;
-                client.Authenticate (userJson.ApiToken);
-            }
-            RxChain.Send (new DataMsg.UserDataPut (authResult, userData));
+            RxChain.Send (new DataMsg.UserDataPut (
+                              authResult, userJson != null ? mapper.Map<UserData> (userJson) : null));
         }
 
         async Task DownloadEntries (TimerState state)
         {
             long? clientRemoteId = null;
+            string authToken = state.User.ApiToken;
             var startDate = state.DownloadResult.DownloadFrom;
             const int endDate = Literals.TimeEntryLoadDays;
 
             try {
-                var jsonEntries = await client.ListTimeEntries (startDate, endDate);
+                var jsonEntries = await client.ListTimeEntries (authToken, startDate, endDate);
                 // Download new Entries
 
                 var newWorkspaces = new List<CommonJson> ();
@@ -297,7 +294,7 @@ namespace Toggl.Phoebe._Reactive
                 foreach (var entry in jsonEntries) {
                     if (state.Workspaces.Values.All (x => x.RemoteId != entry.WorkspaceRemoteId) &&
                             newWorkspaces.All (x => x.RemoteId != entry.WorkspaceRemoteId)) {
-                        newWorkspaces.Add (await client.Get<WorkspaceJson> (entry.WorkspaceRemoteId));
+                        newWorkspaces.Add (await client.Get<WorkspaceJson> (authToken, entry.WorkspaceRemoteId));
                     }
 
                     if (entry.ProjectRemoteId.HasValue) {
@@ -308,7 +305,7 @@ namespace Toggl.Phoebe._Reactive
                         } else {
                             var projectJson = newProjects.FirstOrDefault (x => x.RemoteId == entry.ProjectRemoteId);
                             if (projectJson == null) {
-                                projectJson = await client.Get<ProjectJson> (entry.ProjectRemoteId.Value);
+                                projectJson = await client.Get<ProjectJson> (authToken, entry.ProjectRemoteId.Value);
                                 newProjects.Add (projectJson);
                             }
                             clientRemoteId = (projectJson as ProjectJson).ClientRemoteId;
@@ -317,7 +314,7 @@ namespace Toggl.Phoebe._Reactive
                         if (clientRemoteId.HasValue) {
                             if (state.Clients.Values.All (x => x.RemoteId != clientRemoteId) &&
                                     newClients.All (x => x.RemoteId != clientRemoteId)) {
-                                newClients.Add (await client.Get<ClientJson> (clientRemoteId.Value));
+                                newClients.Add (await client.Get<ClientJson> (authToken, clientRemoteId.Value));
                             }
                         }
                     }
@@ -325,7 +322,7 @@ namespace Toggl.Phoebe._Reactive
                     if (entry.TaskRemoteId.HasValue) {
                         if (state.Tasks.Values.All (x => x.RemoteId != entry.TaskRemoteId) &&
                                 newTasks.All (x => x.RemoteId != entry.TaskRemoteId)) {
-                            newTasks.Add (await client.Get<TaskJson> (entry.TaskRemoteId.Value));
+                            newTasks.Add (await client.Get<TaskJson> (authToken, entry.TaskRemoteId.Value));
                         }
                     }
 
@@ -333,7 +330,7 @@ namespace Toggl.Phoebe._Reactive
                         if (state.Tags.Values.All (x => x.WorkspaceRemoteId != entry.WorkspaceRemoteId || x.Name != tag) &&
                                 newTags.All (x => x.WorkspaceRemoteId != entry.WorkspaceRemoteId || x.Name != tag)) {
                             // TODO RX: How to get the tag without a remote id?
-                            //newTags.Add (await client.Get<TagJson> (tagRemoteId));
+                            //newTags.Add (await client.Get<TagJson> (authToken, tagRemoteId));
                         }
                     }
                 }

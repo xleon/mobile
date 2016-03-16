@@ -41,12 +41,12 @@ namespace Toggl.Phoebe.Net
                     // Load full user data:
                     ReloadUser ();
                 }
-                Token = credStore.ApiToken;
+                //Token = credStore.ApiToken;
                 IsAuthenticated = !String.IsNullOrEmpty (Token);
             } catch (ArgumentException) {
                 // When data is corrupt and cannot find user
                 credStore.UserId = null;
-                credStore.ApiToken = null;
+                //credStore.ApiToken = null;
             }
 
             // Listen for global data changes
@@ -125,7 +125,7 @@ namespace Toggl.Phoebe.Net
 
                 var credStore = ServiceContainer.Resolve<ISettingsStore> ();
                 credStore.UserId = userData.Id;
-                credStore.ApiToken = userJson.ApiToken;
+                //credStore.ApiToken = userJson.ApiToken;
 
                 User = userData;
                 Token = userJson.ApiToken;
@@ -205,7 +205,7 @@ namespace Toggl.Phoebe.Net
 
             var credStore = ServiceContainer.Resolve<ISettingsStore> ();
             credStore.UserId = null;
-            credStore.ApiToken = null;
+            //credStore.ApiToken = null;
 
             IsAuthenticated = false;
             Token = null;

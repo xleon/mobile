@@ -11,22 +11,22 @@ namespace Toggl.Phoebe._Net
     {
         #region Generic CURD methods
 
-        Task<T> Create<T> (T jsonObject)
+        Task<T> Create<T> (string authToken, T jsonObject)
         where T : CommonJson;
 
-        Task<T> Get<T> (long id)
+        Task<T> Get<T> (string authToken, long id)
         where T : CommonJson;
 
-        Task<List<T>> List<T> ()
+        Task<List<T>> List<T> (string authToken)
         where T : CommonJson;
 
-        Task<T> Update<T> (T jsonObject)
+        Task<T> Update<T> (string authToken, T jsonObject)
         where T : CommonJson;
 
-        Task Delete<T> (T jsonObject)
+        Task Delete<T> (string authToken, T jsonObject)
         where T : CommonJson;
 
-        Task Delete<T> (IEnumerable<T> jsonObjects)
+        Task Delete<T> (string authToken, IEnumerable<T> jsonObjects)
         where T : CommonJson;
 
         #endregion
@@ -35,30 +35,30 @@ namespace Toggl.Phoebe._Net
 
         Task<UserJson> GetUser (string googleAccessToken);
 
-        Task<List<ClientJson>> ListWorkspaceClients (long workspaceId);
+        Task<List<ClientJson>> ListWorkspaceClients (string authToken, long workspaceId);
 
-        Task<List<ProjectJson>> ListWorkspaceProjects (long workspaceId);
+        Task<List<ProjectJson>> ListWorkspaceProjects (string authToken, long workspaceId);
 
-        Task<List<WorkspaceUserJson>> ListWorkspaceUsers (long workspaceId);
+        Task<List<WorkspaceUserJson>> ListWorkspaceUsers (string authToken, long workspaceId);
 
-        Task<List<TaskJson>> ListWorkspaceTasks (long workspaceId);
+        Task<List<TaskJson>> ListWorkspaceTasks (string authToken, long workspaceId);
 
-        Task<List<TaskJson>> ListProjectTasks (long projectId);
+        Task<List<TaskJson>> ListProjectTasks (string authToken, long projectId);
 
-        Task<List<ProjectUserJson>> ListProjectUsers (long projectId);
+        Task<List<ProjectUserJson>> ListProjectUsers (string authToken, long projectId);
 
-        Task<List<TimeEntryJson>> ListTimeEntries (DateTime start, DateTime end, CancellationToken cancellationToken);
+        Task<List<TimeEntryJson>> ListTimeEntries (string authToken, DateTime start, DateTime end, CancellationToken cancellationToken);
 
-        Task<List<TimeEntryJson>> ListTimeEntries (DateTime start, DateTime end);
+        Task<List<TimeEntryJson>> ListTimeEntries (string authToken, DateTime start, DateTime end);
 
-        Task<List<TimeEntryJson>> ListTimeEntries (DateTime end, int days, CancellationToken cancellationToken);
+        Task<List<TimeEntryJson>> ListTimeEntries (string authToken, DateTime end, int days, CancellationToken cancellationToken);
 
-        Task<List<TimeEntryJson>> ListTimeEntries (DateTime end, int days);
+        Task<List<TimeEntryJson>> ListTimeEntries (string authToken, DateTime end, int days);
 
-        Task<UserRelatedJson> GetChanges (DateTime? since);
+        Task<UserRelatedJson> GetChanges (string authToken, DateTime? since);
 
-        Task CreateFeedback (FeedbackJson jsonObject);
+        Task CreateFeedback (string authToken, FeedbackJson jsonObject);
 
-        Task CreateExperimentAction (ActionJson jsonObject);
+        Task CreateExperimentAction (string authToken, ActionJson jsonObject);
     }
 }

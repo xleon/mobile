@@ -167,6 +167,7 @@ namespace Toggl.Phoebe._Reactive
                 authResult: Net.AuthResult.None,
                 downloadResult: new DownloadResult (false, true, false, downloadFrom, downloadFrom),
                 user: userData,
+                activeTimeEntryId: Guid.Empty,
                 workspaces: new Dictionary<Guid, WorkspaceData> (),
                 projects: new Dictionary<Guid, ProjectData> (),
                 workspaceUsers: new Dictionary<Guid, WorkspaceUserData> (),
@@ -174,8 +175,7 @@ namespace Toggl.Phoebe._Reactive
                 clients: new Dictionary<Guid, ClientData> (),
                 tasks: new Dictionary<Guid, TaskData> (),
                 tags: new Dictionary<Guid, TagData> (),
-                timeEntries: new Dictionary<Guid, RichTimeEntry> (),
-                activeTimeEntry: new TimeEntryData ());
+                timeEntries: new Dictionary<Guid, RichTimeEntry> ());
 
             return new AppState (timerState);
         }
@@ -247,11 +247,12 @@ namespace Toggl.Phoebe._Reactive
         public IReadOnlyDictionary<Guid, TaskData> Tasks { get; private set; }
         public IReadOnlyDictionary<Guid, TagData> Tags { get; private set; }
         public IReadOnlyDictionary<Guid, RichTimeEntry> TimeEntries { get; private set; }
-        public ITimeEntryData ActiveTimeEntry { get; private set; }
+        public Guid ActiveTimeEntryId { get; private set; }
 
         public TimerState (
             Net.AuthResult authResult,
             DownloadResult downloadResult,
+			Guid activeTimeEntryId,
             UserData user,
             IReadOnlyDictionary<Guid, WorkspaceData> workspaces,
             IReadOnlyDictionary<Guid, ProjectData> projects,
@@ -260,11 +261,11 @@ namespace Toggl.Phoebe._Reactive
             IReadOnlyDictionary<Guid, ClientData> clients,
             IReadOnlyDictionary<Guid, TaskData> tasks,
             IReadOnlyDictionary<Guid, TagData> tags,
-            IReadOnlyDictionary<Guid, RichTimeEntry> timeEntries,
-            ITimeEntryData activeTimeEntry)
+            IReadOnlyDictionary<Guid, RichTimeEntry> timeEntries)
         {
             AuthResult = authResult;
             DownloadResult = downloadResult;
+			ActiveTimeEntryId = activeTimeEntryId;
             User = user;
             Workspaces = workspaces;
             Projects = projects;
@@ -274,12 +275,12 @@ namespace Toggl.Phoebe._Reactive
             Tasks = tasks;
             Tags = tags;
             TimeEntries = timeEntries;
-            ActiveTimeEntry = activeTimeEntry;
         }
 
         public TimerState With (
             Net.AuthResult? authResult = null,
             DownloadResult downloadResult = null,
+            Guid? activeTimeEntryId = null,
             UserData user = null,
             IReadOnlyDictionary<Guid, WorkspaceData> workspaces = null,
             IReadOnlyDictionary<Guid, ProjectData> projects = null,
@@ -288,12 +289,12 @@ namespace Toggl.Phoebe._Reactive
             IReadOnlyDictionary<Guid, ClientData> clients = null,
             IReadOnlyDictionary<Guid, TaskData> tasks = null,
             IReadOnlyDictionary<Guid, TagData> tags = null,
-            IReadOnlyDictionary<Guid, RichTimeEntry> timeEntries = null,
-            ITimeEntryData activeTimeEntry = null)
+            IReadOnlyDictionary<Guid, RichTimeEntry> timeEntries = null)
         {
             return new TimerState (
                        authResult ?? AuthResult,
                        downloadResult ?? DownloadResult,
+                       activeTimeEntryId ?? ActiveTimeEntryId,
                        user ?? User,
                        workspaces ?? Workspaces,
                        projects ?? Projects,
@@ -302,8 +303,7 @@ namespace Toggl.Phoebe._Reactive
                        clients ?? Clients,
                        tasks ?? Tasks,
                        tags ?? Tags,
-                       timeEntries ?? TimeEntries,
-                       activeTimeEntry ?? ActiveTimeEntry);
+                       timeEntries ?? TimeEntries);
         }
 
         /// <summary>

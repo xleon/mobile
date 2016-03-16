@@ -160,11 +160,11 @@ namespace Toggl.Phoebe._ViewModels
                 }
 
                 // Check if ActiveTimeEntry has changed
-                if (ActiveEntry == null || ActiveEntry.Data != timerState.ActiveTimeEntry) {
-                    if (timerState.ActiveTimeEntry.Id == Guid.Empty) {
+                if (ActiveEntry == null || ActiveEntry.Data.Id != timerState.ActiveTimeEntryId) {
+                    if (timerState.ActiveTimeEntryId == Guid.Empty) {
                         ActiveEntry = new RichTimeEntry (timerState, new TimeEntryData ());
                     } else {
-                        ActiveEntry = timerState.TimeEntries[timerState.ActiveTimeEntry.Id];
+                        ActiveEntry = timerState.TimeEntries[timerState.ActiveTimeEntryId];
 
                         // Check if an entry is running.
                         if (IsEntryRunning = ActiveEntry.Data.State == TimeEntryState.Running) {

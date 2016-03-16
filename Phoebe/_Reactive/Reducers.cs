@@ -239,15 +239,25 @@ namespace Toggl.Phoebe._Reactive
             var entryData = (msg as DataMsg.TimeEntryContinue).Data.ForceLeft ();
             var dataStore = ServiceContainer.Resolve <ISyncDataStore> ();
 
-            CheckTimeEntryState (entryData, TimeEntryState.Finished, "continue");
+            // TODO RX: Review the conditions to create a new time entry
+            TimeEntryData newEntry = null;
+            if (entryData.Id == Guid.Empty) {
+                newEntry = state.GetTimeEntryDraft ();
+            }
+            else {
+				CheckTimeEntryState (entryData, TimeEntryState.Finished, "continue");
+                newEntry = new TimeEntryData (entryData);
+            }
+            newEntry.Id = Guid.NewGuid ();
+            newEntry.State = TimeEntryState.Running;
+            newEntry.StartTime = DateTime.UtcNow;
 
-            var updated = dataStore.Update (ctx => ctx.Put (new TimeEntryData (entryData) {
-                State = TimeEntryState.Running,
-            }));
+            var updated = dataStore.Update (ctx => ctx.Put (newEntry));
 
-            // TODO: Check updated.Count == 1?
+            // Throw exception if entry wasn't updated properly
+            entryData = (ITimeEntryData)updated.Single ();
             return DataSyncMsg.Create (
-                       state.With (timeEntries: state.UpdateTimeEntries (updated)),
+                       state.With (activeTimeEntryId: entryData.Id, timeEntries: state.UpdateTimeEntries (updated)),
                        updated);
         }
 

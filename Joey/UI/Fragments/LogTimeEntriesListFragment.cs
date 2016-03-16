@@ -20,7 +20,6 @@ using Toggl.Joey.UI.Views;
 using Toggl.Phoebe._Data.Models;
 using Toggl.Phoebe._ViewModels;
 using Toggl.Phoebe._ViewModels.Timer;
-using Toggl.Phoebe.Data;
 using XPlatUtils;
 
 namespace Toggl.Joey.UI.Fragments
@@ -30,6 +29,7 @@ namespace Toggl.Joey.UI.Fragments
         ItemTouchListener.IItemTouchListener,
         SwipeRefreshLayout.IOnRefreshListener
     {
+        
         public static bool NewTimeEntryStartedByFAB;
 
         private RecyclerView recyclerView;
@@ -107,6 +107,12 @@ namespace Toggl.Joey.UI.Fragments
                 }
             });
 
+            ViewModel.PropertyChanged += (sender, e) => {
+                if (e.PropertyName == nameof (ViewModel.ActiveEntry)) {
+                    
+                }
+            };
+
             // Pass ViewModel to TimerComponent.
             timerComponent.SetViewModel (ViewModel);
             StartStopBtn.Click += StartStopClick;
@@ -128,17 +134,12 @@ namespace Toggl.Joey.UI.Fragments
             //                            OBMExperimentManager.StartButtonActionKey,
             //                            OBMExperimentManager.ClickActionValue);
 
+            // TODO RX: This public static mutable property is a bit dangerous
+            // We may need to put in the AppState
+            if (ViewModel.ActiveEntry.Data.State != TimeEntryState.Running) {
+                NewTimeEntryStartedByFAB = true;
+            }
             ViewModel.StartStopTimeEntry ();
-            // TODO RX: Run action when the entry is updated
-            //var timeEntryData = ViewModel.StartStopTimeEntry ();
-            //if (timeEntryData.State == TimeEntryState.Running) {
-            //    NewTimeEntryStartedByFAB = true;
-            //    var ids = new List<string> { timeEntryData.Id.ToString () };
-            //    var intent = new Intent (Activity, typeof (EditTimeEntryActivity));
-            //    intent.PutStringArrayListExtra (EditTimeEntryActivity.ExtraGroupedTimeEntriesGuids, ids);
-            //    intent.PutExtra (EditTimeEntryActivity.IsGrouped,  false);
-            //    StartActivity (intent);
-            //}
         }
 
         public override void OnDestroyView ()
@@ -235,6 +236,18 @@ namespace Toggl.Joey.UI.Fragments
             ViewModel.LoadMore ();
         }
 
+        private void OnActiveEntryChanged ()
+        {
+			var activeEntry = ViewModel.ActiveEntry.Data;
+            if (activeEntry.State == TimeEntryState.Running && NewTimeEntryStartedByFAB) {
+                var ids = new List<string> { activeEntry.Id.ToString () };
+                var intent = new Intent (Activity, typeof (EditTimeEntryActivity));
+                intent.PutStringArrayListExtra (EditTimeEntryActivity.ExtraGroupedTimeEntriesGuids, ids);
+                intent.PutExtra (EditTimeEntryActivity.IsGrouped,  false);
+                StartActivity (intent);
+            }
+        }
+
         private void OnLoadInfoChanged ()
         {
             if (ViewModel.LoadInfo.IsSyncing) {
@@ -277,7 +290,7 @@ namespace Toggl.Joey.UI.Fragments
             //if (info.HasItems != LogTimeEntriesViewModel.CollectionState.NotReady) {
 
             View emptyView = emptyMessageView;
-            var isWelcome = ServiceContainer.Resolve<ISettingsStore> ().ShowWelcome;
+            var isWelcome = ServiceContainer.Resolve<Phoebe.Data.ISettingsStore> ().ShowWelcome;
             var hasItems = ViewModel.Collection.Count > 0;
 
             // TODO RX: OBM Experiments

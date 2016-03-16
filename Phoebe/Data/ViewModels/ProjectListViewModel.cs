@@ -136,7 +136,9 @@ namespace Toggl.Phoebe.Data.ViewModels
         {
             CurrentWorkspaceId = WorkspaceList [newIndex].Id;
             ProjectList.WorkspaceId = WorkspaceList [newIndex].Id;
-            TopProjects = AllTopProjects.Where (r => r.WorkspaceId == CurrentWorkspaceId).Take (3).ToList ();
+            TopProjects = ProjectList.Count > 7
+                          ? AllTopProjects.Where (r => r.WorkspaceId == CurrentWorkspaceId).Take (3).ToList ()
+                          : new List<CommonProjectData> ();
             CurrentWorkspaceIndex = newIndex;
         }
     }

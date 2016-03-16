@@ -22,6 +22,10 @@ namespace Toggl.Phoebe.Net
         public static readonly string PropertyUser = GetPropertyName (m => m.User);
         public static readonly string PropertyToken = GetPropertyName (m => m.Token);
 
+        public static readonly string OfflineUserName = "offlineUser";
+        public static readonly string OfflineUserEmail = "nouser@toggl.com";
+        public static readonly string OfflineWorkspaceName = "Workspace";
+
         private readonly Subscription<DataChangeMessage> subscriptionDataChange;
         private static readonly string Tag = "AuthManager";
 
@@ -42,8 +46,10 @@ namespace Toggl.Phoebe.Net
                     ReloadUser ();
                 }
                 Token = credStore.ApiToken;
-                IsAuthenticated = !String.IsNullOrEmpty (Token);
+                OfflineMode = credStore.OfflineMode;
+                IsAuthenticated = !String.IsNullOrEmpty (Token) || OfflineMode;
             } catch (ArgumentException) {
+
                 // When data is corrupt and cannot find user
                 credStore.UserId = null;
                 credStore.ApiToken = null;
@@ -54,7 +60,7 @@ namespace Toggl.Phoebe.Net
             subscriptionDataChange = bus.Subscribe<DataChangeMessage> (OnDataChange);
         }
 
-        private async void ReloadUser ()
+        public async void ReloadUser ()
         {
             if (User == null) {
                 return;
@@ -70,6 +76,7 @@ namespace Toggl.Phoebe.Net
             if (IsAuthenticated) {
                 throw new InvalidOperationException ("Cannot authenticate when old credentials still present.");
             }
+
             if (IsAuthenticating) {
                 throw new InvalidOperationException ("Another authentication is still in progress.");
             }
@@ -151,6 +158,63 @@ namespace Toggl.Phoebe.Net
             return AuthResult.Success;
         }
 
+        public async Task<AuthResult> NoUserSetupAsync ()
+        {
+            IsAuthenticating = true;
+
+            //Create dummy user and workspace.
+            var userJson = new UserJson () {
+                Id = 100,
+                Name = OfflineUserName,
+                StartOfWeek = DayOfWeek.Monday,
+                Locale = "",
+                Email = OfflineUserEmail,
+                Password = "no-password",
+                Timezone = Time.TimeZoneId,
+                DefaultWorkspaceId = 1000
+            };
+
+            var workspaceJson = new WorkspaceJson () {
+                Id = 1000,
+                Name = OfflineWorkspaceName,
+                IsPremium = false,
+                IsAdmin = false
+            };
+
+            try {
+                // Import the user into our database:
+                UserData userData;
+                try {
+                    var dataStore = ServiceContainer.Resolve<IDataStore> ();
+                    userData = await dataStore.ExecuteInTransactionAsync (ctx => userJson.Import (ctx));
+                    await dataStore.ExecuteInTransactionAsync (ctx => workspaceJson.Import (ctx));
+                } catch (Exception ex) {
+                    var log = ServiceContainer.Resolve<ILogger> ();
+                    log.Error (Tag, ex, "Failed to import authenticated user.");
+
+                    ServiceContainer.Resolve<MessageBus> ().Send (
+                        new AuthFailedMessage (this, AuthResult.SystemError, ex));
+                    return AuthResult.SystemError;
+                }
+
+                var credStore = ServiceContainer.Resolve<ISettingsStore> ();
+                credStore.UserId = userData.Id;
+                credStore.ApiToken = userJson.ApiToken;
+                credStore.OfflineMode = userData.Name == OfflineUserName;
+
+                User = userData;
+                Token = userJson.ApiToken;
+                OfflineMode = userData.Name == OfflineUserName;
+                IsAuthenticated = true;
+
+                ServiceContainer.Resolve<MessageBus> ().Send (
+                    new AuthChangedMessage (this, AuthChangeReason.NoUser));
+            } finally {
+                IsAuthenticating = false;
+            }
+            return AuthResult.Success;
+        }
+
         public Task<AuthResult> AuthenticateAsync (string username, string password)
         {
             var log = ServiceContainer.Resolve<ILogger> ();
@@ -188,10 +252,102 @@ namespace Toggl.Phoebe.Net
             var client = ServiceContainer.Resolve<ITogglClient> ();
 
             log.Info (Tag, "Signing up with email Google access token.");
+
             return AuthenticateAsync (() => client.Create (new UserJson () {
                 GoogleAccessToken = accessToken,
                 Timezone = Time.TimeZoneId,
             }), AuthChangeReason.Signup, AccountCredentials.Google);
+        }
+
+        public async Task<AuthResult> ActivateRealUser (Func<Task<UserJson>> getUser)
+        {
+            var log = ServiceContainer.Resolve<ILogger> ();
+            var credStore = ServiceContainer.Resolve<ISettingsStore> ();
+
+            try {
+                UserJson userJson;
+                try {
+                    userJson = await getUser ();
+                    if (userJson == null) {
+                        ServiceContainer.Resolve<MessageBus> ().Send (
+                            new AuthFailedMessage (this, AuthResult.InvalidCredentials));
+                        return AuthResult.InvalidCredentials;
+                    } else if (userJson.DefaultWorkspaceId == 0) {
+                        ServiceContainer.Resolve<MessageBus> ().Send (
+                            new AuthFailedMessage (this, AuthResult.NoDefaultWorkspace));
+                        return AuthResult.NoDefaultWorkspace;
+                    }
+                } catch (Exception ex) {
+                    var reqEx = ex as UnsuccessfulRequestException;
+                    if (reqEx != null && (reqEx.IsForbidden || reqEx.IsValidationError)) {
+                        ServiceContainer.Resolve<MessageBus> ().Send (
+                            new AuthFailedMessage (this, AuthResult.InvalidCredentials));
+                        return AuthResult.InvalidCredentials;
+                    }
+
+                    if (ex.IsNetworkFailure () || ex is TaskCanceledException) {
+                        log.Info (Tag, ex, "Failed authenticate user.");
+                    } else {
+                        log.Warning (Tag, ex, "Failed to authenticate user.");
+                    }
+
+                    ServiceContainer.Resolve<MessageBus> ().Send (
+                        new AuthFailedMessage (this, AuthResult.NetworkError, ex));
+                    return AuthResult.NetworkError;
+                }
+                // Import the user into our database:
+                UserData userData;
+                try {
+                    var dataStore = ServiceContainer.Resolve<IDataStore> ();
+                    userData = await dataStore.ExecuteInTransactionAsync (ctx => userJson.Import (ctx));
+                } catch (Exception ex) {
+                    log.Error (Tag, ex, "Failed to import authenticated user.");
+
+                    ServiceContainer.Resolve<MessageBus> ().Send (
+                        new AuthFailedMessage (this, AuthResult.SystemError, ex));
+                    return AuthResult.SystemError;
+                }
+
+                credStore.UserId = userData.Id;
+                credStore.ApiToken = userJson.ApiToken;
+                credStore.OfflineMode = false;
+
+                User = userData;
+                Token = userJson.ApiToken;
+                OfflineMode = false;
+
+                IsAuthenticated = true;
+            } finally {
+                IsAuthenticating = false;
+            }
+            return AuthResult.Success;
+        }
+
+        public async Task<AuthResult> RegisterNoUserEmailAsync (string email, string password)
+        {
+            var log = ServiceContainer.Resolve<ILogger> ();
+            var client = ServiceContainer.Resolve<ITogglClient> ();
+
+            log.Info (Tag, "Signing up with email.");
+
+            return await ActivateRealUser (() => client.Create (new UserJson {
+                Email = email,
+                Password = password,
+                Timezone = Time.TimeZoneId,
+            }));
+        }
+
+        public async Task<AuthResult> RegisterNoUserGoogleAsync (string accessToken)
+        {
+            var log = ServiceContainer.Resolve<ILogger> ();
+            var client = ServiceContainer.Resolve<ITogglClient> ();
+
+            log.Info (Tag, "Signing up with email Google access token.");
+
+            return await ActivateRealUser (() => client.Create (new UserJson () {
+                GoogleAccessToken = accessToken,
+                Timezone = Time.TimeZoneId,
+            }));
         }
 
         public void Forget ()
@@ -206,10 +362,12 @@ namespace Toggl.Phoebe.Net
             var credStore = ServiceContainer.Resolve<ISettingsStore> ();
             credStore.UserId = null;
             credStore.ApiToken = null;
+            credStore.OfflineMode = false;
 
             IsAuthenticated = false;
             Token = null;
             User = null;
+            OfflineMode = false;
 
             ServiceContainer.Resolve<MessageBus> ().Send (
                 new AuthChangedMessage (this, AuthChangeReason.Logout));
@@ -227,7 +385,9 @@ namespace Toggl.Phoebe.Net
 
         public bool IsAuthenticating { get; private set; }
 
-        public bool IsAuthenticated { get; private set; }
+        public bool IsAuthenticated  { get; private set; }
+
+        public bool OfflineMode { get; private set; }
 
         public UserData User { get; private set; }
 

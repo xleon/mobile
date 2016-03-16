@@ -1,11 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Android.App;
 using Android.Content;
+using Android.InputMethodServices;
 using Android.OS;
 using Android.Views;
+using Android.Views.InputMethods;
 using Android.Widget;
 using GalaSoft.MvvmLight.Helpers;
 using Toggl.Joey.Data;
@@ -15,6 +18,7 @@ using Toggl.Joey.UI.Views;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.ViewModels;
+using Toggl.Phoebe.Net;
 using XPlatUtils;
 using ActionBar = Android.Support.V7.App.ActionBar;
 using Activity = Android.Support.V7.App.AppCompatActivity;
@@ -195,14 +199,19 @@ namespace Toggl.Joey.UI.Fragments
 
             // If project list needs to be opened?
             var settingsStore = ServiceContainer.Resolve<SettingsStore> ();
-            if (settingsStore.ChooseProjectForNew && LogTimeEntriesListFragment.NewTimeEntryStartedByFAB) {
-                LogTimeEntriesListFragment.NewTimeEntryStartedByFAB = false;
+            if (settingsStore.ChooseProjectForNew && LogTimeEntriesListFragment.NewTimeEntry) {
+                LogTimeEntriesListFragment.NewTimeEntry = false;
                 OpenProjectListActivity ();
             }
 
             // Finally set content visible.
             editTimeEntryContent.Visibility = ViewStates.Visible;
             editTimeEntryProgressBar.Visibility = ViewStates.Gone;
+
+            if (LogTimeEntriesListFragment.NewTimeEntry) {
+                DescriptionField.RequestFocus ();
+                ((EditTimeEntryActivity)Activity).ShowSoftKeyboard (DescriptionField.TextField, false);
+            }
         }
 
         public override void OnDestroyView ()

@@ -14,6 +14,7 @@ using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Utils;
 using Toggl.Phoebe.Data.ViewModels;
+using Toggl.Phoebe.Net;
 using XPlatUtils;
 
 namespace Toggl.Joey.UI.Adapters
@@ -404,7 +405,8 @@ namespace Toggl.Joey.UI.Adapters
                 var color = Color.Transparent;
                 var ctx = ServiceContainer.Resolve<Context> ();
 
-                if (datasource.Data.RemoteId.HasValue && !datasource.Data.IsDirty) {
+                var authManager = ServiceContainer.Resolve<AuthManager> ();
+                if (authManager.OfflineMode || (datasource.Data.RemoteId.HasValue && !datasource.Data.IsDirty)) {
                     NotSyncedView.Visibility = ViewStates.Gone;
                 } else {
                     NotSyncedView.Visibility = ViewStates.Visible;

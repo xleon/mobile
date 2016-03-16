@@ -51,7 +51,8 @@ namespace Toggl.Phoebe.Net
 
         public async void Run (SyncMode mode = SyncMode.Full)
         {
-            if (!ServiceContainer.Resolve<AuthManager> ().IsAuthenticated) {
+            var authManager = ServiceContainer.Resolve<AuthManager> ();
+            if (!authManager.IsAuthenticated) {
                 return;
             }
             if (IsRunning) {
@@ -60,6 +61,11 @@ namespace Toggl.Phoebe.Net
 
             var bus = ServiceContainer.Resolve<MessageBus> ();
             var network = ServiceContainer.Resolve<INetworkPresence> ();
+
+            if (authManager.OfflineMode) {
+                bus.Send (new SyncFinishedMessage (this, mode, false, null));
+                return;
+            }
 
             if (!network.IsNetworkPresent) {
                 network.RegisterSyncWhenNetworkPresent ();
@@ -86,6 +92,42 @@ namespace Toggl.Phoebe.Net
                 IsRunning = false;
                 subscriptionDataChange = bus.Subscribe<DataChangeMessage> (OnDataChange);
             }
+        }
+
+        public async void RunUpload ()
+        {
+            var authManager = ServiceContainer.Resolve<AuthManager> ();
+            if (!authManager.IsAuthenticated) {
+                return;
+            }
+            if (IsRunning) {
+                return;
+            }
+
+            var bus = ServiceContainer.Resolve<MessageBus> ();
+            var network = ServiceContainer.Resolve<INetworkPresence> ();
+
+            if (!network.IsNetworkPresent) {
+                return;
+            }
+
+            IsRunning = true;
+
+            // Unsubscribe from models commited messages (our actions trigger them as well,
+            // so need to ignore them to prevent infinite recursion.
+            if (subscriptionDataChange != null) {
+                bus.Unsubscribe (subscriptionDataChange);
+                subscriptionDataChange = null;
+            }
+
+            try {
+                // Make sure that the RunInBackground is actually started on a background thread
+                await Task.Factory.StartNew (() => MergeNoUserData ());
+            } finally {
+                IsRunning = false;
+                subscriptionDataChange = bus.Subscribe<DataChangeMessage> (OnDataChange);
+            }
+
         }
 
         private async Task<DateTime?> RunInBackground (SyncMode mode, DateTime? lastRun)
@@ -147,6 +189,57 @@ namespace Toggl.Phoebe.Net
             return lastRun;
         }
 
+        private async Task MergeNoUserData ()
+        {
+            var bus = ServiceContainer.Resolve<MessageBus> ();
+            var log = ServiceContainer.Resolve<ILogger> ();
+            var client = ServiceContainer.Resolve<ITogglClient> ();
+            var store = ServiceContainer.Resolve<IDataStore> ();
+
+            var syncDuration = Stopwatch.StartNew ();
+
+            bool hasErrors = false;
+            Exception ex = null;
+            try {
+
+                var serverData = await client.GetChanges (null).ConfigureAwait (false);
+
+                await store.ExecuteInTransactionAsync (ctx => {
+                    var user = serverData.User.Import (ctx);
+                    var workspace = serverData.Workspaces.ElementAt (0).Import (ctx);
+
+                    var workspaceId = Tuple.Create ("WorkspaceId", (object)workspace.Id);
+                    var userId = Tuple.Create ("UserId", (object)user.Id);
+
+                    //Lift data from the local objects to server objects
+                    SqlExtensions.UpdateTable<ProjectData> (ctx, workspaceId);
+                    SqlExtensions.UpdateTable<ClientData> (ctx, workspaceId);
+                    SqlExtensions.UpdateTable<TagData> (ctx, workspaceId);
+                    SqlExtensions.UpdateTable<TimeEntryData> (ctx, workspaceId, userId);
+                    SqlExtensions.UpdateTable<ProjectUserData> (ctx, userId);
+
+                    // Delete old data.
+                    SqlExtensions.DeleteTable<UserData> (ctx, Tuple.Create ("Name", (object)"Workspace"));
+                    SqlExtensions.DeleteTable<WorkspaceData> (ctx, Tuple.Create ("Name", (object)"offlineUser"));
+                });
+
+            } catch (Exception e) {
+                if (e.IsNetworkFailure () || e is TaskCanceledException) {
+                    if (e.IsNetworkFailure ()) {
+                        ServiceContainer.Resolve<INetworkPresence> ().RegisterSyncWhenNetworkPresent ();
+                    }
+                } else {
+                }
+
+                hasErrors = true;
+                ex = e;
+            } finally {
+                syncDuration.Stop ();
+                log.Info (Tag, "Sync finished in {0}ms{1}.", syncDuration.ElapsedMilliseconds, hasErrors ? " (with errors)" : String.Empty);
+                bus.Send (new SyncFinishedMessage (this, SyncMode.Full, hasErrors, ex));
+            }
+        }
+
         private static async Task CollectGarbage ()
         {
             var store = ServiceContainer.Resolve<IDataStore> ();
@@ -168,6 +261,9 @@ namespace Toggl.Phoebe.Net
 
         private static async Task<DateTime> PullChanges (DateTime? lastRun)
         {
+            if (ServiceContainer.Resolve<AuthManager> ().OfflineMode) {
+                return DateTime.Now;
+            }
             var client = ServiceContainer.Resolve<ITogglClient> ();
             var store = ServiceContainer.Resolve<IDataStore> ();
             var log = ServiceContainer.Resolve<ILogger> ();
@@ -262,6 +358,9 @@ namespace Toggl.Phoebe.Net
 
         private static async Task<bool> PushChanges ()
         {
+            if (ServiceContainer.Resolve<AuthManager> ().OfflineMode) {
+                return true;
+            }
             var log = ServiceContainer.Resolve<ILogger> ();
             var hasErrors = false;
 
@@ -479,7 +578,10 @@ namespace Toggl.Phoebe.Net
 
         public void RunTimeEntriesUpdate (DateTime startFrom, int daysLoad)
         {
-            Task.Run (async () => await RunTimeEntriesUpdateAsync (startFrom, daysLoad));
+            var authManager = ServiceContainer.Resolve<AuthManager> ();
+            if (!authManager.OfflineMode) {
+                Task.Run (async () => await RunTimeEntriesUpdateAsync (startFrom, daysLoad));
+            }
         }
 
         private async Task RunTimeEntriesUpdateAsync (DateTime startFrom, int daysLoad)

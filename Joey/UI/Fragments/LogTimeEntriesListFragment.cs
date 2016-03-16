@@ -13,6 +13,7 @@ using Android.Support.V7.Widget.Helper;
 using Android.Views;
 using Android.Widget;
 using GalaSoft.MvvmLight.Helpers;
+using Toggl.Joey.Data;
 using Toggl.Joey.UI.Activities;
 using Toggl.Joey.UI.Adapters;
 using Toggl.Joey.UI.Components;
@@ -32,12 +33,14 @@ namespace Toggl.Joey.UI.Fragments
         ItemTouchListener.IItemTouchListener,
         SwipeRefreshLayout.IOnRefreshListener
     {
-        public static bool NewTimeEntryStartedByFAB;
+        public static bool NewTimeEntry;
 
         private RecyclerView recyclerView;
         private SwipeRefreshLayout swipeLayout;
         private View emptyMessageView;
         private View experimentEmptyView;
+        private View layoverView;
+        private Button layoverDismissButton;
         private LogTimeEntriesAdapter logAdapter;
         private CoordinatorLayout coordinatorLayout;
         private Subscription<SyncFinishedMessage> drawerSyncFinished;
@@ -83,6 +86,10 @@ namespace Toggl.Joey.UI.Fragments
             emptyMessageView = view.FindViewById<View> (Resource.Id.EmptyMessageView);
             welcomeMessage = view.FindViewById<TextView> (Resource.Id.WelcomeTextView);
             noItemsMessage = view.FindViewById<TextView> (Resource.Id.EmptyTitleTextView);
+            layoverView = view.FindViewById<View> (Resource.Id.LayoverView);
+            layoverView.Click += (sender, e) => { };
+            layoverDismissButton = view.FindViewById<Button> (Resource.Id.LayoverButton);
+            layoverDismissButton.Click += OnAllrightButtonClicked;
             recyclerView = view.FindViewById<RecyclerView> (Resource.Id.LogRecyclerView);
             recyclerView.SetLayoutManager (new LinearLayoutManager (Activity));
             swipeLayout = view.FindViewById<SwipeRefreshLayout> (Resource.Id.LogSwipeContainer);
@@ -92,7 +99,20 @@ namespace Toggl.Joey.UI.Fragments
             timerComponent = ((MainDrawerActivity)Activity).Timer; // TODO: a better way to do this?
             HasOptionsMenu = true;
 
+            var settingsStore = ServiceContainer.Resolve<SettingsStore> ();
+            var authManager = ServiceContainer.Resolve<AuthManager> ();
+            if (settingsStore.ShowOverlay || !authManager.OfflineMode) {
+                layoverView.Visibility = ViewStates.Gone;
+            }
+
             return view;
+        }
+
+        private void OnAllrightButtonClicked (object sender, EventArgs e)
+        {
+            var settingsStore = ServiceContainer.Resolve<SettingsStore> ();
+            settingsStore.ShowOverlay = true;
+            layoverView.Visibility = ViewStates.Gone;
         }
 
         public async override void OnViewCreated (View view, Bundle savedInstanceState)
@@ -145,7 +165,8 @@ namespace Toggl.Joey.UI.Fragments
 
             var timeEntryData = await ViewModel.StartStopTimeEntry ();
             if (timeEntryData.State == TimeEntryState.Running) {
-                NewTimeEntryStartedByFAB = true;
+                NewTimeEntry = true;
+
                 var ids = new List<string> { timeEntryData.Id.ToString () };
                 var intent = new Intent (Activity, typeof (EditTimeEntryActivity));
                 intent.PutStringArrayListExtra (EditTimeEntryActivity.ExtraGroupedTimeEntriesGuids, ids);
@@ -198,6 +219,7 @@ namespace Toggl.Joey.UI.Fragments
 
         private void SetCollectionState ()
         {
+            // TODO RX OfflineMode needs to show the experiment screen.
             if (ViewModel.HasItems != LogTimeEntriesViewModel.CollectionState.NotReady) {
                 View emptyView = emptyMessageView;
                 var isWelcome = ServiceContainer.Resolve<ISettingsStore> ().ShowWelcome;
@@ -230,6 +252,7 @@ namespace Toggl.Joey.UI.Fragments
 
         public override bool OnOptionsItemSelected (IMenuItem item)
         {
+            NewTimeEntry = true;
             var i = new Intent (Activity, typeof (EditTimeEntryActivity));
             i.PutStringArrayListExtra (EditTimeEntryActivity.ExtraGroupedTimeEntriesGuids, new List<string> { ViewModel.GetActiveTimeEntry ().Id.ToString ()});
             Activity.StartActivity (i);
@@ -281,7 +304,12 @@ namespace Toggl.Joey.UI.Fragments
         #region Sync
         public void OnRefresh ()
         {
-            ViewModel.TriggerFullSync ();
+            if (!ServiceContainer.Resolve<AuthManager> ().OfflineMode) {
+                ViewModel.TriggerFullSync ();
+            } else {
+                swipeLayout.Refreshing = false;
+            }
+
         }
 
         private void SyncFinished (SyncFinishedMessage msg)

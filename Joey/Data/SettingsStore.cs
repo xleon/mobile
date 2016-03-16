@@ -16,6 +16,7 @@ namespace Toggl.Joey.Data
     {
         private const string PreferenceName = "togglSettings";
         private const string PhoebeUserIdKey = "phoebeUserId";
+        private const string PhoebeOfflineModeKey = "phoebeOfflineMode";
         private const string PhoebeApiTokenKey = "phoebeApiToken";
         private const string PhoebeSyncLastRunKey = "phoebeSyncLastRun";
         private const string PhoebeUseDefaultTagKey = "phoebeUseDefaultTag";
@@ -33,6 +34,8 @@ namespace Toggl.Joey.Data
         private const string PhoebeProjectSortKey = "projectSortKey";
         private const string PhoebeIsStagingKey = "isStagingKey";
         private const string PhoebeShowWelcomeKey = "showWelcomeKey";
+        private const string PhoebeShowOverlay = "gotWelcomeMessage";
+        private const string FirstTimeEntryFocusKey = "firsTimeEntry";
 
         private static string GetPropertyName<T> (Expression<Func<SettingsStore, T>> expr)
         {
@@ -162,6 +165,17 @@ namespace Toggl.Joey.Data
             set {
                 SetGuid (PhoebeUserIdKey, value);
                 OnSettingChanged (PropertyUserId);
+            }
+        }
+
+        public static readonly string PropertyOfflineMode = GetPropertyName (s => s.OfflineMode);
+
+        public bool OfflineMode
+        {
+            get { return GetInt (PhoebeOfflineModeKey) == 1; }
+            set {
+                SetInt (PhoebeOfflineModeKey, value ? 1 : 0);
+                OnSettingChanged (PropertyOfflineMode);
             }
         }
 
@@ -316,6 +330,28 @@ namespace Toggl.Joey.Data
             get { return (GetInt (PhoebeShowWelcomeKey) ?? 1) == 1; }
             set {
                 SetInt (PhoebeShowWelcomeKey, value ? 1 : 0);
+            }
+        }
+
+        public static readonly string PropertyShowOverlay = GetPropertyName (s => s.ShowOverlay);
+
+        public bool ShowOverlay
+        {
+            get { return GetInt (PhoebeShowOverlay) == 1; }
+            set {
+                SetInt (PhoebeShowOverlay, value ? 1 : 0);
+                OnSettingChanged (PropertyShowOverlay);
+            }
+        }
+
+        public static readonly string PropertyFirstTimeEntryFocus = GetPropertyName (s => s.FirstTimeEntryFocus);
+
+        public bool FirstTimeEntryFocus
+        {
+            get { return GetInt (FirstTimeEntryFocusKey) == 1; }
+            set {
+                SetInt (FirstTimeEntryFocusKey, value ? 1 : 0);
+                OnSettingChanged (PropertyFirstTimeEntryFocus);
             }
         }
     }

@@ -32,7 +32,7 @@ namespace Toggl.Joey.UI.Activities
          // The actual entry-point is defined in manifest via activity-alias, this here is just to
          // make adb launch the activity automatically when developing.
          #endif
-         Theme = "@style/Theme.Toggl.App")]
+         Theme = "@style/Theme.Toggl.Main")]
     public class MainDrawerActivity : BaseActivity
     {
         private const string PageStackExtra = "com.toggl.timer.page_stack";
@@ -43,8 +43,10 @@ namespace Toggl.Joey.UI.Activities
         private readonly Lazy<SettingsListFragment> settingsFragment = new Lazy<SettingsListFragment> ();
         private readonly Lazy<ReportsPagerFragment> reportFragment = new Lazy<ReportsPagerFragment> ();
         private readonly Lazy<FeedbackFragment> feedbackFragment = new Lazy<FeedbackFragment> ();
+        private readonly Lazy<RegisterUserFragment> registerUserFragment = new Lazy<RegisterUserFragment> ();
         private readonly List<int> pageStack = new List<int> ();
         private readonly Handler handler = new Handler ();
+        private AuthManager authManager;
         private DrawerListAdapter drawerAdapter;
         private ToolbarModes toolbarMode;
 
@@ -89,11 +91,10 @@ namespace Toggl.Joey.UI.Activities
             DrawerUserName = DrawerUserView.FindViewById<TextView> (Resource.Id.TitleTextView);
             DrawerEmail = DrawerUserView.FindViewById<TextView> (Resource.Id.EmailTextView);
             DrawerImage = DrawerUserView.FindViewById<ProfileImageView> (Resource.Id.IconProfileImageView);
-            DrawerListView.AddHeaderView (DrawerUserView);
             DrawerListView.Adapter = drawerAdapter = new DrawerListAdapter ();
             DrawerListView.ItemClick += OnDrawerListViewItemClick;
 
-            var authManager = ServiceContainer.Resolve<AuthManager> ();
+            authManager = ServiceContainer.Resolve<AuthManager> ();
             authManager.PropertyChanged += OnUserChangedEvent;
 
             DrawerLayout = FindViewById<DrawerLayout> (Resource.Id.DrawerLayout);
@@ -108,6 +109,9 @@ namespace Toggl.Joey.UI.Activities
                 // TODO: Improve this dirty solution?
             };
 
+            if (!ServiceContainer.Resolve<AuthManager> ().OfflineMode) {
+                DrawerListView.AddHeaderView (DrawerUserView);
+            }
             Timer.OnCreate (this);
 
             var lp = new Android.Support.V7.App.ActionBar.LayoutParams (ViewGroup.LayoutParams.MatchParent, ViewGroup.LayoutParams.MatchParent, (int)GravityFlags.Right);
@@ -203,7 +207,7 @@ namespace Toggl.Joey.UI.Activities
             DrawerListView.SetItemChecked (pos, true);
         }
 
-        private void OpenPage (int id)
+        public void OpenPage (int id)
         {
             if (id == DrawerListAdapter.SettingsPageId) {
                 OpenFragment (settingsFragment.Value);
@@ -216,10 +220,14 @@ namespace Toggl.Joey.UI.Activities
                 } else {
                     SupportActionBar.SetTitle (Resource.String.MainDrawerReportsYear);
                 }
+
                 OpenFragment (reportFragment.Value);
             } else if (id == DrawerListAdapter.FeedbackPageId) {
                 SupportActionBar.SetTitle (Resource.String.MainDrawerFeedback);
                 OpenFragment (feedbackFragment.Value);
+            } else if (id == DrawerListAdapter.RegisterUserPageId) {
+                SupportActionBar.SetTitle (Resource.String.MainDrawerSignup);
+                OpenFragment (registerUserFragment.Value);
             } else {
                 SupportActionBar.SetTitle (Resource.String.MainDrawerTimer);
                 OpenFragment (trackingFragment.Value);
@@ -232,6 +240,12 @@ namespace Toggl.Joey.UI.Activities
             if (pageStack.Count == 1 && id == DrawerListAdapter.TimerPageId) {
                 pageStack.Clear ();
             }
+        }
+
+        public void ForgetCurrentUser ()
+        {
+            authManager.Forget ();
+            StartAuthActivity ();
         }
 
         private void OpenFragment (Fragment fragment)
@@ -270,17 +284,17 @@ namespace Toggl.Joey.UI.Activities
                 OpenPage (DrawerListAdapter.TimerPageId);
 
             } else if (e.Id == DrawerListAdapter.LogoutPageId) {
-                var authManager = ServiceContainer.Resolve<AuthManager> ();
-                authManager.Forget ();
-                StartAuthActivity ();
+                ForgetCurrentUser();
             } else if (e.Id == DrawerListAdapter.ReportsPageId) {
                 OpenPage (DrawerListAdapter.ReportsPageId);
             } else if (e.Id == DrawerListAdapter.SettingsPageId) {
                 OpenPage (DrawerListAdapter.SettingsPageId);
-
             } else if (e.Id == DrawerListAdapter.FeedbackPageId) {
                 OpenPage (DrawerListAdapter.FeedbackPageId);
+            } else if (e.Id == DrawerListAdapter.RegisterUserPageId) {
+                OpenPage (DrawerListAdapter.RegisterUserPageId);
             }
+
 
             DrawerLayout.CloseDrawers ();
         }

@@ -1,8 +1,11 @@
 ﻿using System.Collections.Generic;
+using System.Threading;
 using Android.App;
 using Android.Content.PM;
 using Android.OS;
 using Android.Views;
+using Android.Views.InputMethods;
+using Android.Widget;
 using Toggl.Joey.UI.Fragments;
 
 namespace Toggl.Joey.UI.Activities
@@ -70,6 +73,12 @@ namespace Toggl.Joey.UI.Activities
                     .Commit ();
                 }
             }
+        }
+
+        public async void ShowSoftKeyboard (View input, bool selectText)
+        {
+            await System.Threading.Tasks.Task.Delay (100);
+            ((InputMethodManager)GetSystemService (InputMethodService)).ShowSoftInput (input, ShowFlags.Implicit);
         }
     }
 }

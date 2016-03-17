@@ -33,7 +33,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)_Old\ExceptionExtensions.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)_Old\ExpressionExtensions.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)_Old\ITimeProvider.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)_Old\IWidgetUpdateService.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)_Old\Message.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)_Old\MessageBus.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)_Old\ModelViewManager.cs" />
@@ -47,7 +46,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)_Old\TimeCorrectionManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)_Old\TrackingMode.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)_Old\UpgradeManager.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)_Old\WidgetSyncManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)_Net\ITogglClient.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)_Net\TogglHttpResponseMessage.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)_Net\TogglRestClient.cs" />
@@ -105,7 +103,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)Analytics\SettingName.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Analytics\TimerStartSource.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Analytics\TimerStopSource.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Data\ActiveTimeEntryManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Data\DataAction.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Data\DataCache.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Data\DataChangeMessage.cs" />
@@ -198,8 +195,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)Data\Utils\DateHolder.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Data\Utils\ObservableRangeCollection.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Data\Utils\PropertyChangeTracker.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Data\Utils\TimeEntriesCollection.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Data\Utils\TimeEntriesFeed.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Data\Utils\TimeEntryGroup.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Data\Utils\TimeEntryHolder.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Data\Utils\TimeEntryInfo.cs" />
@@ -208,7 +203,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)Data\ViewModels\CreateTagViewModel.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Data\ViewModels\EditTimeEntryGroupViewModel.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Data\ViewModels\EditTimeEntryViewModel.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Data\ViewModels\LogTimeEntriesViewModel.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Data\ViewModels\NewProjectViewModel.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Data\ViewModels\ProjectListViewModel.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Data\ViewModels\TagListViewModel.cs" />
@@ -221,9 +215,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)Logging\LogLevel.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Logging\LogStore.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Net\AuthChangeReason.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Net\AuthChangedMessage.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Net\AuthFailedMessage.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Net\AuthManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Net\AuthResult.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Net\ExperimentAction.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Net\FeedbackMessage.cs" />
@@ -249,6 +240,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)IPlatformUtils.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ServiceContainer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)_ViewModels\LoginVM.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)_ViewModels\ClientListVM.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="$(MSBuildThisFileDirectory)Contrib\XPlatUtils\" />

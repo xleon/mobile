@@ -34,7 +34,7 @@ namespace Toggl.Phoebe.Data.Views
         {
             var v = new ProjectsCollection (sortBy, workspaceId);
             var store = ServiceContainer.Resolve<IDataStore> ();
-            var userData = ServiceContainer.Resolve<AuthManager> ().User;
+            var userData = new UserData ();// ServiceContainer.Resolve<AuthManager> ().User;
 
             var projectsTask = store.GetUserAccessibleProjects (userData.Id);
             var clientsTask = store.Table<ClientData> ().Where (r => r.DeletedAt == null)

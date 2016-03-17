@@ -21,23 +21,15 @@ namespace Toggl.Joey.Net
 
         public GcmRegistrationManager ()
         {
-            var authManager = ServiceContainer.Resolve<AuthManager> ();
-            authToken = authManager.Token;
-
             var bus = ServiceContainer.Resolve<MessageBus> ();
-            subscriptionAuthChanged = bus.Subscribe<AuthChangedMessage> (OnAuthChangedMessage);
-
             CheckRegistrationId ();
         }
 
         private void CheckRegistrationId ()
         {
-            if (!HasGcmSupport) {
-                return;
-            }
+            return;
 
-            var authManager = ServiceContainer.Resolve<AuthManager> ();
-            if (!authManager.IsAuthenticated) {
+            if (!HasGcmSupport) {
                 return;
             }
 
@@ -55,25 +47,6 @@ namespace Toggl.Joey.Net
                 }
                 var ctx = ServiceContainer.Resolve<Context> ();
                 return GoogleApiAvailability.Instance.IsGooglePlayServicesAvailable (ctx) == ConnectionResult.Success;
-            }
-        }
-
-        private void OnAuthChangedMessage (AuthChangedMessage msg)
-        {
-            var hasGcm = HasGcmSupport;
-            var authManager = ServiceContainer.Resolve<AuthManager> ();
-
-            if (hasGcm) {
-                UnregisterDevice ();
-            }
-
-            // Update cached data
-            authToken = authManager.Token;
-
-            if (authManager.IsAuthenticated) {
-                if (hasGcm) {
-                    RegisterDevice ();
-                }
             }
         }
 

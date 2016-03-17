@@ -20,20 +20,7 @@ namespace Toggl.Joey.Widget
 
     public class RemotesViewsFactory : Java.Lang.Object, RemoteViewsService.IRemoteViewsFactory
     {
-        private readonly List<WidgetSyncManager.WidgetEntryData> itemList = new  List<WidgetSyncManager.WidgetEntryData> ();
         private Context context;
-
-        private IWidgetUpdateService widgetUpdateService;
-
-        private IWidgetUpdateService UpdateService
-        {
-            get {
-                if (widgetUpdateService == null) {
-                    widgetUpdateService = ServiceContainer.Resolve<IWidgetUpdateService> ();
-                }
-                return widgetUpdateService;
-            }
-        }
 
         public RemotesViewsFactory (Context ctx)
         {
@@ -47,7 +34,7 @@ namespace Toggl.Joey.Widget
 
         public void OnCreate ()
         {
-            itemList.AddRange (UpdateService.LastEntries);
+            //itemList.AddRange (UpdateService.LastEntries);
         }
 
         public void OnDestroy ()
@@ -57,6 +44,7 @@ namespace Toggl.Joey.Widget
         public RemoteViews GetViewAt (int position)
         {
             var remoteView = new RemoteViews (context.PackageName, Resource.Layout.widget_list_item);
+            /*
             var rowData = itemList [position];
 
             // set if is running
@@ -78,10 +66,10 @@ namespace Toggl.Joey.Widget
                 Resource.Id.ProjectTextView,
                 String.IsNullOrWhiteSpace (rowData.ProjectName) ? context.Resources.GetString (Resource.String.RunningWidgetNoProject) : rowData.ProjectName);
             remoteView.SetTextViewText (Resource.Id.DurationTextView, rowData.TimeValue);
-
+            */
             return remoteView;
         }
-
+        /*
         private Intent ConstructFillIntent (WidgetSyncManager.WidgetEntryData entryData)
         {
             var intent = new Intent ();
@@ -95,17 +83,16 @@ namespace Toggl.Joey.Widget
 
             return intent;
         }
+        */
 
         public void OnDataSetChanged ()
         {
-            itemList.Clear ();
-            itemList.AddRange (UpdateService.LastEntries);
         }
 
         public int Count
         {
             get {
-                return itemList.Count;
+                return 0;
             }
         }
 

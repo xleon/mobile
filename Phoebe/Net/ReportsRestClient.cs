@@ -39,12 +39,14 @@ namespace Toggl.Phoebe.Net
 
         private HttpRequestMessage SetupRequest (HttpRequestMessage req)
         {
+            /*
             var authManager = ServiceContainer.Resolve<AuthManager> ();
             if (authManager.Token != null) {
                 req.Headers.Authorization = new AuthenticationHeaderValue ("Basic",
                         Convert.ToBase64String (Encoding.ASCII.GetBytes (
                                                     string.Format ("{0}:api_token", authManager.Token))));
             }
+            */
             return req;
         }
 
@@ -73,7 +75,7 @@ namespace Toggl.Phoebe.Net
 
         public async Task<ReportJson> GetReports (DateTime startDate, DateTime endDate, long workspaceId)
         {
-            var user = ServiceContainer.Resolve<AuthManager> ().User;
+            var user = new UserData(); //DaServiceContainetr.Resolve<AuthManager> ().User;
             var start = startDate.ToString ("yyyy-MM-dd");
             var end = endDate.ToString ("yyyy-MM-dd");
             var relUrl = "summary?billable=both&order_field=duration&order_desc=true&user_agent=toggl_mobile&subgrouping_ids=true&bars_count=31";

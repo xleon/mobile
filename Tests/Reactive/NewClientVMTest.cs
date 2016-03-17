@@ -46,8 +46,7 @@ namespace Toggl.Phoebe.Tests.Reactive
             var name = "MyClient";
             var tcs = Util.CreateTask<bool> ();
 
-            viewModel.ClientName = name;
-            viewModel.SaveClient (new SyncTestOptions (false, (state, sent, queued) => {
+            viewModel.SaveClient (name, new SyncTestOptions (false, (state, sent, queued) => {
                 try {
                     ClientData client = null;
                     Assert.That (client = state.TimerState.Clients.Values.SingleOrDefault (

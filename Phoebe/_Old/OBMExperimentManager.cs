@@ -1,4 +1,5 @@
-﻿using Toggl.Phoebe.Net;
+﻿using Toggl.Phoebe._Data.Models;
+using Toggl.Phoebe.Net;
 using XPlatUtils;
 
 namespace Toggl.Phoebe
@@ -14,7 +15,7 @@ namespace Toggl.Phoebe
         public const string StartButtonActionKey = "startButton";
         public const string ClickActionValue = "click";
 
-        public static async void Send (string actionKey, string actionValue)
+        public static async void Send (string actionKey, string actionValue, UserData data)
         {
             var experimentAction = new ExperimentAction {
                 ExperimentId = ExperimentNumber,
@@ -24,15 +25,13 @@ namespace Toggl.Phoebe
             await experimentAction.Send();
         }
 
-        public static bool IncludedInExperiment ()
+        public static bool IncludedInExperiment (UserData userData)
         {
-            var userData = ServiceContainer.Resolve<AuthManager>().User;
             return userData.ExperimentIncluded && userData.ExperimentNumber == ExperimentNumber;
         }
 
-        public static bool InExperimentGroups (int experimentNumber)
+        public static bool InExperimentGroups (int experimentNumber, UserData userData)
         {
-            var userData = ServiceContainer.Resolve<AuthManager>().User;
             return userData.ExperimentNumber == experimentNumber;
         }
 

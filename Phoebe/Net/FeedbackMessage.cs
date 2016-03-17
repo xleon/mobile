@@ -1,6 +1,7 @@
 using System;
 using System.Text;
 using System.Threading.Tasks;
+using Toggl.Phoebe._Reactive;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Json;
@@ -79,11 +80,8 @@ namespace Toggl.Phoebe.Net
 
         private async Task AppendTimeEntryStats (StringBuilder sb)
         {
-            var authManager = ServiceContainer.Resolve<AuthManager> ();
-            var userId = authManager.GetUserId ();
-
+            var userId = StoreManager.Singleton.AppState.TimerState.User.Id;
             var dataStore = ServiceContainer.Resolve<IDataStore> ();
-
             var total = await dataStore.Table<TimeEntryData> ()
                         .Where (r => r.UserId == userId)
                         .CountAsync().ConfigureAwait (false);

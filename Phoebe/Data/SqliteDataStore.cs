@@ -20,9 +20,6 @@ namespace Toggl.Phoebe.Data
         private const string QueueCountSql = "SELECT COUNT(*) FROM [__QUEUE__]";
 
         private readonly SQLiteConnectionWithLock cnn;
-#pragma warning disable 0414
-        private readonly Subscription<AuthChangedMessage> subscriptionAuthChanged;
-#pragma warning restore 0414
 
         public SqliteDataStore (string dbPath, ISQLitePlatform platformInfo)
         {
@@ -30,9 +27,6 @@ namespace Toggl.Phoebe.Data
             // so we can safely make the cast
             var cnnString = new SQLiteConnectionString (dbPath, true);
             cnn = new SQLiteConnectionWithLock (platformInfo, cnnString);
-
-            var bus = ServiceContainer.Resolve<MessageBus> ();
-            subscriptionAuthChanged = bus.Subscribe<AuthChangedMessage> (OnAuthChanged);
 
             CreateTables();
             DatabaseCleanUp ();
@@ -91,12 +85,13 @@ namespace Toggl.Phoebe.Data
             }
         }
 
-        private void OnAuthChanged (AuthChangedMessage msg)
+        private void OnAuthChanged ()
         {
+            /*
             if (msg.AuthManager.IsAuthenticated) {
                 return;
             }
-
+            */
             // Wipe database on logout
             WipeTables ();
         }

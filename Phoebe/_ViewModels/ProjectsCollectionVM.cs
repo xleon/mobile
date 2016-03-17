@@ -2,11 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using Toggl.Phoebe.Data.Utils;
-using Toggl.Phoebe.Net;
 using Toggl.Phoebe._Data.Models;
 using Toggl.Phoebe._Helpers;
 using Toggl.Phoebe._Reactive;
-using XPlatUtils;
 
 namespace Toggl.Phoebe._ViewModels
 {
@@ -28,7 +26,7 @@ namespace Toggl.Phoebe._ViewModels
         {
             this.sortBy = sortBy;
             this.workspaceId = workspaceId;
-            var userData = ServiceContainer.Resolve<AuthManager> ().User;
+            var userData = timerState.User;
 
             clients = timerState.Clients.Values
                       .OrderBy (r => r.Name).ToList ();

@@ -8,12 +8,9 @@ using Android.Widget;
 using GalaSoft.MvvmLight.Helpers;
 using Toggl.Joey.UI.Utils;
 using Toggl.Joey.UI.Views;
-using Toggl.Phoebe.Data.DataObjects;
-using Toggl.Phoebe.Data.ViewModels;
-using ActionBar = Android.Support.V7.App.ActionBar;
+using Toggl.Phoebe._Data.Models;
+using Toggl.Phoebe._ViewModels;
 using Activity = Android.Support.V7.App.AppCompatActivity;
-using Fragment = Android.Support.V4.App.Fragment;
-using Toolbar = Android.Support.V7.Widget.Toolbar;
 
 namespace Toggl.Joey.UI.Fragments
 {
@@ -21,7 +18,7 @@ namespace Toggl.Joey.UI.Fragments
     {
         private const string WorkspaceIdArgument = "workspace_id";
         private ListView listView;
-        private ClientListViewModel viewModel;
+        private ClientListVM viewModel;
         private IOnClientSelectedHandler clientSelectedHandler;
 
         private Guid WorkspaceId
@@ -54,11 +51,10 @@ namespace Toggl.Joey.UI.Fragments
             return fragment;
         }
 
-        public async override void OnCreate (Bundle savedInstanceState)
+        public override void OnCreate (Bundle savedInstanceState)
         {
             base.OnCreate (savedInstanceState);
-            viewModel = await ClientListViewModel.Init (WorkspaceId);
-            SetDialogContent ();
+            viewModel = new ClientListVM (Phoebe._Reactive.StoreManager.Singleton.AppState.TimerState, WorkspaceId);
         }
 
         public override void OnDestroy ()

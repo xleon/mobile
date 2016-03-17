@@ -11,6 +11,7 @@ using Toggl.Joey.UI.Activities;
 using Toggl.Joey.UI.Fragments;
 using Toggl.Joey.UI.Utils;
 using Toggl.Phoebe;
+using Toggl.Phoebe._Reactive;
 using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Reports;
@@ -326,7 +327,7 @@ namespace Toggl.Joey.UI.Fragments
             var current = DateTime.Today;
 
             if (ZoomLevel == ZoomLevel.Week) {
-                var user = ServiceContainer.Resolve<AuthManager> ().User;
+                var user = StoreManager.Singleton.AppState.TimerState.User;
                 var startOfWeek = user.StartOfWeek;
                 var date = current.StartOfWeek (startOfWeek).AddDays (back * 7);
                 return date;

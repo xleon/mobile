@@ -49,11 +49,12 @@ namespace Toggl.Phoebe.Data.Reports
 
         private async Task Initialize ()
         {
+            await Task.Delay (4);
             var store = ServiceContainer.Resolve<IDataStore> ();
-            var user = ServiceContainer.Resolve<AuthManager> ().User;
+            //var user = ServiceContainer.Resolve<AuthManager> ().User;
             reportClient = ServiceContainer.Resolve<IReportsClient> ();
-            workspaceId = await store.ExecuteInTransactionAsync (ctx => ctx.GetRemoteId<WorkspaceData> (user.DefaultWorkspaceId));
-            startOfWeek = user.StartOfWeek;
+            //workspaceId = await store.ExecuteInTransactionAsync (ctx => ctx.GetRemoteId<WorkspaceData> (user.DefaultWorkspaceId));
+            //startOfWeek = user.StartOfWeek;
         }
 
         private async Task FetchData (DateTime startDate, DateTime endDate)
@@ -80,7 +81,8 @@ namespace Toggl.Phoebe.Data.Reports
 
         private void CalculateReportData()
         {
-            var user = ServiceContainer.Resolve<AuthManager> ().User;
+            //var user = ServiceContainer.Resolve<AuthManager> ().User;
+            var user = new UserData ();
 
             long max = 0;
             foreach (var s in dataObject.Activity) {

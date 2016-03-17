@@ -67,7 +67,6 @@ namespace Toggl.Joey
             ServiceContainer.Register<ITimeProvider> (() => new DefaultTimeProvider ());
             ServiceContainer.Register<ILogger> (() => new Logger ());
             ServiceContainer.Register<Context> (this);
-            ServiceContainer.Register<IWidgetUpdateService> (() => new WidgetUpdateService (Context));
             ServiceContainer.Register<ExperimentManager> (() => new ExperimentManager (
                 typeof (Toggl.Phoebe.Analytics.Experiments),
                 typeof (Toggl.Joey.Analytics.Experiments)));
@@ -87,7 +86,6 @@ namespace Toggl.Joey
             //ServiceContainer.Resolve<UpgradeManger> ().TryUpgrade ();
             ServiceContainer.Resolve<ILoggerClient> ();
             ServiceContainer.Resolve<LoggerUserManager> ();
-            ServiceContainer.Resolve<WidgetSyncManager>();
         }
 
         public void InitializeComponents ()

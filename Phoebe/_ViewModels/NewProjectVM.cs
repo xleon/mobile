@@ -63,10 +63,15 @@ namespace Toggl.Phoebe._ViewModels
             return model;
         }
 
-        private bool ExistProjectWithName (string projectName)
+        public bool ExistProjectWithName (string projectName)
         {
             Guid clientId = model.ClientId;
             return timerState.Projects.Values.Any (r => r.Name == projectName && r.ClientId == clientId);
+        }
+
+        public bool ContainsClients (Guid workspaceId)
+        {
+            return timerState.Clients.Values.Any (r => r.DeletedAt == null && r.WorkspaceId == workspaceId);
         }
     }
 }

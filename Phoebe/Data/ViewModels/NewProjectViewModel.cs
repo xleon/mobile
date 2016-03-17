@@ -53,7 +53,7 @@ namespace Toggl.Phoebe.Data.ViewModels
             await model.SaveAsync();
 
             // Create an extra model for Project / User relationship
-            var userData = ServiceContainer.Resolve<AuthManager>().User;
+            var userData = new UserData (); //ServiceContainer.Resolve<AuthManager>().User;
 
             var projectUserModel = new ProjectUserModel();
             projectUserModel.Project = model;

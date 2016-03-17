@@ -48,6 +48,8 @@ namespace Toggl.Joey
 
         private static async Task FindAndStopRunning ()
         {
+            await Task.Delay (1);
+            /*
             var userId = ServiceContainer.Resolve<AuthManager> ().GetUserId ();
             var dataStore = ServiceContainer.Resolve<IDataStore> ();
 
@@ -59,7 +61,7 @@ namespace Toggl.Joey
 
             var stopTasks = runningEntries.Select (data => TimeEntryModel.StopAsync (data));
             await Task.WhenAll (stopTasks).ConfigureAwait (false);
-
+            */
             // Ping analytics
             ServiceContainer.Resolve<ITracker> ().SendTimerStopEvent (TimerStopSource.Notification);
         }

@@ -30,12 +30,9 @@ namespace Toggl.Phoebe._ViewModels
         {
         }
 
-        public string ClientName { get; set; }
-
-        public ClientData SaveClient (SyncTestOptions testOptions = null)
+        public ClientData SaveClient (string clientName, SyncTestOptions testOptions = null)
         {
             // Save client name to make sure it doesn't change while iterating
-            var clientName = ClientName;
             var existing =
                 timerState.Clients.Values
                 .SingleOrDefault (

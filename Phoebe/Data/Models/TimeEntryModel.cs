@@ -723,12 +723,14 @@ namespace Toggl.Phoebe.Data.Models
             Guid workspaceId = Guid.Empty;
             bool durationOnly = false;
 
+            /*
             if (ServiceContainer.Resolve<AuthManager> ().IsAuthenticated) {
                 var user = ServiceContainer.Resolve<AuthManager> ().User;
                 userId = user.Id;
                 workspaceId = user.DefaultWorkspaceId;
                 durationOnly = user.TrackingMode == TrackingMode.Continue;
             }
+            */
 
             // Create new draft object
             var newData = new TimeEntryData {
@@ -811,10 +813,12 @@ namespace Toggl.Phoebe.Data.Models
 
         public static async Task<TimeEntryData> CreateFinishedAsync (TimeSpan duration)
         {
+            /*
             var user = ServiceContainer.Resolve<AuthManager> ().User;
             if (user == null) {
                 return null;
             }
+            */
 
             var store = ServiceContainer.Resolve<IDataStore> ();
             var now = Time.UtcNow;
@@ -823,9 +827,9 @@ namespace Toggl.Phoebe.Data.Models
                 State = TimeEntryState.Finished,
                 StartTime = now - duration,
                 StopTime = now,
-                UserId = user.Id,
-                WorkspaceId = user.DefaultWorkspaceId,
-                DurationOnly = user.TrackingMode == TrackingMode.Continue,
+                //UserId = user.Id,
+                //WorkspaceId = user.DefaultWorkspaceId,
+                //DurationOnly = user.TrackingMode == TrackingMode.Continue,
             };
             MarkDirty (newData);
 
@@ -869,11 +873,13 @@ namespace Toggl.Phoebe.Data.Models
         public static string GetFormattedDuration (TimeSpan duration)
         {
             string formattedString = duration.ToString (@"hh\:mm\:ss");
+            /*
             var user = ServiceContainer.Resolve<AuthManager> ().User;
 
             if (user == null) {
                 return formattedString;
             }
+
 
             if (user.DurationFormat == DurationFormat.Classic) {
                 if (duration.TotalMinutes < 1) {
@@ -886,6 +892,7 @@ namespace Toggl.Phoebe.Data.Models
             } else if (user.DurationFormat == DurationFormat.Decimal) {
                 formattedString = String.Format ("{0:0.00} h", duration.TotalHours);
             }
+            */
             return formattedString;
         }
 

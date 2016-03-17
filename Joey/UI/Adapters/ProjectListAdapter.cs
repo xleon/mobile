@@ -6,9 +6,9 @@ using Android.Views;
 using Android.Widget;
 using Toggl.Joey.UI.Utils;
 using Toggl.Joey.UI.Views;
-using Toggl.Phoebe.Data.DataObjects;
+using Toggl.Phoebe._Data.Models;
+using Toggl.Phoebe._ViewModels;
 using Toggl.Phoebe.Data.Models;
-using Toggl.Phoebe.Data.Views;
 using XPlatUtils;
 
 namespace Toggl.Joey.UI.Adapters
@@ -19,10 +19,10 @@ namespace Toggl.Joey.UI.Adapters
         protected const int ViewTypeClient = ViewTypeContent + 1;
         protected const int ViewTypeTask = ViewTypeContent + 2;
 
-        protected ProjectsCollection collectionView;
+        protected ProjectsCollectionVM collectionView;
         public Action<CommonData> HandleItemSelection { get; set; }
 
-        public ProjectListAdapter (RecyclerView owner, ProjectsCollection collectionView) : base (owner, collectionView)
+        public ProjectListAdapter (RecyclerView owner, ProjectsCollectionVM collectionView) : base (owner, collectionView)
         {
             this.collectionView = collectionView;
         }
@@ -59,8 +59,8 @@ namespace Toggl.Joey.UI.Adapters
             } else if (viewType == ViewTypeClient) {
                 ((ClientItemHolder) holder).Bind (((ClientData)GetItem (position)).Name);
             } else if (viewType == ViewTypeProject) {
-                var showClientName = collectionView.SortBy == ProjectsCollection.SortProjectsBy.Projects;
-                ((ProjectItemHolder) holder).Bind ((ProjectsCollection.SuperProjectData)GetItem (position), showClientName);
+                var showClientName = collectionView.SortBy == ProjectsCollectionVM.SortProjectsBy.Projects;
+                ((ProjectItemHolder) holder).Bind ((ProjectsCollectionVM.SuperProjectData)GetItem (position), showClientName);
             }
         }
 
@@ -71,7 +71,7 @@ namespace Toggl.Joey.UI.Adapters
             if (type != ViewTypeLoaderPlaceholder) {
                 var dataObject = GetItem (position);
 
-                if (dataObject is ProjectsCollection.SuperProjectData) {
+                if (dataObject is ProjectsCollectionVM.SuperProjectData) {
                     type = ViewTypeProject;
                 }
 
@@ -97,7 +97,7 @@ namespace Toggl.Joey.UI.Adapters
             protected ImageView TasksImageView { get; private set; }
 
             private ProjectListAdapter adapter;
-            private ProjectsCollection.SuperProjectData projectData;
+            private ProjectsCollectionVM.SuperProjectData projectData;
 
             public ProjectItemHolder (ProjectListAdapter adapter, View root) : base (root)
             {
@@ -121,7 +121,7 @@ namespace Toggl.Joey.UI.Adapters
                 }
             }
 
-            public void Bind (ProjectsCollection.SuperProjectData projectData, bool showClient)
+            public void Bind (ProjectsCollectionVM.SuperProjectData projectData, bool showClient)
             {
                 this.projectData = projectData;
 

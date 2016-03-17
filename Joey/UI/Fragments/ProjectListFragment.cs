@@ -10,10 +10,8 @@ using Android.Widget;
 using Toggl.Joey.UI.Activities;
 using Toggl.Joey.UI.Adapters;
 using Toggl.Joey.UI.Views;
-using Toggl.Phoebe.Data.DataObjects;
-using Toggl.Phoebe.Data.ViewModels;
-using Toggl.Phoebe.Data.Views;
-using ActionBar = Android.Support.V7.App.ActionBar;
+using Toggl.Phoebe._Data.Models;
+using Toggl.Phoebe._ViewModels;
 using Activity = Android.Support.V7.App.AppCompatActivity;
 using Fragment = Android.Support.V4.App.Fragment;
 using SearchView = Android.Support.V7.Widget.SearchView;
@@ -34,8 +32,7 @@ namespace Toggl.Joey.UI.Fragments
         private Toolbar toolBar;
         private FloatingActionButton newProjectFab;
         private LinearLayout emptyStateLayout;
-        private LinearLayout searchEmptyState;
-        private ProjectListViewModel viewModel;
+        private ProjectListVM viewModel;
 
         private Guid WorkspaceId
         {
@@ -75,7 +72,6 @@ namespace Toggl.Joey.UI.Fragments
             recyclerView.AddItemDecoration (new DividerItemDecoration (Activity, DividerItemDecoration.VerticalList));
 
             emptyStateLayout = view.FindViewById<LinearLayout> (Resource.Id.ProjectListEmptyState);
-            searchEmptyState = view.FindViewById<LinearLayout> (Resource.Id.ProjectListSearchEmptyState);
             tabLayout = view.FindViewById<TabLayout> (Resource.Id.WorkspaceTabLayout);
             newProjectFab = view.FindViewById<AddProjectFab> (Resource.Id.AddNewProjectFAB);
             toolBar = view.FindViewById<Toolbar> (Resource.Id.ProjectListToolbar);
@@ -92,10 +88,10 @@ namespace Toggl.Joey.UI.Fragments
             return view;
         }
 
-        public async override void OnViewCreated (View view, Bundle savedInstanceState)
+        public override void OnViewCreated (View view, Bundle savedInstanceState)
         {
             base.OnViewCreated (view, savedInstanceState);
-            viewModel = await ProjectListViewModel.Init (WorkspaceId);
+            viewModel = new ProjectListVM (Phoebe._Reactive.StoreManager.Singleton.AppState.TimerState, WorkspaceId);
 
             var adapter = new ProjectListAdapter (recyclerView, viewModel.ProjectList);
             adapter.HandleItemSelection = OnItemSelected;
@@ -154,7 +150,7 @@ namespace Toggl.Joey.UI.Fragments
             Guid taskId = Guid.Empty;
 
             if (m is ProjectData) {
-                if (! ((ProjectsCollection.SuperProjectData)m).IsEmpty) {
+                if (! ((ProjectsCollectionVM.SuperProjectData)m).IsEmpty) {
                     projectId = m.Id;
                 }
             } else if (m is TaskData) {
@@ -228,10 +224,10 @@ namespace Toggl.Joey.UI.Fragments
         {
             switch (item.ItemId) {
             case Resource.Id.SortByClients:
-                viewModel.ChangeListSorting (ProjectsCollection.SortProjectsBy.Clients);
+                viewModel.ChangeListSorting (ProjectsCollectionVM.SortProjectsBy.Clients);
                 return true;
             case Resource.Id.SortByProjects:
-                viewModel.ChangeListSorting (ProjectsCollection.SortProjectsBy.Projects);
+                viewModel.ChangeListSorting (ProjectsCollectionVM.SortProjectsBy.Projects);
                 return true;
             }
             return false;

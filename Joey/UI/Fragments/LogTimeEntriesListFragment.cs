@@ -29,7 +29,7 @@ namespace Toggl.Joey.UI.Fragments
         ItemTouchListener.IItemTouchListener,
         SwipeRefreshLayout.IOnRefreshListener
     {
-        
+
         public static bool NewTimeEntryStartedByFAB;
         private RecyclerView recyclerView;
         private SwipeRefreshLayout swipeLayout;

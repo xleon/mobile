@@ -1,6 +1,6 @@
 using System;
 using System.Threading.Tasks;
-using Toggl.Phoebe.Data.Json;
+using Toggl.Phoebe._Data.Json;
 
 namespace Toggl.Phoebe._Net
 {

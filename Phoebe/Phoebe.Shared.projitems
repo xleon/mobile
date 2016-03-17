@@ -144,7 +144,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)Data\Json\OBMJson.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Data\Json\ProjectJson.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Data\Json\ProjectUserJson.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Data\Json\ReportJson.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Data\Json\TagJson.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Data\Json\TaskJson.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Data\Json\TimeEntryJson.cs" />

@@ -337,9 +337,9 @@ namespace Toggl.Phoebe.Tests.Data.Mapper
         [Test]
         public void TestReportJsonDataMap ()
         {
-            var row1 = new List<string> {"row1", "row1", "row1"};
-            var row2 = new List<string> {"row2", "row2", "row2"};
-            var row3 = new List<string> {"row3", "row3", "row3"};
+            var row1 = new List<string> {"111", "111", "111"};
+            var row2 = new List<string> {"222", "222", "222"};
+            var row3 = new List<string> {"333", "333", "333"};
 
             var reportProject1 = new ReportProjectJson {
                 Description = new ReportProjectDescJson {
@@ -407,7 +407,9 @@ namespace Toggl.Phoebe.Tests.Data.Mapper
 
             Assert.That (reportData.TotalBillable, Is.EqualTo (reportJson.TotalBillable));
             Assert.That (reportData.TotalGrand, Is.EqualTo (reportJson.TotalGrand));
-
+            Assert.That (reportData.Activity.Count, Is.EqualTo (reportJson.ActivityContainer.Rows.Count));
+            Assert.That (reportData.Projects.Count, Is.EqualTo (2));
+            Assert.That (reportJson.Projects[0].Currencies.Count, Is.EqualTo (reportProject1.Currencies.Count));
         }
 
         private class PlatformUtils : IPlatformUtils

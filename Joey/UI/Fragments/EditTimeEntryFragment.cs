@@ -196,7 +196,7 @@ namespace Toggl.Joey.UI.Fragments
             // If project list needs to be opened?
             var settingsStore = ServiceContainer.Resolve<SettingsStore> ();
             var startedByFAB = Phoebe._Reactive.StoreManager.Singleton
-                                     .AppState.TimerState.ActiveEntry.StartedByFAB;
+                               .AppState.TimerState.ActiveEntry.StartedByFAB;
             if (settingsStore.ChooseProjectForNew && startedByFAB) {
                 // TODO RX: Modification of global state, must be done by a reducer
                 //LogTimeEntriesListFragment.NewTimeEntryStartedByFAB = false;

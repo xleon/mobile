@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
-using Toggl.Phoebe.Data.Json;
+using Toggl.Phoebe._Data.Json;
 using XPlatUtils;
 
 namespace Toggl.Phoebe._Net

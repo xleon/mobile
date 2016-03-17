@@ -4,11 +4,12 @@
     </style>
     <style name="Theme.Toggl.Splash"  parent="Theme.Toggl.Base">
         <item name="android:windowBackground">@drawable/splashscreen</item>
-        <item name="android:windowNoTitle">true</item>
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
     </style>
     <style name="Theme.Toggl.App" parent="Theme.Toggl.Base">
         <item name="windowActionBar">false</item>
-        <item name="android:windowNoTitle">true</item>
+        <item name="windowNoTitle">true</item>
         <item name="android:windowBackground">@color/window_background</item>
         <item name="colorPrimary">@color/primary</item> <!-- Toolbar branding color -->
         <item name="colorPrimaryDark">@color/primary_dark</item> <!-- statusBarColor is inherited from this -->

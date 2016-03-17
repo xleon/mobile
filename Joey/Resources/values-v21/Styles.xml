@@ -1,6 +1,8 @@
 ﻿<?xml version="1.0" encoding="UTF-8" ?>
 <resources>
   <style name="Theme.Toggl.App" parent="Theme.Toggl.Base">
+    <item name="windowActionBar">false</item>
+    <item name="windowNoTitle">true</item>
     <item name="android:windowContentTransitions">true</item>
     <item name="android:windowAllowEnterTransitionOverlap">true</item>
     <item name="android:windowAllowReturnTransitionOverlap">true</item>

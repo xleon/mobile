@@ -250,16 +250,12 @@ namespace Toggl.Phoebe.Tests.Reactive
             var userData = new UserData { Id = UserId };
             var workspaceData = new WorkspaceData { Id = WorkspaceId };
 
-            // Set initial pagination Date to the beginning of the next day.
-            // So, we can include all entries created -Today-.
-            var downloadFrom = Time.UtcNow.Date.AddDays (1);
-
             var timerState =
                 new TimerState (
                 authResult: Net.AuthResult.None,
-                downloadResult: new DownloadResult (false, true, false, downloadFrom, downloadFrom),
-                activeTimeEntryId: Guid.Empty,
+                downloadResult: DownloadResult.Empty,
                 user: userData,
+			    activeEntry: ActiveEntryInfo.Empty,
                 workspaces: new Dictionary<Guid, WorkspaceData> { { WorkspaceId, workspaceData } },
                 projects: new Dictionary<Guid, ProjectData> (),
                 workspaceUsers: new Dictionary<Guid, WorkspaceUserData> (),

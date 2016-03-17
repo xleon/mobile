@@ -29,9 +29,6 @@ namespace Toggl.Joey.UI.Fragments
         ItemTouchListener.IItemTouchListener,
         SwipeRefreshLayout.IOnRefreshListener
     {
-        
-        public static bool NewTimeEntryStartedByFAB;
-
         private RecyclerView recyclerView;
         private SwipeRefreshLayout swipeLayout;
         private View emptyMessageView;
@@ -134,12 +131,8 @@ namespace Toggl.Joey.UI.Fragments
             //                            OBMExperimentManager.StartButtonActionKey,
             //                            OBMExperimentManager.ClickActionValue);
 
-            // TODO RX: This public static mutable property is a bit dangerous
-            // We may need to put in the AppState
-            if (ViewModel.ActiveEntry.Data.State != TimeEntryState.Running) {
-                NewTimeEntryStartedByFAB = true;
-            }
-            ViewModel.StartStopTimeEntry ();
+            var startedByFAB = ViewModel.ActiveEntry.Data.State != TimeEntryState.Running;
+            ViewModel.StartStopTimeEntry (startedByFAB);
         }
 
         public override void OnDestroyView ()
@@ -239,7 +232,7 @@ namespace Toggl.Joey.UI.Fragments
         private void OnActiveEntryChanged ()
         {
 			var activeEntry = ViewModel.ActiveEntry.Data;
-            if (activeEntry.State == TimeEntryState.Running && NewTimeEntryStartedByFAB) {
+            if (activeEntry.State == TimeEntryState.Running && ViewModel.StartedByFAB) {
                 var ids = new List<string> { activeEntry.Id.ToString () };
                 var intent = new Intent (Activity, typeof (EditTimeEntryActivity));
                 intent.PutStringArrayListExtra (EditTimeEntryActivity.ExtraGroupedTimeEntriesGuids, ids);

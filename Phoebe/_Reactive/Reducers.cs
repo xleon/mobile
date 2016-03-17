@@ -236,7 +236,8 @@ namespace Toggl.Phoebe._Reactive
 
         static DataSyncMsg<TimerState> TimeEntryContinue (TimerState state, DataMsg msg)
         {
-            var entryData = (msg as DataMsg.TimeEntryContinue).Data.ForceLeft ();
+            var entryMsg = msg as DataMsg.TimeEntryContinue;
+            var entryData = entryMsg.Data.ForceLeft ();
             var dataStore = ServiceContainer.Resolve <ISyncDataStore> ();
 
             // TODO RX: Review the conditions to create a new time entry
@@ -256,8 +257,9 @@ namespace Toggl.Phoebe._Reactive
 
             // Throw exception if entry wasn't updated properly
             entryData = (ITimeEntryData)updated.Single ();
+            var activeEntry = new ActiveEntryInfo (entryData.Id, entryMsg.StartedByFAB);
             return DataSyncMsg.Create (
-                       state.With (activeTimeEntryId: entryData.Id, timeEntries: state.UpdateTimeEntries (updated)),
+                       state.With (activeEntry: activeEntry, timeEntries: state.UpdateTimeEntries (updated)),
                        updated);
         }
 

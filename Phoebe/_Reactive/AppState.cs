@@ -145,10 +145,6 @@ namespace Toggl.Phoebe._Reactive
 
         public static AppState Init ()
         {
-            // Set initial pagination Date to the beginning of the next day.
-            // So, we can include all entries created -Today-.
-            var downloadFrom = Time.UtcNow.Date.AddDays (1);
-
             var userData = new UserData ();
             var credStore = ServiceContainer.Resolve<Data.ISettingsStore> ();
             try {
@@ -165,9 +161,9 @@ namespace Toggl.Phoebe._Reactive
             var timerState =
                 new TimerState (
                 authResult: Net.AuthResult.None,
-                downloadResult: new DownloadResult (false, true, false, downloadFrom, downloadFrom),
+                downloadResult: DownloadResult.Empty,
                 user: userData,
-                activeTimeEntryId: Guid.Empty,
+                activeEntry: ActiveEntryInfo.Empty,
                 workspaces: new Dictionary<Guid, WorkspaceData> (),
                 projects: new Dictionary<Guid, ProjectData> (),
                 workspaceUsers: new Dictionary<Guid, WorkspaceUserData> (),
@@ -198,6 +194,23 @@ namespace Toggl.Phoebe._Reactive
         }
     }
 
+    public class ActiveEntryInfo
+    {
+        public Guid Id { get; private set; }
+        public bool StartedByFAB { get; private set; }
+
+		public static ActiveEntryInfo Empty
+		{
+			get { return new ActiveEntryInfo (Guid.Empty, false); }
+		}
+
+        public ActiveEntryInfo (Guid id, bool startedByFAB)
+        {
+            Id = id;
+            StartedByFAB = startedByFAB;
+        }
+    }
+
     public class DownloadResult
     {
         public bool IsSyncing { get; private set; }
@@ -205,6 +218,16 @@ namespace Toggl.Phoebe._Reactive
         public bool HadErrors { get; private set; }
         public DateTime DownloadFrom { get; private set; }
         public DateTime NextDownloadFrom { get; private set; }
+
+        public static DownloadResult Empty
+        {
+            get {
+                // Set initial pagination Date to the beginning of the next day.
+                // So, we can include all entries created -Today-.
+                var downloadFrom = Time.UtcNow.Date.AddDays (1);
+                return new DownloadResult (false, true, false, downloadFrom, downloadFrom);
+            }
+        }
 
         public DownloadResult (
             bool isSyncing, bool hasMore, bool hadErrors,
@@ -239,6 +262,7 @@ namespace Toggl.Phoebe._Reactive
         public DownloadResult DownloadResult { get; private set; }
 
         public UserData User { get; private set; }
+		public ActiveEntryInfo ActiveEntry { get; private set; }
         public IReadOnlyDictionary<Guid, WorkspaceData> Workspaces { get; private set; }
         public IReadOnlyDictionary<Guid, ProjectData> Projects { get; private set; }
         public IReadOnlyDictionary<Guid, WorkspaceUserData> WorkspaceUsers { get; private set; }
@@ -247,13 +271,12 @@ namespace Toggl.Phoebe._Reactive
         public IReadOnlyDictionary<Guid, TaskData> Tasks { get; private set; }
         public IReadOnlyDictionary<Guid, TagData> Tags { get; private set; }
         public IReadOnlyDictionary<Guid, RichTimeEntry> TimeEntries { get; private set; }
-        public Guid ActiveTimeEntryId { get; private set; }
 
         public TimerState (
             Net.AuthResult authResult,
             DownloadResult downloadResult,
-			Guid activeTimeEntryId,
             UserData user,
+            ActiveEntryInfo activeEntry,
             IReadOnlyDictionary<Guid, WorkspaceData> workspaces,
             IReadOnlyDictionary<Guid, ProjectData> projects,
             IReadOnlyDictionary<Guid, WorkspaceUserData> workspaceUsers,
@@ -265,8 +288,8 @@ namespace Toggl.Phoebe._Reactive
         {
             AuthResult = authResult;
             DownloadResult = downloadResult;
-			ActiveTimeEntryId = activeTimeEntryId;
             User = user;
+			ActiveEntry = activeEntry;
             Workspaces = workspaces;
             Projects = projects;
             WorkspaceUsers = workspaceUsers;
@@ -280,8 +303,8 @@ namespace Toggl.Phoebe._Reactive
         public TimerState With (
             Net.AuthResult? authResult = null,
             DownloadResult downloadResult = null,
-            Guid? activeTimeEntryId = null,
             UserData user = null,
+			ActiveEntryInfo activeEntry = null,
             IReadOnlyDictionary<Guid, WorkspaceData> workspaces = null,
             IReadOnlyDictionary<Guid, ProjectData> projects = null,
             IReadOnlyDictionary<Guid, WorkspaceUserData> workspaceUsers = null,
@@ -294,8 +317,8 @@ namespace Toggl.Phoebe._Reactive
             return new TimerState (
                        authResult ?? AuthResult,
                        downloadResult ?? DownloadResult,
-                       activeTimeEntryId ?? ActiveTimeEntryId,
-                       user ?? User,
+				       user ?? User,
+                       activeEntry ?? ActiveEntry,
                        workspaces ?? Workspaces,
                        projects ?? Projects,
                        workspaceUsers ?? WorkspaceUsers,

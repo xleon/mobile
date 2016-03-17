@@ -85,14 +85,16 @@ namespace Toggl.Phoebe._Data
 
         public sealed class TimeEntryContinue : DataMsg
         {
+            public bool StartedByFAB { get; private set; }
             public Either<ITimeEntryData, Exception> Data
             {
                 get { return RawData.CastLeft<ITimeEntryData> (); }
                 set { RawData = value.CastLeft<object> (); }
             }
 
-            public TimeEntryContinue (ITimeEntryData data)
+            public TimeEntryContinue (ITimeEntryData data, bool startedByFAB = false)
             {
+                StartedByFAB = startedByFAB;
                 Data = Either<ITimeEntryData, Exception>.Left (data);
             }
         }

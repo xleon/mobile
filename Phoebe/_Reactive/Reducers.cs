@@ -244,9 +244,8 @@ namespace Toggl.Phoebe._Reactive
             TimeEntryData newEntry = null;
             if (entryData.Id == Guid.Empty) {
                 newEntry = state.GetTimeEntryDraft ();
-            }
-            else {
-				CheckTimeEntryState (entryData, TimeEntryState.Finished, "continue");
+            } else {
+                CheckTimeEntryState (entryData, TimeEntryState.Finished, "continue");
                 newEntry = new TimeEntryData (entryData);
             }
             newEntry.Id = Guid.NewGuid ();

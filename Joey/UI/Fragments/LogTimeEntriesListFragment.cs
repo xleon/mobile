@@ -29,6 +29,8 @@ namespace Toggl.Joey.UI.Fragments
         ItemTouchListener.IItemTouchListener,
         SwipeRefreshLayout.IOnRefreshListener
     {
+        
+        public static bool NewTimeEntryStartedByFAB;
         private RecyclerView recyclerView;
         private SwipeRefreshLayout swipeLayout;
         private View emptyMessageView;
@@ -106,7 +108,7 @@ namespace Toggl.Joey.UI.Fragments
 
             ViewModel.PropertyChanged += (sender, e) => {
                 if (e.PropertyName == nameof (ViewModel.ActiveEntry)) {
-                    
+
                 }
             };
 
@@ -231,8 +233,8 @@ namespace Toggl.Joey.UI.Fragments
 
         private void OnActiveEntryChanged ()
         {
-			var activeEntry = ViewModel.ActiveEntry.Data;
-            if (activeEntry.State == TimeEntryState.Running && ViewModel.StartedByFAB) {
+            var activeEntry = ViewModel.ActiveEntry.Data;
+            if (activeEntry.State == TimeEntryState.Running && NewTimeEntryStartedByFAB) {
                 var ids = new List<string> { activeEntry.Id.ToString () };
                 var intent = new Intent (Activity, typeof (EditTimeEntryActivity));
                 intent.PutStringArrayListExtra (EditTimeEntryActivity.ExtraGroupedTimeEntriesGuids, ids);

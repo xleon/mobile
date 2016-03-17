@@ -119,10 +119,16 @@
     <Compile Include="Test.cs" />
     <Compile Include="VoidLogger.cs" />
     <Compile Include="Data\Mapper\*.cs" />
-    <Compile Include="Reactive\**\*.cs" />
     <Content Include="FodyWeavers.xml" />
     <Compile Include="MainThreadSynchronizationContext.cs" />
     <Compile Include="Reactive\LoginVMTest.cs" />
+    <Compile Include="Reactive\LoginVMTest.cs" />
+    <Compile Include="Reactive\NewClientVMTest.cs" />
+    <Compile Include="Reactive\NewProjectVMTest.cs" />
+    <Compile Include="Reactive\NewTagVMTest.cs" />
+    <Compile Include="Reactive\StoreManagerTest.cs" />
+    <Compile Include="Reactive\SyncOutManagerTest.cs" />
+    <Compile Include="Reactive\Util.cs" />
   </ItemGroup>
   <ItemGroup Condition="$(DefineConstants.Contains('STAGING'))">
     <Compile Include="Staging\**\*.cs" />

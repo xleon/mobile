@@ -258,16 +258,16 @@ namespace Toggl.Phoebe.Tests.Reactive
                 new TimerState (
                 authResult: Net.AuthResult.None,
                 downloadResult: new DownloadResult (false, true, false, downloadFrom, downloadFrom),
+                activeTimeEntryId: Guid.Empty,
                 user: userData,
-            workspaces: new Dictionary<Guid, WorkspaceData> { { WorkspaceId, workspaceData } },
-            projects: new Dictionary<Guid, ProjectData> (),
-            workspaceUsers: new Dictionary<Guid, WorkspaceUserData> (),
-            projectUsers: new Dictionary<Guid, ProjectUserData> (),
-            clients: new Dictionary<Guid, ClientData> (),
-            tasks: new Dictionary<Guid, TaskData> (),
-            tags: new Dictionary<Guid, TagData> (),
-            timeEntries: new Dictionary<Guid, RichTimeEntry> (),
-            activeTimeEntry: new TimeEntryData ());
+                workspaces: new Dictionary<Guid, WorkspaceData> { { WorkspaceId, workspaceData } },
+                projects: new Dictionary<Guid, ProjectData> (),
+                workspaceUsers: new Dictionary<Guid, WorkspaceUserData> (),
+                projectUsers: new Dictionary<Guid, ProjectUserData> (),
+                clients: new Dictionary<Guid, ClientData> (),
+                tasks: new Dictionary<Guid, TaskData> (),
+                tags: new Dictionary<Guid, TagData> (),
+                timeEntries: new Dictionary<Guid, RichTimeEntry> ());
 
             return new AppState (timerState);
         }

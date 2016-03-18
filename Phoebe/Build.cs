@@ -16,7 +16,7 @@ namespace Toggl.Phoebe
         public static readonly Uri StagingUrl = new Uri ("https://mobile.toggl.space/api/");
         public static readonly Uri PrivacyPolicyUrl = new Uri ("https://toggl.com/legal/privacy");
         public static readonly Uri TermsOfServiceUrl = new Uri ("https://toggl.com/legal/terms");
-        public static readonly string GoogleAnalyticsId = "UA-XXXXXXXX-X";
+        public static readonly string GoogleAnalyticsId = "{GOOGLE_ANALYTICS_ID}";
         public static readonly int GoogleAnalyticsPlanIndex = 1;
         public static readonly int GoogleAnalyticsExperimentIndex = 2;
 
@@ -27,7 +27,7 @@ namespace Toggl.Phoebe
         #if __ANDROID__
         public static readonly string AppIdentifier = "TogglJoey";
         public static readonly string GcmSenderId = "{GMC_SENDER_ID}";
-        public static readonly string RaygunApiKey = "{RAYGUN_API_KEY}";
+        public static readonly string RaygunApiKey = "{RAYGUN_API_KEY_ANDROID}";
         public static readonly string GooglePlayUrl = "https://play.google.com/store/apps/details?id=com.toggl.timer";
         #endif
         #endregion
@@ -37,8 +37,8 @@ namespace Toggl.Phoebe
         #if __IOS__
         public static readonly string AppIdentifier = "TogglRoss";
         public static readonly string AppStoreUrl = "itms-apps://itunes.com/apps/toggl";
-        public static readonly string RaygunApiKey = "";
-        public static readonly string TestFairyApiToken = "";
+        public static readonly string RaygunApiKey = "{RAYGUN_API_KEY_IOS}";
+        public static readonly string TestFairyApiToken = "{TESTFAIRY_API_TOKEN}";
         #endif
         #endregion
     }

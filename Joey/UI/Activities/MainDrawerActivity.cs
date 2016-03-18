@@ -12,7 +12,9 @@ using Toggl.Joey.UI.Adapters;
 using Toggl.Joey.UI.Components;
 using Toggl.Joey.UI.Fragments;
 using Toggl.Joey.UI.Views;
+using Toggl.Phoebe._Data;
 using Toggl.Phoebe._Data.Models;
+using Toggl.Phoebe._Reactive;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
 using ActionBarDrawerToggle = Android.Support.V7.App.ActionBarDrawerToggle;
@@ -113,6 +115,11 @@ namespace Toggl.Joey.UI.Activities
                 }
             }
 
+            var userData = StoreManager.Singleton.AppState.TimerState.User;
+            DrawerUserName.Text = userData.Name;
+            DrawerEmail.Text = userData.Email;
+            DrawerImage.ImageUrl = userData.ImageUrl;
+
             // Make sure that the user will see newest data when they start the activity
             ServiceContainer.Resolve<ISyncManager> ().Run ();
         }
@@ -130,24 +137,15 @@ namespace Toggl.Joey.UI.Activities
         private void AdjustToolbar()
         {
             switch (toolbarMode) {
-            case MainDrawerActivity.ToolbarModes.Timer:
+            case ToolbarModes.Timer:
                 SupportActionBar.SetDisplayShowTitleEnabled (false);
                 Timer.Hide = false;
                 break;
-            case MainDrawerActivity.ToolbarModes.Normal:
+            case ToolbarModes.Normal:
                 Timer.Hide = true;
                 SupportActionBar.SetDisplayShowTitleEnabled (true);
                 break;
             }
-        }
-
-        private void OnUserChangedEvent (object sender, PropertyChangedEventArgs args)
-        {
-            /*
-            DrawerUserName.Text = userData.Name;
-            DrawerEmail.Text = userData.Email;
-            DrawerImage.ImageUrl = userData.ImageUrl;
-            */
         }
 
         protected override void OnSaveInstanceState (Bundle outState)
@@ -243,17 +241,16 @@ namespace Toggl.Joey.UI.Activities
 
             // Configure timer component for selected page:
             if (e.Id != DrawerListAdapter.TimerPageId) {
-                ToolbarMode = MainDrawerActivity.ToolbarModes.Normal;
+                ToolbarMode = ToolbarModes.Normal;
             } else {
-                ToolbarMode = MainDrawerActivity.ToolbarModes.Timer;
+                ToolbarMode = ToolbarModes.Timer;
             }
 
             if (e.Id == DrawerListAdapter.TimerPageId) {
                 OpenPage (DrawerListAdapter.TimerPageId);
 
             } else if (e.Id == DrawerListAdapter.LogoutPageId) {
-                //var authManager = ServiceContainer.Resolve<AuthManager> ();
-                //authManager.Forget ();
+                RxChain.Send (new DataMsg.ResetState ());
                 StartAuthActivity ();
             } else if (e.Id == DrawerListAdapter.ReportsPageId) {
                 OpenPage (DrawerListAdapter.ReportsPageId);

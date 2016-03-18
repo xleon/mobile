@@ -29,7 +29,8 @@ namespace Toggl.Phoebe._Reactive
             .Add (typeof (DataMsg.TagsPut), TagsPut)
             .Add (typeof (DataMsg.ClientDataPut), ClientDataPut)
             .Add (typeof (DataMsg.ProjectDataPut), ProjectDataPut)
-            .Add (typeof (DataMsg.UserDataPut), UserDataPut);
+            .Add (typeof (DataMsg.UserDataPut), UserDataPut)
+            .Add (typeof (DataMsg.ResetState), Reset);
 
             return new PropertyCompositeReducer<AppState> ()
                    .Add (x => x.TimerState, tagReducer);
@@ -316,6 +317,34 @@ namespace Toggl.Phoebe._Reactive
             return DataSyncMsg.Create (
                        state.With (timeEntries: state.UpdateTimeEntries (removed)),
                        removed);
+        }
+
+        static DataSyncMsg<TimerState> Reset (TimerState state, DataMsg msg)
+        {
+            var dataStore = ServiceContainer.Resolve <ISyncDataStore> ();
+            dataStore.WipeTables ();
+
+            // Reset state
+            var timerState =
+                new TimerState (
+                authResult: Net.AuthResult.None,
+                downloadResult: DownloadResult.Empty,
+                user: new UserData (),
+                activeEntry: ActiveEntryInfo.Empty,
+                workspaces: new Dictionary<Guid, WorkspaceData> (),
+                projects: new Dictionary<Guid, ProjectData> (),
+                workspaceUsers: new Dictionary<Guid, WorkspaceUserData> (),
+                projectUsers: new Dictionary<Guid, ProjectUserData> (),
+                clients: new Dictionary<Guid, ClientData> (),
+                tasks: new Dictionary<Guid, TaskData> (),
+                tags: new Dictionary<Guid, TagData> (),
+                timeEntries: new Dictionary<Guid, RichTimeEntry> ());
+
+            // TODO: Clean settings?
+            // TODO: Ping analytics?
+            // TODO: Call Log service?
+
+            return DataSyncMsg.Create (timerState);
         }
 
         #region Util

@@ -60,6 +60,10 @@ namespace Toggl.Phoebe._Data
         {
         }
 
+        public sealed class ResetState : DataMsg
+        {
+        }
+
         public sealed class TimeEntriesLoad : DataMsg
         {
             public Either<object, Exception> Data

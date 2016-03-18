@@ -10,6 +10,7 @@ namespace Toggl.Phoebe._Data
     {
         TableQuery<T> Table<T> () where T : CommonData, new();
         IReadOnlyList<ICommonData> Update (Action<ISyncDataStoreContext> worker);
+        void WipeTables ();
 
         int GetQueueSize (string queueId);
         bool TryEnqueue (string queueId, string json);

@@ -2,14 +2,14 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Toggl.Phoebe.Data.DataObjects;
-using Toggl.Phoebe.Data.Json.Converters;
-using Toggl.Phoebe.Data.Models;
+using Toggl.Phoebe._Data;
+using Toggl.Phoebe._Data.Json;
+using Toggl.Phoebe._Data.Models;
+using Toggl.Phoebe._Net;
 using Toggl.Phoebe.Logging;
-using Toggl.Phoebe.Net;
 using XPlatUtils;
 
-namespace Toggl.Phoebe.Data.Reports
+namespace Toggl.Phoebe._Reports
 {
     public class SummaryReportView
     {
@@ -17,26 +17,24 @@ namespace Toggl.Phoebe.Data.Reports
         private ReportData dataObject;
         private DayOfWeek startOfWeek;
         private IReportsClient reportClient;
-        private long? workspaceId;
         private List<ReportProject> collapsedProjects;
         private List<ReportProject> projects;
 
-        public ZoomLevel Period;
+        public ZoomLevel Period { get; set; }
 
-        public async Task Load (int backDate)
+        public async Task Load (UserData userData, int backDate)
         {
             if (IsLoading) {
                 return;
             }
             IsLoading = true;
 
-            if (workspaceId == null) {
-                await Initialize ();
-            }
+            reportClient = ServiceContainer.Resolve<IReportsClient> ();
+            startOfWeek = userData.StartOfWeek;
 
             var startDate = ResolveStartDate (backDate);
             var endDate = ResolveEndDate (startDate);
-            await FetchData (startDate, endDate);
+            await FetchData (userData, startDate, endDate);
             IsLoading = false;
         }
 
@@ -47,24 +45,15 @@ namespace Toggl.Phoebe.Data.Reports
             }
         }
 
-        private async Task Initialize ()
-        {
-            await Task.Delay (4);
-            var store = ServiceContainer.Resolve<IDataStore> ();
-            //var user = ServiceContainer.Resolve<AuthManager> ().User;
-            reportClient = ServiceContainer.Resolve<IReportsClient> ();
-            //workspaceId = await store.ExecuteInTransactionAsync (ctx => ctx.GetRemoteId<WorkspaceData> (user.DefaultWorkspaceId));
-            //startOfWeek = user.StartOfWeek;
-        }
-
-        private async Task FetchData (DateTime startDate, DateTime endDate)
+        private async Task FetchData (UserData userData, DateTime startDate, DateTime endDate)
         {
             dataObject = CreateEmptyReport (startDate);
 
             try {
                 _isError = false;
-                var json = await reportClient.GetReports (startDate, endDate, (long)workspaceId);
-                dataObject = json.Import ();
+                var json = await reportClient.GetReports (userData.ApiToken, userData.RemoteId.GetValueOrDefault (), startDate, endDate, userData.DefaultWorkspaceRemoteId);
+                var mapper = new JsonMapper ();
+                dataObject = mapper.Map<ReportData> (json);
             } catch ( Exception exc) {
                 var log = ServiceContainer.Resolve<ILogger> ();
                 if (exc.IsNetworkFailure () || exc is TaskCanceledException) {
@@ -107,12 +96,12 @@ namespace Toggl.Phoebe.Data.Reports
 
             var containerProject = new ReportProject {
                 Currencies = new List<ReportCurrency>(),
-                Color = ProjectModel.GroupedProjectColorIndex
+                Color = ProjectData.GroupedProjectColorIndex
             };
 
             const float minimunWeight = 0.01f; // minimum weight of project respect to total time
             var totalValue = Convert.ToSingle ( dataObject.Projects.Sum (p => p.TotalTime));
-            int count = ProjectModel.GroupedProjectColorIndex;
+            int count = ProjectData.GroupedProjectColorIndex;
 
             // group projects on one single project
             foreach (var item in dataObject.Projects) {
@@ -246,7 +235,7 @@ namespace Toggl.Phoebe.Data.Reports
         {
             var timeSpan = TimeSpan.FromMilliseconds (ms);
             decimal totalHours = Math.Floor ((decimal)timeSpan.TotalHours);
-            return String.Format ("{0} h {1} min", (int)totalHours, timeSpan.Minutes);
+            return string.Format ("{0} h {1} min", (int)totalHours, timeSpan.Minutes);
         }
 
         public DateTime ResolveStartDate (int backDate)
@@ -280,35 +269,35 @@ namespace Toggl.Phoebe.Data.Reports
 
         public static ZoomLevel GetLastZoomViewed()
         {
-            var settings = ServiceContainer.Resolve<ISettingsStore> ();
+            var settings = ServiceContainer.Resolve<Data.ISettingsStore> ();
             var value = settings.LastReportZoomViewed ?? (int)ZoomLevel.Week;
             return (ZoomLevel)value;
         }
 
-        public static void SaveReportsState ( ZoomLevel zoomLevel)
+        public static void SaveReportsState (ZoomLevel zoomLevel)
         {
-            var settings = ServiceContainer.Resolve<ISettingsStore> ();
+            var settings = ServiceContainer.Resolve<Data.ISettingsStore> ();
             settings.LastReportZoomViewed = (int)zoomLevel;
         }
 
         private string LabelForDate (DateTime date)
         {
             if (Period == ZoomLevel.Week) {
-                return String.Format ("{0:ddd}", date);
+                return string.Format ("{0:ddd}", date);
             }
 
             if (Period == ZoomLevel.Month) {
-                return String.Format ("{0:ddd dd}", date);
+                return string.Format ("{0:ddd dd}", date);
             }
 
-            return String.Format ("{0:MMM}", date);
+            return string.Format ("{0:MMM}", date);
         }
 
         private string GetFormattedTime ( UserData user, long milliseconds)
         {
             TimeSpan duration = TimeSpan.FromMilliseconds ( milliseconds);
             decimal totalHours = Math.Floor ((decimal)duration.TotalHours);
-            string formattedString = String.Format ("{0}:{1}:{2}", (int)totalHours, duration.ToString (@"mm"), duration.ToString (@"ss"));
+            string formattedString = string.Format ("{0}:{1}:{2}", (int)totalHours, duration.ToString (@"mm"), duration.ToString (@"ss"));
 
             if ( user!= null) {
                 if ( user.DurationFormat == DurationFormat.Classic) {
@@ -318,7 +307,7 @@ namespace Toggl.Phoebe.Data.Reports
                         formattedString = duration.ToString (@"mm\:ss\ \m\i\n");
                     }
                 } else if (user.DurationFormat == DurationFormat.Decimal) {
-                    formattedString = String.Format ("{0:0.00} h", duration.TotalHours);
+                    formattedString = string.Format ("{0:0.00} h", duration.TotalHours);
                 }
             }
             return formattedString;
@@ -344,9 +333,9 @@ namespace Toggl.Phoebe.Data.Reports
                     TimeSpan duration = TimeSpan.FromSeconds (activity.TotalTime);
                     decimal totalHours = Math.Floor ((decimal)duration.TotalHours);
 
-                    formattedString = String.Format ("{0}:{1}", (int)totalHours, duration.ToString (@"mm"));
+                    formattedString = string.Format ("{0}:{1}", (int)totalHours, duration.ToString (@"mm"));
                     if (user.DurationFormat == DurationFormat.Decimal) {
-                        formattedString = String.Format ("{0:0.00} h", duration.TotalHours);
+                        formattedString = string.Format ("{0:0.00} h", duration.TotalHours);
                     }
                 }
 

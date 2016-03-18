@@ -8,20 +8,16 @@ using Android.Views;
 using Android.Widget;
 using Toggl.Joey.Data;
 using Toggl.Joey.UI.Activities;
-using Toggl.Joey.UI.Fragments;
 using Toggl.Joey.UI.Utils;
 using Toggl.Phoebe;
+using Toggl.Phoebe._Data.Models;
 using Toggl.Phoebe._Reactive;
+using Toggl.Phoebe._Reports;
 using Toggl.Phoebe.Analytics;
-using Toggl.Phoebe.Data;
-using Toggl.Phoebe.Data.Reports;
-using Toggl.Phoebe.Net;
 using XPlatUtils;
-using Activity = Android.Support.V7.App.AppCompatActivity;
 using Fragment = Android.Support.V4.App.Fragment;
 using FragmentManager = Android.Support.V4.App.FragmentManager;
 using FragmentPagerAdapter = Android.Support.V4.App.FragmentPagerAdapter;
-using FragmentTransaction = Android.Support.V4.App.FragmentTransaction;
 using Toolbar = Android.Support.V7.Widget.Toolbar;
 using ViewPager = Android.Support.V4.View.ViewPager;
 
@@ -58,7 +54,7 @@ namespace Toggl.Joey.UI.Fragments
                 zoomLevel = value;
                 ResetAdapter ();
                 UpdatePeriod ();
-                SummaryReportView.SaveReportsState ( zoomLevel);
+                SummaryReportView.SaveReportsState (zoomLevel);
                 if (IsResumed) {
                     TrackScreenView ();
                 }

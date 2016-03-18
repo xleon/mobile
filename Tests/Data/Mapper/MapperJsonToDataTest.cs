@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using NUnit.Framework;
 using SQLite.Net.Interop;
 using SQLite.Net.Platform.Generic;
@@ -331,6 +332,84 @@ namespace Toggl.Phoebe.Tests.Data.Mapper
             //TODO: check startTime.
             Assert.That (teData.StopTime, Is.Null);
             Assert.That (teData.State, Is.EqualTo (TimeEntryState.Running));
+        }
+
+        [Test]
+        public void TestReportJsonDataMap ()
+        {
+            var row1 = new List<string> {"111", "111", "111"};
+            var row2 = new List<string> {"222", "222", "222"};
+            var row3 = new List<string> {"333", "333", "333"};
+
+            var reportProject1 = new ReportProjectJson {
+                Description = new ReportProjectDescJson {
+                    Client = "client1",
+                    Color = "color1",
+                    Project = "reportProject1"
+                },
+                Id = "reportProject1",
+                Currencies = new List<ReportCurrencyJson> {
+                    new ReportCurrencyJson { Amount = 10, Currency = "euro" },
+                    new ReportCurrencyJson { Amount = 100, Currency = "dollar" },
+                },
+                Items = new List<ReportTimeEntryJson> {
+                    new ReportTimeEntryJson {
+                        Currency = "curr",
+                        Description = new ReportTimeEntryDescJson { Title = "Title" },
+                        Ids="1,1,1",
+                        Rate = 1.0f,
+                        Sum = 1.0f,
+                        Time = 1111
+                    }
+                }
+            };
+
+            var reportProject2 = new ReportProjectJson {
+                Description = new ReportProjectDescJson {
+                    Client = "client2",
+                    Color = "color2",
+                    Project = "reportProject2"
+                },
+                Id = "reportProject2",
+                Currencies = new List<ReportCurrencyJson> {
+                    new ReportCurrencyJson { Amount = 20, Currency = "euro" },
+                    new ReportCurrencyJson { Amount = 200, Currency = "dollar" },
+                },
+                Items = new List<ReportTimeEntryJson> {
+                    new ReportTimeEntryJson {
+                        Currency = "curr",
+                        Description = new ReportTimeEntryDescJson { Title = "Title" },
+                        Ids="2,2,2",
+                        Rate = 2.0f,
+                        Sum = 2.0f,
+                        Time = 2222
+                    }
+                }
+            };
+
+            var reportJson = new ReportJson {
+                TotalBillable = 12345,
+                ActivityContainer = new ReportActivityJson {
+                    Rows = new List<List<string>> {row1, row2, row3},
+                    ZoomLevel = "month"
+                },
+                Projects = new List<ReportProjectJson> {
+                    reportProject1, reportProject2
+                },
+                TotalCurrencies = new List<ReportCurrencyJson> {
+                    new ReportCurrencyJson { Amount = 30, Currency = "euro" },
+                    new ReportCurrencyJson { Amount = 300, Currency = "dollar" },
+                },
+                TotalGrand = 12345
+            };
+
+            var reportData = mapper.Map<ReportData> (reportJson);
+
+            Assert.That (reportData.TotalBillable, Is.EqualTo (reportJson.TotalBillable));
+            Assert.That (reportData.TotalGrand, Is.EqualTo (reportJson.TotalGrand));
+            Assert.That (reportData.Activity.Count, Is.EqualTo (reportJson.ActivityContainer.Rows.Count));
+            Assert.That (reportData.Projects.Count, Is.EqualTo (2));
+            Assert.That (reportJson.Projects[0].Currencies.Count, Is.EqualTo (reportProject1.Currencies.Count));
         }
 
         private class PlatformUtils : IPlatformUtils

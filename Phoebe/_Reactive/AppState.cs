@@ -199,10 +199,10 @@ namespace Toggl.Phoebe._Reactive
         public Guid Id { get; private set; }
         public bool StartedByFAB { get; private set; }
 
-		public static ActiveEntryInfo Empty
-		{
-			get { return new ActiveEntryInfo (Guid.Empty, false); }
-		}
+        public static ActiveEntryInfo Empty
+        {
+            get { return new ActiveEntryInfo (Guid.Empty, false); }
+        }
 
         public ActiveEntryInfo (Guid id, bool startedByFAB)
         {
@@ -262,7 +262,7 @@ namespace Toggl.Phoebe._Reactive
         public DownloadResult DownloadResult { get; private set; }
 
         public UserData User { get; private set; }
-		public ActiveEntryInfo ActiveEntry { get; private set; }
+        public ActiveEntryInfo ActiveEntry { get; private set; }
         public IReadOnlyDictionary<Guid, WorkspaceData> Workspaces { get; private set; }
         public IReadOnlyDictionary<Guid, ProjectData> Projects { get; private set; }
         public IReadOnlyDictionary<Guid, WorkspaceUserData> WorkspaceUsers { get; private set; }
@@ -289,7 +289,7 @@ namespace Toggl.Phoebe._Reactive
             AuthResult = authResult;
             DownloadResult = downloadResult;
             User = user;
-			ActiveEntry = activeEntry;
+            ActiveEntry = activeEntry;
             Workspaces = workspaces;
             Projects = projects;
             WorkspaceUsers = workspaceUsers;
@@ -304,7 +304,7 @@ namespace Toggl.Phoebe._Reactive
             Net.AuthResult? authResult = null,
             DownloadResult downloadResult = null,
             UserData user = null,
-			ActiveEntryInfo activeEntry = null,
+            ActiveEntryInfo activeEntry = null,
             IReadOnlyDictionary<Guid, WorkspaceData> workspaces = null,
             IReadOnlyDictionary<Guid, ProjectData> projects = null,
             IReadOnlyDictionary<Guid, WorkspaceUserData> workspaceUsers = null,
@@ -317,7 +317,7 @@ namespace Toggl.Phoebe._Reactive
             return new TimerState (
                        authResult ?? AuthResult,
                        downloadResult ?? DownloadResult,
-				       user ?? User,
+                       user ?? User,
                        activeEntry ?? ActiveEntry,
                        workspaces ?? Workspaces,
                        projects ?? Projects,

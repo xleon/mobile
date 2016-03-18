@@ -24,7 +24,7 @@ namespace Toggl.Phoebe
             // Core services that are most likelly to be overriden by UI code:
             var restApiUrl = ServiceContainer.Resolve<ISettingsStore> ().IsStagingMode ? Build.StagingUrl : Build.ApiUrl;
             ServiceContainer.Register<_Net.ITogglClient> (() => new _Net.TogglRestClient (restApiUrl));
-            ServiceContainer.Register<IReportsClient> (() => new ReportsRestClient (Build.ReportsApiUrl));
+            ServiceContainer.Register<_Net.IReportsClient> (() => new _Net.ReportsRestClient (Build.ReportsApiUrl));
             ServiceContainer.Register<LoggerUserManager> ();
         }
 
@@ -39,7 +39,6 @@ namespace Toggl.Phoebe
             ServiceContainer.Register<UserJsonConverter> ();
             ServiceContainer.Register<WorkspaceJsonConverter> ();
             ServiceContainer.Register<WorkspaceUserJsonConverter> ();
-            ServiceContainer.Register<ReportJsonConverter> ();
         }
 
         private static IDataStore CreateDataStore ()

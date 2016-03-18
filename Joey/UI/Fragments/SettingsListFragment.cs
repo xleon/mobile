@@ -25,7 +25,7 @@ namespace Toggl.Joey.UI.Fragments
             ListAdapter = new SettingsAdapter ();
         }
 
-        public override void OnListItemClick (ListView l, View v, int position, long id)
+        public override void OnListItemClick (ListView lValue, View vValue, int position, long id)
         {
             ((SettingsAdapter)ListAdapter).OnItemClicked (position);
         }

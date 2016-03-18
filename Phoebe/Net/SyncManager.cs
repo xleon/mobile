@@ -154,12 +154,15 @@ namespace Toggl.Phoebe.Net
             bool hasErrors = false;
             Exception ex = null;
             try {
+                Data.Json.UserJson userJson = null;
                 if (mode == SyncMode.Full) {
                     await CollectGarbage ().ConfigureAwait (false);
                 }
 
                 if (mode.HasFlag (SyncMode.Pull)) {
-                    lastRun = await PullChanges (lastRun).ConfigureAwait (false);
+                    var tuple = await PullChanges (lastRun).ConfigureAwait (false);
+                    lastRun = tuple.Item1;
+                    userJson = tuple.Item2;
                 }
 
                 // Resolve conflicts in client (not server)
@@ -168,6 +171,9 @@ namespace Toggl.Phoebe.Net
                 if (mode.HasFlag (SyncMode.Push)) {
                     hasErrors = await PushChanges ().ConfigureAwait (false);
                 }
+
+                // TODO: Check userData has synced properly #1390
+                CheckUserSettings (userJson, log);
             } catch (Exception e) {
                 if (e.IsNetworkFailure () || e is TaskCanceledException) {
                     log.Info (Tag, e, "Sync ({0}) failed.", mode);
@@ -187,6 +193,39 @@ namespace Toggl.Phoebe.Net
             }
 
             return lastRun;
+        }
+
+        private void CheckUserSettings (Data.Json.UserJson json, ILogger log)
+        {
+            if (json == null) {
+                return;
+            }
+
+            try {
+                var data = ServiceContainer.Resolve<AuthManager> ().User;
+                var errors =
+                    (data.StartOfWeek == json.StartOfWeek ? "" : "StartOfWeek ") +
+                    (data.DateFormat == json.DateFormat ? "" : "DateFormat ") +
+                    (data.TimeFormat == json.TimeFormat ? "" : "TimeFormat ") +
+                    (data.ImageUrl == json.ImageUrl ? "" : "ImageUrl ") +
+                    (data.Locale == json.Locale ? "" : "Locale ") +
+                    (data.Timezone == json.Timezone ? "" : "Timezone ") +
+                    (data.SendProductEmails == json.SendProductEmails ? "" : "SendProductEmails ") +
+                    (data.SendTimerNotifications == json.SendTimerNotifications ? "" : "SendTimerNotifications ") +
+                    (data.SendWeeklyReport == json.SendWeeklyReport ? "" : "SendWeeklyReport ") +
+                    (data.TrackingMode == (json.StoreStartAndStopTime ? TrackingMode.StartNew : TrackingMode.Continue) ? "" : "TrackingMode ") +
+                    //(data.DefaultWorkspaceId == defaultWorkspaceId ? "" : "defaultWorkspaceId ") +
+                    (data.DurationFormat == json.DurationFormat ? "" : "DurationFormat ") +
+                    (data.ExperimentIncluded == (json.OBM != null && json.OBM.Included) ? "" : "ExperimentIncluded ") +
+                    (data.ExperimentNumber == (json.OBM == null ? 0 : json.OBM.Number) ? "" : "ExperimentNumber ");
+
+                if (!string.IsNullOrWhiteSpace (errors)) {
+                    log.Error (Tag, "Server and app user settings differ: " + errors);
+                }
+            }
+            catch (Exception e) {
+                log.Error (Tag, e, "Cannot check user data: {0}", e.Message);
+            }
         }
 
         private async Task MergeNoUserData ()
@@ -259,10 +298,10 @@ namespace Toggl.Phoebe.Net
             await Task.WhenAll (timeEntryRows.Select (store.DeleteAsync)).ConfigureAwait (false);
         }
 
-        private static async Task<DateTime> PullChanges (DateTime? lastRun)
+        private static async Task<Tuple<DateTime, Data.Json.UserJson>> PullChanges (DateTime? lastRun)
         {
             if (ServiceContainer.Resolve<AuthManager> ().OfflineMode) {
-                return DateTime.Now;
+                return Tuple.Create<DateTime,Data.Json.UserJson> (DateTime.Now, null);
             }
             var client = ServiceContainer.Resolve<ITogglClient> ();
             var store = ServiceContainer.Resolve<IDataStore> ();
@@ -287,6 +326,7 @@ namespace Toggl.Phoebe.Net
 
             // Import data (in parallel batches)
             var userData = await store.ExecuteInTransactionAsync (ctx => changes.User.Import (ctx));
+
             await store.ExecuteInTransactionAsync (ctx => {
                 foreach (var json in changes.Workspaces) {
                     var workspaceData = json.Import (ctx);
@@ -353,7 +393,7 @@ namespace Toggl.Phoebe.Net
                 }
             });
 
-            return changes.Timestamp;
+            return Tuple.Create (changes.Timestamp, changes.User);
         }
 
         private static async Task<bool> PushChanges ()

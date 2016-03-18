@@ -47,7 +47,7 @@
 			<string>Editor</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string></string>
+				<string>{CF_BUNDLE_URL_SCHEMES}</string>
 			</array>
 		</dict>
 	</array>

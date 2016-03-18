@@ -73,6 +73,16 @@ namespace Toggl.Phoebe._Data
             return updated;
         }
 
+        public void WipeTables ()
+        {
+            var dataObjects = DiscoverDataModels ();
+            foreach (var t in dataObjects) {
+                var map = cnn.GetMapping (t);
+                var query = string.Format ("DELETE FROM \"{0}\"", map.TableName);
+                cnn.Execute (query);
+            }
+        }
+
         #region Queue
         const string QueueCreateSql = "CREATE TABLE IF NOT EXISTS [__QUEUE__{0}] (Data TEXT)";
         const string QueueInsertSql = "INSERT INTO [__QUEUE__{0}] VALUES (?)";

@@ -414,6 +414,7 @@ namespace Toggl.Phoebe._Reactive
         {
             var userId = User.Id;
             var workspaceId = User.DefaultWorkspaceId;
+            var remoteWorkspaceId = User.DefaultWorkspaceRemoteId;
             var durationOnly = User.TrackingMode == TrackingMode.Continue;
 
             // Create new draft object
@@ -421,6 +422,7 @@ namespace Toggl.Phoebe._Reactive
                 State = TimeEntryState.New,
                 UserId = userId,
                 WorkspaceId = workspaceId,
+                WorkspaceRemoteId = remoteWorkspaceId,
                 DurationOnly = durationOnly,
             };
         }

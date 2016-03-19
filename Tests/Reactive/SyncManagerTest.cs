@@ -3,6 +3,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using NUnit.Framework;
 using Toggl.Phoebe._Data;
+using Toggl.Phoebe._Data.Json;
+using Toggl.Phoebe._Data.Models;
 using Toggl.Phoebe._Net;
 using Toggl.Phoebe._Reactive;
 using XPlatUtils;
@@ -10,8 +12,9 @@ using XPlatUtils;
 namespace Toggl.Phoebe.Tests.Reactive
 {
     [TestFixture]
-    public class SyncOutManagerTest : Test
+    public class SyncManagerTest : Test
     {
+        NetworkSwitcher networkSwitcher;
         readonly ToggleClientMock togglClient = new ToggleClientMock ();
 
         public override void Init ()
@@ -20,7 +23,8 @@ namespace Toggl.Phoebe.Tests.Reactive
             var platformUtils = new PlatformUtils ();
             ServiceContainer.RegisterScoped<IPlatformUtils> (platformUtils);
             ServiceContainer.RegisterScoped<ITogglClient> (togglClient);
-
+            networkSwitcher = new NetworkSwitcher ();
+            ServiceContainer.RegisterScoped<Net.INetworkPresence> (networkSwitcher);
             RxChain.Init (Util.GetInitAppState ());
         }
 
@@ -28,6 +32,13 @@ namespace Toggl.Phoebe.Tests.Reactive
         {
             base.Cleanup ();
             RxChain.Cleanup ();
+        }
+
+        [SetUp]
+        public override void SetUp()
+        {
+            base.SetUp();
+            togglClient.ReceivedItems.Clear ();
         }
 
         [Test]
@@ -103,6 +114,27 @@ namespace Toggl.Phoebe.Tests.Reactive
             }));
 
             await tcs.Task;
+        }
+
+        [Test]
+        public void TestCreateNewCommonData ()
+        {
+            // Set network as connected.
+            networkSwitcher.SetNetworkConnection (true);
+            var mapper = new JsonMapper ();
+            var te = Util.CreateTimeEntryData (DateTime.Now);
+
+            RxChain.Send (new DataMsg.TimeEntryPut (te));
+            var commonData = togglClient.ReceivedItems.FirstOrDefault ();
+            var remoteTe = mapper.Map<TimeEntryData> (commonData);
+
+            Assert.That (remoteTe.Description, Is.EqualTo (te.Description));
+            Assert.That (remoteTe.RemoteId, Is.Not.Null);
+
+            var dataStore = ServiceContainer.Resolve<ISyncDataStore> ();
+            // Check item has been correctly saved in database
+            Assert.That (dataStore.Table<TimeEntryData> ().SingleOrDefault (
+                             x => x.Id == te.Id), Is.Not.Null);
         }
     }
 }

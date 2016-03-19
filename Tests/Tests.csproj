@@ -127,7 +127,7 @@
     <Compile Include="Reactive\NewProjectVMTest.cs" />
     <Compile Include="Reactive\NewTagVMTest.cs" />
     <Compile Include="Reactive\StoreManagerTest.cs" />
-    <Compile Include="Reactive\SyncOutManagerTest.cs" />
+    <Compile Include="Reactive\SyncManagerTest.cs" />
     <Compile Include="Reactive\Util.cs" />
   </ItemGroup>
   <ItemGroup Condition="$(DefineConstants.Contains('STAGING'))">

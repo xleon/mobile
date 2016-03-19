@@ -32,7 +32,7 @@ namespace Toggl.Phoebe._Reactive
 
         readonly string Tag = typeof (SyncManager).Name;
         readonly JsonMapper mapper;
-        readonly Toggl.Phoebe.Net.INetworkPresence networkPresence;
+        readonly Net.INetworkPresence networkPresence;
         readonly ISyncDataStore dataStore;
         readonly ITogglClient client;
         readonly Subject<Tuple<ServerRequest, AppState>> requestManager = new Subject<Tuple<ServerRequest, AppState>> ();
@@ -41,7 +41,7 @@ namespace Toggl.Phoebe._Reactive
         SyncManager ()
         {
             mapper = new JsonMapper ();
-            networkPresence = ServiceContainer.Resolve<Toggl.Phoebe.Net.INetworkPresence> ();
+            networkPresence = ServiceContainer.Resolve<Net.INetworkPresence> ();
             dataStore = ServiceContainer.Resolve<ISyncDataStore> ();
             client = ServiceContainer.Resolve<ITogglClient> ();
 
@@ -326,13 +326,18 @@ namespace Toggl.Phoebe._Reactive
                         }
                     }
 
-                    foreach (var tag in entry.Tags) {
-                        if (state.Tags.Values.All (x => x.WorkspaceRemoteId != entry.WorkspaceRemoteId || x.Name != tag) &&
-                                newTags.All (x => x.WorkspaceRemoteId != entry.WorkspaceRemoteId || x.Name != tag)) {
-                            // TODO RX: How to get the tag without a remote id?
-                            //newTags.Add (await client.Get<TagJson> (authToken, tagRemoteId));
+                    try {
+                        foreach (var tag in entry.Tags) {
+                            if (state.Tags.Values.All (x => x.WorkspaceRemoteId != entry.WorkspaceRemoteId || x.Name != tag) &&
+                                    newTags.All (x => x.WorkspaceRemoteId != entry.WorkspaceRemoteId || x.Name != tag)) {
+                                // TODO RX: How to get the tag without a remote id?
+                                // newTags.Add (await client.Get<TagJson> (authToken, tagRemoteId));
+                            }
                         }
+                    } catch (Exception ex) {
+                        Console.WriteLine ("here!");
                     }
+
                 }
 
                 // TODO: Check if any of the received items is null?

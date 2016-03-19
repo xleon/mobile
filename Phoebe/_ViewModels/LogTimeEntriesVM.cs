@@ -68,6 +68,13 @@ namespace Toggl.Phoebe._ViewModels
                 .Scan<TimerState, Tuple<TimerState, DownloadResult>> (
                     null, (tuple, state) => Tuple.Create (state, tuple != null ? tuple.Item2 : null))
                 .Subscribe (tuple => UpdateState (tuple.Item1, tuple.Item2));
+
+
+            // TODO: RX Review this line.
+            // The ViewModel is created and start to load
+            // content. This line was in the View before because
+            // was an async method.
+            LoadMore ();
         }
 
         private void ResetCollection ()
@@ -100,8 +107,10 @@ namespace Toggl.Phoebe._ViewModels
             }
         }
 
-        // TODO RX: What's the difference between LoadMore and TriggerFullSync?
-        //public void TriggerFullSync ()
+        public void TriggerFullSync ()
+        {
+            // TODO RX: Trigger full sync!
+        }
 
         public void LoadMore ()
         {
@@ -130,7 +139,6 @@ namespace Toggl.Phoebe._ViewModels
         public void StartStopTimeEntry (bool startedByFAB = false)
         {
             // TODO RX: Protect from requests in short time (double click...)?
-
             var entry = ActiveEntry.Data;
             if (entry.State == TimeEntryState.Running) {
                 RxChain.Send (new DataMsg.TimeEntryStop (entry));
@@ -143,9 +151,16 @@ namespace Toggl.Phoebe._ViewModels
 
         public void RemoveTimeEntry (int index)
         {
+            // TODO: Add analytic event
             var te = Collection.ElementAt (index) as ITimeEntryHolder;
             RxChain.Send (new DataMsg.TimeEntryDelete (te.Entry.Data));
-            // TODO: Add analytic event?
+        }
+
+        public void ReportExperiment (string actionKey, string actionValue)
+        {
+            if (Collection.Count == 0 && ServiceContainer.Resolve<Data.ISettingsStore> ().ShowWelcome) {
+                OBMExperimentManager.Send (actionKey, actionValue, StoreManager.Singleton.AppState.TimerState.User);
+            }
         }
 
         private void UpdateState (TimerState timerState, DownloadResult prevDownloadResult)

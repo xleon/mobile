@@ -1,5 +1,9 @@
-﻿using Toggl.Phoebe._Data.Models;
-using Toggl.Phoebe.Net;
+﻿using System;
+using System.Threading.Tasks;
+using Toggl.Phoebe._Data.Json;
+using Toggl.Phoebe._Data.Models;
+using Toggl.Phoebe._Net;
+using Toggl.Phoebe.Logging;
 using XPlatUtils;
 
 namespace Toggl.Phoebe
@@ -15,14 +19,14 @@ namespace Toggl.Phoebe
         public const string StartButtonActionKey = "startButton";
         public const string ClickActionValue = "click";
 
-        public static async void Send (string actionKey, string actionValue, UserData data)
+        public static async void Send (string actionKey, string actionValue, UserData userData)
         {
             var experimentAction = new ExperimentAction {
                 ExperimentId = ExperimentNumber,
                 ActionKey = actionKey,
                 ActionValue = actionValue
             };
-            await experimentAction.Send();
+            await experimentAction.SendAction (userData.ApiToken);
         }
 
         public static bool IncludedInExperiment (UserData userData)
@@ -35,6 +39,37 @@ namespace Toggl.Phoebe
             return userData.ExperimentNumber == experimentNumber;
         }
 
+        class ExperimentAction
+        {
+            private const string Tag = "ExperimentAction";
+
+            public int ExperimentId { get; set; }
+            public string ActionKey { get; set; }
+            public string ActionValue { get; set; }
+
+            public async Task<bool> SendAction (string authToken)
+            {
+                var client = ServiceContainer.Resolve<ITogglClient> ();
+                try {
+                    var json = new ActionJson {
+                        ExperimentId = ExperimentId,
+                        Key = ActionKey,
+                        Value = ActionValue
+                    };
+                    await client.CreateExperimentAction (authToken, json).ConfigureAwait (false);
+
+                } catch (Exception ex) {
+                    var log = ServiceContainer.Resolve<ILogger> ();
+                    if (ex.IsNetworkFailure() ) {
+                        log.Info (Tag, ex, "Network failure. Failed to send obm action.");
+                    } else {
+                        log.Warning (Tag, ex, "Server error. Failed to send obm action.");
+                    }
+                    return false;
+                }
+                return true;
+            }
+        }
     }
 }
 

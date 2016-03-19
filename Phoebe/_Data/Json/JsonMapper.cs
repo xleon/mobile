@@ -39,6 +39,7 @@ namespace Toggl.Phoebe._Data.Json
 
                 // User mapping
                 config.CreateMap<UserJson, UserData> ()
+                .ForMember (dest => dest.TrackingMode, opt => opt.MapFrom (src => src.StoreStartAndStopTime ? TrackingMode.StartNew : TrackingMode.Continue))
                 .ForMember (dest => dest.ExperimentIncluded, opt => opt.MapFrom (src => src.OBM.Included))
                 .ForMember (dest => dest.ExperimentNumber, opt => opt.MapFrom (src => src.OBM.Number));
 

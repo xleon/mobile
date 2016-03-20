@@ -31,7 +31,6 @@ namespace Toggl.Joey.UI.Fragments
         SwipeRefreshLayout.IOnRefreshListener
     {
 
-        public static bool NewTimeEntryStartedByFAB;
         private RecyclerView recyclerView;
         private SwipeRefreshLayout swipeLayout;
         private View emptyMessageView;
@@ -90,7 +89,7 @@ namespace Toggl.Joey.UI.Fragments
             // init viewModel
             ViewModel = new LogTimeEntriesVM (StoreManager.Singleton.AppState.TimerState);
 
-            activeEntryBinding =  this.SetBinding (()=> ViewModel.ActiveEntry).WhenSourceChanges (OnActiveEntryChanged);
+            //activeEntryBinding =  this.SetBinding (()=> ViewModel.ActiveEntry).WhenSourceChanges (OnActiveEntryChanged);
             collectionBinding = this.SetBinding (() => ViewModel.Collection).WhenSourceChanges (() => {
                 logAdapter = new LogTimeEntriesAdapter (recyclerView, ViewModel);
                 recyclerView.SetAdapter (logAdapter);
@@ -212,7 +211,7 @@ namespace Toggl.Joey.UI.Fragments
         private void OnActiveEntryChanged ()
         {
             var activeEntry = ViewModel.ActiveEntry.Data;
-            if (activeEntry.State == TimeEntryState.Running && NewTimeEntryStartedByFAB) {
+            if (activeEntry.State == TimeEntryState.Running) {
                 var ids = new List<string> { activeEntry.Id.ToString () };
                 var intent = new Intent (Activity, typeof (EditTimeEntryActivity));
                 intent.PutStringArrayListExtra (EditTimeEntryActivity.ExtraGroupedTimeEntriesGuids, ids);

@@ -169,15 +169,16 @@ namespace Toggl.Phoebe._Reactive
         async Task SendMessage (string authToken, List<CommonData> remoteObjects, Guid localId, CommonJson json)
         {
             if (json.DeletedAt == null) {
+                CommonJson response;
                 if (json.RemoteId != null) {
                     // TODO: Save the response to remoteObjects here too?
-                    await client.Update (authToken, json);
+                    response = await client.Update (authToken, json);
                 } else {
-                    var res = await client.Create (authToken, json);
-                    var resData = mapper.Map (res);
-                    resData.Id = localId;
-                    remoteObjects.Add (resData);
+                    response = await client.Create (authToken, json);
                 }
+                var resData = mapper.Map (response);
+                resData.Id = localId;
+                remoteObjects.Add (resData);
             } else {
                 if (json.RemoteId != null) {
                     await client.Delete (authToken, json);

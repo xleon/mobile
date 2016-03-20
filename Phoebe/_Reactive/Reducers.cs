@@ -263,6 +263,8 @@ namespace Toggl.Phoebe._Reactive
                 CheckTimeEntryState (entryData, TimeEntryState.Finished, "continue");
                 newEntry = new TimeEntryData (entryData);
             }
+
+            newEntry.RemoteId = null;
             newEntry.Id = Guid.NewGuid ();
             newEntry.State = TimeEntryState.Running;
             newEntry.StartTime = Time.UtcNow;
@@ -273,7 +275,7 @@ namespace Toggl.Phoebe._Reactive
 
             // Throw exception if entry wasn't updated properly
             entryData = (ITimeEntryData)updated.Single ();
-            var activeEntry = new ActiveEntryInfo (entryData.Id, entryMsg.StartedByFAB);
+            var activeEntry = new ActiveEntryInfo (entryData.Id);
             return DataSyncMsg.Create (
                        state.With (activeEntry: activeEntry, timeEntries: state.UpdateTimeEntries (modEntries)),
                        updated);
@@ -294,7 +296,7 @@ namespace Toggl.Phoebe._Reactive
             // TODO: Check updated.Count == 1?
             var activeEntry = state.ActiveEntry;
             if (activeEntry.Id == entryData.Id) {
-                activeEntry = new ActiveEntryInfo (Guid.Empty, false);
+                activeEntry = new ActiveEntryInfo (Guid.Empty);
             }
             return DataSyncMsg.Create (
                        state.With (activeEntry: activeEntry, timeEntries: state.UpdateTimeEntries (updated)),

@@ -39,6 +39,8 @@ namespace Toggl.Phoebe._Data
 
         public sealed class ReceivedFromServer : DataMsg
         {
+            public Tuple<UserData, DateTime> FullSyncInfo { get; private set; }
+
             public Either<IEnumerable<CommonData>, Exception> Data
             {
                 get { return RawData.CastLeft<IEnumerable<CommonData>> (); }
@@ -50,8 +52,9 @@ namespace Toggl.Phoebe._Data
                 Data = Either<IEnumerable<CommonData>, Exception>.Right (ex);
             }
 
-            public ReceivedFromServer (IEnumerable<CommonData> data)
+            public ReceivedFromServer (IEnumerable<CommonData> data, Tuple<UserData, DateTime> fullSyncInfo = null)
             {
+                FullSyncInfo = fullSyncInfo;
                 Data = Either<IEnumerable<CommonData>, Exception>.Left (data);
             }
         }

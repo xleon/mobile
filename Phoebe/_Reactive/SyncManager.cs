@@ -282,7 +282,8 @@ namespace Toggl.Phoebe._Reactive
             const int endDate = Literals.TimeEntryLoadDays;
 
             try {
-                IList<TimeEntryJson> jsonEntries = null;
+				IList<TimeEntryJson> jsonEntries = null;
+                Tuple<UserData, DateTime> fullSyncInfo = null;
                 var newWorkspaces = new List<WorkspaceJson> ();
                 var newProjects = new List<ProjectJson> ();
                 var newClients = new List<ClientJson> ();
@@ -292,14 +293,13 @@ namespace Toggl.Phoebe._Reactive
                 if (fullSync) {
                     // TODO RX: Check if since date is older than 2 months, see #1301
                     var changes = await client.GetChanges (authToken, state.Settings.SyncLastRun);
-					// TODO RX: changes.User, changes.TimeStamp
-
                     jsonEntries = changes.TimeEntries.ToList ();
                     newWorkspaces = changes.Workspaces.ToList ();
                     newProjects = changes.Projects.ToList ();
                     newClients = changes.Clients.ToList ();
                     newTasks = changes.Tasks.ToList ();
                     newTags = changes.Tags.ToList ();
+                    fullSyncInfo = Tuple.Create (mapper.Map<UserData> (changes.User), changes.Timestamp);
 
                 } else {
                     // Download new Entries
@@ -359,7 +359,7 @@ namespace Toggl.Phoebe._Reactive
                                   .Concat (newClients.Select (mapper.Map<ClientData>).Cast<CommonData> ())
                                   .Concat (newTasks.Select (mapper.Map<TaskData>).Cast<CommonData> ())
                                   .Concat (newTags.Select (mapper.Map<TagData>).Cast<CommonData> ())
-                                  .ToList ()));
+                                  .ToList (), fullSyncInfo));
 
             } catch (Exception exc) {
                 var tag = this.GetType ().Name;

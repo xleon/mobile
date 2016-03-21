@@ -255,7 +255,6 @@ namespace Toggl.Phoebe.Tests.Reactive
                 authResult: Net.AuthResult.None,
                 downloadResult: DownloadResult.Empty,
                 user: userData,
-                activeEntry: ActiveEntryInfo.Empty,
             workspaces: new Dictionary<Guid, WorkspaceData> { { WorkspaceId, workspaceData } },
             projects: new Dictionary<Guid, ProjectData> (),
             workspaceUsers: new Dictionary<Guid, WorkspaceUserData> (),

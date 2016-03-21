@@ -347,10 +347,7 @@ namespace Toggl.Phoebe._Reactive
                                 // newTags.Add (await client.Get<TagJson> (authToken, tagRemoteId));
                             }
                         }
-                    } catch (Exception ex) {
-                        Console.WriteLine ("here!");
                     }
-
                 }
 
                 RxChain.Send (new DataMsg.ReceivedFromServer (

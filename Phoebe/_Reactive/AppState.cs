@@ -163,7 +163,6 @@ namespace Toggl.Phoebe._Reactive
                 authResult: Net.AuthResult.None,
                 downloadResult: DownloadResult.Empty,
                 user: userData,
-                activeEntry: ActiveEntryInfo.Empty,
                 workspaces: new Dictionary<Guid, WorkspaceData> (),
                 projects: new Dictionary<Guid, ProjectData> (),
                 workspaceUsers: new Dictionary<Guid, WorkspaceUserData> (),
@@ -260,7 +259,6 @@ namespace Toggl.Phoebe._Reactive
         public DownloadResult DownloadResult { get; private set; }
 
         public UserData User { get; private set; }
-        public ActiveEntryInfo ActiveEntry { get; private set; }
         public IReadOnlyDictionary<Guid, WorkspaceData> Workspaces { get; private set; }
         public IReadOnlyDictionary<Guid, ProjectData> Projects { get; private set; }
         public IReadOnlyDictionary<Guid, WorkspaceUserData> WorkspaceUsers { get; private set; }
@@ -270,11 +268,23 @@ namespace Toggl.Phoebe._Reactive
         public IReadOnlyDictionary<Guid, TagData> Tags { get; private set; }
         public IReadOnlyDictionary<Guid, RichTimeEntry> TimeEntries { get; private set; }
 
+        // TimerState instances are immutable snapshots, so it's safe to use a cache for ActiveEntry
+        private RichTimeEntry _activeEntryCache = null;
+        public RichTimeEntry ActiveEntry
+        {
+            get {
+                if (_activeEntryCache == null) {
+                    _activeEntryCache = TimeEntries.Values.SingleOrDefault (
+                                            x => x.Data.State == TimeEntryState.Running) ?? new RichTimeEntry (this, new TimeEntryData ());
+                }
+                return _activeEntryCache;
+            }
+        }
+
         public TimerState (
             Net.AuthResult authResult,
             DownloadResult downloadResult,
             UserData user,
-            ActiveEntryInfo activeEntry,
             IReadOnlyDictionary<Guid, WorkspaceData> workspaces,
             IReadOnlyDictionary<Guid, ProjectData> projects,
             IReadOnlyDictionary<Guid, WorkspaceUserData> workspaceUsers,
@@ -287,7 +297,6 @@ namespace Toggl.Phoebe._Reactive
             AuthResult = authResult;
             DownloadResult = downloadResult;
             User = user;
-            ActiveEntry = activeEntry;
             Workspaces = workspaces;
             Projects = projects;
             WorkspaceUsers = workspaceUsers;
@@ -302,7 +311,6 @@ namespace Toggl.Phoebe._Reactive
             Net.AuthResult? authResult = null,
             DownloadResult downloadResult = null,
             UserData user = null,
-            ActiveEntryInfo activeEntry = null,
             IReadOnlyDictionary<Guid, WorkspaceData> workspaces = null,
             IReadOnlyDictionary<Guid, ProjectData> projects = null,
             IReadOnlyDictionary<Guid, WorkspaceUserData> workspaceUsers = null,
@@ -316,7 +324,6 @@ namespace Toggl.Phoebe._Reactive
                        authResult ?? AuthResult,
                        downloadResult ?? DownloadResult,
                        user ?? User,
-                       activeEntry ?? ActiveEntry,
                        workspaces ?? Workspaces,
                        projects ?? Projects,
                        workspaceUsers ?? WorkspaceUsers,

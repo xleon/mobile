@@ -50,6 +50,7 @@ namespace Toggl.Phoebe._Reactive
         {
             var dataStore = ServiceContainer.Resolve <ISyncDataStore> ();
             var fullSync = (msg as DataMsg.TimeEntriesLoad).Data.ForceLeft ();
+			var endDate = state.DownloadResult.NextDownloadFrom;
 
             // TODO RX: Should we load entries from db also in full sync? What should be the startDate?
 
@@ -62,7 +63,6 @@ namespace Toggl.Phoebe._Reactive
                                    downloadFrom: DateTime.UtcNow,
                                    nextDownloadFrom: endDate);
             } else {
-                var endDate = state.DownloadResult.NextDownloadFrom;
                 var startDate = GetDatesByDays (dataStore, endDate, Literals.TimeEntryLoadDays);
 
                 dbEntries = dataStore
@@ -251,48 +251,38 @@ namespace Toggl.Phoebe._Reactive
 
         static DataSyncMsg<TimerState> TimeEntryContinue (TimerState state, DataMsg msg)
         {
-            var entryMsg = msg as DataMsg.TimeEntryContinue;
-            var entryData = entryMsg.Data.ForceLeft ();
+            var entryData = (msg as DataMsg.TimeEntryContinue).Data.ForceLeft ();
             var dataStore = ServiceContainer.Resolve <ISyncDataStore> ();
-            var modEntries = new List<ICommonData> ();
 
-            // TODO RX: Stop previous started
-            // Correct way?
-            if (state.ActiveEntry.Id != Guid.Empty) {
-                var previousActive = state.TimeEntries [state.ActiveEntry.Id];
-                if (previousActive.Data.State == TimeEntryState.Running) {
-                    var stopped = dataStore.Update (ctx => ctx.Put (new TimeEntryData (entryData) {
+            var updated = dataStore.Update (ctx => {
+                // Stop ActiveEntry if necessary
+                var prev = state.ActiveEntry.Data;
+                if (prev.Id != Guid.Empty && prev.State == TimeEntryState.Running) {
+                    ctx.Put (new TimeEntryData (prev) {
                         State = TimeEntryState.Finished,
                         StopTime = Time.UtcNow
-                    }));
-                    modEntries.Add (stopped.FirstOrDefault ());
+                    });
                 }
-            }
 
-            // TODO RX: Review the conditions to create a new time entry
-            TimeEntryData newEntry = null;
-            if (entryData.Id == Guid.Empty) {
-                newEntry = state.GetTimeEntryDraft ();
-            } else {
-                CheckTimeEntryState (entryData, TimeEntryState.Finished, "continue");
-                newEntry = new TimeEntryData (entryData);
-            }
+                // TODO RX: Review the conditions to create a new time entry
+                TimeEntryData newEntry = null;
+                if (entryData.Id == Guid.Empty) {
+                    newEntry = state.GetTimeEntryDraft ();
+                } else {
+                    CheckTimeEntryState (entryData, TimeEntryState.Finished, "continue");
+                    newEntry = new TimeEntryData (entryData);
+                }
 
-            newEntry.RemoteId = null;
-            newEntry.Id = Guid.NewGuid ();
-            newEntry.State = TimeEntryState.Running;
-            newEntry.StartTime = Time.UtcNow;
-            newEntry.StopTime = null;
+                newEntry.RemoteId = null;
+                newEntry.Id = Guid.NewGuid ();
+                newEntry.State = TimeEntryState.Running;
+                newEntry.StartTime = Time.UtcNow;
+                newEntry.StopTime = null;
+                ctx.Put (newEntry);
+            });
 
-            var updated = dataStore.Update (ctx => ctx.Put (newEntry));
-            modEntries.Add (updated.FirstOrDefault ());
-
-            // Throw exception if entry wasn't updated properly
-            entryData = (ITimeEntryData)updated.Single ();
-            var activeEntry = new ActiveEntryInfo (entryData.Id);
             return DataSyncMsg.Create (
-                       state.With (activeEntry: activeEntry, timeEntries: state.UpdateTimeEntries (modEntries)),
-                       updated);
+                       state.With (timeEntries: state.UpdateTimeEntries (updated)), updated);
         }
 
         static DataSyncMsg<TimerState> TimeEntryStop (TimerState state, DataMsg msg)
@@ -308,13 +298,8 @@ namespace Toggl.Phoebe._Reactive
             }));
 
             // TODO: Check updated.Count == 1?
-            var activeEntry = state.ActiveEntry;
-            if (activeEntry.Id == entryData.Id) {
-                activeEntry = new ActiveEntryInfo (Guid.Empty);
-            }
             return DataSyncMsg.Create (
-                       state.With (activeEntry: activeEntry, timeEntries: state.UpdateTimeEntries (updated)),
-                       updated);
+                       state.With (timeEntries: state.UpdateTimeEntries (updated)), updated);
         }
 
         static DataSyncMsg<TimerState> TimeEntriesRemoveWithUndo (TimerState state, DataMsg msg)
@@ -366,7 +351,6 @@ namespace Toggl.Phoebe._Reactive
                 authResult: Net.AuthResult.None,
                 downloadResult: DownloadResult.Empty,
                 user: new UserData (),
-                activeEntry: ActiveEntryInfo.Empty,
                 workspaces: new Dictionary<Guid, WorkspaceData> (),
                 projects: new Dictionary<Guid, ProjectData> (),
                 workspaceUsers: new Dictionary<Guid, WorkspaceUserData> (),

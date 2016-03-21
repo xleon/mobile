@@ -169,13 +169,7 @@ namespace Toggl.Phoebe._ViewModels
                     );
                 }
 
-                // Check if ActiveTimeEntry has changed
-                if (timerState.ActiveEntry.Id == Guid.Empty) {
-                    ActiveEntry = new RichTimeEntry (timerState, new TimeEntryData ());
-                } else {
-                    ActiveEntry = timerState.TimeEntries[timerState.ActiveEntry.Id];
-                }
-
+                ActiveEntry = timerState.ActiveEntry;
                 IsEntryRunning = ActiveEntry.Data.State == TimeEntryState.Running;
                 // Check if an entry is running.
                 if (IsEntryRunning && !durationTimer.Enabled) {

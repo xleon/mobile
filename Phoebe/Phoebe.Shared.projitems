@@ -211,7 +211,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)Logging\LogStore.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Net\AuthChangeReason.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Net\AuthResult.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Net\ExperimentAction.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Net\FeedbackMessage.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Net\INetworkPresence.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Net\IPushClient.cs" />

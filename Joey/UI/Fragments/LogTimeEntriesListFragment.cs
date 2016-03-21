@@ -4,7 +4,6 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using Android.Content;
 using Android.OS;
-using Android.Support.Design.Widget;
 using Android.Support.V4.App;
 using Android.Support.V4.Widget;
 using Android.Support.V7.Widget;
@@ -17,7 +16,9 @@ using Toggl.Joey.UI.Adapters;
 using Toggl.Joey.UI.Components;
 using Toggl.Joey.UI.Utils;
 using Toggl.Joey.UI.Views;
+using Toggl.Phoebe;
 using Toggl.Phoebe._Data.Models;
+using Toggl.Phoebe._Reactive;
 using Toggl.Phoebe._ViewModels;
 using Toggl.Phoebe._ViewModels.Timer;
 using XPlatUtils;
@@ -30,14 +31,11 @@ namespace Toggl.Joey.UI.Fragments
         SwipeRefreshLayout.IOnRefreshListener
     {
 
-        public static bool NewTimeEntryStartedByFAB;
         private RecyclerView recyclerView;
         private SwipeRefreshLayout swipeLayout;
         private View emptyMessageView;
         private View experimentEmptyView;
         private LogTimeEntriesAdapter logAdapter;
-        private CoordinatorLayout coordinatorLayout;
-        //private Subscription<SyncFinishedMessage> drawerSyncFinished;
         private TimerComponent timerComponent;
         private TextView welcomeMessage;
         private TextView noItemsMessage;
@@ -53,6 +51,8 @@ namespace Toggl.Joey.UI.Fragments
         private Binding<LogTimeEntriesVM.LoadInfoType, LogTimeEntriesVM.LoadInfoType> loadInfoBinding;
         private Binding<ObservableCollection<IHolder>, ObservableCollection<IHolder>> collectionBinding;
         private Binding<bool, FABButtonState> fabBinding;
+        private Binding<RichTimeEntry, RichTimeEntry> activeEntryBinding;
+
 
         #region Binding objects and properties.
 
@@ -75,7 +75,6 @@ namespace Toggl.Joey.UI.Fragments
             recyclerView.SetLayoutManager (new LinearLayoutManager (Activity));
             swipeLayout = view.FindViewById<SwipeRefreshLayout> (Resource.Id.LogSwipeContainer);
             swipeLayout.SetOnRefreshListener (this);
-            coordinatorLayout = view.FindViewById<CoordinatorLayout> (Resource.Id.logCoordinatorLayout);
             StartStopBtn = view.FindViewById<StartStopFab> (Resource.Id.StartStopBtn);
             timerComponent = ((MainDrawerActivity)Activity).Timer; // TODO: a better way to do this?
             HasOptionsMenu = true;
@@ -88,14 +87,15 @@ namespace Toggl.Joey.UI.Fragments
             base.OnViewCreated (view, savedInstanceState);
 
             // init viewModel
-            ViewModel = new LogTimeEntriesVM (Phoebe._Reactive.StoreManager.Singleton.AppState.TimerState);
+            ViewModel = new LogTimeEntriesVM (StoreManager.Singleton.AppState.TimerState);
 
+            //activeEntryBinding =  this.SetBinding (()=> ViewModel.ActiveEntry).WhenSourceChanges (OnActiveEntryChanged);
             collectionBinding = this.SetBinding (() => ViewModel.Collection).WhenSourceChanges (() => {
                 logAdapter = new LogTimeEntriesAdapter (recyclerView, ViewModel);
                 recyclerView.SetAdapter (logAdapter);
             });
             hasItemsBinding = this.SetBinding (()=> ViewModel.Collection.Count).WhenSourceChanges (SetCollectionState);
-            loadInfoBinding = this.SetBinding (()=> ViewModel.LoadInfo).WhenSourceChanges (OnLoadInfoChanged);
+            loadInfoBinding = this.SetBinding (()=> ViewModel.LoadInfo).WhenSourceChanges (SetFooterState);
             fabBinding = this.SetBinding (() => ViewModel.IsEntryRunning, () => StartStopBtn.ButtonAction)
                          .ConvertSourceToTarget (isRunning => isRunning ? FABButtonState.Stop : FABButtonState.Start);
 
@@ -106,33 +106,18 @@ namespace Toggl.Joey.UI.Fragments
                 }
             });
 
-            ViewModel.PropertyChanged += (sender, e) => {
-                if (e.PropertyName == nameof (ViewModel.ActiveEntry)) {
-
-                }
-            };
-
             // Pass ViewModel to TimerComponent.
             timerComponent.SetViewModel (ViewModel);
             StartStopBtn.Click += StartStopClick;
             SetupRecyclerView (ViewModel);
-
-            // TODO: Review this line.
-            // Get data to fill the list. For the moment,
-            // until a screenloader is added to the screen
-            // is better to load the items after create
-            // the viewModel and show the loader from RecyclerView
-            ViewModel.LoadMore ();
         }
 
 
         public void StartStopClick (object sender, EventArgs e)
         {
             // TODO RX: Send experiment data.
-            //ViewModel.ReportExperiment (OBMExperimentManager.AndroidExperimentNumber,
-            //                            OBMExperimentManager.StartButtonActionKey,
-            //                            OBMExperimentManager.ClickActionValue);
-
+            ViewModel.ReportExperiment (OBMExperimentManager.StartButtonActionKey,
+                                        OBMExperimentManager.ClickActionValue);
             var startedByFAB = ViewModel.ActiveEntry.Data.State != TimeEntryState.Running;
             ViewModel.StartStopTimeEntry (startedByFAB);
         }
@@ -143,12 +128,6 @@ namespace Toggl.Joey.UI.Fragments
             if (Handle == IntPtr.Zero) {
                 return;
             }
-
-            //var bus = ServiceContainer.Resolve<MessageBus> ();
-            //if (drawerSyncFinished != null) {
-            //    bus.Unsubscribe (drawerSyncFinished);
-            //    drawerSyncFinished = null;
-            //}
 
             // TODO: Remove bindings to ViewModel
             // check if it is needed or not.
@@ -232,7 +211,7 @@ namespace Toggl.Joey.UI.Fragments
         private void OnActiveEntryChanged ()
         {
             var activeEntry = ViewModel.ActiveEntry.Data;
-            if (activeEntry.State == TimeEntryState.Running && NewTimeEntryStartedByFAB) {
+            if (activeEntry.State == TimeEntryState.Running) {
                 var ids = new List<string> { activeEntry.Id.ToString () };
                 var intent = new Intent (Activity, typeof (EditTimeEntryActivity));
                 intent.PutStringArrayListExtra (EditTimeEntryActivity.ExtraGroupedTimeEntriesGuids, ids);
@@ -241,28 +220,26 @@ namespace Toggl.Joey.UI.Fragments
             }
         }
 
-        private void OnLoadInfoChanged ()
+        private void OnSyncFinished ()
         {
-            if (ViewModel.LoadInfo.IsSyncing) {
-                swipeLayout.Refreshing = true;
-            } else {
-                swipeLayout.Refreshing = false;
-
-                if (ViewModel.LoadInfo.HadErrors) {
-                    int msgId = Resource.String.LastSyncHadErrors;
-
-                    // TODO RX
-                    //if (msg.FatalError.IsNetworkFailure ()) {
-                    //    msgId = Resource.String.LastSyncNoConnection;
-                    //}
-                    //else if (msg.FatalError is TaskCanceledException) {
-                    //    msgId = Resource.String.LastSyncFatalError;
-                    //}
-                    Snackbar.Make (coordinatorLayout, Resources.GetString (msgId), Snackbar.LengthLong).Show ();
-                }
+            // TODO RX: Waiting for implement
+            // Full sync method.
+            if (!swipeLayout.Refreshing) {
+                return;
             }
+            swipeLayout.Refreshing = false;
+            /*
+            if (msg.HadErrors) {
+                int msgId = Resource.String.LastSyncHadErrors;
 
-            SetFooterState ();
+                if (msg.FatalError.IsNetworkFailure ()) {
+                    msgId = Resource.String.LastSyncNoConnection;
+                } else if (msg.FatalError is TaskCanceledException) {
+                    msgId = Resource.String.LastSyncFatalError;
+                }
+                Snackbar.Make (coordinatorLayout, Resources.GetString (msgId), Snackbar.LengthLong).Show ();
+            }
+            */
         }
 
         private void SetFooterState ()
@@ -279,8 +256,9 @@ namespace Toggl.Joey.UI.Fragments
 
         private void SetCollectionState ()
         {
-            // TODO RX: Check not ready state?
-            //if (info.HasItems != LogTimeEntriesViewModel.CollectionState.NotReady) {
+            if (ViewModel.LoadInfo.IsSyncing && ViewModel.Collection.Count == 0) {
+                return;
+            }
 
             View emptyView = emptyMessageView;
             var isWelcome = ServiceContainer.Resolve<Phoebe.Data.ISettingsStore> ().ShowWelcome;

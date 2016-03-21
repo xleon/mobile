@@ -20,14 +20,14 @@ namespace Toggl.Phoebe._ViewModels
         private RichTimeEntry previousData;
         private System.Timers.Timer durationTimer;
 
-        private void Init (TimerState timerState, TimeEntryData timeData, List<string> tagList)
+        private void Init (TimerState state, TimeEntryData timeData, List<string> tagList)
         {
             durationTimer = new System.Timers.Timer ();
             durationTimer.Elapsed += DurationTimerCallback;
 
-            this.timerState = timerState;
+            this.timerState = state;
             IsManual = timeData.Id == Guid.Empty;
-            richData = new RichTimeEntry (timerState, timeData);
+            richData = new RichTimeEntry (state, timeData);
 
             UpdateView (x => {
                 x.Tags = tagList;
@@ -41,7 +41,7 @@ namespace Toggl.Phoebe._ViewModels
             // Save previous state.
             previousData = IsManual
                            // Hack to force tag saving even if there're no other changes
-                           ? new RichTimeEntry (timerState, richData.Data.With (x => x.Tags = new List<string> ()))
+                           ? new RichTimeEntry (state, richData.Data.With (x => x.Tags = new List<string> ()))
                            : new RichTimeEntry (richData.Data, richData.Info);
 
             ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Edit Time Entry";
@@ -87,7 +87,7 @@ namespace Toggl.Phoebe._ViewModels
             }
         }
 
-        public DateTime StartData
+        public DateTime StartDate
         {
             get {
                 return richData.Data.StartTime == DateTime.MinValue
@@ -127,7 +127,7 @@ namespace Toggl.Phoebe._ViewModels
 
         #endregion
 
-        public void ChangeProjectAndTask (Guid workspaceId, Guid projectId, Guid taskId)
+        public void ChangeProjectAndTask (Guid projectId, Guid taskId)
         {
             if (projectId != richData.Data.ProjectId || taskId != richData.Data.TaskId) {
                 UpdateView (x => {

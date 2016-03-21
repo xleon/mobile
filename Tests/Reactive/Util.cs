@@ -268,4 +268,31 @@ namespace Toggl.Phoebe.Tests.Reactive
             return new AppState (timerState);
         }
     }
+
+    public class NetworkSwitcher : Net.INetworkPresence
+    {
+        private bool isConnected;
+
+        public bool IsNetworkPresent
+        {
+            get {
+                return isConnected;
+            }
+        }
+
+        public void RegisterSyncWhenNetworkPresent()
+        {
+            throw new NotImplementedException();
+        }
+
+        public void UnregisterSyncWhenNetworkPresent()
+        {
+            throw new NotImplementedException();
+        }
+
+        public void SetNetworkConnection (bool isConnected)
+        {
+            this.isConnected = isConnected;
+        }
+    }
 }

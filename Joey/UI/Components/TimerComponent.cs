@@ -6,14 +6,11 @@ using Toggl.Joey.UI.Views;
 using Toggl.Phoebe._Reactive;
 using Toggl.Phoebe._ViewModels;
 using Activity = Android.Support.V4.App.FragmentActivity;
-using Fragment = Android.Support.V4.App.Fragment;
 
 namespace Toggl.Joey.UI.Components
 {
     public class TimerComponent
     {
-        private static readonly string LogTag = "TimerComponent";
-
         protected TextView DurationTextView { get; private set; }
         protected TextView ProjectTextView { get; private set; }
         protected TextView DescriptionTextView { get; private set; }

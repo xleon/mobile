@@ -10,6 +10,13 @@ using Toggl.Phoebe.Data.Utils;
 
 namespace Toggl.Phoebe._ViewModels
 {
+    public interface IOnTagSelectedHandler
+    {
+        void OnCreateNewTag (TagData newTagData);
+
+        void OnModifyTagList (List<TagData> newTagList);
+    }
+
     public class TagListVM : IDisposable
     {
         // This viewMode is apparently simple but
@@ -17,7 +24,7 @@ namespace Toggl.Phoebe._ViewModels
         // the list. (subscription and reload of data
         // everytime a tag is changed/created/deleted
 
-        TagListVM (TimerState timerState, Guid workspaceId, List<Guid> previousSelectedIds)
+        public TagListVM (TimerState timerState, Guid workspaceId, List<Guid> previousSelectedIds)
         {
             TagCollection = LoadTags (timerState, workspaceId, previousSelectedIds);
             ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Select Tags";

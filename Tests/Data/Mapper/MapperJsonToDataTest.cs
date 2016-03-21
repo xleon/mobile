@@ -255,7 +255,7 @@ namespace Toggl.Phoebe.Tests.Data.Mapper
                 SendTimerNotifications = true,
                 SendWeeklyReport = true,
                 StartOfWeek = DayOfWeek.Monday,
-                StoreStartAndStopTime = true, // Not used on UserData
+                StoreStartAndStopTime = true,
                 TimeFormat = "MM:SS",
                 Timezone = "TimeZone"
             };
@@ -278,8 +278,15 @@ namespace Toggl.Phoebe.Tests.Data.Mapper
             Assert.That (userData.SendTimerNotifications, Is.EqualTo (userJson.SendTimerNotifications));
             Assert.That (userData.StartOfWeek, Is.EqualTo (userJson.StartOfWeek));
             Assert.That (userData.SendWeeklyReport, Is.EqualTo (userJson.SendWeeklyReport));
+            Assert.That (userData.TrackingMode, Is.EqualTo (TrackingMode.StartNew));
             Assert.That (userData.TimeFormat, Is.EqualTo (userJson.TimeFormat));
             Assert.That (userData.Timezone, Is.EqualTo (userJson.Timezone));
+
+            // Test Continue mode.
+            userJson.StoreStartAndStopTime = false;
+            userData = mapper.Map<UserData> (userJson);
+            Assert.That (userData.TrackingMode, Is.EqualTo (TrackingMode.Continue));
+
         }
 
         [Test]

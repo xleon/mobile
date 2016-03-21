@@ -254,6 +254,20 @@ namespace Toggl.Phoebe._Reactive
             var entryMsg = msg as DataMsg.TimeEntryContinue;
             var entryData = entryMsg.Data.ForceLeft ();
             var dataStore = ServiceContainer.Resolve <ISyncDataStore> ();
+            var modEntries = new List<ICommonData> ();
+
+            // TODO RX: Stop previous started
+            // Correct way?
+            if (state.ActiveEntry.Id != Guid.Empty) {
+                var previousActive = state.TimeEntries [state.ActiveEntry.Id];
+                if (previousActive.Data.State == TimeEntryState.Running) {
+                    var stopped = dataStore.Update (ctx => ctx.Put (new TimeEntryData (entryData) {
+                        State = TimeEntryState.Finished,
+                        StopTime = Time.UtcNow
+                    }));
+                    modEntries.Add (stopped.FirstOrDefault ());
+                }
+            }
 
             // TODO RX: Review the conditions to create a new time entry
             TimeEntryData newEntry = null;
@@ -263,17 +277,21 @@ namespace Toggl.Phoebe._Reactive
                 CheckTimeEntryState (entryData, TimeEntryState.Finished, "continue");
                 newEntry = new TimeEntryData (entryData);
             }
+
+            newEntry.RemoteId = null;
             newEntry.Id = Guid.NewGuid ();
             newEntry.State = TimeEntryState.Running;
-            newEntry.StartTime = DateTime.UtcNow;
+            newEntry.StartTime = Time.UtcNow;
+            newEntry.StopTime = null;
 
             var updated = dataStore.Update (ctx => ctx.Put (newEntry));
+            modEntries.Add (updated.FirstOrDefault ());
 
             // Throw exception if entry wasn't updated properly
             entryData = (ITimeEntryData)updated.Single ();
-            var activeEntry = new ActiveEntryInfo (entryData.Id, entryMsg.StartedByFAB);
+            var activeEntry = new ActiveEntryInfo (entryData.Id);
             return DataSyncMsg.Create (
-                       state.With (activeEntry: activeEntry, timeEntries: state.UpdateTimeEntries (updated)),
+                       state.With (activeEntry: activeEntry, timeEntries: state.UpdateTimeEntries (modEntries)),
                        updated);
         }
 
@@ -290,8 +308,12 @@ namespace Toggl.Phoebe._Reactive
             }));
 
             // TODO: Check updated.Count == 1?
+            var activeEntry = state.ActiveEntry;
+            if (activeEntry.Id == entryData.Id) {
+                activeEntry = new ActiveEntryInfo (Guid.Empty);
+            }
             return DataSyncMsg.Create (
-                       state.With (timeEntries: state.UpdateTimeEntries (updated)),
+                       state.With (activeEntry: activeEntry, timeEntries: state.UpdateTimeEntries (updated)),
                        updated);
         }
 

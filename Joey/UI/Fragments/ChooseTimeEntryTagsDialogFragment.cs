@@ -10,8 +10,9 @@ using Android.Widget;
 using GalaSoft.MvvmLight.Helpers;
 using Toggl.Joey.UI.Utils;
 using Toggl.Joey.UI.Views;
-using Toggl.Phoebe.Data.DataObjects;
-using Toggl.Phoebe.Data.ViewModels;
+using Toggl.Phoebe._Data.Models;
+using Toggl.Phoebe._Reactive;
+using Toggl.Phoebe._ViewModels;
 
 namespace Toggl.Joey.UI.Fragments
 {
@@ -20,7 +21,7 @@ namespace Toggl.Joey.UI.Fragments
         private static readonly string SelectedTagNamesArgument = "com.toggl.timer.selected_tag_names";
         private static readonly string WorkspaceIdArgument = "com.toggl.timer.workspace_id";
         private ListView listView;
-        private TagListViewModel viewModel;
+        private TagListVM viewModel;
         private IOnTagSelectedHandler updateTagHandler;
 
         private Guid WorkspaceId
@@ -66,11 +67,10 @@ namespace Toggl.Joey.UI.Fragments
             return fragment;
         }
 
-        public async override void OnCreate (Bundle savedInstanceState)
+        public override void OnCreate (Bundle savedInstanceState)
         {
             base.OnCreate (savedInstanceState);
-            viewModel = await TagListViewModel.Init (WorkspaceId, ExistingTagIds);
-            SetPreviousSelectedTags ();
+            viewModel = new TagListVM (StoreManager.Singleton.AppState.TimerState, WorkspaceId, ExistingTagIds);
         }
 
         public override void OnDestroy ()

@@ -197,17 +197,15 @@ namespace Toggl.Phoebe._Reactive
     public class ActiveEntryInfo
     {
         public Guid Id { get; private set; }
-        public bool StartedByFAB { get; private set; }
 
         public static ActiveEntryInfo Empty
         {
-            get { return new ActiveEntryInfo (Guid.Empty, false); }
+            get { return new ActiveEntryInfo (Guid.Empty); }
         }
 
-        public ActiveEntryInfo (Guid id, bool startedByFAB)
+        public ActiveEntryInfo (Guid id)
         {
             Id = id;
-            StartedByFAB = startedByFAB;
         }
     }
 
@@ -414,6 +412,7 @@ namespace Toggl.Phoebe._Reactive
         {
             var userId = User.Id;
             var workspaceId = User.DefaultWorkspaceId;
+            var remoteWorkspaceId = User.DefaultWorkspaceRemoteId;
             var durationOnly = User.TrackingMode == TrackingMode.Continue;
 
             // Create new draft object
@@ -421,6 +420,7 @@ namespace Toggl.Phoebe._Reactive
                 State = TimeEntryState.New,
                 UserId = userId,
                 WorkspaceId = workspaceId,
+                WorkspaceRemoteId = remoteWorkspaceId,
                 DurationOnly = durationOnly,
             };
         }

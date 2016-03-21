@@ -33,7 +33,7 @@ namespace Toggl.Phoebe._ViewModels
                 .Singleton
                 .Observe (app => app.TimerState)
                 // TODO: Recover buffer?
-//                  .TimedBuffer (bufferMilliseconds)
+                //.TimedBuffer (bufferMilliseconds)
                 .Subscribe (UpdateItems);
         }
 
@@ -56,6 +56,10 @@ namespace Toggl.Phoebe._ViewModels
                 // TODO RX: Make sure there's no conflict between this and list updating on UI thread, see #1343
                 // Check diffs, modify ItemCollection and notify changes
                 var diffs = Diff.Calculate (Items, newItemCollection);
+
+                // 5. Swap remove events to delete normal items before headers.
+                // iOS requierement.
+                diffs = Diff.SortRemoveEvents<IHolder,DateHolder> (diffs);
 
                 // CollectionChanged events must be fired on UI thread
                 ServiceContainer.Resolve<IPlatformUtils> ().DispatchOnUIThread (() => {

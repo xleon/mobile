@@ -143,33 +143,6 @@ namespace Toggl.Phoebe.Tests.Reactive
             // None state.
             viewModel.TryLoginWithGoogle (ToggleClientMock.fakeGoogleId + "__");
         }
-
-        private class NetworkSwitcher : Net.INetworkPresence
-        {
-            private bool isConnected;
-
-            public bool IsNetworkPresent
-            {
-                get {
-                    return isConnected;
-                }
-            }
-
-            public void RegisterSyncWhenNetworkPresent()
-            {
-                throw new NotImplementedException();
-            }
-
-            public void UnregisterSyncWhenNetworkPresent()
-            {
-                throw new NotImplementedException();
-            }
-
-            public void SetNetworkConnection (bool isConnected)
-            {
-                this.isConnected = isConnected;
-            }
-        }
     }
 }
 

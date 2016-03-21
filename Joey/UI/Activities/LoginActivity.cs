@@ -44,6 +44,8 @@ namespace Toggl.Joey.UI.Activities
         const string ExtraShowPassword = "com.toggl.timer.show_password";
 
         private GoogleApiClient mGoogleApiClient;
+        // State variables for Google Login, not exactly needed.
+        // more info here: https://github.com/xamarin/monodroid-samples/blob/master/google-services/SigninQuickstart/SigninQuickstart/MainActivity.cs
         private bool mIsResolving;
         private bool mShouldResolve;
         private bool hasGoogleAccounts;
@@ -305,6 +307,7 @@ namespace Toggl.Joey.UI.Activities
             base.OnActivityResult (requestCode, resultCode, data);
 
             if (requestCode == RC_SIGN_IN) {
+                mIsResolving = false;
                 GoogleSignInResult result = Auth.GoogleSignInApi.GetSignInResultFromIntent (data);
                 if (result.IsSuccess) {
                     GoogleSignInAccount acct = result.SignInAccount;
@@ -330,7 +333,7 @@ namespace Toggl.Joey.UI.Activities
         public void OnConnectionFailed (ConnectionResult result)
         {
             var log = ServiceContainer.Resolve<ILogger> ();
-            log.Info (LogTag, "Failed to login with Google due to network issues.onConnectionFailed:" + result);
+            log.Info (LogTag, "OnConnectionFailed:" + result);
 
             if (!mIsResolving && mShouldResolve) {
                 if (result.HasResolution) {
@@ -345,8 +348,6 @@ namespace Toggl.Joey.UI.Activities
                 } else {
                     ShowAuthError (string.Empty, AuthResult.GoogleError, LoginVM.LoginMode.Login);
                 }
-            } else {
-                ShowAuthError (string.Empty, AuthResult.GoogleError, LoginVM.LoginMode.Login);
             }
         }
 

@@ -39,7 +39,6 @@ namespace Toggl.Phoebe._ViewModels
         public bool IsGroupedMode { get; private set; }
         public string Duration { get; private set; }
         public bool IsEntryRunning { get; private set; }
-        public bool StartedByFAB { get; private set; }
         public LoadInfoType LoadInfo { get; private set; }
         public RichTimeEntry ActiveEntry { get; private set; }
         public ObservableCollection<IHolder> Collection { get { return timeEntryCollection; } }
@@ -68,6 +67,13 @@ namespace Toggl.Phoebe._ViewModels
                 .Scan<TimerState, Tuple<TimerState, DownloadResult>> (
                     null, (tuple, state) => Tuple.Create (state, tuple != null ? tuple.Item2 : null))
                 .Subscribe (tuple => UpdateState (tuple.Item1, tuple.Item2));
+
+
+            // TODO: RX Review this line.
+            // The ViewModel is created and start to load
+            // content. This line was in the View before because
+            // was an async method.
+            LoadMore ();
         }
 
         private void ResetCollection ()
@@ -76,7 +82,7 @@ namespace Toggl.Phoebe._ViewModels
             IsGroupedMode = ServiceContainer.Resolve<Data.ISettingsStore> ().GroupedTimeEntries;
 
             timeEntryCollection = new TimeEntryCollectionVM (
-                IsGroupedMode ? TimeEntryGroupMethod.Single : TimeEntryGroupMethod.ByDateAndTask);
+                IsGroupedMode ? TimeEntryGroupMethod.ByDateAndTask : TimeEntryGroupMethod.Single);
         }
 
         public void Dispose ()
@@ -127,7 +133,6 @@ namespace Toggl.Phoebe._ViewModels
         public void StartStopTimeEntry (bool startedByFAB = false)
         {
             // TODO RX: Protect from requests in short time (double click...)?
-
             var entry = ActiveEntry.Data;
             if (entry.State == TimeEntryState.Running) {
                 RxChain.Send (new DataMsg.TimeEntryStop (entry));
@@ -140,9 +145,16 @@ namespace Toggl.Phoebe._ViewModels
 
         public void RemoveTimeEntry (int index)
         {
+            // TODO: Add analytic event
             var te = Collection.ElementAt (index) as ITimeEntryHolder;
             RxChain.Send (new DataMsg.TimeEntryDelete (te.Entry.Data));
-            // TODO: Add analytic event?
+        }
+
+        public void ReportExperiment (string actionKey, string actionValue)
+        {
+            if (Collection.Count == 0 && ServiceContainer.Resolve<Data.ISettingsStore> ().ShowWelcome) {
+                OBMExperimentManager.Send (actionKey, actionValue, StoreManager.Singleton.AppState.TimerState.User);
+            }
         }
 
         private void UpdateState (TimerState timerState, DownloadResult prevDownloadResult)
@@ -158,21 +170,19 @@ namespace Toggl.Phoebe._ViewModels
                 }
 
                 // Check if ActiveTimeEntry has changed
-                if (ActiveEntry == null || ActiveEntry.Data.Id != timerState.ActiveEntry.Id) {
-                    if (timerState.ActiveEntry.Id == Guid.Empty) {
-                        ActiveEntry = new RichTimeEntry (timerState, new TimeEntryData ());
-                    } else {
-                        StartedByFAB = timerState.ActiveEntry.StartedByFAB;
-                        ActiveEntry = timerState.TimeEntries[timerState.ActiveEntry.Id];
+                if (timerState.ActiveEntry.Id == Guid.Empty) {
+                    ActiveEntry = new RichTimeEntry (timerState, new TimeEntryData ());
+                } else {
+                    ActiveEntry = timerState.TimeEntries[timerState.ActiveEntry.Id];
+                }
 
-                        // Check if an entry is running.
-                        if (IsEntryRunning = ActiveEntry.Data.State == TimeEntryState.Running) {
-                            durationTimer.Start ();
-                        } else {
-                            durationTimer.Stop ();
-                            Duration = TimeSpan.FromSeconds (0).ToString ().Substring (0, 8);
-                        }
-                    }
+                IsEntryRunning = ActiveEntry.Data.State == TimeEntryState.Running;
+                // Check if an entry is running.
+                if (IsEntryRunning && !durationTimer.Enabled) {
+                    durationTimer.Start ();
+                } else if (!IsEntryRunning && durationTimer.Enabled) {
+                    durationTimer.Stop ();
+                    Duration = TimeSpan.FromSeconds (0).ToString ().Substring (0, 8);
                 }
             });
         }
@@ -183,7 +193,7 @@ namespace Toggl.Phoebe._ViewModels
             ServiceContainer.Resolve<IPlatformUtils> ().DispatchOnUIThread (() => {
                 var duration = ActiveEntry.Data.GetDuration ();
                 durationTimer.Interval = 1000 - duration.Milliseconds;
-                Duration = TimeSpan.FromSeconds (duration.TotalSeconds).ToString ().Substring (0, 8);
+                Duration = string.Format ("{0:D2}:{1:mm}:{1:ss}", (int)duration.TotalHours, duration);
             });
         }
     }

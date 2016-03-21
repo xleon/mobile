@@ -5,7 +5,8 @@ using Android.OS;
 using Android.Text;
 using Android.Widget;
 using GalaSoft.MvvmLight.Helpers;
-using Toggl.Phoebe.Data.ViewModels;
+using Toggl.Phoebe._Reactive;
+using Toggl.Phoebe._ViewModels;
 
 namespace Toggl.Joey.UI.Fragments
 {
@@ -15,7 +16,7 @@ namespace Toggl.Joey.UI.Fragments
 
         private Button positiveButton;
         private EditText nameEditText { get; set;}
-        private CreateTagViewModel viewModel { get; set;}
+        private NewTagVM viewModel { get; set;}
         private Binding<string, string> tagBinding;
         private IOnTagSelectedHandler updateTagHandler;
 
@@ -52,7 +53,7 @@ namespace Toggl.Joey.UI.Fragments
         public override void OnCreate (Bundle savedInstanceState)
         {
             base.OnCreate (savedInstanceState);
-            viewModel = new CreateTagViewModel (WorkspaceId);
+            viewModel = new NewTagVM (StoreManager.Singleton.AppState.TimerState, WorkspaceId);
         }
 
         public override Dialog OnCreateDialog (Bundle savedInstanceState)
@@ -93,9 +94,9 @@ namespace Toggl.Joey.UI.Fragments
             ValidateTagName ();
         }
 
-        private async void OnPositiveButtonClicked (object sender, DialogClickEventArgs e)
+        private void OnPositiveButtonClicked (object sender, DialogClickEventArgs e)
         {
-            var newTagData = await viewModel.SaveTagModel (nameEditText.Text);
+            var newTagData = viewModel.SaveTag (nameEditText.Text);
             if (updateTagHandler != null) {
                 updateTagHandler.OnCreateNewTag (newTagData);
             }

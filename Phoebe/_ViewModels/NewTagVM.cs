@@ -21,22 +21,20 @@ namespace Toggl.Phoebe._ViewModels
             ServiceContainer.Resolve<ITracker> ().CurrentScreen = "New Tag Screen";
         }
 
-        public string TagName { get; set; }
-
         public void Dispose ()
         {
         }
 
-        public TagData SaveTag (SyncTestOptions testOptions = null)
+        public TagData SaveTag (string tagName, SyncTestOptions testOptions = null)
         {
             var existing =
                 timerState.Tags.Values.SingleOrDefault (
-                    r => r.WorkspaceId == workspace.Id && r.Name == TagName);
+                    r => r.WorkspaceId == workspace.Id && r.Name == tagName);
 
             var tag = existing
             ?? new TagData {
                 Id = Guid.NewGuid (),
-                Name = TagName,
+                Name = tagName,
                 WorkspaceId = workspace.Id,
                 WorkspaceRemoteId = workspace.RemoteId.HasValue ? workspace.RemoteId.Value : 0
             };

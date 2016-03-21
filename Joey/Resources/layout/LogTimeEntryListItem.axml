@@ -40,6 +40,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="@color/background_delete_item"
+        android:visibility="gone"
         android:orientation="horizontal"
         android:paddingLeft="24dp"
         android:paddingRight="24dp">
@@ -52,8 +53,10 @@
         android:id="@+id/swipe_layout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:elevation="5dp"
         android:background="@android:color/white">
         <LinearLayout
+            android:id="@+id/LinearEntryLayout"
             android:orientation="horizontal"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
@@ -89,8 +92,7 @@
                         android:id="@+id/ProjectTextView"
                         android:layout_height="wrap_content"
                         android:layout_width="wrap_content"
-                        android:ellipsize="end"
-                        android:text="Project New Project longText" />
+                        android:ellipsize="end" />
                 </RelativeLayout>
                 <RelativeLayout
                     android:layout_marginTop="2dp"

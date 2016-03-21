@@ -805,6 +805,7 @@
     <AndroidResource Include="Resources\drawable-xhdpi\arrow_step_1.png" />
     <AndroidResource Include="Resources\drawable-xxhdpi\arrow_step_1.png" />
     <AndroidResource Include="Resources\drawable\BlackCursor.xml" />
+    <AndroidResource Include="Resources\transition\log_edit_transition.xml" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Xamarin\Android\Xamarin.Android.CSharp.targets" />
   <ItemGroup>
@@ -834,5 +835,8 @@
       <ReferenceOutputAssembly>False</ReferenceOutputAssembly>
       <IsAppExtension>True</IsAppExtension>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Resources\transition\" />
   </ItemGroup>
 </Project>

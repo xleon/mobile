@@ -25,6 +25,7 @@ using Toggl.Phoebe.Data.Utils;
 using Toggl.Phoebe.Data.ViewModels;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
+using Android.Transitions;
 
 namespace Toggl.Joey.UI.Fragments
 {
@@ -167,7 +168,6 @@ namespace Toggl.Joey.UI.Fragments
             var timeEntryData = await ViewModel.StartStopTimeEntry ();
             if (timeEntryData.State == TimeEntryState.Running) {
                 NewTimeEntry = true;
-                NewTimeEntryStartedByFAB = true;
                 var frg = EditTimeEntryFragment.NewInstance (timeEntryData.Id.ToString ());
                 ((MainDrawerActivity)Activity).OpenSubView (frg, frg.Tag);
                 // TODO open-edit
@@ -281,10 +281,43 @@ namespace Toggl.Joey.UI.Fragments
         #region IRecyclerViewOnItemClickListener implementation
         public void OnItemClick (RecyclerView parent, View clickedView, int position)
         {
-            // TODO: open-edit
             IList<string> guids = ((ITimeEntryHolder)ViewModel.Collection.ElementAt (position)).Guids;
-            var frg = EditTimeEntryFragment.NewInstance (guids[0]);
-            ((MainDrawerActivity)Activity).OpenSubView (frg, frg.Tag);
+            var editFragment = EditTimeEntryFragment.NewInstance (guids[0]);
+
+            if (Android.OS.Build.VERSION.SdkInt >= Android.OS.BuildVersionCodes.Lollipop) {
+                var inflater = TransitionInflater.From (Activity);
+                var logEditTransition = inflater.InflateTransition (Resource.Transition.log_edit_transition);
+
+                SharedElementReturnTransition = logEditTransition;
+                SharedElementEnterTransition = logEditTransition;
+
+                ExitTransition = inflater.InflateTransition (Android.Resource.Transition.Fade);
+                EnterTransition = inflater.InflateTransition (Android.Resource.Transition.Fade);
+
+                editFragment.SharedElementEnterTransition = logEditTransition;
+                editFragment.SharedElementReturnTransition = logEditTransition;
+                editFragment.EnterTransition = inflater.InflateTransition (Android.Resource.Transition.Fade);
+                editFragment.ReturnTransition = inflater.InflateTransition (Android.Resource.Transition.Fade);
+            }
+
+            var cView = parent.GetChildViewHolder (clickedView) as LogTimeEntriesAdapter.TimeEntryListItemHolder;
+
+            var bundle = new Bundle ();
+            bundle.PutString (EditTimeEntryFragment.TransitionNameBodyArgument, cView.BackgroundLayout.TransitionName);
+            bundle.PutString (EditTimeEntryFragment.TransitionNameDescriptionArgument, cView.DescriptionTextView.TransitionName);
+            bundle.PutString (EditTimeEntryFragment.TransitionNameDurationArgument, cView.DurationTextView.TransitionName);
+            bundle.PutString (EditTimeEntryFragment.TransitionValueDescriptionArgument, cView.DescriptionTextView.Text);
+            bundle.PutString (EditTimeEntryFragment.TransitionValueDurationArgument, cView.DurationTextView.Text);
+
+            editFragment.Arguments = bundle;
+
+            FragmentManager.BeginTransaction ()
+            .AddSharedElement (cView.DescriptionTextView, cView.DescriptionTextView.TransitionName)
+            .AddSharedElement (cView.BackgroundLayout, cView.BackgroundLayout.TransitionName)
+            .AddSharedElement (cView.DurationTextView, cView.DurationTextView.TransitionName)
+            .Replace (Resource.Id.ContentFrameLayout, editFragment)
+            .AddToBackStack (editFragment.Tag)
+            .Commit ();
         }
 
         public void OnItemLongClick (RecyclerView parent, View clickedView, int position)

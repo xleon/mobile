@@ -8,6 +8,7 @@ using Android.Support.V4.App;
 using Android.Support.V4.Widget;
 using Android.Text.Format;
 using Android.Views;
+using Android.Views.InputMethods;
 using Android.Widget;
 using Toggl.Joey.UI.Adapters;
 using Toggl.Joey.UI.Components;
@@ -254,7 +255,14 @@ namespace Toggl.Joey.UI.Activities
         {
             authManager.Forget ();
             StartAuthActivity ();
-        
+        }
+
+        public async void ShowSoftKeyboard (View input, bool selectText)
+        {
+            await System.Threading.Tasks.Task.Delay (100);
+            ((InputMethodManager)GetSystemService (InputMethodService)).ShowSoftInput (input, ShowFlags.Implicit);
+        }
+
         public override void OnBackPressed ()
         {
             if (pageStack.Count > 0) {

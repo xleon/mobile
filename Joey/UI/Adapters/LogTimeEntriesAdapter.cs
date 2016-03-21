@@ -86,6 +86,11 @@ namespace Toggl.Joey.UI.Adapters
                 } else {
                     timeEntryListItemHolder.SetNormalState ();
                 }
+                if (Android.OS.Build.VERSION.SdkInt >= Android.OS.BuildVersionCodes.Lollipop) {
+                    timeEntryListItemHolder.BackgroundLayout.TransitionName = String.Concat ("transview", position.ToString());
+                    timeEntryListItemHolder.DescriptionTextView.TransitionName = String.Concat ("transdesc", position.ToString ());
+                    timeEntryListItemHolder.DurationTextView.TransitionName = String.Concat ("transdur", position.ToString ());
+                }
                 return;
             }
 
@@ -293,7 +298,7 @@ namespace Toggl.Joey.UI.Adapters
             }
         }
 
-        private class TimeEntryListItemHolder : RecyclerView.ViewHolder, View.IOnTouchListener
+        public class TimeEntryListItemHolder : RecyclerView.ViewHolder, View.IOnTouchListener
         {
             private readonly LogTimeEntriesAdapter owner;
             private Timer timer;
@@ -311,6 +316,7 @@ namespace Toggl.Joey.UI.Adapters
             public TextView DurationTextView { get; private set; }
             public ImageButton ContinueImageButton { get; private set; }
 
+            public LinearLayout BackgroundLayout { get; private set; }
             public View SwipeLayout { get; private set; }
             public View PreUndoLayout { get; private set; }
             public View UndoLayout { get; private set; }
@@ -325,6 +331,7 @@ namespace Toggl.Joey.UI.Adapters
                 this.owner = owner;
 
                 ColorView = root.FindViewById<View> (Resource.Id.ColorView);
+                BackgroundLayout = root.FindViewById<LinearLayout> (Resource.Id.LinearEntryLayout);
                 ProjectTextView = root.FindViewById<TextView> (Resource.Id.ProjectTextView).SetFont (Font.RobotoMedium);
                 ClientTextView = root.FindViewById<TextView> (Resource.Id.ClientTextView).SetFont (Font.RobotoMedium);
                 TaskTextView = root.FindViewById<TextView> (Resource.Id.TaskTextView).SetFont (Font.RobotoMedium);
@@ -382,7 +389,7 @@ namespace Toggl.Joey.UI.Adapters
                 } else {
                     SwipeLayout.SetX (0);
                 }
-                PreUndoLayout.Visibility = ViewStates.Visible;
+                PreUndoLayout.Visibility = ViewStates.Gone; //TODO: this breaks swipe_delete
                 UndoLayout.Visibility = ViewStates.Gone;
             }
 

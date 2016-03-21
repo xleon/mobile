@@ -7,6 +7,7 @@ using Android.App;
 using Android.Content;
 using Android.InputMethodServices;
 using Android.OS;
+using Android.Transitions;
 using Android.Views;
 using Android.Views.InputMethods;
 using Android.Widget;
@@ -32,7 +33,11 @@ namespace Toggl.Joey.UI.Fragments
         ChangeDateTimeDialogFragment.IChangeDateTime,
         IOnTagSelectedHandler
     {
-        private static readonly string TimeEntryIdArgument = "com.toggl.timer.time_entry_id";
+        public static readonly string TransitionNameBodyArgument = "TRANS_BODY";
+        public static readonly string TransitionNameDurationArgument = "TRANS_DURATION";
+        public static readonly string TransitionNameDescriptionArgument = "TRANS_DESCRIPTION";
+        public static readonly string TransitionValueDescriptionArgument = "TRANS_DESCRIPTION_VALUE";
+        public static readonly string TransitionValueDurationArgument = "TRANS_DURATION_VALUE";
 
         // to avoid weak references to be removed
         private Binding<string, string> durationBinding, projectBinding, clientBinding, descriptionBinding;
@@ -42,6 +47,7 @@ namespace Toggl.Joey.UI.Fragments
         private Binding<bool, bool> isBillableBinding, billableBinding, isRunningBinding, saveMenuBinding, syncErrorBinding;
 
         public EditTimeEntryViewModel ViewModel { get; private set; }
+        public LinearLayout EditContentView { get; private set; }
         public TextView DurationTextView { get; private set; }
         public EditText StartTimeEditText { get; private set; }
         public EditText StopTimeEditText { get; private set; }
@@ -56,19 +62,13 @@ namespace Toggl.Joey.UI.Fragments
         private TextView stopTimeEditLabel;
         private ActionBar toolbar;
 
-        private Guid TimeEntryId
-        {
-            get {
-                var id = Guid.Empty;
-                if (Arguments != null) {
-                    Guid.TryParse (Arguments.GetString (TimeEntryIdArgument), out id);
-                }
-                return id;
-            }
-        }
+        private Guid TimeEntryId { get; set; }
 
-        public EditTimeEntryFragment ()
+        public EditTimeEntryFragment (string idString)
         {
+            var id = Guid.Empty;
+            Guid.TryParse (idString, out id);
+            TimeEntryId = id;
         }
 
         public EditTimeEntryFragment (IntPtr jref, Android.Runtime.JniHandleOwnership xfer) : base (jref, xfer)
@@ -77,13 +77,7 @@ namespace Toggl.Joey.UI.Fragments
 
         public static EditTimeEntryFragment NewInstance (string timeEntryId)
         {
-            var fragment = new EditTimeEntryFragment ();
-
-            var bundle = new Bundle ();
-            bundle.PutString (TimeEntryIdArgument, timeEntryId);
-            fragment.Arguments = bundle;
-
-            return fragment;
+            return new EditTimeEntryFragment (timeEntryId);
         }
 
         public override View OnCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
@@ -91,19 +85,17 @@ namespace Toggl.Joey.UI.Fragments
             var view = inflater.Inflate (Resource.Layout.EditTimeEntryFragment, container, false);
             var activityToolbar = view.FindViewById<Toolbar> (Resource.Id.EditTimeEntryFragmentToolbar);
             var activity = (MainDrawerActivity)Activity;
-
             activity.SetSupportActionBar (activityToolbar);
             toolbar = activity.SupportActionBar;
             toolbar.SetDisplayHomeAsUpEnabled (true);
-
-
-            var durationLayout = inflater.Inflate (Resource.Layout.DurationTextView, null);
-            DurationTextView = durationLayout.FindViewById<TextView> (Resource.Id.DurationTextViewTextView);
-
-            toolbar.SetCustomView (durationLayout, new ActionBar.LayoutParams ((int)GravityFlags.Center));
             toolbar.SetDisplayShowCustomEnabled (true);
             toolbar.SetDisplayShowTitleEnabled (false);
 
+            var durationLayout = inflater.Inflate (Resource.Layout.DurationTextView, null);
+            DurationTextView = durationLayout.FindViewById<TextView> (Resource.Id.DurationTextViewTextView);
+            toolbar.SetCustomView (durationLayout, new ActionBar.LayoutParams ((int)GravityFlags.Center));
+
+            EditContentView = view.FindViewById<LinearLayout> (Resource.Id.EditContentView);
             StartTimeEditText = view.FindViewById<EditText> (Resource.Id.StartTimeEditText).SetFont (Font.Roboto);
             StopTimeEditText = view.FindViewById<EditText> (Resource.Id.StopTimeEditText).SetFont (Font.Roboto);
             stopTimeEditLabel = view.FindViewById<TextView> (Resource.Id.StopTimeEditLabel);
@@ -124,6 +116,14 @@ namespace Toggl.Joey.UI.Fragments
             editTimeEntryContent = view.FindViewById<View> (Resource.Id.EditTimeEntryContent);
 
             ((MainDrawerActivity)Activity).ToolbarMode = MainDrawerActivity.ToolbarModes.SubView;
+
+            if (Arguments.ContainsKey (TransitionNameBodyArgument)) {
+                EditContentView.TransitionName = Arguments.GetString (TransitionNameBodyArgument);
+                DescriptionField.TransitionName = Arguments.GetString (TransitionNameDescriptionArgument);
+                DurationTextView.TransitionName = Arguments.GetString (TransitionNameDurationArgument);
+                DescriptionField.TextField.Text = Arguments.GetString (TransitionValueDescriptionArgument);
+                DurationTextView.Text = Arguments.GetString (TransitionValueDurationArgument);
+            }
 
             HasOptionsMenu = true;
             return view;
@@ -212,7 +212,7 @@ namespace Toggl.Joey.UI.Fragments
 
             if (LogTimeEntriesListFragment.NewTimeEntry) {
                 DescriptionField.RequestFocus ();
-                ((EditTimeEntryActivity)Activity).ShowSoftKeyboard (DescriptionField.TextField, false);
+                ((MainDrawerActivity)Activity).ShowSoftKeyboard (DescriptionField.TextField, false);
             }
         }
 

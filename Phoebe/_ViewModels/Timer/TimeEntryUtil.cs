@@ -21,31 +21,10 @@ namespace Toggl.Phoebe._ViewModels.Timer
         DateTime GetStartTime ();
     }
 
-    public enum TimeEntryGroupMethod {
-        Single,
-        ByDateAndTask
-    }
-
-    public class TimeEntryGrouper
+    public interface IGrouper<T, TGroup>
     {
-        readonly TimeEntryGroupMethod Method;
-
-        public TimeEntryGrouper (TimeEntryGroupMethod method)
-        {
-            Method = method;
-        }
-
-        public IEnumerable<ITimeEntryHolder> Group (IEnumerable<TimeEntryHolder> items)
-        {
-            return Method == TimeEntryGroupMethod.Single
-                   ? items.Cast<ITimeEntryHolder> () : TimeEntryGroup.Group (items);
-        }
-
-        public IEnumerable<TimeEntryHolder> Ungroup (IEnumerable<ITimeEntryHolder> groups)
-        {
-            return Method == TimeEntryGroupMethod.Single
-                   ? groups.Cast<TimeEntryHolder> () : TimeEntryGroup.Ungroup (groups.Cast<TimeEntryGroup> ());
-        }
+        IEnumerable<TGroup> Group (IEnumerable<T> items);
+        IEnumerable<T> Ungroup (IEnumerable<TGroup> groups);
     }
 }
 

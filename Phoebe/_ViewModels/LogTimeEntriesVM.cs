@@ -51,15 +51,7 @@ namespace Toggl.Phoebe._ViewModels
 
             ServiceContainer.Resolve<ITracker> ().CurrentScreen = "TimeEntryList Screen";
 
-            // RX TODO: Remove MessageBus
-            var bus = ServiceContainer.Resolve<MessageBus> ();
-            subscriptionSettingChanged = bus.Subscribe<Data.SettingChangedMessage> (msg => {
-                if (msg.Name == "GroupedTimeEntries") {
-                    ResetCollection ();
-                }
-            });
-
-            ResetCollection ();
+            ResetCollection (appState.Settings.GroupedEntries);
             subscriptionState = StoreManager
                 .Singleton
                 .Observe (x => x.State)
@@ -68,7 +60,6 @@ namespace Toggl.Phoebe._ViewModels
                     null, (tuple, state) => Tuple.Create (state, tuple != null ? tuple.Item2 : null))
                 .Subscribe (tuple => UpdateState (tuple.Item1, tuple.Item2));
 
-
             // TODO: RX Review this line.
             // The ViewModel is created and start to load
             // content. This line was in the View before because
@@ -76,13 +67,14 @@ namespace Toggl.Phoebe._ViewModels
             LoadMore ();
         }
 
-        private void ResetCollection ()
+        private void ResetCollection (bool isGroupedMode)
         {
             DisposeCollection ();
-            IsGroupedMode = ServiceContainer.Resolve<Data.ISettingsStore> ().GroupedTimeEntries;
+            IsGroupedMode = isGroupedMode;
 
-            timeEntryCollection = new TimeEntryCollectionVM (
-                IsGroupedMode ? TimeEntryGroupMethod.ByDateAndTask : TimeEntryGroupMethod.Single);
+            timeEntryCollection = isGroupedMode
+                ? (TimeEntryCollectionVM)new TimeEntryCollectionVM<TimeEntryGroup> ()
+                : new TimeEntryCollectionVM<TimeEntryHolder> ();
         }
 
         public void Dispose ()
@@ -160,6 +152,10 @@ namespace Toggl.Phoebe._ViewModels
         private void UpdateState (AppState appState, DownloadResult prevDownloadResult)
         {
             ServiceContainer.Resolve<IPlatformUtils> ().DispatchOnUIThread (() => {
+                if (appState.Settings.GroupedEntries != IsGroupedMode) {
+                    ResetCollection (appState.Settings.GroupedEntries);
+                }
+
                 // Check if DownloadResult has changed
                 if (LoadInfo == null || prevDownloadResult != appState.DownloadResult) {
                     LoadInfo = new LoadInfoType (

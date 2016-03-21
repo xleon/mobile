@@ -87,7 +87,7 @@ namespace Toggl.Joey.UI.Fragments
             base.OnViewCreated (view, savedInstanceState);
 
             // init viewModel
-            ViewModel = new LogTimeEntriesVM (StoreManager.Singleton.AppState.TimerState);
+            ViewModel = new LogTimeEntriesVM (StoreManager.Singleton.AppState);
 
             //activeEntryBinding =  this.SetBinding (()=> ViewModel.ActiveEntry).WhenSourceChanges (OnActiveEntryChanged);
             collectionBinding = this.SetBinding (() => ViewModel.Collection).WhenSourceChanges (() => {

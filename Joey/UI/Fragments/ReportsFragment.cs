@@ -152,7 +152,7 @@ namespace Toggl.Joey.UI.Fragments
                 var data = new SummaryReportView {
                     Period = ZoomLevel,
                 };
-                await data.Load (StoreManager.Singleton.AppState.TimerState.User, Period);
+                await data.Load (StoreManager.Singleton.AppState.User, Period);
                 IsError = data.IsError;
                 if (controller != null) {
                     controller.Data = data;

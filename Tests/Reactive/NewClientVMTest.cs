@@ -30,7 +30,7 @@ namespace Toggl.Phoebe.Tests.Reactive
             ServiceContainer.RegisterScoped<ITracker> (new TrackerMock());
 
             RxChain.Init (initState);
-            viewModel = new NewClientVM (initState.TimerState, Util.WorkspaceId);
+            viewModel = new NewClientVM (initState, Util.WorkspaceId);
             dataStore = new SyncSqliteDataStore (databasePath, platformUtils.SQLiteInfo);
         }
 
@@ -49,7 +49,7 @@ namespace Toggl.Phoebe.Tests.Reactive
             viewModel.SaveClient (name, new SyncTestOptions (false, (state, sent, queued) => {
                 try {
                     ClientData client = null;
-                    Assert.That (client = state.TimerState.Clients.Values.SingleOrDefault (
+                    Assert.That (client = state.Clients.Values.SingleOrDefault (
                                               x => x.WorkspaceId == Util.WorkspaceId && x.Name == name), Is.Not.Null);
 
                     // Check item has been correctly saved in database

@@ -250,21 +250,8 @@ namespace Toggl.Phoebe.Tests.Reactive
             var userData = new UserData { Id = UserId };
             var workspaceData = new WorkspaceData { Id = WorkspaceId };
 
-            var timerState =
-                new TimerState (
-                authResult: Net.AuthResult.None,
-                downloadResult: DownloadResult.Empty,
-                user: userData,
-            workspaces: new Dictionary<Guid, WorkspaceData> { { WorkspaceId, workspaceData } },
-            projects: new Dictionary<Guid, ProjectData> (),
-            workspaceUsers: new Dictionary<Guid, WorkspaceUserData> (),
-            projectUsers: new Dictionary<Guid, ProjectUserData> (),
-            clients: new Dictionary<Guid, ClientData> (),
-            tasks: new Dictionary<Guid, TaskData> (),
-            tags: new Dictionary<Guid, TagData> (),
-            timeEntries: new Dictionary<Guid, RichTimeEntry> ());
-
-            return new AppState (timerState);
+            var init = AppState.Init ();
+            return init.With (user: userData, workspaces: init.Update (init.Workspaces, new[] { workspaceData }));
         }
     }
 

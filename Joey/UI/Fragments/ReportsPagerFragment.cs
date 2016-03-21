@@ -323,7 +323,7 @@ namespace Toggl.Joey.UI.Fragments
             var current = DateTime.Today;
 
             if (ZoomLevel == ZoomLevel.Week) {
-                var user = StoreManager.Singleton.AppState.TimerState.User;
+                var user = StoreManager.Singleton.AppState.User;
                 var startOfWeek = user.StartOfWeek;
                 var date = current.StartOfWeek (startOfWeek).AddDays (back * 7);
                 return date;

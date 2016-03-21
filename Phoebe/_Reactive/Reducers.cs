@@ -11,11 +11,69 @@ using Toggl.Phoebe.Net;
 
 namespace Toggl.Phoebe._Reactive
 {
+    public interface IReducer
+    {
+        DataSyncMsg<object> Reduce (object state, DataMsg msg);
+    }
+
+    public class Reducer<T> : IReducer
+    {
+        readonly Func<T, DataMsg, DataSyncMsg<T>> reducer;
+
+        public virtual DataSyncMsg<T> Reduce (T state, DataMsg msg)
+        {
+            return reducer (state, msg);
+        }
+
+        DataSyncMsg<object> IReducer.Reduce (object state, DataMsg msg)
+        {
+            return Reduce ((T)state, msg).Cast<object> ();
+        }
+
+        protected Reducer () { }
+
+        public Reducer (Func<T, DataMsg, DataSyncMsg<T>> reducer)
+        {
+            this.reducer = reducer;
+        }
+    }
+
+    public class TagCompositeReducer<T> : Reducer<T>, IReducer
+    {
+        readonly Dictionary<Type, Reducer<T>> reducers = new Dictionary<Type, Reducer<T>> ();
+
+        public TagCompositeReducer<T> Add (Type msgType, Func<T, DataMsg, DataSyncMsg<T>> reducer)
+        {
+            return Add (msgType, new Reducer<T> (reducer));
+        }
+
+        public TagCompositeReducer<T> Add (Type msgType, Reducer<T> reducer)
+        {
+            reducers.Add (msgType, reducer);
+            return this;
+        }
+
+        public override DataSyncMsg<T> Reduce (T state, DataMsg msg)
+        {
+            Reducer<T> reducer;
+            if (reducers.TryGetValue (msg.GetType (), out reducer)) {
+                return reducer.Reduce (state, msg);
+            } else {
+                return DataSyncMsg.Create (state);
+            }
+        }
+
+        DataSyncMsg<object> IReducer.Reduce (object state, DataMsg msg)
+        {
+            return Reduce ((T)state, msg).Cast<object> ();
+        }
+    }
+
     public static class Reducers
     {
         public static Reducer<AppState> Init ()
         {
-            var tagReducer = new TagCompositeReducer<TimerState> ()
+            return new TagCompositeReducer<AppState> ()
             .Add (typeof (DataMsg.Request), ServerRequest)
             .Add (typeof (DataMsg.ReceivedFromServer), ReceivedFromServer)
             .Add (typeof (DataMsg.TimeEntriesLoad), TimeEntriesLoad)
@@ -31,12 +89,9 @@ namespace Toggl.Phoebe._Reactive
             .Add (typeof (DataMsg.ProjectDataPut), ProjectDataPut)
             .Add (typeof (DataMsg.UserDataPut), UserDataPut)
             .Add (typeof (DataMsg.ResetState), Reset);
-
-            return new PropertyCompositeReducer<AppState> ()
-                   .Add (x => x.TimerState, tagReducer);
         }
 
-        static DataSyncMsg<TimerState> ServerRequest (TimerState state, DataMsg msg)
+        static DataSyncMsg<AppState> ServerRequest (AppState state, DataMsg msg)
         {
             var request = (msg as DataMsg.Request).Data;
             var newState =
@@ -46,7 +101,7 @@ namespace Toggl.Phoebe._Reactive
             return DataSyncMsg.Create (newState, request: request);
         }
 
-        static DataSyncMsg<TimerState> TimeEntriesLoad (TimerState state, DataMsg msg)
+        static DataSyncMsg<AppState> TimeEntriesLoad (AppState state, DataMsg msg)
         {
             var dataStore = ServiceContainer.Resolve <ISyncDataStore> ();
             var fullSync = (msg as DataMsg.TimeEntriesLoad).Data.ForceLeft ();
@@ -92,7 +147,7 @@ namespace Toggl.Phoebe._Reactive
                        request: new ServerRequest.DownloadEntries (fullSync));
         }
 
-        static DataSyncMsg<TimerState> ReceivedFromServer (TimerState state, DataMsg msg)
+        static DataSyncMsg<AppState> ReceivedFromServer (AppState state, DataMsg msg)
         {
             return (msg as DataMsg.ReceivedFromServer).Data.Match (
             receivedData => {
@@ -144,7 +199,7 @@ namespace Toggl.Phoebe._Reactive
                 state.With (downloadResult: state.DownloadResult.With (isSyncing: false, hadErrors: true))));
         }
 
-        static DataSyncMsg<TimerState> TimeEntryPut (TimerState state, DataMsg msg)
+        static DataSyncMsg<AppState> TimeEntryPut (AppState state, DataMsg msg)
         {
             var entryData = (msg as DataMsg.TimeEntryPut).Data.ForceLeft ();
             var dataStore = ServiceContainer.Resolve <ISyncDataStore> ();
@@ -158,7 +213,7 @@ namespace Toggl.Phoebe._Reactive
                        updated);
         }
 
-        static DataSyncMsg<TimerState> TimeEntryDelete (TimerState state, DataMsg msg)
+        static DataSyncMsg<AppState> TimeEntryDelete (AppState state, DataMsg msg)
         {
             var entryData = (msg as DataMsg.TimeEntryDelete).Data.ForceLeft ();
             var dataStore = ServiceContainer.Resolve <ISyncDataStore> ();
@@ -173,7 +228,7 @@ namespace Toggl.Phoebe._Reactive
                        updated);
         }
 
-        static DataSyncMsg<TimerState> TagsPut (TimerState state, DataMsg msg)
+        static DataSyncMsg<AppState> TagsPut (AppState state, DataMsg msg)
         {
             var tags = (msg as DataMsg.TagsPut).Data.ForceLeft ();
             var dataStore = ServiceContainer.Resolve <ISyncDataStore> ();
@@ -187,7 +242,7 @@ namespace Toggl.Phoebe._Reactive
             return DataSyncMsg.Create (state.With (tags: state.Update (state.Tags, updated)), updated);
         }
 
-        static DataSyncMsg<TimerState> ClientDataPut (TimerState state, DataMsg msg)
+        static DataSyncMsg<AppState> ClientDataPut (AppState state, DataMsg msg)
         {
             var data = (msg as DataMsg.ClientDataPut).Data.ForceLeft ();
             var dataStore = ServiceContainer.Resolve <ISyncDataStore> ();
@@ -197,7 +252,7 @@ namespace Toggl.Phoebe._Reactive
             return DataSyncMsg.Create (state.With (clients: state.Update (state.Clients, updated)), updated);
         }
 
-        static DataSyncMsg<TimerState> ProjectDataPut (TimerState state, DataMsg msg)
+        static DataSyncMsg<AppState> ProjectDataPut (AppState state, DataMsg msg)
         {
             var data = (msg as DataMsg.ProjectDataPut).Data.ForceLeft ();
             var dataStore = ServiceContainer.Resolve <ISyncDataStore> ();
@@ -214,7 +269,7 @@ namespace Toggl.Phoebe._Reactive
                        ), updated);
         }
 
-        static DataSyncMsg<TimerState> UserDataPut (TimerState state, DataMsg msg)
+        static DataSyncMsg<AppState> UserDataPut (AppState state, DataMsg msg)
         {
             return (msg as DataMsg.UserDataPut).Data.Match (
             userData => {
@@ -224,13 +279,14 @@ namespace Toggl.Phoebe._Reactive
                 // This will throw an exception if user hasn't been correctly updated
                 var userDataInDb = updated.Single () as UserData;
 
-                // Save user data in settings
+                // TODO RX: 
                 ServiceContainer.Resolve<Data.ISettingsStore> ().UserId = userDataInDb.Id;
 
-                return DataSyncMsg.Create (state.With (
-                                               user: userDataInDb,
-                                               authResult: AuthResult.Success
-                                           ));
+                return DataSyncMsg.Create (
+                        state.With (
+                            user: userDataInDb,
+                            authResult: AuthResult.Success,
+                            settings: state.Settings.With (userId: userDataInDb.Id)));
             },
             ex => {
                 return DataSyncMsg.Create (state.With (
@@ -249,7 +305,7 @@ namespace Toggl.Phoebe._Reactive
             }
         }
 
-        static DataSyncMsg<TimerState> TimeEntryContinue (TimerState state, DataMsg msg)
+        static DataSyncMsg<AppState> TimeEntryContinue (AppState state, DataMsg msg)
         {
             var entryData = (msg as DataMsg.TimeEntryContinue).Data.ForceLeft ();
             var dataStore = ServiceContainer.Resolve <ISyncDataStore> ();
@@ -285,7 +341,7 @@ namespace Toggl.Phoebe._Reactive
                        state.With (timeEntries: state.UpdateTimeEntries (updated)), updated);
         }
 
-        static DataSyncMsg<TimerState> TimeEntryStop (TimerState state, DataMsg msg)
+        static DataSyncMsg<AppState> TimeEntryStop (AppState state, DataMsg msg)
         {
             var entryData = (msg as DataMsg.TimeEntryStop).Data.ForceLeft ();
             var dataStore = ServiceContainer.Resolve <ISyncDataStore> ();
@@ -302,7 +358,7 @@ namespace Toggl.Phoebe._Reactive
                        state.With (timeEntries: state.UpdateTimeEntries (updated)), updated);
         }
 
-        static DataSyncMsg<TimerState> TimeEntriesRemoveWithUndo (TimerState state, DataMsg msg)
+        static DataSyncMsg<AppState> TimeEntriesRemoveWithUndo (AppState state, DataMsg msg)
         {
             var removed = (msg as DataMsg.TimeEntriesRemoveWithUndo).Data.ForceLeft ()
             .Select (x => new TimeEntryData (x) {
@@ -313,7 +369,7 @@ namespace Toggl.Phoebe._Reactive
             return DataSyncMsg.Create (state.With (timeEntries: state.UpdateTimeEntries (removed)));
         }
 
-        static DataSyncMsg<TimerState> TimeEntriesRestoreFromUndo (TimerState state, DataMsg msg)
+        static DataSyncMsg<AppState> TimeEntriesRestoreFromUndo (AppState state, DataMsg msg)
         {
             var restored = (msg as DataMsg.TimeEntriesRestoreFromUndo).Data.ForceLeft ();
 
@@ -321,7 +377,7 @@ namespace Toggl.Phoebe._Reactive
             return DataSyncMsg.Create (state.With (timeEntries: state.UpdateTimeEntries (restored)));
         }
 
-        static DataSyncMsg<TimerState> TimeEntriesRemovePermanently (TimerState state, DataMsg msg)
+        static DataSyncMsg<AppState> TimeEntriesRemovePermanently (AppState state, DataMsg msg)
         {
             var entryMsg = (msg as DataMsg.TimeEntriesRemovePermanently).Data.ForceLeft ();
             var dataStore = ServiceContainer.Resolve <ISyncDataStore> ();
@@ -340,31 +396,21 @@ namespace Toggl.Phoebe._Reactive
                        removed);
         }
 
-        static DataSyncMsg<TimerState> Reset (TimerState state, DataMsg msg)
+        static DataSyncMsg<AppState> Reset (AppState state, DataMsg msg)
         {
             var dataStore = ServiceContainer.Resolve <ISyncDataStore> ();
             dataStore.WipeTables ();
 
+            // TODO RX: Clear platform settings?
+
             // Reset state
-            var timerState =
-                new TimerState (
-                authResult: Net.AuthResult.None,
-                downloadResult: DownloadResult.Empty,
-                user: new UserData (),
-                workspaces: new Dictionary<Guid, WorkspaceData> (),
-                projects: new Dictionary<Guid, ProjectData> (),
-                workspaceUsers: new Dictionary<Guid, WorkspaceUserData> (),
-                projectUsers: new Dictionary<Guid, ProjectUserData> (),
-                clients: new Dictionary<Guid, ClientData> (),
-                tasks: new Dictionary<Guid, TaskData> (),
-                tags: new Dictionary<Guid, TagData> (),
-                timeEntries: new Dictionary<Guid, RichTimeEntry> ());
+            var appState = AppState.Init ();
 
             // TODO: Clean settings?
             // TODO: Ping analytics?
             // TODO: Call Log service?
 
-            return DataSyncMsg.Create (timerState);
+            return DataSyncMsg.Create (appState);
         }
 
         #region Util

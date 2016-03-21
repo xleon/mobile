@@ -96,7 +96,7 @@ namespace Toggl.Joey.UI.Fragments
         public override void OnViewCreated (View view, Bundle savedInstanceState)
         {
             base.OnViewCreated (view, savedInstanceState);
-            ViewModel = new NewProjectVM (Phoebe._Reactive.StoreManager.Singleton.AppState.TimerState, WorkspaceId);
+            ViewModel = new NewProjectVM (Phoebe._Reactive.StoreManager.Singleton.AppState, WorkspaceId);
             clientBinding = this.SetBinding (() => ViewModel.ClientName, () => SelectClientBit.TextField.Text);
         }
 

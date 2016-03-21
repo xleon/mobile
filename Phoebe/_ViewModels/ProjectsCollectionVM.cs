@@ -22,20 +22,20 @@ namespace Toggl.Phoebe._ViewModels
             Clients
         }
 
-        public ProjectsCollectionVM (TimerState timerState, SortProjectsBy sortBy, Guid workspaceId)
+        public ProjectsCollectionVM (AppState appState, SortProjectsBy sortBy, Guid workspaceId)
         {
             this.sortBy = sortBy;
             this.workspaceId = workspaceId;
-            var userData = timerState.User;
+            var userData = appState.User;
 
-            clients = timerState.Clients.Values
+            clients = appState.Clients.Values
                       .OrderBy (r => r.Name).ToList ();
 
-            tasks = timerState.Tasks.Values
+            tasks = appState.Tasks.Values
                     .Where (r => r.IsActive)
                     .OrderBy (r => r.Name).ToList ();
 
-            projects = timerState.GetUserAccessibleProjects (userData.Id).Select (
+            projects = appState.GetUserAccessibleProjects (userData.Id).Select (
                            p => new SuperProjectData (
                 p,
                 clients.FirstOrDefault (c => c.Id == p.ClientId),

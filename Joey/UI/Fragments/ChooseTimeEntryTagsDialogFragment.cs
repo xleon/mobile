@@ -70,7 +70,7 @@ namespace Toggl.Joey.UI.Fragments
         public override void OnCreate (Bundle savedInstanceState)
         {
             base.OnCreate (savedInstanceState);
-            viewModel = new TagListVM (StoreManager.Singleton.AppState.TimerState, WorkspaceId, ExistingTagIds);
+            viewModel = new TagListVM (StoreManager.Singleton.AppState, WorkspaceId, ExistingTagIds);
         }
 
         public override void OnDestroy ()

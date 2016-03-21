@@ -54,7 +54,7 @@ namespace Toggl.Joey.UI.Fragments
         public override void OnCreate (Bundle savedInstanceState)
         {
             base.OnCreate (savedInstanceState);
-            viewModel = new ClientListVM (Phoebe._Reactive.StoreManager.Singleton.AppState.TimerState, WorkspaceId);
+            viewModel = new ClientListVM (Phoebe._Reactive.StoreManager.Singleton.AppState, WorkspaceId);
         }
 
         public override void OnDestroy ()

@@ -53,7 +53,7 @@ namespace Toggl.Joey.UI.Fragments
         public override void OnCreate (Bundle savedInstanceState)
         {
             base.OnCreate (savedInstanceState);
-            viewModel = new NewTagVM (StoreManager.Singleton.AppState.TimerState, WorkspaceId);
+            viewModel = new NewTagVM (StoreManager.Singleton.AppState, WorkspaceId);
         }
 
         public override Dialog OnCreateDialog (Bundle savedInstanceState)

@@ -12,12 +12,12 @@ namespace Toggl.Phoebe._ViewModels
     public class NewTagVM : IDisposable
     {
         private readonly WorkspaceData workspace;
-        private readonly TimerState timerState;
+        private readonly AppState appState;
 
-        public NewTagVM (TimerState timerState, Guid workspaceId)
+        public NewTagVM (AppState appState, Guid workspaceId)
         {
-            this.timerState = timerState;
-            workspace = timerState.Workspaces[workspaceId];
+            this.appState = appState;
+            workspace = appState.Workspaces[workspaceId];
             ServiceContainer.Resolve<ITracker> ().CurrentScreen = "New Tag Screen";
         }
 
@@ -28,7 +28,7 @@ namespace Toggl.Phoebe._ViewModels
         public TagData SaveTag (string tagName, SyncTestOptions testOptions = null)
         {
             var existing =
-                timerState.Tags.Values.SingleOrDefault (
+                appState.Tags.Values.SingleOrDefault (
                     r => r.WorkspaceId == workspace.Id && r.Name == tagName);
 
             var tag = existing

@@ -63,7 +63,7 @@ namespace Toggl.Phoebe.Tests.Reactive
                         viewModel.AuthResult != Net.AuthResult.Authenticating) {
                     // Correct login.
                     Assert.That (viewModel.AuthResult, Is.EqualTo (Net.AuthResult.Success));
-                    Assert.That (StoreManager.Singleton.AppState.TimerState.User.Email, Is.EqualTo (ToggleClientMock.fakeUserEmail));
+                    Assert.That (StoreManager.Singleton.AppState.User.Email, Is.EqualTo (ToggleClientMock.fakeUserEmail));
 
                     // Check item has been correctly saved in database
                     Assert.That (dataStore.Table<UserData> ().SingleOrDefault (
@@ -90,7 +90,7 @@ namespace Toggl.Phoebe.Tests.Reactive
                         viewModel.AuthResult != Net.AuthResult.Authenticating) {
                     // Correct login.
                     Assert.That (viewModel.AuthResult, Is.EqualTo (Net.AuthResult.Success));
-                    Assert.That (StoreManager.Singleton.AppState.TimerState.User.Email, Is.EqualTo (ToggleClientMock.fakeUserEmail));
+                    Assert.That (StoreManager.Singleton.AppState.User.Email, Is.EqualTo (ToggleClientMock.fakeUserEmail));
 
                     // Check item has been correctly saved in database
                     Assert.That (dataStore.Table<UserData> ().SingleOrDefault (
@@ -113,7 +113,7 @@ namespace Toggl.Phoebe.Tests.Reactive
                         viewModel.AuthResult != Net.AuthResult.Authenticating) {
                     // Correct login.
                     Assert.That (viewModel.AuthResult, Is.EqualTo (Net.AuthResult.SystemError));
-                    Assert.That (StoreManager.Singleton.AppState.TimerState.User.Email, Is.EqualTo (string.Empty));
+                    Assert.That (StoreManager.Singleton.AppState.User.Email, Is.EqualTo (string.Empty));
 
                     // Check item has been correctly saved in database
                     Assert.That (dataStore.Table<UserData> ().SingleOrDefault (
@@ -132,7 +132,7 @@ namespace Toggl.Phoebe.Tests.Reactive
                 if (e.PropertyName == nameof (viewModel.AuthResult)) {
                     // Not Google account.
                     Assert.That (viewModel.AuthResult, Is.EqualTo (Net.AuthResult.NoGoogleAccount));
-                    Assert.That (StoreManager.Singleton.AppState.TimerState.User, Is.Null);
+                    Assert.That (StoreManager.Singleton.AppState.User, Is.Null);
 
                     // Nothing in DB.
                     Assert.That (dataStore.Table<UserData> ().SingleOrDefault (

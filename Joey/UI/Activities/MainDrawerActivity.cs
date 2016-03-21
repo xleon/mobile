@@ -115,7 +115,7 @@ namespace Toggl.Joey.UI.Activities
                 }
             }
 
-            var userData = StoreManager.Singleton.AppState.TimerState.User;
+            var userData = StoreManager.Singleton.AppState.User;
             DrawerUserName.Text = userData.Name;
             DrawerEmail.Text = userData.Email;
             DrawerImage.ImageUrl = userData.ImageUrl;

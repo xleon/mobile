@@ -34,7 +34,7 @@ namespace Toggl.Phoebe._ViewModels
             CurrentLoginMode = LoginMode.Login;
 
             subscription = StoreManager.Singleton
-                           .Observe (x => x.TimerState.AuthResult)
+                           .Observe (x => x.State.AuthResult)
                            .DistinctUntilChanged ()
             .SubscribeSimple (state => {
                 ServiceContainer.Resolve<IPlatformUtils> ().DispatchOnUIThread (() => {

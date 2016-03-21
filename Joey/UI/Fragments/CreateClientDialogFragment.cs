@@ -49,7 +49,7 @@ namespace Toggl.Joey.UI.Fragments
         public override void OnCreate (Bundle savedInstanceState)
         {
             base.OnCreate (savedInstanceState);
-            ViewModel = new NewClientVM (Phoebe._Reactive.StoreManager.Singleton.AppState.TimerState, WorkspaceId);
+            ViewModel = new NewClientVM (Phoebe._Reactive.StoreManager.Singleton.AppState, WorkspaceId);
             ValidateClientName ();
         }
 

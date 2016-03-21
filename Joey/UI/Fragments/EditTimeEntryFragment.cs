@@ -125,7 +125,7 @@ namespace Toggl.Joey.UI.Fragments
         public override void OnViewCreated (View view, Bundle savedInstanceState)
         {
             base.OnViewCreated (view, savedInstanceState);
-            ViewModel = new EditTimeEntryVM (StoreManager.Singleton.AppState.TimerState, TimeEntryId);
+            ViewModel = new EditTimeEntryVM (StoreManager.Singleton.AppState, TimeEntryId);
 
             // TODO: in theory, this event could be binded but
             // the event "CheckedChange" isn't found when

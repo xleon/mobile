@@ -91,7 +91,7 @@ namespace Toggl.Joey.UI.Fragments
         public override void OnViewCreated (View view, Bundle savedInstanceState)
         {
             base.OnViewCreated (view, savedInstanceState);
-            viewModel = new ProjectListVM (Phoebe._Reactive.StoreManager.Singleton.AppState.TimerState, WorkspaceId);
+            viewModel = new ProjectListVM (Phoebe._Reactive.StoreManager.Singleton.AppState, WorkspaceId);
 
             var adapter = new ProjectListAdapter (recyclerView, viewModel.ProjectList);
             adapter.HandleItemSelection = OnItemSelected;

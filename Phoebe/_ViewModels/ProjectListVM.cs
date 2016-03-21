@@ -16,7 +16,7 @@ namespace Toggl.Phoebe._ViewModels
     [ImplementPropertyChanged]
     public class ProjectListVM : ViewModelBase, IDisposable
     {
-        public ProjectListVM (TimerState timerState, Guid workspaceId)
+        public ProjectListVM (AppState appState, Guid workspaceId)
         {
             CurrentWorkspaceId = workspaceId;
             ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Select Project";
@@ -31,9 +31,9 @@ namespace Toggl.Phoebe._ViewModels
             var savedSort = Enum.Parse (typeof (ProjectsCollectionVM.SortProjectsBy), settingsStore.SortProjectsBy);
 
             ProjectList = new ProjectsCollectionVM (
-                timerState, (ProjectsCollectionVM.SortProjectsBy)savedSort, workspaceId);
+                appState, (ProjectsCollectionVM.SortProjectsBy)savedSort, workspaceId);
 
-            WorkspaceList = timerState.Workspaces.Values.OrderBy (r => r.Name).ToList ();
+            WorkspaceList = appState.Workspaces.Values.OrderBy (r => r.Name).ToList ();
             CurrentWorkspaceIndex = WorkspaceList.IndexOf (p => p.Id == workspaceId);
 
             // Search stream

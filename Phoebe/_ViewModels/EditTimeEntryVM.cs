@@ -15,17 +15,17 @@ namespace Toggl.Phoebe._ViewModels
     {
         internal static readonly string DefaultTag = "mobile";
 
-        private TimerState timerState;
+        private AppState appState;
         private RichTimeEntry richData;
         private RichTimeEntry previousData;
         private System.Timers.Timer durationTimer;
 
-        private void Init (TimerState state, TimeEntryData timeData, List<string> tagList)
+        private void Init (AppState state, TimeEntryData timeData, List<string> tagList)
         {
             durationTimer = new System.Timers.Timer ();
             durationTimer.Elapsed += DurationTimerCallback;
 
-            this.timerState = state;
+            this.appState = state;
             IsManual = timeData.Id == Guid.Empty;
             richData = new RichTimeEntry (state, timeData);
 
@@ -47,26 +47,26 @@ namespace Toggl.Phoebe._ViewModels
             ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Edit Time Entry";
         }
 
-        public EditTimeEntryVM (TimerState timerState, Guid timeEntryId)
+        public EditTimeEntryVM (AppState appState, Guid timeEntryId)
         {
             TimeEntryData data;
             List<string> tagList;
 
             if (timeEntryId == Guid.Empty) {
-                data = timerState.GetTimeEntryDraft ();
-                tagList = GetDefaultTagList (timerState, data.WorkspaceId).Select (x => x.Name).ToList ();
+                data = appState.GetTimeEntryDraft ();
+                tagList = GetDefaultTagList (appState, data.WorkspaceId).Select (x => x.Name).ToList ();
             } else {
-                var richTe = timerState.TimeEntries[timeEntryId];
+                var richTe = appState.TimeEntries[timeEntryId];
                 data = new TimeEntryData (richTe.Data);
                 tagList = new List<string> (richTe.Data.Tags);
             }
 
-            Init (timerState, data, tagList);
+            Init (appState, data, tagList);
         }
 
-        public EditTimeEntryVM (TimerState timerState, ITimeEntryData timeEntryData, List<string> tagList)
+        public EditTimeEntryVM (AppState appState, ITimeEntryData timeEntryData, List<string> tagList)
         {
-            Init (timerState, new TimeEntryData (timeEntryData), tagList);
+            Init (appState, new TimeEntryData (timeEntryData), tagList);
         }
 
         public void Dispose ()
@@ -209,7 +209,7 @@ namespace Toggl.Phoebe._ViewModels
                 var oldProjectId = richData.Data.ProjectId;
 
                 richData = new RichTimeEntry (
-                    timerState,
+                    appState,
                     richData.Data.With (updater)
                 );
 
@@ -239,14 +239,14 @@ namespace Toggl.Phoebe._ViewModels
 
                 // Check if the new project belongs to a different workspace
                 if (richData.Data.WorkspaceId != richData.Info.ProjectData.WorkspaceId) {
-                    var workspace = timerState.Workspaces[richData.Info.ProjectData.WorkspaceId];
+                    var workspace = appState.Workspaces[richData.Info.ProjectData.WorkspaceId];
 
                     richData = new RichTimeEntry (
-                        timerState,
+                        appState,
                     richData.Data.With (x => {
                         x.WorkspaceId = workspace.Id;
                         x.IsBillable = workspace.IsPremium && x.IsBillable;
-                        x.Tags = UpdateTagsWithWorkspace (timerState, x.Id, workspace.Id, TagList)
+                        x.Tags = UpdateTagsWithWorkspace (appState, x.Id, workspace.Id, TagList)
                                  .Select (t => t.Name).ToList ();
                     })
                     );
@@ -265,13 +265,13 @@ namespace Toggl.Phoebe._ViewModels
             });
         }
 
-        private static List<TagData> GetDefaultTagList (TimerState timerState, Guid workspaceId)
+        private static List<TagData> GetDefaultTagList (AppState appState, Guid workspaceId)
         {
             if (!ServiceContainer.Resolve<Data.ISettingsStore> ().UseDefaultTag) {
                 return new List<TagData> ();
             }
 
-            var defaultTagList = timerState.Tags.Values.Where (
+            var defaultTagList = appState.Tags.Values.Where (
                                      r => r.Name == DefaultTag && r.WorkspaceId == workspaceId).ToList ();
 
             if (defaultTagList.Count == 0) {
@@ -281,10 +281,10 @@ namespace Toggl.Phoebe._ViewModels
             return defaultTagList;
         }
 
-        private static List<TagData> UpdateTagsWithWorkspace (TimerState timerState, Guid timeEntryId, Guid workspaceId, IEnumerable<TagData> oldTagList)
+        private static List<TagData> UpdateTagsWithWorkspace (AppState appState, Guid timeEntryId, Guid workspaceId, IEnumerable<TagData> oldTagList)
         {
             // Get new workspace tag list.
-            var tagList = timerState.Tags.Values.Where (r => r.WorkspaceId == workspaceId).ToList ();
+            var tagList = appState.Tags.Values.Where (r => r.WorkspaceId == workspaceId).ToList ();
 
             // Get new tags to create and existing tags from previous workspace.
             var tagsToCreate = new List<TagData> (oldTagList.Where (t => tagList.IndexOf (n => n.Name.Equals (t.Name)) == -1));

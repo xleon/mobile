@@ -55,7 +55,7 @@ namespace Toggl.Phoebe._Reactive
                     msg = reducer.Reduce (acc.State, tuple.Item1);
                 } catch (Exception ex) {
                     var log = ServiceContainer.Resolve<ILogger> ();
-                    log.Error (GetType ().Name, ex, "Failed to update state");
+                    log.Error (GetType ().Name, ex, "Failed to handle DataMsg: {0}", tuple.Item1.GetType ().Name);
                     msg = DataSyncMsg.Create (acc.State);
                 }
                 AppState = msg.State;
@@ -74,9 +74,9 @@ namespace Toggl.Phoebe._Reactive
             return subject2;
         }
 
-        public IObservable<T> Observe<T> (Func<AppState, T> selector)
+        public IObservable<T> Observe<T> (Func<DataSyncMsg<AppState>, T> selector)
         {
-            return subject2.Select (syncMsg => selector (syncMsg.State));
+            return subject2.Select (syncMsg => selector (syncMsg));
         }
     }
 }

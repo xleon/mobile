@@ -24,9 +24,9 @@ namespace Toggl.Phoebe._ViewModels
         // the list. (subscription and reload of data
         // everytime a tag is changed/created/deleted
 
-        public TagListVM (TimerState timerState, Guid workspaceId, List<Guid> previousSelectedIds)
+        public TagListVM (AppState appState, Guid workspaceId, List<Guid> previousSelectedIds)
         {
-            TagCollection = LoadTags (timerState, workspaceId, previousSelectedIds);
+            TagCollection = LoadTags (appState, workspaceId, previousSelectedIds);
             ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Select Tags";
         }
 
@@ -38,12 +38,12 @@ namespace Toggl.Phoebe._ViewModels
         public ObservableRangeCollection<TagData> TagCollection { get; set; }
 
         private ObservableRangeCollection<TagData> LoadTags (
-            TimerState timerState, Guid workspaceId, List<Guid> previousSelectedIds)
+            AppState appState, Guid workspaceId, List<Guid> previousSelectedIds)
         {
             var tagCollection = new ObservableRangeCollection<TagData> ();
 
             var selectedTags =
-                timerState.Tags.Values.Where (
+                appState.Tags.Values.Where (
                     r => r.WorkspaceId == workspaceId &&
                     previousSelectedIds.Contains (r.Id)).ToList ();
 

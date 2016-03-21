@@ -80,7 +80,7 @@ namespace Toggl.Phoebe.Net
 
         private async Task AppendTimeEntryStats (StringBuilder sb)
         {
-            var userId = StoreManager.Singleton.AppState.TimerState.User.Id;
+            var userId = StoreManager.Singleton.AppState.User.Id;
             var dataStore = ServiceContainer.Resolve<IDataStore> ();
             var total = await dataStore.Table<TimeEntryData> ()
                         .Where (r => r.UserId == userId)

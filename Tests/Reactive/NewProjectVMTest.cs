@@ -30,7 +30,7 @@ namespace Toggl.Phoebe.Tests.Reactive
             ServiceContainer.RegisterScoped<ITracker> (new TrackerMock());
 
             RxChain.Init (initState);
-            viewModel = new NewProjectVM (initState.TimerState, Util.WorkspaceId);
+            viewModel = new NewProjectVM (initState, Util.WorkspaceId);
             dataStore = new SyncSqliteDataStore (databasePath, platformUtils.SQLiteInfo);
         }
 
@@ -50,7 +50,7 @@ namespace Toggl.Phoebe.Tests.Reactive
             viewModel.SaveProject (pname, pcolor, new SyncTestOptions (false, (state, sent, queued) => {
                 try {
                     ProjectData project = null;
-                    Assert.That (project = state.TimerState.Projects.Values.SingleOrDefault (
+                    Assert.That (project = state.Projects.Values.SingleOrDefault (
                                                x => x.WorkspaceId == Util.WorkspaceId && x.Name == pname && x.Color == pcolor), Is.Not.Null);
 
                     // Check project has been correctly saved in database
@@ -58,7 +58,7 @@ namespace Toggl.Phoebe.Tests.Reactive
                                      x => x.WorkspaceId == Util.WorkspaceId && x.Name == pname && x.Color == pcolor && x.Id == project.Id), Is.Not.Null);
 
                     // ProjectUserData
-                    Assert.That (state.TimerState.ProjectUsers.Values.SingleOrDefault (x => x.ProjectId == project.Id), Is.Not.Null);
+                    Assert.That (state.ProjectUsers.Values.SingleOrDefault (x => x.ProjectId == project.Id), Is.Not.Null);
                     Assert.That (dataStore.Table<ProjectUserData> ().SingleOrDefault (x => x.ProjectId == project.Id), Is.Not.Null);
 
                     tcs.SetResult (true);
@@ -84,7 +84,7 @@ namespace Toggl.Phoebe.Tests.Reactive
             viewModel.SetClient (client);
             viewModel.SaveProject (pname, pcolor, new SyncTestOptions (false, (state, sent, queued) => {
                 try {
-                    Assert.That (state.TimerState.Projects.Values.SingleOrDefault (
+                    Assert.That (state.Projects.Values.SingleOrDefault (
                                      x => x.Name == pname && x.ClientId == client.Id), Is.Not.Null);
 
                     tcs.SetResult (true);

@@ -13,14 +13,14 @@ namespace Toggl.Phoebe._ViewModels
     [ImplementPropertyChanged]
     public class NewProjectVM : IDisposable
     {
-        private readonly TimerState timerState;
+        private readonly AppState appState;
         private readonly WorkspaceData workspace;
         private readonly ProjectData model;
 
-        public NewProjectVM (TimerState timerState, Guid workspaceId)
+        public NewProjectVM (AppState appState, Guid workspaceId)
         {
-            this.timerState = timerState;
-            workspace = timerState.Workspaces[workspaceId];
+            this.appState = appState;
+            workspace = appState.Workspaces[workspaceId];
             model = new ProjectData {
                 Id = Guid.NewGuid (),
                 WorkspaceId = workspaceId,
@@ -52,9 +52,9 @@ namespace Toggl.Phoebe._ViewModels
             var projectUser = new ProjectUserData {
                 Id = Guid.NewGuid (),
                 ProjectId = model.Id,
-                UserId = timerState.User.Id,
+                UserId = appState.User.Id,
                 ProjectRemoteId = model.RemoteId.HasValue ? model.RemoteId.Value : 0,
-                UserRemoteId = timerState.User.RemoteId.HasValue ? timerState.User.RemoteId.Value : 0
+                UserRemoteId = appState.User.RemoteId.HasValue ? appState.User.RemoteId.Value : 0
             };
 
             // Save new project and relationship
@@ -66,12 +66,12 @@ namespace Toggl.Phoebe._ViewModels
         public bool ExistProjectWithName (string projectName)
         {
             Guid clientId = model.ClientId;
-            return timerState.Projects.Values.Any (r => r.Name == projectName && r.ClientId == clientId);
+            return appState.Projects.Values.Any (r => r.Name == projectName && r.ClientId == clientId);
         }
 
         public bool ContainsClients (Guid workspaceId)
         {
-            return timerState.Clients.Values.Any (r => r.DeletedAt == null && r.WorkspaceId == workspaceId);
+            return appState.Clients.Values.Any (r => r.DeletedAt == null && r.WorkspaceId == workspaceId);
         }
     }
 }

@@ -57,7 +57,7 @@ namespace Toggl.Phoebe._Reactive
             .SelectAsync (async x => {
                 if (x.Item1 is ServerRequest.DownloadEntries) {
                     var req = x.Item1 as ServerRequest.DownloadEntries;
-                    await DownloadEntries (x.Item2.TimerState, req.FullSync);
+                    await DownloadEntries (x.Item2, req.FullSync);
                 } else if (x.Item1 is ServerRequest.Authenticate) {
                     var req = x.Item1 as ServerRequest.Authenticate;
                     await AuthenticateAsync (req.Username, req.Password);
@@ -83,7 +83,7 @@ namespace Toggl.Phoebe._Reactive
 
         async Task EnqueueOrSend (DataSyncMsg<AppState> syncMsg)
         {
-            var authToken = syncMsg.State.TimerState.User.ApiToken;
+            var authToken = syncMsg.State.User.ApiToken;
             var remoteObjects = new List<CommonData> ();
             var enqueuedItems = new List<DataJsonMsg> ();
             var isConnected = syncMsg.SyncTest != null
@@ -274,7 +274,7 @@ namespace Toggl.Phoebe._Reactive
                               authResult, userJson != null ? mapper.Map<UserData> (userJson) : null));
         }
 
-        async Task DownloadEntries (TimerState state, bool fullSync)
+        async Task DownloadEntries (AppState state, bool fullSync)
         {
             long? clientRemoteId = null;
             string authToken = state.User.ApiToken;
@@ -290,8 +290,10 @@ namespace Toggl.Phoebe._Reactive
                 var newTags = new List<TagJson> ();
 
                 if (fullSync) {
-                    // TODO RX: Is it correct to use startDate here?
-                    var changes = await client.GetChanges (authToken, startDate);
+                    // TODO RX: Check if since date is older than 2 months, see #1301
+                    var changes = await client.GetChanges (authToken, state.Settings.SyncLastRun);
+					// TODO RX: changes.User, changes.TimeStamp
+
                     jsonEntries = changes.TimeEntries.ToList ();
                     newWorkspaces = changes.Workspaces.ToList ();
                     newProjects = changes.Projects.ToList ();
@@ -299,7 +301,6 @@ namespace Toggl.Phoebe._Reactive
                     newTasks = changes.Tasks.ToList ();
                     newTags = changes.Tags.ToList ();
 
-                    // TODO RX: What's the use of changes.TimeStamp?
                 } else {
                     // Download new Entries
                     jsonEntries = await client.ListTimeEntries (authToken, startDate, endDate);
@@ -312,7 +313,8 @@ namespace Toggl.Phoebe._Reactive
                         }
 
                         if (entry.ProjectRemoteId.HasValue) {
-                            var projectData = state.Projects.Values.FirstOrDefault (x => x.RemoteId == entry.ProjectRemoteId);
+                            var projectData = state.Projects.Values.FirstOrDefault (
+                                x => x.RemoteId == entry.ProjectRemoteId);
 
                             if (projectData != null) {
                                 clientRemoteId = projectData.ClientRemoteId;

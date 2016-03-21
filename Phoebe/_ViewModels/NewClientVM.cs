@@ -12,12 +12,12 @@ namespace Toggl.Phoebe._ViewModels
     public class NewClientVM : IDisposable
     {
         private ClientData model;
-        private readonly TimerState timerState;
+        private readonly AppState appState;
 
-        public NewClientVM (TimerState timerState, Guid workspaceId)
+        public NewClientVM (AppState appState, Guid workspaceId)
         {
-            var workspace = timerState.Workspaces[workspaceId];
-            this.timerState = timerState;
+            var workspace = appState.Workspaces[workspaceId];
+            this.appState = appState;
             model = new ClientData {
                 Id = Guid.NewGuid (),
                 WorkspaceId = workspaceId,
@@ -34,7 +34,7 @@ namespace Toggl.Phoebe._ViewModels
         {
             // Save client name to make sure it doesn't change while iterating
             var existing =
-                timerState.Clients.Values
+                appState.Clients.Values
                 .SingleOrDefault (
                     r => r.WorkspaceId == model.WorkspaceId && r.Name == clientName);
 

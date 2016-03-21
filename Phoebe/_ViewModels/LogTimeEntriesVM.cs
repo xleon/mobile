@@ -43,7 +43,7 @@ namespace Toggl.Phoebe._ViewModels
         public RichTimeEntry ActiveEntry { get; private set; }
         public ObservableCollection<IHolder> Collection { get { return timeEntryCollection; } }
 
-        public LogTimeEntriesVM (TimerState timerState)
+        public LogTimeEntriesVM (AppState appState)
         {
             // durationTimer will update the Duration value if ActiveTimeEntry is running
             durationTimer = new System.Timers.Timer ();
@@ -60,11 +60,11 @@ namespace Toggl.Phoebe._ViewModels
             });
 
             ResetCollection ();
-            subscriptionState =
-                StoreManager.Singleton
-                .Observe (app => app.TimerState)
-                .StartWith (timerState)
-                .Scan<TimerState, Tuple<TimerState, DownloadResult>> (
+            subscriptionState = StoreManager
+                .Singleton
+                .Observe (x => x.State)
+                .StartWith (appState)
+                .Scan<AppState, Tuple<AppState, DownloadResult>> (
                     null, (tuple, state) => Tuple.Create (state, tuple != null ? tuple.Item2 : null))
                 .Subscribe (tuple => UpdateState (tuple.Item1, tuple.Item2));
 
@@ -153,23 +153,23 @@ namespace Toggl.Phoebe._ViewModels
         public void ReportExperiment (string actionKey, string actionValue)
         {
             if (Collection.Count == 0 && ServiceContainer.Resolve<Data.ISettingsStore> ().ShowWelcome) {
-                OBMExperimentManager.Send (actionKey, actionValue, StoreManager.Singleton.AppState.TimerState.User);
+                OBMExperimentManager.Send (actionKey, actionValue, StoreManager.Singleton.AppState.User);
             }
         }
 
-        private void UpdateState (TimerState timerState, DownloadResult prevDownloadResult)
+        private void UpdateState (AppState appState, DownloadResult prevDownloadResult)
         {
             ServiceContainer.Resolve<IPlatformUtils> ().DispatchOnUIThread (() => {
                 // Check if DownloadResult has changed
-                if (LoadInfo == null || prevDownloadResult != timerState.DownloadResult) {
+                if (LoadInfo == null || prevDownloadResult != appState.DownloadResult) {
                     LoadInfo = new LoadInfoType (
-                        timerState.DownloadResult.IsSyncing,
-                        timerState.DownloadResult.HasMore,
-                        timerState.DownloadResult.HadErrors
+                        appState.DownloadResult.IsSyncing,
+                        appState.DownloadResult.HasMore,
+                        appState.DownloadResult.HadErrors
                     );
                 }
 
-                ActiveEntry = timerState.ActiveEntry;
+                ActiveEntry = appState.ActiveEntry;
                 IsEntryRunning = ActiveEntry.Data.State == TimeEntryState.Running;
                 // Check if an entry is running.
                 if (IsEntryRunning && !durationTimer.Enabled) {

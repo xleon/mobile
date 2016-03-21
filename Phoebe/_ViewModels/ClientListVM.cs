@@ -16,12 +16,12 @@ namespace Toggl.Phoebe._ViewModels
 
     public class ClientListVM : IDisposable
     {
-        public ClientListVM (TimerState timerState, Guid workspaceId)
+        public ClientListVM (AppState appState, Guid workspaceId)
         {
             ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Select Client";
 
             ClientDataCollection = new ObservableRangeCollection<ClientData> ();
-            var clients =  timerState.Clients.Values.Where (r => r.DeletedAt == null && r.WorkspaceId == workspaceId).ToList ();
+            var clients =  appState.Clients.Values.Where (r => r.DeletedAt == null && r.WorkspaceId == workspaceId).ToList ();
             if (!clients.Any ()) {
                 clients.Add (new ClientData { Name = "No client" });
             }

@@ -3,6 +3,7 @@ using System.Linq;
 using System.Collections.Generic;
 using Toggl.Phoebe._Data;
 using Toggl.Phoebe._Data.Models;
+using Toggl.Phoebe._Helpers;
 using XPlatUtils;
 using Toggl.Phoebe.Logging;
 using System.Reflection;
@@ -10,156 +11,207 @@ using System.Linq.Expressions;
 
 namespace Toggl.Phoebe._Reactive
 {
-    public interface IWithDictionary<T>
+    public class AppState
     {
-        T WithDictionary (IReadOnlyDictionary<string, object> dic);
-    }
+		public SettingsState Settings { get; private set; }
+        public Net.AuthResult AuthResult { get; private set; }
+        public DownloadResult DownloadResult { get; private set; }
 
-    public interface IReducer
-    {
-        DataSyncMsg<object> Reduce (object state, DataMsg msg);
-    }
+        public UserData User { get; private set; }
+        public IReadOnlyDictionary<Guid, WorkspaceData> Workspaces { get; private set; }
+        public IReadOnlyDictionary<Guid, ProjectData> Projects { get; private set; }
+        public IReadOnlyDictionary<Guid, WorkspaceUserData> WorkspaceUsers { get; private set; }
+        public IReadOnlyDictionary<Guid, ProjectUserData> ProjectUsers { get; private set; }
+        public IReadOnlyDictionary<Guid, ClientData> Clients { get; private set; }
+        public IReadOnlyDictionary<Guid, TaskData> Tasks { get; private set; }
+        public IReadOnlyDictionary<Guid, TagData> Tags { get; private set; }
+        public IReadOnlyDictionary<Guid, RichTimeEntry> TimeEntries { get; private set; }
 
-    public class Reducer<T> : IReducer
-    {
-        readonly Func<T, DataMsg, DataSyncMsg<T>> reducer;
-
-        public virtual DataSyncMsg<T> Reduce (T state, DataMsg msg)
+        // AppState instances are immutable snapshots, so it's safe to use a cache for ActiveEntry
+        private RichTimeEntry _activeEntryCache = null;
+        public RichTimeEntry ActiveEntry
         {
-            return reducer (state, msg);
-        }
-
-        DataSyncMsg<object> IReducer.Reduce (object state, DataMsg msg)
-        {
-            return Reduce ((T)state, msg).Cast<object> ();
-        }
-
-        protected Reducer () { }
-
-        public Reducer (Func<T, DataMsg, DataSyncMsg<T>> reducer)
-        {
-            this.reducer = reducer;
-        }
-    }
-
-    public class TagCompositeReducer<T> : Reducer<T>, IReducer
-    {
-        readonly Dictionary<Type, Reducer<T>> reducers = new Dictionary<Type, Reducer<T>> ();
-
-        public TagCompositeReducer<T> Add (Type msgType, Func<T, DataMsg, DataSyncMsg<T>> reducer)
-        {
-            return Add (msgType, new Reducer<T> (reducer));
-        }
-
-        public TagCompositeReducer<T> Add (Type msgType, Reducer<T> reducer)
-        {
-            reducers.Add (msgType, reducer);
-            return this;
-        }
-
-        public override DataSyncMsg<T> Reduce (T state, DataMsg msg)
-        {
-            Reducer<T> reducer;
-            if (reducers.TryGetValue (msg.GetType (), out reducer)) {
-                return reducer.Reduce (state, msg);
-            } else {
-                return DataSyncMsg.Create (state);
+            get {
+                if (_activeEntryCache == null) {
+                    _activeEntryCache = new RichTimeEntry (this, new TimeEntryData ());
+                    if (TimeEntries.Count > 0)
+                        _activeEntryCache = TimeEntries.Values.SingleOrDefault (
+                            x => x.Data.State == TimeEntryState.Running) ?? _activeEntryCache;
+                }
+                return _activeEntryCache;
             }
         }
 
-        DataSyncMsg<object> IReducer.Reduce (object state, DataMsg msg)
+        AppState (
+            SettingsState settings,
+            Net.AuthResult authResult,
+            DownloadResult downloadResult,
+            UserData user,
+            IReadOnlyDictionary<Guid, WorkspaceData> workspaces,
+            IReadOnlyDictionary<Guid, ProjectData> projects,
+            IReadOnlyDictionary<Guid, WorkspaceUserData> workspaceUsers,
+            IReadOnlyDictionary<Guid, ProjectUserData> projectUsers,
+            IReadOnlyDictionary<Guid, ClientData> clients,
+            IReadOnlyDictionary<Guid, TaskData> tasks,
+            IReadOnlyDictionary<Guid, TagData> tags,
+            IReadOnlyDictionary<Guid, RichTimeEntry> timeEntries)
         {
-            return Reduce ((T)state, msg).Cast<object> ();
-        }
-    }
-
-    public class PropertyCompositeReducer<T> : Reducer<T>, IReducer
-        where T : IWithDictionary<T>
-    {
-        readonly List<Tuple<PropertyInfo, IReducer>> reducers = new List<Tuple<PropertyInfo, IReducer>> ();
-
-        public PropertyCompositeReducer<T> Add<TPart> (
-            Expression<Func<T,TPart>> selector,
-            Func<TPart, DataMsg, DataSyncMsg<TPart>> reducer)
-        {
-            return Add (selector, new Reducer<TPart> (reducer));
-        }
-
-        public PropertyCompositeReducer<T> Add<TPart> (Expression<Func<T,TPart>> selector, Reducer<TPart> reducer)
-        {
-            var memberExpr = selector.Body as MemberExpression;
-            var member = memberExpr.Member as PropertyInfo;
-
-            if (memberExpr == null)
-                throw new ArgumentException (string.Format (
-                                                 "Expression '{0}' should be a property.",
-                                                 selector.ToString()));
-            if (member == null)
-                throw new ArgumentException (string.Format (
-                                                 "Expression '{0}' should be a constant expression",
-                                                 selector.ToString()));
-
-            reducers.Add (Tuple.Create (member, (IReducer)reducer));
-            return this;
+            AuthResult = authResult;
+            DownloadResult = downloadResult;
+            User = user;
+            Workspaces = workspaces;
+            Projects = projects;
+            WorkspaceUsers = workspaceUsers;
+            ProjectUsers = projectUsers;
+            Clients = clients;
+            Tasks = tasks;
+            Tags = tags;
+            TimeEntries = timeEntries;
         }
 
-        public override DataSyncMsg<T> Reduce (T state, DataMsg msg)
-        {
-            var syncData = new List<ICommonData> ();
-            var serverRequests = new List<ServerRequest> ();
-            var dic = new Dictionary<string, object> ();
-
-            foreach (var reducer in reducers) {
-                var propValue = reducer.Item1.GetValue (state);
-                var res = reducer.Item2.Reduce (propValue, msg);
-
-                dic.Add (reducer.Item1.Name, res.State);
-                syncData.AddRange (res.SyncData);
-                serverRequests.AddRange (res.ServerRequests);
-            }
-
-            return new DataSyncMsg<T> (state.WithDictionary (dic), syncData, serverRequests);
-        }
-
-        DataSyncMsg<object> IReducer.Reduce (object state, DataMsg msg)
-        {
-            return Reduce ((T)state, msg).Cast<object> ();
-        }
-    }
-
-    public class AppState : IWithDictionary<AppState>
-    {
-        public TimerState TimerState { get; private set; }
-
-        public AppState (
-            TimerState timerState)
-        {
-            TimerState = timerState;
-        }
-
-        public AppState WithDictionary (IReadOnlyDictionary<string, object> dic)
+        public AppState With (
+            SettingsState settings = null,
+            Net.AuthResult? authResult = null,
+            DownloadResult downloadResult = null,
+            UserData user = null,
+            IReadOnlyDictionary<Guid, WorkspaceData> workspaces = null,
+            IReadOnlyDictionary<Guid, ProjectData> projects = null,
+            IReadOnlyDictionary<Guid, WorkspaceUserData> workspaceUsers = null,
+            IReadOnlyDictionary<Guid, ProjectUserData> projectUsers = null,
+            IReadOnlyDictionary<Guid, ClientData> clients = null,
+            IReadOnlyDictionary<Guid, TaskData> tasks = null,
+            IReadOnlyDictionary<Guid, TagData> tags = null,
+            IReadOnlyDictionary<Guid, RichTimeEntry> timeEntries = null)
         {
             return new AppState (
-                       dic.ContainsKey (nameof (TimerState)) ? (TimerState)dic[nameof (TimerState)] : this.TimerState);
+                settings ?? Settings,
+                authResult ?? AuthResult,
+                downloadResult ?? DownloadResult,
+                user ?? User,
+                workspaces ?? Workspaces,
+                projects ?? Projects,
+                workspaceUsers ?? WorkspaceUsers,
+                projectUsers ?? ProjectUsers,
+                clients ?? Clients,
+                tasks ?? Tasks,
+                tags ?? Tags,
+                timeEntries ?? TimeEntries);
+        }
+
+        /// <summary>
+        /// This doesn't check ModifiedAt or DeletedAt, so call it
+        /// always after putting items first in the database
+        /// </summary>
+        public IReadOnlyDictionary<Guid, T> Update<T> (
+            IReadOnlyDictionary<Guid, T> oldItems, IEnumerable<ICommonData> newItems)
+            where T : CommonData
+        {
+            var dic = oldItems.ToDictionary (x => x.Key, x => x.Value);
+            foreach (var newItem in newItems.OfType<T> ()) {
+                if (newItem.DeletedAt == null) {
+                    if (dic.ContainsKey (newItem.Id)) {
+                        dic [newItem.Id] = newItem;
+                    } else {
+                        dic.Add (newItem.Id, newItem);
+                    }
+                } else {
+                    if (dic.ContainsKey (newItem.Id)) {
+                        dic.Remove (newItem.Id);
+                    }
+                }
+            }
+            return dic;
+        }
+
+        /// <summary>
+        /// This doesn't check ModifiedAt or DeletedAt, so call it
+        /// always after putting items first in the database
+        /// </summary>
+        public IReadOnlyDictionary<Guid, RichTimeEntry> UpdateTimeEntries (
+            IEnumerable<ICommonData> newItems)
+        {
+            var dic = TimeEntries.ToDictionary (x => x.Key, x => x.Value);
+            foreach (var newItem in newItems.OfType<ITimeEntryData> ()) {
+                if (newItem.DeletedAt == null) {
+                    if (dic.ContainsKey (newItem.Id)) {
+                        dic [newItem.Id] = new RichTimeEntry (
+                            newItem, LoadTimeEntryInfo (newItem));
+                    } else {
+                        dic.Add (newItem.Id, new RichTimeEntry (
+                            newItem, LoadTimeEntryInfo (newItem)));
+                    }
+                } else {
+                    if (dic.ContainsKey (newItem.Id)) {
+                        dic.Remove (newItem.Id);
+                    }
+                }
+            }
+            return dic;
+        }
+
+        public TimeEntryInfo LoadTimeEntryInfo (ITimeEntryData teData)
+        {
+            var workspaceData = teData.WorkspaceId != Guid.Empty ? Workspaces[teData.WorkspaceId] : new WorkspaceData ();
+            var projectData = teData.ProjectId != Guid.Empty ? Projects[teData.ProjectId] : new ProjectData ();
+            var clientData = projectData.ClientId != Guid.Empty ? Clients[projectData.ClientId] : new ClientData ();
+            var taskData = teData.TaskId != Guid.Empty ? Tasks[teData.TaskId] : new TaskData ();
+            var color = (projectData.Id != Guid.Empty) ? projectData.Color : -1;
+            var tagsData =
+                teData.Tags.Select (
+                    x => Tags.Values.SingleOrDefault (y => y.WorkspaceId == teData.WorkspaceId && y.Name == x))
+                      // TODO: Throw exception if tag was not found?
+                      .Where (x => x != null)
+                      .ToList ();
+
+            return new TimeEntryInfo (
+                workspaceData,
+                projectData,
+                clientData,
+                taskData,
+                tagsData,
+                color);
+        }
+
+        public IEnumerable<ProjectData> GetUserAccessibleProjects (Guid userId)
+        {
+            return Projects.Values.Where (
+                p => p.IsActive && (p.IsPrivate || ProjectUsers.Values.Any (x => x.ProjectId == p.Id && x.UserId == userId)))
+                           .OrderBy (p => p.Name);
+        }
+
+        public TimeEntryData GetTimeEntryDraft ()
+        {
+            var userId = User.Id;
+            var workspaceId = User.DefaultWorkspaceId;
+            var remoteWorkspaceId = User.DefaultWorkspaceRemoteId;
+            var durationOnly = User.TrackingMode == TrackingMode.Continue;
+
+            // Create new draft object
+            return new TimeEntryData {
+                State = TimeEntryState.New,
+                UserId = userId,
+                WorkspaceId = workspaceId,
+                WorkspaceRemoteId = remoteWorkspaceId,
+                DurationOnly = durationOnly,
+            };
         }
 
         public static AppState Init ()
         {
-            var userData = new UserData ();
-            var credStore = ServiceContainer.Resolve<Data.ISettingsStore> ();
+			var userData = new UserData ();
+            var settings = SettingsState.Init ();
             try {
-                var userId = credStore.UserId;
-                if (userId.HasValue) {
+                if (settings.UserId != Guid.Empty) {
                     var dataStore = ServiceContainer.Resolve<ISyncDataStore> ();
-                    userData = dataStore.Table<UserData> ().Single (x => x.Id == userId.Value);
+                    userData = dataStore.Table<UserData> ().Single (x => x.Id == settings.UserId);
                 }
             } catch (ArgumentException) {
                 // When data is corrupt and cannot find user
-                credStore.UserId = null;
+                settings = settings.With (userId: Guid.Empty);
             }
 
-            var timerState =
-                new TimerState (
+            return new AppState (
+                settings: settings,
                 authResult: Net.AuthResult.None,
                 downloadResult: DownloadResult.Empty,
                 user: userData,
@@ -171,8 +223,6 @@ namespace Toggl.Phoebe._Reactive
                 tasks: new Dictionary<Guid, TaskData> (),
                 tags: new Dictionary<Guid, TagData> (),
                 timeEntries: new Dictionary<Guid, RichTimeEntry> ());
-
-            return new AppState (timerState);
         }
     }
 
@@ -187,8 +237,8 @@ namespace Toggl.Phoebe._Reactive
             Info = info;
         }
 
-        public RichTimeEntry (TimerState timerState, ITimeEntryData data)
-        : this (data, timerState.LoadTimeEntryInfo (data))
+        public RichTimeEntry (AppState appState, ITimeEntryData data)
+            : this (data, appState.LoadTimeEntryInfo (data))
         {
         }
     }
@@ -253,183 +303,79 @@ namespace Toggl.Phoebe._Reactive
         }
     }
 
-    public class TimerState
+    public class SettingsState
     {
-        public Net.AuthResult AuthResult { get; private set; }
-        public DownloadResult DownloadResult { get; private set; }
+        // TODO RX: Check these correspond to new _Helpers.Settings class properties
+        public Guid UserId { get; private set; }
+        public DateTime SyncLastRun { get; private set; }
+        public bool UseDefaultTag { get; private set; }
+        public string LastAppVersion { get; private set; }
+        public string ExperimentId { get; private set; }
+        public int LastReportZoom { get; private set; }
+        public bool GroupedEntries { get; private set; }
+        public string ProjectSort { get; private set; }
 
-        public UserData User { get; private set; }
-        public IReadOnlyDictionary<Guid, WorkspaceData> Workspaces { get; private set; }
-        public IReadOnlyDictionary<Guid, ProjectData> Projects { get; private set; }
-        public IReadOnlyDictionary<Guid, WorkspaceUserData> WorkspaceUsers { get; private set; }
-        public IReadOnlyDictionary<Guid, ProjectUserData> ProjectUsers { get; private set; }
-        public IReadOnlyDictionary<Guid, ClientData> Clients { get; private set; }
-        public IReadOnlyDictionary<Guid, TaskData> Tasks { get; private set; }
-        public IReadOnlyDictionary<Guid, TagData> Tags { get; private set; }
-        public IReadOnlyDictionary<Guid, RichTimeEntry> TimeEntries { get; private set; }
-
-        // TimerState instances are immutable snapshots, so it's safe to use a cache for ActiveEntry
-        private RichTimeEntry _activeEntryCache = null;
-        public RichTimeEntry ActiveEntry
+        SettingsState (
+            Guid userId,
+            DateTime syncLastRun,
+            bool useDefaultTag,
+            string lastAppVersion,
+            int lastReportZoom,
+            bool groupedEntries,
+            string projectSort)
         {
-            get {
-                if (_activeEntryCache == null) {
-                    _activeEntryCache = TimeEntries.Values.SingleOrDefault (
-                                            x => x.Data.State == TimeEntryState.Running) ?? new RichTimeEntry (this, new TimeEntryData ());
-                }
-                return _activeEntryCache;
-            }
+            UserId = userId;
+            SyncLastRun = syncLastRun;
+            UseDefaultTag = useDefaultTag;
+            LastAppVersion = lastAppVersion;
+            LastReportZoom = lastReportZoom;
+            GroupedEntries = groupedEntries;
+            ProjectSort = projectSort;
         }
 
-        public TimerState (
-            Net.AuthResult authResult,
-            DownloadResult downloadResult,
-            UserData user,
-            IReadOnlyDictionary<Guid, WorkspaceData> workspaces,
-            IReadOnlyDictionary<Guid, ProjectData> projects,
-            IReadOnlyDictionary<Guid, WorkspaceUserData> workspaceUsers,
-            IReadOnlyDictionary<Guid, ProjectUserData> projectUsers,
-            IReadOnlyDictionary<Guid, ClientData> clients,
-            IReadOnlyDictionary<Guid, TaskData> tasks,
-            IReadOnlyDictionary<Guid, TagData> tags,
-            IReadOnlyDictionary<Guid, RichTimeEntry> timeEntries)
+        public static SettingsState Init ()
         {
-            AuthResult = authResult;
-            DownloadResult = downloadResult;
-            User = user;
-            Workspaces = workspaces;
-            Projects = projects;
-            WorkspaceUsers = workspaceUsers;
-            ProjectUsers = projectUsers;
-            Clients = clients;
-            Tasks = tasks;
-            Tags = tags;
-            TimeEntries = timeEntries;
+            return new SettingsState (
+                Settings.UserId,
+                Settings.SyncLastRun,
+                Settings.UseDefaultTag,
+                Settings.LastAppVersion,
+                Settings.LastReportZoom,
+                Settings.GroupedEntries,
+                Settings.ProjectSort
+            );
         }
 
-        public TimerState With (
-            Net.AuthResult? authResult = null,
-            DownloadResult downloadResult = null,
-            UserData user = null,
-            IReadOnlyDictionary<Guid, WorkspaceData> workspaces = null,
-            IReadOnlyDictionary<Guid, ProjectData> projects = null,
-            IReadOnlyDictionary<Guid, WorkspaceUserData> workspaceUsers = null,
-            IReadOnlyDictionary<Guid, ProjectUserData> projectUsers = null,
-            IReadOnlyDictionary<Guid, ClientData> clients = null,
-            IReadOnlyDictionary<Guid, TaskData> tasks = null,
-            IReadOnlyDictionary<Guid, TagData> tags = null,
-            IReadOnlyDictionary<Guid, RichTimeEntry> timeEntries = null)
+        private T updateNullable<T> (Nullable<T> value, T @default, Func<T,T> update)
+        where T : struct
         {
-            return new TimerState (
-                       authResult ?? AuthResult,
-                       downloadResult ?? DownloadResult,
-                       user ?? User,
-                       workspaces ?? Workspaces,
-                       projects ?? Projects,
-                       workspaceUsers ?? WorkspaceUsers,
-                       projectUsers ?? ProjectUsers,
-                       clients ?? Clients,
-                       tasks ?? Tasks,
-                       tags ?? Tags,
-                       timeEntries ?? TimeEntries);
+            return value.HasValue ? update (value.Value) : @default;
         }
 
-        /// <summary>
-        /// This doesn't check ModifiedAt or DeletedAt, so call it
-        /// always after putting items first in the database
-        /// </summary>
-        public IReadOnlyDictionary<Guid, T> Update<T> (
-            IReadOnlyDictionary<Guid, T> oldItems, IEnumerable<ICommonData> newItems)
-        where T : CommonData
+        private T updateReference<T> (T value, T @default, Func<T,T> update)
+            where T : class
         {
-            var dic = oldItems.ToDictionary (x => x.Key, x => x.Value);
-            foreach (var newItem in newItems.OfType<T> ()) {
-                if (newItem.DeletedAt == null) {
-                    if (dic.ContainsKey (newItem.Id)) {
-                        dic [newItem.Id] = newItem;
-                    } else {
-                        dic.Add (newItem.Id, newItem);
-                    }
-                } else {
-                    if (dic.ContainsKey (newItem.Id)) {
-                        dic.Remove (newItem.Id);
-                    }
-                }
-            }
-            return dic;
+            return value != null ? update (value) : @default;
         }
 
-        /// <summary>
-        /// This doesn't check ModifiedAt or DeletedAt, so call it
-        /// always after putting items first in the database
-        /// </summary>
-        public IReadOnlyDictionary<Guid, RichTimeEntry> UpdateTimeEntries (
-            IEnumerable<ICommonData> newItems)
+        public SettingsState With (
+            Guid? userId = null,
+            DateTime? syncLastRun = null,
+            bool? useDefaultTag = null,
+            string lastAppVersion = null,
+            int? lastReportZoom = null,
+            bool? groupedEntries = null,
+            string projectSort = null)
         {
-            var dic = TimeEntries.ToDictionary (x => x.Key, x => x.Value);
-            foreach (var newItem in newItems.OfType<ITimeEntryData> ()) {
-                if (newItem.DeletedAt == null) {
-                    if (dic.ContainsKey (newItem.Id)) {
-                        dic [newItem.Id] = new RichTimeEntry (
-                            newItem, LoadTimeEntryInfo (newItem));
-                    } else {
-                        dic.Add (newItem.Id, new RichTimeEntry (
-                                     newItem, LoadTimeEntryInfo (newItem)));
-                    }
-                } else {
-                    if (dic.ContainsKey (newItem.Id)) {
-                        dic.Remove (newItem.Id);
-                    }
-                }
-            }
-            return dic;
-        }
-
-        public TimeEntryInfo LoadTimeEntryInfo (ITimeEntryData teData)
-        {
-            var workspaceData = teData.WorkspaceId != Guid.Empty ? Workspaces[teData.WorkspaceId] : new WorkspaceData ();
-            var projectData = teData.ProjectId != Guid.Empty ? Projects[teData.ProjectId] : new ProjectData ();
-            var clientData = projectData.ClientId != Guid.Empty ? Clients[projectData.ClientId] : new ClientData ();
-            var taskData = teData.TaskId != Guid.Empty ? Tasks[teData.TaskId] : new TaskData ();
-            var color = (projectData.Id != Guid.Empty) ? projectData.Color : -1;
-            var tagsData =
-                teData.Tags.Select (
-                    x => Tags.Values.SingleOrDefault (y => y.WorkspaceId == teData.WorkspaceId && y.Name == x))
-                // TODO: Throw exception if tag was not found?
-                .Where (x => x != null)
-                .ToList ();
-
-            return new TimeEntryInfo (
-                       workspaceData,
-                       projectData,
-                       clientData,
-                       taskData,
-                       tagsData,
-                       color);
-        }
-
-        public IEnumerable<ProjectData> GetUserAccessibleProjects (Guid userId)
-        {
-            return Projects.Values.Where (
-                       p => p.IsActive && (p.IsPrivate || ProjectUsers.Values.Any (x => x.ProjectId == p.Id && x.UserId == userId)))
-                   .OrderBy (p => p.Name);
-        }
-
-        public TimeEntryData GetTimeEntryDraft ()
-        {
-            var userId = User.Id;
-            var workspaceId = User.DefaultWorkspaceId;
-            var remoteWorkspaceId = User.DefaultWorkspaceRemoteId;
-            var durationOnly = User.TrackingMode == TrackingMode.Continue;
-
-            // Create new draft object
-            return new TimeEntryData {
-                State = TimeEntryState.New,
-                UserId = userId,
-                WorkspaceId = workspaceId,
-                WorkspaceRemoteId = remoteWorkspaceId,
-                DurationOnly = durationOnly,
-            };
+            return new SettingsState (
+                updateNullable (userId, UserId, x => Settings.UserId = x),
+                updateNullable (syncLastRun, SyncLastRun, x => Settings.SyncLastRun = x),
+                updateNullable (useDefaultTag, UseDefaultTag, x => Settings.UseDefaultTag = x),
+                updateReference (lastAppVersion, LastAppVersion, x => Settings.LastAppVersion = x),
+                updateNullable (lastReportZoom, LastReportZoom, x => Settings.LastReportZoom = x),
+                updateNullable (groupedEntries, GroupedEntries, x => Settings.GroupedEntries = x),
+                updateReference (projectSort, ProjectSort, x => Settings.ProjectSort = x)
+            );
         }
     }
 }

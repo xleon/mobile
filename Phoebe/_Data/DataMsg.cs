@@ -66,10 +66,15 @@ namespace Toggl.Phoebe._Data
 
         public sealed class TimeEntriesLoad : DataMsg
         {
-            public Either<object, Exception> Data
+            public Either<bool, Exception> Data
             {
-                get { return RawData; }
-                set { RawData = value; }
+                get { return RawData.CastLeft<bool> (); }
+                set { RawData = value.CastLeft<object> (); }
+            }
+
+            public TimeEntriesLoad (bool fullSync = false)
+            {
+                Data = Either<bool, Exception>.Left (fullSync);
             }
         }
 
@@ -262,7 +267,15 @@ namespace Toggl.Phoebe._Data
     {
         protected ServerRequest () {}
 
-        public sealed class DownloadEntries : ServerRequest { }
+        public sealed class DownloadEntries : ServerRequest
+        {
+            public readonly bool FullSync;
+            public DownloadEntries (bool fullSync)
+            {
+                FullSync = fullSync;
+            }
+        }
+
         public sealed class Authenticate : ServerRequest
         {
             public readonly string Username;

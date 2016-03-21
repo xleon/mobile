@@ -100,14 +100,11 @@ namespace Toggl.Phoebe._ViewModels
             }
         }
 
-        // TODO RX: What's the difference between LoadMore and TriggerFullSync?
-        //public void TriggerFullSync ()
-
-        public void LoadMore ()
+        public void LoadMore (bool fullSync = false)
         {
             ServiceContainer.Resolve<IPlatformUtils> ().DispatchOnUIThread (() => {
                 LoadInfo = new LoadInfoType (true, true, false);
-                RxChain.Send (new DataMsg.TimeEntriesLoad ());
+                RxChain.Send (new DataMsg.TimeEntriesLoad (fullSync));
             });
         }
 

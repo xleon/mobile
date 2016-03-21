@@ -50,7 +50,7 @@ namespace Toggl.Phoebe._Reactive
         {
             var dataStore = ServiceContainer.Resolve <ISyncDataStore> ();
             var fullSync = (msg as DataMsg.TimeEntriesLoad).Data.ForceLeft ();
-			var endDate = state.DownloadResult.NextDownloadFrom;
+            var endDate = state.DownloadResult.NextDownloadFrom;
 
             // TODO RX: Should we load entries from db also in full sync? What should be the startDate?
 

@@ -55,9 +55,9 @@ namespace Toggl.Phoebe._Reactive
             .Synchronize ()
             // TODO: Use Throttle here?
             .SelectAsync (async x => {
-                // TODO RX: Check connection? Throw exception if not connected or just dismiss?
                 if (x.Item1 is ServerRequest.DownloadEntries) {
-                    await DownloadEntries (x.Item2.TimerState);
+                    var req = x.Item1 as ServerRequest.DownloadEntries;
+                    await DownloadEntries (x.Item2.TimerState, req.FullSync);
                 } else if (x.Item1 is ServerRequest.Authenticate) {
                     var req = x.Item1 as ServerRequest.Authenticate;
                     await AuthenticateAsync (req.Username, req.Password);
@@ -274,7 +274,7 @@ namespace Toggl.Phoebe._Reactive
                               authResult, userJson != null ? mapper.Map<UserData> (userJson) : null));
         }
 
-        async Task DownloadEntries (TimerState state)
+        async Task DownloadEntries (TimerState state, bool fullSync)
         {
             long? clientRemoteId = null;
             string authToken = state.User.ApiToken;
@@ -282,52 +282,64 @@ namespace Toggl.Phoebe._Reactive
             const int endDate = Literals.TimeEntryLoadDays;
 
             try {
-                var jsonEntries = await client.ListTimeEntries (authToken, startDate, endDate);
-                // Download new Entries
-
-                var newWorkspaces = new List<CommonJson> ();
-                var newProjects = new List<CommonJson> ();
-                var newClients = new List<CommonJson> ();
-                var newTasks = new List<CommonJson> ();
+                IList<TimeEntryJson> jsonEntries = null;
+                var newWorkspaces = new List<WorkspaceJson> ();
+                var newProjects = new List<ProjectJson> ();
+                var newClients = new List<ClientJson> ();
+                var newTasks = new List<TaskJson> ();
                 var newTags = new List<TagJson> ();
 
-                // Check the state contains all related objects
-                foreach (var entry in jsonEntries) {
-                    if (state.Workspaces.Values.All (x => x.RemoteId != entry.WorkspaceRemoteId) &&
-                            newWorkspaces.All (x => x.RemoteId != entry.WorkspaceRemoteId)) {
-                        newWorkspaces.Add (await client.Get<WorkspaceJson> (authToken, entry.WorkspaceRemoteId));
-                    }
+                if (fullSync) {
+                    // TODO RX: Is it correct to use startDate here?
+                    var changes = await client.GetChanges (authToken, startDate);
+                    jsonEntries = changes.TimeEntries.ToList ();
+                    newWorkspaces = changes.Workspaces.ToList ();
+                    newProjects = changes.Projects.ToList ();
+                    newClients = changes.Clients.ToList ();
+                    newTasks = changes.Tasks.ToList ();
+                    newTags = changes.Tags.ToList ();
 
-                    if (entry.ProjectRemoteId.HasValue) {
-                        var projectData = state.Projects.Values.FirstOrDefault (x => x.RemoteId == entry.ProjectRemoteId);
+                    // TODO RX: What's the use of changes.TimeStamp?
+                } else {
+                    // Download new Entries
+                    jsonEntries = await client.ListTimeEntries (authToken, startDate, endDate);
 
-                        if (projectData != null) {
-                            clientRemoteId = projectData.ClientRemoteId;
-                        } else {
-                            var projectJson = newProjects.FirstOrDefault (x => x.RemoteId == entry.ProjectRemoteId);
-                            if (projectJson == null) {
-                                projectJson = await client.Get<ProjectJson> (authToken, entry.ProjectRemoteId.Value);
-                                newProjects.Add (projectJson);
+                    // Check the state contains all related objects
+                    foreach (var entry in jsonEntries) {
+                        if (state.Workspaces.Values.All (x => x.RemoteId != entry.WorkspaceRemoteId) &&
+                                newWorkspaces.All (x => x.RemoteId != entry.WorkspaceRemoteId)) {
+                            newWorkspaces.Add (await client.Get<WorkspaceJson> (authToken, entry.WorkspaceRemoteId));
+                        }
+
+                        if (entry.ProjectRemoteId.HasValue) {
+                            var projectData = state.Projects.Values.FirstOrDefault (x => x.RemoteId == entry.ProjectRemoteId);
+
+                            if (projectData != null) {
+                                clientRemoteId = projectData.ClientRemoteId;
+                            } else {
+                                var projectJson = newProjects.FirstOrDefault (x => x.RemoteId == entry.ProjectRemoteId);
+                                if (projectJson == null) {
+                                    projectJson = await client.Get<ProjectJson> (authToken, entry.ProjectRemoteId.Value);
+                                    newProjects.Add (projectJson);
+                                }
+                                clientRemoteId = (projectJson as ProjectJson).ClientRemoteId;
                             }
-                            clientRemoteId = (projectJson as ProjectJson).ClientRemoteId;
-                        }
 
-                        if (clientRemoteId.HasValue) {
-                            if (state.Clients.Values.All (x => x.RemoteId != clientRemoteId) &&
-                                    newClients.All (x => x.RemoteId != clientRemoteId)) {
-                                newClients.Add (await client.Get<ClientJson> (authToken, clientRemoteId.Value));
+                            if (clientRemoteId.HasValue) {
+                                if (state.Clients.Values.All (x => x.RemoteId != clientRemoteId) &&
+                                        newClients.All (x => x.RemoteId != clientRemoteId)) {
+                                    newClients.Add (await client.Get<ClientJson> (authToken, clientRemoteId.Value));
+                                }
                             }
                         }
-                    }
 
-                    if (entry.TaskRemoteId.HasValue) {
-                        if (state.Tasks.Values.All (x => x.RemoteId != entry.TaskRemoteId) &&
-                                newTasks.All (x => x.RemoteId != entry.TaskRemoteId)) {
-                            newTasks.Add (await client.Get<TaskJson> (authToken, entry.TaskRemoteId.Value));
+                        if (entry.TaskRemoteId.HasValue) {
+                            if (state.Tasks.Values.All (x => x.RemoteId != entry.TaskRemoteId) &&
+                                    newTasks.All (x => x.RemoteId != entry.TaskRemoteId)) {
+                                newTasks.Add (await client.Get<TaskJson> (authToken, entry.TaskRemoteId.Value));
+                            }
                         }
-                    }
 
-                    try {
                         foreach (var tag in entry.Tags) {
                             if (state.Tags.Values.All (x => x.WorkspaceRemoteId != entry.WorkspaceRemoteId || x.Name != tag) &&
                                     newTags.All (x => x.WorkspaceRemoteId != entry.WorkspaceRemoteId || x.Name != tag)) {
@@ -340,8 +352,6 @@ namespace Toggl.Phoebe._Reactive
                     }
 
                 }
-
-                // TODO: Check if any of the received items is null?
 
                 RxChain.Send (new DataMsg.ReceivedFromServer (
                                   jsonEntries.Select (mapper.Map<TimeEntryData>).Cast<CommonData> ()

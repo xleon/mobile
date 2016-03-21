@@ -205,7 +205,7 @@ namespace Toggl.Joey.UI.Fragments
         #region Sync
         public void OnRefresh ()
         {
-            ViewModel.TriggerFullSync ();
+            ViewModel.LoadMore (fullSync: true);
         }
 
         private void OnActiveEntryChanged ()

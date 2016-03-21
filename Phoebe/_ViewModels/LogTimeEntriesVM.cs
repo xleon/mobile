@@ -106,16 +106,11 @@ namespace Toggl.Phoebe._ViewModels
             }
         }
 
-        public void TriggerFullSync ()
-        {
-            // TODO RX: Trigger full sync!
-        }
-
-        public void LoadMore ()
+        public void LoadMore (bool fullSync = false)
         {
             ServiceContainer.Resolve<IPlatformUtils> ().DispatchOnUIThread (() => {
                 LoadInfo = new LoadInfoType (true, true, false);
-                RxChain.Send (new DataMsg.TimeEntriesLoad ());
+                RxChain.Send (new DataMsg.TimeEntriesLoad (fullSync));
             });
         }
 

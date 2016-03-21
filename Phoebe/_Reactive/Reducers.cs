@@ -49,10 +49,23 @@ namespace Toggl.Phoebe._Reactive
         static DataSyncMsg<TimerState> TimeEntriesLoad (TimerState state, DataMsg msg)
         {
             var dataStore = ServiceContainer.Resolve <ISyncDataStore> ();
-            var endDate = state.DownloadResult.NextDownloadFrom;
-            var startDate = GetDatesByDays (dataStore, endDate, Literals.TimeEntryLoadDays);
+            var fullSync = (msg as DataMsg.TimeEntriesLoad).Data.ForceLeft ();
 
-            var dbEntries = dataStore
+            // TODO RX: Should we load entries from db also in full sync? What should be the startDate?
+
+            DownloadResult downloadInfo = state.DownloadResult;
+            IList<TimeEntryData> dbEntries = new List<TimeEntryData> ();
+
+            if (fullSync) {
+                downloadInfo = downloadInfo.With (
+                                   isSyncing: true,
+                                   downloadFrom: DateTime.UtcNow,
+                                   nextDownloadFrom: endDate);
+            } else {
+                var endDate = state.DownloadResult.NextDownloadFrom;
+                var startDate = GetDatesByDays (dataStore, endDate, Literals.TimeEntryLoadDays);
+
+                dbEntries = dataStore
                             .Table<TimeEntryData> ()
                             .Where (r =>
                                     r.State != TimeEntryState.New &&
@@ -63,19 +76,20 @@ namespace Toggl.Phoebe._Reactive
                             .OrderByDescending (r => r.StartTime)
                             .ToList ();
 
-            var downloadInfo =
-                state.DownloadResult.With (
-                    isSyncing: true,
-                    downloadFrom: endDate,
-                    nextDownloadFrom: dbEntries.Any ()
-                    ? dbEntries.Min (x => x.StartTime)
-                    : endDate);
+                downloadInfo =
+                    downloadInfo.With (
+                        isSyncing: true,
+                        downloadFrom: endDate,
+                        nextDownloadFrom: dbEntries.Any ()
+                        ? dbEntries.Min (x => x.StartTime)
+                        : endDate);
+            }
 
             return DataSyncMsg.Create (
                        state.With (
                            downloadResult: downloadInfo,
                            timeEntries: state.UpdateTimeEntries (dbEntries)),
-                       request: new ServerRequest.DownloadEntries ());
+                       request: new ServerRequest.DownloadEntries (fullSync));
         }
 
         static DataSyncMsg<TimerState> ReceivedFromServer (TimerState state, DataMsg msg)

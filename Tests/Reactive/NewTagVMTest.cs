@@ -46,8 +46,7 @@ namespace Toggl.Phoebe.Tests.Reactive
             var name = "MyTag";
             var tcs = Util.CreateTask<bool> ();
 
-            viewModel.TagName = name;
-            viewModel.SaveTag (new SyncTestOptions (false, (state, sent, queued) => {
+            viewModel.SaveTag (name, new SyncTestOptions (false, (state, sent, queued) => {
                 try {
                     TagData tag = null;
                     Assert.That (tag = state.TimerState.Tags.Values.SingleOrDefault (

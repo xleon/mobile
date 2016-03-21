@@ -32,9 +32,8 @@ namespace Toggl.Phoebe._ViewModels
         }
 
         private TimeEntryCollectionVM timeEntryCollection;
-        private Subscription<Data.SettingChangedMessage> subscriptionSettingChanged;
         private readonly System.Timers.Timer durationTimer;
-        private readonly IDisposable subscriptionState;
+        private readonly IDisposable subscriptionSettings, subscriptionState;
 
         public bool IsGroupedMode { get; private set; }
         public string Duration { get; private set; }
@@ -78,14 +77,14 @@ namespace Toggl.Phoebe._ViewModels
 
         public void Dispose ()
         {
-            var bus = ServiceContainer.Resolve<MessageBus> ();
-            if (subscriptionSettingChanged != null) {
-                bus.Unsubscribe (subscriptionSettingChanged);
-                subscriptionSettingChanged = null;
+            if (subscriptionSettings != null) {
+                subscriptionSettings.Dispose ();
             }
+
             if (subscriptionState != null) {
                 subscriptionState.Dispose ();
             }
+
             durationTimer.Elapsed -= DurationTimerCallback;
             DisposeCollection ();
         }

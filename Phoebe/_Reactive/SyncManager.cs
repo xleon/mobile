@@ -314,7 +314,7 @@ namespace Toggl.Phoebe._Reactive
 
                         if (entry.ProjectRemoteId.HasValue) {
                             var projectData = state.Projects.Values.FirstOrDefault (
-                                x => x.RemoteId == entry.ProjectRemoteId);
+                                                  x => x.RemoteId == entry.ProjectRemoteId);
 
                             if (projectData != null) {
                                 clientRemoteId = projectData.ClientRemoteId;

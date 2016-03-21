@@ -13,6 +13,7 @@ using Toggl.Joey.Net;
 using Toggl.Joey.UI.Activities;
 using Toggl.Joey.Widget;
 using Toggl.Phoebe;
+using Toggl.Phoebe._Reactive;
 using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Logging;
@@ -57,14 +58,13 @@ namespace Toggl.Joey
 
             // Register platform service.
             ServiceContainer.Register<IPlatformUtils> (this);
-            ServiceContainer.Register<SettingsStore> (() => new SettingsStore (Context));
-            ServiceContainer.Register<ISettingsStore> (() => ServiceContainer.Resolve<SettingsStore> ());
+            ServiceContainer.Register<ITimeProvider> (() => new DefaultTimeProvider ());
+            ServiceContainer.Register<INetworkPresence> (() => new NetworkPresence (Context, (ConnectivityManager)GetSystemService (ConnectivityService)));
 
             // Register Phoebe services.
             Services.Register ();
 
             // Register Joey components:
-            ServiceContainer.Register<ITimeProvider> (() => new DefaultTimeProvider ());
             ServiceContainer.Register<ILogger> (() => new Logger ());
             ServiceContainer.Register<Context> (this);
             ServiceContainer.Register<ExperimentManager> (() => new ExperimentManager (
@@ -74,11 +74,11 @@ namespace Toggl.Joey
             ServiceContainer.Register<GcmRegistrationManager> ();
             ServiceContainer.Register<AndroidNotificationManager> ();
             ServiceContainer.Register<ILoggerClient> (() => new LogClient ());
-            ServiceContainer.Register<ITracker> (() => new Tracker (this));
-            ServiceContainer.Register<INetworkPresence> (() => new NetworkPresence (Context, (ConnectivityManager)GetSystemService (ConnectivityService)));
+            var tracker = new Tracker (this);
+            ServiceContainer.Register<ITracker> (() => tracker);
 
             // This needs some services, like ITimeProvider, so run it at the end
-            Phoebe._Reactive.RxChain.Init (Phoebe._Reactive.AppState.Init ());
+            RxChain.Init (AppState.Init ());
         }
 
         private void InitializeStartupComponents ()

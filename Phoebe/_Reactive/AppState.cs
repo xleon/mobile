@@ -5,15 +5,12 @@ using Toggl.Phoebe._Data;
 using Toggl.Phoebe._Data.Models;
 using Toggl.Phoebe._Helpers;
 using XPlatUtils;
-using Toggl.Phoebe.Logging;
-using System.Reflection;
-using System.Linq.Expressions;
 
 namespace Toggl.Phoebe._Reactive
 {
     public class AppState
     {
-		public SettingsState Settings { get; private set; }
+        public SettingsState Settings { get; private set; }
         public Net.AuthResult AuthResult { get; private set; }
         public DownloadResult DownloadResult { get; private set; }
 
@@ -36,7 +33,7 @@ namespace Toggl.Phoebe._Reactive
                     _activeEntryCache = new RichTimeEntry (this, new TimeEntryData ());
                     if (TimeEntries.Count > 0)
                         _activeEntryCache = TimeEntries.Values.SingleOrDefault (
-                            x => x.Data.State == TimeEntryState.Running) ?? _activeEntryCache;
+                                                x => x.Data.State == TimeEntryState.Running) ?? _activeEntryCache;
                 }
                 return _activeEntryCache;
             }
@@ -85,18 +82,18 @@ namespace Toggl.Phoebe._Reactive
             IReadOnlyDictionary<Guid, RichTimeEntry> timeEntries = null)
         {
             return new AppState (
-                settings ?? Settings,
-                authResult ?? AuthResult,
-                downloadResult ?? DownloadResult,
-                user ?? User,
-                workspaces ?? Workspaces,
-                projects ?? Projects,
-                workspaceUsers ?? WorkspaceUsers,
-                projectUsers ?? ProjectUsers,
-                clients ?? Clients,
-                tasks ?? Tasks,
-                tags ?? Tags,
-                timeEntries ?? TimeEntries);
+                       settings ?? Settings,
+                       authResult ?? AuthResult,
+                       downloadResult ?? DownloadResult,
+                       user ?? User,
+                       workspaces ?? Workspaces,
+                       projects ?? Projects,
+                       workspaceUsers ?? WorkspaceUsers,
+                       projectUsers ?? ProjectUsers,
+                       clients ?? Clients,
+                       tasks ?? Tasks,
+                       tags ?? Tags,
+                       timeEntries ?? TimeEntries);
         }
 
         /// <summary>
@@ -105,7 +102,7 @@ namespace Toggl.Phoebe._Reactive
         /// </summary>
         public IReadOnlyDictionary<Guid, T> Update<T> (
             IReadOnlyDictionary<Guid, T> oldItems, IEnumerable<ICommonData> newItems)
-            where T : CommonData
+        where T : CommonData
         {
             var dic = oldItems.ToDictionary (x => x.Key, x => x.Value);
             foreach (var newItem in newItems.OfType<T> ()) {
@@ -139,7 +136,7 @@ namespace Toggl.Phoebe._Reactive
                             newItem, LoadTimeEntryInfo (newItem));
                     } else {
                         dic.Add (newItem.Id, new RichTimeEntry (
-                            newItem, LoadTimeEntryInfo (newItem)));
+                                     newItem, LoadTimeEntryInfo (newItem)));
                     }
                 } else {
                     if (dic.ContainsKey (newItem.Id)) {
@@ -160,24 +157,24 @@ namespace Toggl.Phoebe._Reactive
             var tagsData =
                 teData.Tags.Select (
                     x => Tags.Values.SingleOrDefault (y => y.WorkspaceId == teData.WorkspaceId && y.Name == x))
-                      // TODO: Throw exception if tag was not found?
-                      .Where (x => x != null)
-                      .ToList ();
+                // TODO: Throw exception if tag was not found?
+                .Where (x => x != null)
+                .ToList ();
 
             return new TimeEntryInfo (
-                workspaceData,
-                projectData,
-                clientData,
-                taskData,
-                tagsData,
-                color);
+                       workspaceData,
+                       projectData,
+                       clientData,
+                       taskData,
+                       tagsData,
+                       color);
         }
 
         public IEnumerable<ProjectData> GetUserAccessibleProjects (Guid userId)
         {
             return Projects.Values.Where (
-                p => p.IsActive && (p.IsPrivate || ProjectUsers.Values.Any (x => x.ProjectId == p.Id && x.UserId == userId)))
-                           .OrderBy (p => p.Name);
+                       p => p.IsActive && (p.IsPrivate || ProjectUsers.Values.Any (x => x.ProjectId == p.Id && x.UserId == userId)))
+                   .OrderBy (p => p.Name);
         }
 
         public TimeEntryData GetTimeEntryDraft ()
@@ -199,7 +196,7 @@ namespace Toggl.Phoebe._Reactive
 
         public static AppState Init ()
         {
-			var userData = new UserData ();
+            var userData = new UserData ();
             var settings = SettingsState.Init ();
             try {
                 if (settings.UserId != Guid.Empty) {
@@ -214,18 +211,18 @@ namespace Toggl.Phoebe._Reactive
             }
 
             return new AppState (
-                settings: settings,
-                authResult: Net.AuthResult.None,
-                downloadResult: DownloadResult.Empty,
-                user: userData,
-                workspaces: new Dictionary<Guid, WorkspaceData> (),
-                projects: new Dictionary<Guid, ProjectData> (),
-                workspaceUsers: new Dictionary<Guid, WorkspaceUserData> (),
-                projectUsers: new Dictionary<Guid, ProjectUserData> (),
-                clients: new Dictionary<Guid, ClientData> (),
-                tasks: new Dictionary<Guid, TaskData> (),
-                tags: new Dictionary<Guid, TagData> (),
-                timeEntries: new Dictionary<Guid, RichTimeEntry> ());
+                       settings: settings,
+                       authResult: Net.AuthResult.None,
+                       downloadResult: DownloadResult.Empty,
+                       user: userData,
+                       workspaces: new Dictionary<Guid, WorkspaceData> (),
+                       projects: new Dictionary<Guid, ProjectData> (),
+                       workspaceUsers: new Dictionary<Guid, WorkspaceUserData> (),
+                       projectUsers: new Dictionary<Guid, ProjectUserData> (),
+                       clients: new Dictionary<Guid, ClientData> (),
+                       tasks: new Dictionary<Guid, TaskData> (),
+                       tags: new Dictionary<Guid, TagData> (),
+                       timeEntries: new Dictionary<Guid, RichTimeEntry> ());
         }
     }
 
@@ -241,7 +238,7 @@ namespace Toggl.Phoebe._Reactive
         }
 
         public RichTimeEntry (AppState appState, ITimeEntryData data)
-            : this (data, appState.LoadTimeEntryInfo (data))
+        : this (data, appState.LoadTimeEntryInfo (data))
         {
         }
     }
@@ -308,55 +305,89 @@ namespace Toggl.Phoebe._Reactive
 
     public class SettingsState
     {
-        // TODO RX: Check these correspond to new _Helpers.Settings class properties
+        // Common Default values
+        private static readonly Guid UserIdDefault = Guid.Empty;
+        private static readonly DateTime SyncLastRunDefault = DateTime.MinValue;
+        private static readonly bool UseDefaultTagDefault = true;
+        private static readonly string LastAppVersionDefault = string.Empty;
+        private static readonly int LastReportZoomDefault = 0;
+        private static readonly bool GroupedEntriesDefault = false;
+        private static readonly bool ChooseProjectForNewDefault = false;
+        private static readonly int ReportsCurrentItemDefault = 0;
+        private static readonly string ProjectSortDefault = string.Empty;
+        private static readonly string InstallIdDefault = string.Empty;
+        // iOS only Default values
+        private static readonly string RossPreferredStartViewDefault = string.Empty;
+        private static readonly bool RossReadDurOnlyNoticeDefault = false;
+        private static readonly DateTime RossIgnoreSyncErrorsUntilDefault = DateTime.MinValue;
+        // Android only Default values
+        private static readonly string GcmRegistrationIdDefault = string.Empty;
+        private static readonly string GcmAppVersionDefault = string.Empty;
+        private static readonly bool IdleNotificationDefault = true;
+        private static readonly bool ShowNotificationDefault = true;
+
+        // Common values
         public Guid UserId { get; private set; }
         public DateTime SyncLastRun { get; private set; }
         public bool UseDefaultTag { get; private set; }
         public string LastAppVersion { get; private set; }
-        public string ExperimentId { get; private set; }
         public int LastReportZoom { get; private set; }
         public bool GroupedEntries { get; private set; }
+        public bool ChooseProjectForNew { get; private set; }
+        public int ReportsCurrentItem { get; private set; }
         public string ProjectSort { get; private set; }
+        public string InstallId  { get; private set; }
+        // iOS only  values
+        public string RossPreferredStartView { get; private set; }
+        public bool RossReadDurOnlyNotice { get; private set; }
+        public DateTime RossIgnoreSyncErrorsUntil { get; private set; }
+        // Android only  values
+        public string GcmRegistrationId { get; private set; }
+        public string GcmAppVersion { get; private set; }
+        public bool IdleNotification { get; private set; }
+        public bool ShowNotification { get; private set; }
 
-        SettingsState (
-            Guid userId,
-            DateTime syncLastRun,
-            bool useDefaultTag,
-            string lastAppVersion,
-            int lastReportZoom,
-            bool groupedEntries,
-            string projectSort)
+        SettingsState (SettingsState savedSettingState = null)
         {
-            UserId = userId;
-            SyncLastRun = syncLastRun;
-            UseDefaultTag = useDefaultTag;
-            LastAppVersion = lastAppVersion;
-            LastReportZoom = lastReportZoom;
-            GroupedEntries = groupedEntries;
-            ProjectSort = projectSort;
+            UserId = (savedSettingState == null) ? UserIdDefault : savedSettingState.UserId;
+            SyncLastRun = (savedSettingState == null) ? SyncLastRunDefault : savedSettingState.SyncLastRun;
+            UseDefaultTag = (savedSettingState == null) ? UseDefaultTagDefault : savedSettingState.UseDefaultTag;
+            LastAppVersion = (savedSettingState == null) ? LastAppVersionDefault : savedSettingState.LastAppVersion;
+            LastReportZoom = (savedSettingState == null) ? LastReportZoomDefault : savedSettingState.LastReportZoom;
+            GroupedEntries = (savedSettingState == null) ? GroupedEntriesDefault : savedSettingState.GroupedEntries;
+            ChooseProjectForNew = (savedSettingState == null) ? ChooseProjectForNewDefault : savedSettingState.ChooseProjectForNew;
+            ReportsCurrentItem = (savedSettingState == null) ? ReportsCurrentItemDefault : savedSettingState.ReportsCurrentItem;
+            ProjectSort = (savedSettingState == null) ? ProjectSortDefault : savedSettingState.ProjectSort;
+            InstallId = (savedSettingState == null) ? InstallIdDefault : savedSettingState.InstallId;
+            // iOS only  values
+            RossPreferredStartView = (savedSettingState == null) ? RossPreferredStartViewDefault : savedSettingState.RossPreferredStartView;
+            RossReadDurOnlyNotice = (savedSettingState == null) ? RossReadDurOnlyNoticeDefault : savedSettingState.RossReadDurOnlyNotice;
+            RossIgnoreSyncErrorsUntil = (savedSettingState == null) ? RossIgnoreSyncErrorsUntilDefault : savedSettingState.RossIgnoreSyncErrorsUntil;
+            // Android only  values
+            GcmRegistrationId = (savedSettingState == null) ? GcmRegistrationIdDefault : savedSettingState.GcmRegistrationId;
+            GcmAppVersion = (savedSettingState == null) ? GcmAppVersionDefault : savedSettingState.GcmAppVersion;
+            IdleNotification = (savedSettingState == null) ? IdleNotificationDefault : savedSettingState.IdleNotification;
+            ShowNotification = (savedSettingState == null) ? ShowNotificationDefault : savedSettingState.ShowNotification;
         }
 
         public static SettingsState Init ()
         {
-            return new SettingsState (
-                Settings.UserId,
-                Settings.SyncLastRun,
-                Settings.UseDefaultTag,
-                Settings.LastAppVersion,
-                Settings.LastReportZoom,
-                Settings.GroupedEntries,
-                Settings.ProjectSort
-            );
+            // If saved is empty, return default.
+            if (Settings.SerializedSettings == string.Empty) {
+                return new SettingsState();
+            }
+
+            var saved = Newtonsoft.Json.JsonConvert.DeserializeObject<SettingsState> (Settings.SerializedSettings);
+            return new SettingsState (saved);
         }
 
         private T updateNullable<T> (Nullable<T> value, T @default, Func<T,T> update)
-        where T : struct
-        {
+        where T : struct {
             return value.HasValue ? update (value.Value) : @default;
         }
 
         private T updateReference<T> (T value, T @default, Func<T,T> update)
-            where T : class
+        where T : class
         {
             return value != null ? update (value) : @default;
         }
@@ -364,21 +395,46 @@ namespace Toggl.Phoebe._Reactive
         public SettingsState With (
             Guid? userId = null,
             DateTime? syncLastRun = null,
-            bool? useDefaultTag = null,
+            bool? useTag = null,
             string lastAppVersion = null,
             int? lastReportZoom = null,
             bool? groupedEntries = null,
-            string projectSort = null)
+            bool? chooseProjectForNew = null,
+            int? reportsCurrentItem = null,
+            string projectSort = null,
+            string installId = null,
+            // iOS only  values
+            string rossPreferredStartView = null,
+            bool? rossReadDurOnlyNotice = null,
+            DateTime? rossIgnoreSyncErrorsUntil = null,
+            // Android only  values
+            string gcmRegistrationId = null,
+            string gcmAppVersion = null,
+            bool? idleNotification = null,
+            bool? showNotification = null)
         {
-            return new SettingsState (
-                updateNullable (userId, UserId, x => Settings.UserId = x),
-                updateNullable (syncLastRun, SyncLastRun, x => Settings.SyncLastRun = x),
-                updateNullable (useDefaultTag, UseDefaultTag, x => Settings.UseDefaultTag = x),
-                updateReference (lastAppVersion, LastAppVersion, x => Settings.LastAppVersion = x),
-                updateNullable (lastReportZoom, LastReportZoom, x => Settings.LastReportZoom = x),
-                updateNullable (groupedEntries, GroupedEntries, x => Settings.GroupedEntries = x),
-                updateReference (projectSort, ProjectSort, x => Settings.ProjectSort = x)
-            );
+            var copy = new SettingsState (this);
+            updateNullable (userId, copy.UserId, x => copy.UserId = x);
+            updateNullable (syncLastRun, copy.SyncLastRun, x => copy.SyncLastRun = x);
+            updateNullable (useTag, copy.UseDefaultTag, x => copy.UseDefaultTag = x);
+            updateReference (lastAppVersion, copy.LastAppVersion, x => copy.LastAppVersion = x);
+            updateNullable (lastReportZoom, copy.LastReportZoom, x => copy.LastReportZoom = x);
+            updateNullable (groupedEntries, copy.GroupedEntries, x => copy.GroupedEntries = x);
+            updateNullable (chooseProjectForNew, copy.ChooseProjectForNew, x => copy.ChooseProjectForNew = x);
+            updateNullable (reportsCurrentItem, copy.ReportsCurrentItem, x => copy.ReportsCurrentItem = x);
+            updateReference (projectSort, copy.ProjectSort, x => copy.ProjectSort = x);
+            updateReference (installId, copy.InstallId, x => copy.InstallId = x);
+            // iOS only  values
+            updateReference (rossPreferredStartView, copy.RossPreferredStartView, x => copy.RossPreferredStartView = x);
+            updateNullable (rossReadDurOnlyNotice, copy.RossReadDurOnlyNotice, x => copy.RossReadDurOnlyNotice = x);
+            updateNullable (rossIgnoreSyncErrorsUntil, copy.RossIgnoreSyncErrorsUntil, x => copy.RossIgnoreSyncErrorsUntil = x);
+            // Android only  values
+            updateReference (gcmRegistrationId, copy.GcmRegistrationId, x => copy.GcmRegistrationId = x);
+            updateReference (gcmAppVersion, copy.GcmAppVersion, x => copy.GcmAppVersion = x);
+            updateNullable (idleNotification, copy.IdleNotification, x => copy.IdleNotification = x);
+            updateNullable (showNotification, copy.ShowNotification, x => copy.ShowNotification = x);
+
+            return copy;
         }
     }
 }

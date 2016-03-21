@@ -12,9 +12,9 @@ namespace Toggl.Phoebe.Analytics
 
         public BaseTracker ()
         {
-            var bus = ServiceContainer.Resolve<MessageBus> ();
-            var experiment = ServiceContainer.Resolve<ExperimentManager> ().CurrentExperiment;
-            CurrentExperiment = experiment != null ? experiment.Id : null;
+            //var experiment = ServiceContainer.Resolve<ExperimentManager> ().CurrentExperiment;
+            //CurrentExperiment = experiment != null ? experiment.Id : null;
+            CurrentExperiment = null;
         }
 
         ~BaseTracker ()

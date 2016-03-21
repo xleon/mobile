@@ -74,21 +74,21 @@ namespace Toggl.Phoebe._Reactive
         public static Reducer<AppState> Init ()
         {
             return new TagCompositeReducer<AppState> ()
-            .Add (typeof (DataMsg.Request), ServerRequest)
-            .Add (typeof (DataMsg.ReceivedFromServer), ReceivedFromServer)
-            .Add (typeof (DataMsg.TimeEntriesLoad), TimeEntriesLoad)
-            .Add (typeof (DataMsg.TimeEntryPut), TimeEntryPut)
-            .Add (typeof (DataMsg.TimeEntryDelete), TimeEntryDelete)
-            .Add (typeof (DataMsg.TimeEntryContinue), TimeEntryContinue)
-            .Add (typeof (DataMsg.TimeEntryStop), TimeEntryStop)
-            .Add (typeof (DataMsg.TimeEntriesRemoveWithUndo), TimeEntriesRemoveWithUndo)
-            .Add (typeof (DataMsg.TimeEntriesRestoreFromUndo), TimeEntriesRestoreFromUndo)
-            .Add (typeof (DataMsg.TimeEntriesRemovePermanently), TimeEntriesRemovePermanently)
-            .Add (typeof (DataMsg.TagsPut), TagsPut)
-            .Add (typeof (DataMsg.ClientDataPut), ClientDataPut)
-            .Add (typeof (DataMsg.ProjectDataPut), ProjectDataPut)
-            .Add (typeof (DataMsg.UserDataPut), UserDataPut)
-            .Add (typeof (DataMsg.ResetState), Reset);
+                   .Add (typeof (DataMsg.Request), ServerRequest)
+                   .Add (typeof (DataMsg.ReceivedFromServer), ReceivedFromServer)
+                   .Add (typeof (DataMsg.TimeEntriesLoad), TimeEntriesLoad)
+                   .Add (typeof (DataMsg.TimeEntryPut), TimeEntryPut)
+                   .Add (typeof (DataMsg.TimeEntryDelete), TimeEntryDelete)
+                   .Add (typeof (DataMsg.TimeEntryContinue), TimeEntryContinue)
+                   .Add (typeof (DataMsg.TimeEntryStop), TimeEntryStop)
+                   .Add (typeof (DataMsg.TimeEntriesRemoveWithUndo), TimeEntriesRemoveWithUndo)
+                   .Add (typeof (DataMsg.TimeEntriesRestoreFromUndo), TimeEntriesRestoreFromUndo)
+                   .Add (typeof (DataMsg.TimeEntriesRemovePermanently), TimeEntriesRemovePermanently)
+                   .Add (typeof (DataMsg.TagsPut), TagsPut)
+                   .Add (typeof (DataMsg.ClientDataPut), ClientDataPut)
+                   .Add (typeof (DataMsg.ProjectDataPut), ProjectDataPut)
+                   .Add (typeof (DataMsg.UserDataPut), UserDataPut)
+                   .Add (typeof (DataMsg.ResetState), Reset);
         }
 
         static DataSyncMsg<AppState> ServerRequest (AppState state, DataMsg msg)
@@ -297,10 +297,10 @@ namespace Toggl.Phoebe._Reactive
                 var userDataInDb = updated.Single () as UserData;
 
                 return DataSyncMsg.Create (
-                        state.With (
-                            user: userDataInDb,
-                            authResult: AuthResult.Success,
-                            settings: state.Settings.With (userId: userDataInDb.Id)));
+                           state.With (
+                               user: userDataInDb,
+                               authResult: AuthResult.Success,
+                               settings: state.Settings.With (userId: userDataInDb.Id)));
             },
             ex => {
                 return DataSyncMsg.Create (state.With (

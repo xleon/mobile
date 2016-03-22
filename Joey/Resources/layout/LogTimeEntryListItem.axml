@@ -53,7 +53,7 @@
         android:id="@+id/swipe_layout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:elevation="5dp"
+        android:elevation="1dp"
         android:background="@android:color/white">
         <LinearLayout
             android:id="@+id/LinearEntryLayout"

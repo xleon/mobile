@@ -11,6 +11,7 @@
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
         <item name="android:windowBackground">@color/window_background</item>
+        <item name="android:windowSharedElementsUseOverlay">true</item>
         <item name="colorPrimary">@color/primary</item> <!-- Toolbar branding color -->
         <item name="colorPrimaryDark">@color/primary_dark</item> <!-- statusBarColor is inherited from this -->
         <item name="colorAccent">@color/window_background</item>

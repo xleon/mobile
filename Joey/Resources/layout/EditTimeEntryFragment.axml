@@ -4,7 +4,7 @@
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:elevation="3dp"
+    android:elevation="1dp"
     android:background="@color/window_background">
     <android.support.v7.widget.Toolbar
         android:id="@+id/EditTimeEntryFragmentToolbar"
@@ -17,6 +17,7 @@
         android:layout_height="wrap_content">
         <LinearLayout
             android:id="@+id/EditTimeEntryContent"
+            android:elevation="0dp"
             android:orientation="vertical"
             android:minWidth="25px"
             android:minHeight="25px"

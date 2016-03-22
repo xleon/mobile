@@ -118,6 +118,8 @@ namespace Toggl.Joey.UI.Fragments
 
         public async override void OnViewCreated (View view, Bundle savedInstanceState)
         {
+            AllowEnterTransitionOverlap = true;
+            AllowReturnTransitionOverlap = true;
             base.OnViewCreated (view, savedInstanceState);
 
             // init viewModel
@@ -168,10 +170,33 @@ namespace Toggl.Joey.UI.Fragments
             var timeEntryData = await ViewModel.StartStopTimeEntry ();
             if (timeEntryData.State == TimeEntryState.Running) {
                 NewTimeEntry = true;
-                var frg = EditTimeEntryFragment.NewInstance (timeEntryData.Id.ToString ());
-                ((MainDrawerActivity)Activity).OpenSubView (frg, frg.Tag);
-                // TODO open-edit
-                // timeEntryData.Id.ToString ()
+                var editFragment = EditTimeEntryFragment.NewInstance (timeEntryData.Id.ToString ());
+
+                if (Android.OS.Build.VERSION.SdkInt >= Android.OS.BuildVersionCodes.Lollipop) {
+                    var inflater = TransitionInflater.From (Activity);
+                    var logEditTransition = inflater.InflateTransition (Resource.Transition.log_edit_transition);
+
+                    SharedElementReturnTransition = logEditTransition;
+                    SharedElementEnterTransition = logEditTransition;
+                    editFragment.SharedElementEnterTransition = logEditTransition;
+                    editFragment.SharedElementReturnTransition = logEditTransition;
+
+                    ExitTransition = inflater.InflateTransition (Android.Resource.Transition.Move);
+                    EnterTransition = inflater.InflateTransition (Android.Resource.Transition.NoTransition);
+                    editFragment.EnterTransition = inflater.InflateTransition (Android.Resource.Transition.Fade);
+                    editFragment.ReturnTransition = inflater.InflateTransition (Android.Resource.Transition.Fade);
+                }
+
+                var bundle = new Bundle ();
+                StartStopBtn.TransitionName = "fab_transition";
+                bundle.PutString (EditTimeEntryFragment.TransitionNameFabArgument, StartStopBtn.TransitionName);
+                editFragment.Arguments = bundle;
+
+                FragmentManager.BeginTransaction ()
+                .AddSharedElement (StartStopBtn, StartStopBtn.TransitionName)
+                .Replace (Resource.Id.ContentFrameLayout, editFragment)
+                .AddToBackStack (editFragment.Tag)
+                .Commit ();
             }
         }
 

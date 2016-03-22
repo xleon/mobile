@@ -9,6 +9,7 @@ using Android.InputMethodServices;
 using Android.OS;
 using Android.Transitions;
 using Android.Views;
+using Android.Views.Animations;
 using Android.Views.InputMethods;
 using Android.Widget;
 using GalaSoft.MvvmLight.Helpers;
@@ -33,6 +34,7 @@ namespace Toggl.Joey.UI.Fragments
         ChangeDateTimeDialogFragment.IChangeDateTime,
         IOnTagSelectedHandler
     {
+        public static readonly string TransitionNameFabArgument = "TRANS_FAB";
         public static readonly string TransitionNameBodyArgument = "TRANS_BODY";
         public static readonly string TransitionNameDurationArgument = "TRANS_DURATION";
         public static readonly string TransitionNameDescriptionArgument = "TRANS_DESCRIPTION";
@@ -82,6 +84,9 @@ namespace Toggl.Joey.UI.Fragments
 
         public override View OnCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
         {
+            AllowEnterTransitionOverlap = true;
+            AllowReturnTransitionOverlap = true;
+
             var view = inflater.Inflate (Resource.Layout.EditTimeEntryFragment, container, false);
             var activityToolbar = view.FindViewById<Toolbar> (Resource.Id.EditTimeEntryFragmentToolbar);
             var activity = (MainDrawerActivity)Activity;
@@ -117,12 +122,14 @@ namespace Toggl.Joey.UI.Fragments
 
             ((MainDrawerActivity)Activity).ToolbarMode = MainDrawerActivity.ToolbarModes.SubView;
 
-            if (Arguments.ContainsKey (TransitionNameBodyArgument)) {
+            if (Arguments != null && Arguments.ContainsKey (TransitionNameBodyArgument)) {
                 EditContentView.TransitionName = Arguments.GetString (TransitionNameBodyArgument);
                 DescriptionField.TransitionName = Arguments.GetString (TransitionNameDescriptionArgument);
                 DurationTextView.TransitionName = Arguments.GetString (TransitionNameDurationArgument);
                 DescriptionField.TextField.Text = Arguments.GetString (TransitionValueDescriptionArgument);
                 DurationTextView.Text = Arguments.GetString (TransitionValueDurationArgument);
+            } else if (Arguments != null && Arguments.ContainsKey (TransitionNameFabArgument)) {
+                EditContentView.TransitionName = Arguments.GetString (TransitionNameFabArgument);
             }
 
             HasOptionsMenu = true;
@@ -211,8 +218,8 @@ namespace Toggl.Joey.UI.Fragments
             editTimeEntryProgressBar.Visibility = ViewStates.Gone;
 
             if (LogTimeEntriesListFragment.NewTimeEntry) {
-                DescriptionField.RequestFocus ();
-                ((MainDrawerActivity)Activity).ShowSoftKeyboard (DescriptionField.TextField, false);
+//                DescriptionField.RequestFocus ();
+//                ((MainDrawerActivity)Activity).ShowSoftKeyboard (DescriptionField.TextField, false);
             }
         }
 
@@ -302,6 +309,7 @@ namespace Toggl.Joey.UI.Fragments
                 ViewModel.SaveManual ();
             }
 
+            LogTimeEntriesListFragment.NewTimeEntry = false;
             Activity.OnBackPressed ();
             return base.OnOptionsItemSelected (item);
         }

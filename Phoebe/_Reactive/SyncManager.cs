@@ -342,7 +342,7 @@ namespace Toggl.Phoebe._Reactive
                             }
                         }
 
-						// TODO RX: How to get the tag without a remote id?
+                        // TODO RX: How to get the tag without a remote id?
                         // TODO: Getting some null reference errors in this code
                         //foreach (var tag in entry.Tags) {
                         //    if (state.Tags.Values.All (x => x.WorkspaceRemoteId != entry.WorkspaceRemoteId || x.Name != tag) &&

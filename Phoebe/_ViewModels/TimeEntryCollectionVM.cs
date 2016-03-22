@@ -59,7 +59,7 @@ namespace Toggl.Phoebe._ViewModels
                 // Swap remove events to delete normal items before headers.
                 // iOS requierement.
                 diffs = Diff.SortRemoveEvents<IHolder,DateHolder> (diffs);
-
+                Console.WriteLine ("updates: " + diffs.Count);
                 // CollectionChanged events must be fired on UI thread
                 ServiceContainer.Resolve<IPlatformUtils> ().DispatchOnUIThread (() => {
                     foreach (var diff in diffs) {

@@ -414,7 +414,7 @@ namespace Toggl.Phoebe._Reactive
             bool? showNotification = null,
             bool? showWelcome = null)
         {
-            var copy = new SettingsState ();
+            var copy = Init();
             updateNullable (userId, copy.UserId, x => copy.UserId = x);
             updateNullable (syncLastRun, copy.SyncLastRun, x => copy.SyncLastRun = x);
             updateNullable (useTag, copy.UseDefaultTag, x => copy.UseDefaultTag = x);
@@ -424,17 +424,17 @@ namespace Toggl.Phoebe._Reactive
             updateNullable (chooseProjectForNew, copy.ChooseProjectForNew, x => copy.ChooseProjectForNew = x);
             updateNullable (reportsCurrentItem, copy.ReportsCurrentItem, x => copy.ReportsCurrentItem = x);
             updateReference (projectSort, copy.ProjectSort, x => copy.ProjectSort = x);
-            updateReference(installId, copy.InstallId, x => copy.InstallId = x);
+            updateReference (installId, copy.InstallId, x => copy.InstallId = x);
             // iOS only  values
-            updateReference(rossPreferredStartView, copy.RossPreferredStartView, x => copy.RossPreferredStartView = x);
+            updateReference (rossPreferredStartView, copy.RossPreferredStartView, x => copy.RossPreferredStartView = x);
             updateNullable (rossReadDurOnlyNotice, copy.RossReadDurOnlyNotice, x => copy.RossReadDurOnlyNotice = x);
-            updateNullable(rossIgnoreSyncErrorsUntil, copy.RossIgnoreSyncErrorsUntil, x => copy.RossIgnoreSyncErrorsUntil = x);
+            updateNullable (rossIgnoreSyncErrorsUntil, copy.RossIgnoreSyncErrorsUntil, x => copy.RossIgnoreSyncErrorsUntil = x);
             // Android only  values
-            updateReference(gcmRegistrationId, copy.GcmRegistrationId, x => copy.GcmRegistrationId = x);
-            updateReference(gcmAppVersion, copy.GcmAppVersion, x => copy.GcmAppVersion = x);
-            updateNullable(idleNotification, copy.IdleNotification, x => copy.IdleNotification = x);
-            updateNullable(showNotification, copy.ShowNotification, x => copy.ShowNotification = x);
-            updateNullable(showWelcome, copy.ShowWelcome, x => copy.ShowWelcome = x);
+            updateReference (gcmRegistrationId, copy.GcmRegistrationId, x => copy.GcmRegistrationId = x);
+            updateReference (gcmAppVersion, copy.GcmAppVersion, x => copy.GcmAppVersion = x);
+            updateNullable (idleNotification, copy.IdleNotification, x => copy.IdleNotification = x);
+            updateNullable (showNotification, copy.ShowNotification, x => copy.ShowNotification = x);
+            updateNullable (showWelcome, copy.ShowWelcome, x => copy.ShowWelcome = x);
 
             // Save new copy serialized
             Settings.SerializedSettings = Newtonsoft.Json.JsonConvert.SerializeObject (copy);

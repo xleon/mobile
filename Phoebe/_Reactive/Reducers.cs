@@ -88,7 +88,8 @@ namespace Toggl.Phoebe._Reactive
                    .Add (typeof (DataMsg.ClientDataPut), ClientDataPut)
                    .Add (typeof (DataMsg.ProjectDataPut), ProjectDataPut)
                    .Add (typeof (DataMsg.UserDataPut), UserDataPut)
-                   .Add (typeof (DataMsg.ResetState), Reset);
+                   .Add (typeof (DataMsg.ResetState), Reset)
+                   .Add (typeof (DataMsg.UpdateSetting), UpdateSettings);
         }
 
         static DataSyncMsg<AppState> ServerRequest (AppState state, DataMsg msg)
@@ -150,23 +151,21 @@ namespace Toggl.Phoebe._Reactive
         static DataSyncMsg<AppState> ReceivedFromServer (AppState state, DataMsg msg)
         {
             var serverMsg = msg as DataMsg.ReceivedFromServer;
-            return serverMsg.Data.Match (
-                receivedData => {
-                    var dataStore = ServiceContainer.Resolve <ISyncDataStore> ();
+            return serverMsg.Data.Match (receivedData => {
 
-                    var updated = dataStore.Update (ctx => {
-                        foreach (var newData in receivedData) {
-                            ICommonData oldData = null;
-                            string tableName = newData.GetType ().Name;
-                            // Check first if the newData has localId assigned
-                            // (for example, the ones returned by TogglClient.Create)
-                            if (newData.Id != Guid.Empty) {
-                                oldData = ctx.GetByColumn (newData.GetType (), nameof (newData.Id), newData.Id);
-                            }
-                            // If no localId, check if an item with the same RemoteId is in the db
-                            else {
-                                oldData = ctx.GetByColumn (newData.GetType (), nameof (newData.RemoteId), newData.RemoteId);
-                            }
+                var dataStore = ServiceContainer.Resolve <ISyncDataStore> ();
+                var updated = dataStore.Update (ctx => {
+                    foreach (var newData in receivedData) {
+                        ICommonData oldData = null;
+                        // Check first if the newData has localId assigned
+                        // (for example, the ones returned by TogglClient.Create)
+                        if (newData.Id != Guid.Empty) {
+                            oldData = ctx.GetByColumn (newData.GetType (), nameof (ICommonData.Id), newData.Id);
+                        }
+                        // If no localId, check if an item with the same RemoteId is in the db
+                        else {
+                            oldData = ctx.GetByColumn (newData.GetType (), nameof (ICommonData.RemoteId), newData.RemoteId);
+                        }
 
                         if (oldData != null) {
                             if (newData.CompareTo (oldData) >= 0) {
@@ -211,9 +210,7 @@ namespace Toggl.Phoebe._Reactive
                                timeEntries: state.UpdateTimeEntries (updated)
                            ));
             },
-            ex => DataSyncMsg.Create (
-                state.With (downloadResult: state.DownloadResult.With (isSyncing: false, hadErrors: true)))
-                   );
+            ex => DataSyncMsg.Create (state.With (downloadResult: state.DownloadResult.With (isSyncing: false, hadErrors: true))));
         }
 
         static DataSyncMsg<AppState> TimeEntryPut (AppState state, DataMsg msg)
@@ -314,7 +311,7 @@ namespace Toggl.Phoebe._Reactive
         {
             if (entryData.State != expected) {
                 throw new InvalidOperationException (
-                    String.Format ("Cannot {0} a time entry ({1}) in {2} state.",
+                    string.Format ("Cannot {0} a time entry ({1}) in {2} state.",
                                    action, entryData.Id, entryData.State));
             }
         }
@@ -421,11 +418,23 @@ namespace Toggl.Phoebe._Reactive
             // Reset state
             var appState = AppState.Init ();
 
-            // TODO: Clean settings?
             // TODO: Ping analytics?
             // TODO: Call Log service?
 
             return DataSyncMsg.Create (appState);
+        }
+
+        static DataSyncMsg<AppState> UpdateSettings (AppState state, DataMsg msg)
+        {
+            var info = (msg as DataMsg.UpdateSetting).Data.ForceLeft ();
+            SettingsState newSettings = state.Settings;
+
+            if (info.Item1 == nameof (SettingsState.ShowWelcome)) {
+                newSettings = newSettings.With (showWelcome: (bool)info.Item2);
+            }
+
+            return DataSyncMsg.Create (
+                       state.With (settings:newSettings));
         }
 
         #region Util

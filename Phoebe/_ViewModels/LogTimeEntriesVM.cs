@@ -117,6 +117,9 @@ namespace Toggl.Phoebe._ViewModels
                 RxChain.Send (new DataMsg.TimeEntryContinue (timeEntryHolder.Entry.Data));
                 ServiceContainer.Resolve<ITracker> ().SendTimerStartEvent (TimerStartSource.AppContinue);
             }
+
+            // Set ShowWelcome setting to false.
+            RxChain.Send (new DataMsg.UpdateSetting (nameof (SettingsState.ShowWelcome),false));
         }
 
         public void StartStopTimeEntry (bool startedByFAB = false)
@@ -139,12 +142,24 @@ namespace Toggl.Phoebe._ViewModels
             RxChain.Send (new DataMsg.TimeEntryDelete (te.Entry.Data));
         }
 
+        #region Extra
         public void ReportExperiment (string actionKey, string actionValue)
         {
             if (Collection.Count == 0 && StoreManager.Singleton.AppState.Settings.ShowWelcome) {
                 OBMExperimentManager.Send (actionKey, actionValue, StoreManager.Singleton.AppState.User);
             }
         }
+
+        public bool IsInExperiment ()
+        {
+            return OBMExperimentManager.IncludedInExperiment (StoreManager.Singleton.AppState.User);
+        }
+
+        public bool IsWelcomeMessageShown ()
+        {
+            return StoreManager.Singleton.AppState.Settings.ShowWelcome;
+        }
+        #endregion
 
         private void UpdateState (AppState appState, DownloadResult prevDownloadResult)
         {
@@ -163,14 +178,13 @@ namespace Toggl.Phoebe._ViewModels
                 }
 
                 // Don't update ActiveEntry if both ActiveEntry and appState.ActiveEntry are empty
-                if (ActiveEntry == null || !(ActiveEntry.Data.Id == Guid.Empty && appState.ActiveEntry.Data.Id == Guid.Empty)) {
+                if (ActiveEntry == null || ! (ActiveEntry.Data.Id == Guid.Empty && appState.ActiveEntry.Data.Id == Guid.Empty)) {
                     ActiveEntry = appState.ActiveEntry;
                     IsEntryRunning = ActiveEntry.Data.State == TimeEntryState.Running;
                     // Check if an entry is running.
                     if (IsEntryRunning && !durationTimer.Enabled) {
                         durationTimer.Start ();
-                    }
-                    else if (!IsEntryRunning && durationTimer.Enabled) {
+                    } else if (!IsEntryRunning && durationTimer.Enabled) {
                         durationTimer.Stop ();
                         Duration = TimeSpan.FromSeconds (0).ToString ().Substring (0, 8);
                     }

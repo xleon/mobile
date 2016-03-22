@@ -250,7 +250,7 @@ namespace Toggl.Joey.UI.Fragments
                 var inflater = TransitionInflater.From (Activity);
                 ExitTransition = inflater.InflateTransition (Android.Resource.Transition.Fade);
                 EnterTransition = inflater.InflateTransition (Android.Resource.Transition.Fade);
-                projectListFragment.EnterTransition = inflater.InflateTransition (Android.Resource.Transition.SlideBottom);
+                projectListFragment.EnterTransition = inflater.InflateTransition (Android.Resource.Transition.Fade);
                 projectListFragment.ReturnTransition = inflater.InflateTransition (Android.Resource.Transition.Fade);
             }
 

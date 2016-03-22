@@ -10,7 +10,7 @@ namespace Toggl.Phoebe
         public static readonly Uri ApiUrl = new Uri ("https://mobile.toggl.space/api/");
         public static readonly Uri ReportsApiUrl = new Uri ("https://mobile.toggl.space/reports/api/");
         #else
-        public static readonly Uri ApiUrl = new Uri ("https://mobile.toggl.com/
+        public static readonly Uri ApiUrl = new Uri ("https://mobile.toggl.com/api/");
         public static readonly Uri ReportsApiUrl = new Uri ("https://mobile.toggl.com/reports/api/");
         #endif
         public static readonly Uri StagingUrl = new Uri ("https://mobile.toggl.space/api/");

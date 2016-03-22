@@ -95,7 +95,7 @@ namespace Toggl.Joey.UI.Fragments
                 recyclerView.SetAdapter (logAdapter);
             });
             hasItemsBinding = this.SetBinding (()=> ViewModel.Collection.Count).WhenSourceChanges (SetCollectionState);
-            loadInfoBinding = this.SetBinding (()=> ViewModel.LoadInfo).WhenSourceChanges (SetFooterState);
+            //loadInfoBinding = this.SetBinding (()=> ViewModel.LoadInfo).WhenSourceChanges (SetFooterState);
             fabBinding = this.SetBinding (() => ViewModel.IsEntryRunning, () => StartStopBtn.ButtonAction)
                          .ConvertSourceToTarget (isRunning => isRunning ? FABButtonState.Stop : FABButtonState.Start);
 
@@ -261,7 +261,7 @@ namespace Toggl.Joey.UI.Fragments
             }
 
             View emptyView = emptyMessageView;
-            var isWelcome = ServiceContainer.Resolve<Phoebe.Data.ISettingsStore> ().ShowWelcome;
+            var isWelcome = false; //ServiceContainer.Resolve<Phoebe.Data.ISettingsStore> ().ShowWelcome;
             var hasItems = ViewModel.Collection.Count > 0;
 
             // TODO RX: OBM Experiments

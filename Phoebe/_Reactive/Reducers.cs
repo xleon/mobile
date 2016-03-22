@@ -74,21 +74,22 @@ namespace Toggl.Phoebe._Reactive
         public static Reducer<AppState> Init ()
         {
             return new TagCompositeReducer<AppState> ()
-            .Add (typeof (DataMsg.Request), ServerRequest)
-            .Add (typeof (DataMsg.ReceivedFromServer), ReceivedFromServer)
-            .Add (typeof (DataMsg.TimeEntriesLoad), TimeEntriesLoad)
-            .Add (typeof (DataMsg.TimeEntryPut), TimeEntryPut)
-            .Add (typeof (DataMsg.TimeEntryDelete), TimeEntryDelete)
-            .Add (typeof (DataMsg.TimeEntryContinue), TimeEntryContinue)
-            .Add (typeof (DataMsg.TimeEntryStop), TimeEntryStop)
-            .Add (typeof (DataMsg.TimeEntriesRemoveWithUndo), TimeEntriesRemoveWithUndo)
-            .Add (typeof (DataMsg.TimeEntriesRestoreFromUndo), TimeEntriesRestoreFromUndo)
-            .Add (typeof (DataMsg.TimeEntriesRemovePermanently), TimeEntriesRemovePermanently)
-            .Add (typeof (DataMsg.TagsPut), TagsPut)
-            .Add (typeof (DataMsg.ClientDataPut), ClientDataPut)
-            .Add (typeof (DataMsg.ProjectDataPut), ProjectDataPut)
-            .Add (typeof (DataMsg.UserDataPut), UserDataPut)
-            .Add (typeof (DataMsg.ResetState), Reset);
+                   .Add (typeof (DataMsg.Request), ServerRequest)
+                   .Add (typeof (DataMsg.ReceivedFromServer), ReceivedFromServer)
+                   .Add (typeof (DataMsg.TimeEntriesLoad), TimeEntriesLoad)
+                   .Add (typeof (DataMsg.TimeEntryPut), TimeEntryPut)
+                   .Add (typeof (DataMsg.TimeEntryDelete), TimeEntryDelete)
+                   .Add (typeof (DataMsg.TimeEntryContinue), TimeEntryContinue)
+                   .Add (typeof (DataMsg.TimeEntryStop), TimeEntryStop)
+                   .Add (typeof (DataMsg.TimeEntriesRemoveWithUndo), TimeEntriesRemoveWithUndo)
+                   .Add (typeof (DataMsg.TimeEntriesRestoreFromUndo), TimeEntriesRestoreFromUndo)
+                   .Add (typeof (DataMsg.TimeEntriesRemovePermanently), TimeEntriesRemovePermanently)
+                   .Add (typeof (DataMsg.TagsPut), TagsPut)
+                   .Add (typeof (DataMsg.ClientDataPut), ClientDataPut)
+                   .Add (typeof (DataMsg.ProjectDataPut), ProjectDataPut)
+                   .Add (typeof (DataMsg.UserDataPut), UserDataPut)
+                   .Add (typeof (DataMsg.ResetState), Reset)
+                   .Add (typeof (DataMsg.UpdateSetting), UpdateSettings);
         }
 
         static DataSyncMsg<AppState> ServerRequest (AppState state, DataMsg msg)
@@ -150,70 +151,66 @@ namespace Toggl.Phoebe._Reactive
         static DataSyncMsg<AppState> ReceivedFromServer (AppState state, DataMsg msg)
         {
             var serverMsg = msg as DataMsg.ReceivedFromServer;
-            return serverMsg.Data.Match (
-                receivedData => {
-                    var dataStore = ServiceContainer.Resolve <ISyncDataStore> ();
+            return serverMsg.Data.Match (receivedData => {
 
-                    var updated = dataStore.Update (ctx => {
-                        foreach (var newData in receivedData) {
-                            ICommonData oldData = null;
-                            string tableName = newData.GetType ().Name;
-                            // Check first if the newData has localId assigned
-                            // (for example, the ones returned by TogglClient.Create)
-                            if (newData.Id != Guid.Empty) {
-                                oldData = ctx.GetByColumn (newData.GetType (), nameof (newData.Id), newData.Id);
-                            }
-                            // If no localId, check if an item with the same RemoteId is in the db
-                            else {
-                                oldData = ctx.GetByColumn (newData.GetType (), nameof (newData.RemoteId), newData.RemoteId);
-                            }
+                var dataStore = ServiceContainer.Resolve <ISyncDataStore> ();
+                var updated = dataStore.Update (ctx => {
+                    foreach (var newData in receivedData) {
+                        ICommonData oldData = null;
+                        // Check first if the newData has localId assigned
+                        // (for example, the ones returned by TogglClient.Create)
+                        if (newData.Id != Guid.Empty) {
+                            oldData = ctx.GetByColumn (newData.GetType (), nameof (ICommonData.Id), newData.Id);
+                        }
+                        // If no localId, check if an item with the same RemoteId is in the db
+                        else {
+                            oldData = ctx.GetByColumn (newData.GetType (), nameof (ICommonData.RemoteId), newData.RemoteId);
+                        }
 
-                            if (oldData != null) {
-                                if (newData.CompareTo (oldData) >= 0) {
-                                    newData.Id = oldData.Id;
-                                    PutOrDelete (ctx, newData);
-                                }
-                            } else {
-                                newData.Id = Guid.NewGuid (); // Assign new Id
+                        if (oldData != null) {
+                            if (newData.CompareTo (oldData) >= 0) {
+                                newData.Id = oldData.Id;
                                 PutOrDelete (ctx, newData);
                             }
+                        } else {
+                            newData.Id = Guid.NewGuid (); // Assign new Id
+                            PutOrDelete (ctx, newData);
                         }
-
-                        if (serverMsg.FullSyncInfo != null) {
-                            // TODO: Throw exception if this is not successful?
-                            ctx.Put (serverMsg.FullSyncInfo.Item1);
-                        }
-                    });
-
-                    var hasMore = receivedData.OfType<TimeEntryData> ().Any ();
-                    var userData = state.User;
-                    var settings = state.Settings;
-
-                    if (serverMsg.FullSyncInfo != null) {
-                        userData = serverMsg.FullSyncInfo.Item1;
-                        settings = settings.With (syncLastRun: serverMsg.FullSyncInfo.Item2);
                     }
 
-                    return DataSyncMsg.Create (
-                        state.With (
-                            user: userData,
-                            settings: settings,
-                            downloadResult: state.DownloadResult.With (isSyncing: false, hasMore: hasMore, hadErrors: false),
-                            workspaces: state.Update (state.Workspaces, updated),
-                            projects: state.Update (state.Projects, updated),
-                            workspaceUsers: state.Update (state.WorkspaceUsers, updated),
-                            projectUsers: state.Update (state.ProjectUsers, updated),
-                            clients: state.Update (state.Clients, updated),
-                            tasks: state.Update (state.Tasks, updated),
-                            tags: state.Update (state.Tags, updated),
-                            // TODO: Check if the updated entries are within the current scroll view
-                            // Probably it's better to do this check in UpdateTimeEntries
-                            timeEntries: state.UpdateTimeEntries (updated)
-                        ));
-                },
-                ex => DataSyncMsg.Create (
-                    state.With (downloadResult: state.DownloadResult.With (isSyncing: false, hadErrors: true)))
-            );
+                    if (serverMsg.FullSyncInfo != null) {
+                        // TODO: Throw exception if this is not successful?
+                        ctx.Put (serverMsg.FullSyncInfo.Item1);
+                    }
+                });
+
+                var hasMore = receivedData.OfType<TimeEntryData> ().Any ();
+                var userData = state.User;
+                var settings = state.Settings;
+
+                if (serverMsg.FullSyncInfo != null) {
+                    userData = serverMsg.FullSyncInfo.Item1;
+                    settings = settings.With (syncLastRun: serverMsg.FullSyncInfo.Item2);
+                }
+
+                return DataSyncMsg.Create (
+                           state.With (
+                               user: userData,
+                               settings: settings,
+                               downloadResult: state.DownloadResult.With (isSyncing: false, hasMore: hasMore, hadErrors: false),
+                               workspaces: state.Update (state.Workspaces, updated),
+                               projects: state.Update (state.Projects, updated),
+                               workspaceUsers: state.Update (state.WorkspaceUsers, updated),
+                               projectUsers: state.Update (state.ProjectUsers, updated),
+                               clients: state.Update (state.Clients, updated),
+                               tasks: state.Update (state.Tasks, updated),
+                               tags: state.Update (state.Tags, updated),
+                               // TODO: Check if the updated entries are within the current scroll view
+                               // Probably it's better to do this check in UpdateTimeEntries
+                               timeEntries: state.UpdateTimeEntries (updated)
+                           ));
+            },
+            ex => DataSyncMsg.Create (state.With (downloadResult: state.DownloadResult.With (isSyncing: false, hadErrors: true))));
         }
 
         static DataSyncMsg<AppState> TimeEntryPut (AppState state, DataMsg msg)
@@ -297,10 +294,10 @@ namespace Toggl.Phoebe._Reactive
                 var userDataInDb = updated.Single () as UserData;
 
                 return DataSyncMsg.Create (
-                        state.With (
-                            user: userDataInDb,
-                            authResult: AuthResult.Success,
-                            settings: state.Settings.With (userId: userDataInDb.Id)));
+                           state.With (
+                               user: userDataInDb,
+                               authResult: AuthResult.Success,
+                               settings: state.Settings.With (userId: userDataInDb.Id)));
             },
             ex => {
                 return DataSyncMsg.Create (state.With (
@@ -314,7 +311,7 @@ namespace Toggl.Phoebe._Reactive
         {
             if (entryData.State != expected) {
                 throw new InvalidOperationException (
-                    String.Format ("Cannot {0} a time entry ({1}) in {2} state.",
+                    string.Format ("Cannot {0} a time entry ({1}) in {2} state.",
                                    action, entryData.Id, entryData.State));
             }
         }
@@ -415,16 +412,29 @@ namespace Toggl.Phoebe._Reactive
             var dataStore = ServiceContainer.Resolve <ISyncDataStore> ();
             dataStore.WipeTables ();
 
-            // TODO RX: Clear platform settings?
+            // Clear platform settings.
+            Settings.SerializedSettings = string.Empty;
 
             // Reset state
             var appState = AppState.Init ();
 
-            // TODO: Clean settings?
             // TODO: Ping analytics?
             // TODO: Call Log service?
 
             return DataSyncMsg.Create (appState);
+        }
+
+        static DataSyncMsg<AppState> UpdateSettings (AppState state, DataMsg msg)
+        {
+            var info = (msg as DataMsg.UpdateSetting).Data.ForceLeft ();
+            SettingsState newSettings = state.Settings;
+
+            if (info.Item1 == nameof (SettingsState.ShowWelcome)) {
+                newSettings = newSettings.With (showWelcome: (bool)info.Item2);
+            }
+
+            return DataSyncMsg.Create (
+                       state.With (settings:newSettings));
         }
 
         #region Util

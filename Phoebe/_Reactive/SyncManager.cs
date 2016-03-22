@@ -282,7 +282,7 @@ namespace Toggl.Phoebe._Reactive
             const int endDate = Literals.TimeEntryLoadDays;
 
             try {
-				IList<TimeEntryJson> jsonEntries = null;
+                IList<TimeEntryJson> jsonEntries = null;
                 Tuple<UserData, DateTime> fullSyncInfo = null;
                 var newWorkspaces = new List<WorkspaceJson> ();
                 var newProjects = new List<ProjectJson> ();
@@ -314,7 +314,7 @@ namespace Toggl.Phoebe._Reactive
 
                         if (entry.ProjectRemoteId.HasValue) {
                             var projectData = state.Projects.Values.FirstOrDefault (
-                                x => x.RemoteId == entry.ProjectRemoteId);
+                                                  x => x.RemoteId == entry.ProjectRemoteId);
 
                             if (projectData != null) {
                                 clientRemoteId = projectData.ClientRemoteId;
@@ -342,7 +342,7 @@ namespace Toggl.Phoebe._Reactive
                             }
                         }
 
-						// TODO RX: How to get the tag without a remote id?
+                        // TODO RX: How to get the tag without a remote id?
                         // TODO: Getting some null reference errors in this code
                         //foreach (var tag in entry.Tags) {
                         //    if (state.Tags.Values.All (x => x.WorkspaceRemoteId != entry.WorkspaceRemoteId || x.Name != tag) &&

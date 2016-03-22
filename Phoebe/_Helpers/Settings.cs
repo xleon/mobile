@@ -1,4 +1,6 @@
-﻿using System;
+﻿using System.Reflection;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 using Plugin.Settings;
 using Plugin.Settings.Abstractions;
 
@@ -11,173 +13,76 @@ namespace Toggl.Phoebe._Helpers
     /// </summary>
     public static class Settings
     {
-        private static ISettings AppSettings { get { return CrossSettings.Current; } }
-
-        #region Setting Constants
-
-        //
-        // Common keys
-        //
-        private const string UserIdKey = "phoebeUserId";
-        private const string ApiTokenKey = "phoebeApiToken";
-        private const string SyncLastRunKey = "phoebeSyncLastRun";
-        private const string UseDefaultTagKey = "phoebeUseDefaultTag";
-        private const string LastAppVersionKey = "phoebeLastAppVersion";
-        private const string ExperimentIdKey = "phoebeExperimentId";
-        private const string LastReportZoomKey = "lastReportZoomKey";
-        private const string GroupedEntriesKey = "groupedEntriesKey";
-        private const string ChooseProjectForNewKey = "chooseProjectForNewKey";
-        private const string ReportsCurrentItemKey = "reportsCurrentItem";
-        private const string ProjectSortKey = "projectSortKey";
-        private const string InstallIdKey = "installId";
-
-        // iOS only keys
-        private const string RossPreferredStartViewKey = "rossPreferredStartView";
-        private const string RossReadDurOnlyNoticeKey = "rossReadDurOnlyNotice";
-
-        // Android only keys
-        private const string GcmRegistrationIdKey = "joeyGcmRegistrationId";
-        private const string GcmAppVersionKey = "joeyGcmAppVersion";
-        private const string IdleNotificationKey = "idleNotification";
-        private const string ShowNotificationKey = "disableNotificationKey";
-
-        //
-        // Common Default values
-        //
-        private static readonly Guid UserIdDefault = Guid.Empty;
-        private static readonly string ApiTokenDefault = string.Empty;
-        private static readonly DateTime SyncLastRunDefault = DateTime.MinValue;
-        private static readonly bool UseDefaultTagDefault = true;
-        private static readonly string LastAppVersionDefault = string.Empty;
-        private static readonly int LastReportZoomDefault = 0;
-        private static readonly bool GroupedEntriesDefault = false;
-        private static readonly bool ChooseProjectForNewDefault = false;
-        private static readonly int ReportsCurrentItemDefault = 0;
-        private static readonly string ProjectSortDefault = string.Empty;
-        private static readonly string InstallIdDefault = string.Empty;
-
-        // iOS only Default values
-        private static readonly string RossPreferredStartViewDefault = string.Empty;
-        private static readonly bool RossReadDurOnlyNoticeDefault = false;
-        private static readonly DateTime RossIgnoreSyncErrorsUntilDefault = DateTime.MinValue;
-
-        // Android only Default values
-        private static readonly string GcmRegistrationIdDefault = string.Empty;
-        private static readonly string GcmAppVersionDefault = string.Empty;
-        private static readonly bool IdleNotificationDefault = true;
-        private static readonly bool ShowNotificationDefault = true;
-
-        #endregion
-
-        #region Setting properties
-
-        public static Guid UserId
+        private static ISettings AppSettings
         {
-            get { return AppSettings.GetValueOrDefault (UserIdKey, UserIdDefault); }
-            set { AppSettings.AddOrUpdateValue (UserIdKey, value); }
+            get {
+                #if __MOBILE__
+                return CrossSettings.Current;
+                #else
+                // Used for tests only
+                return new CrossSettingsTest ();
+                #endif
+            }
         }
 
-        public static string ApiToken
+        private const string SerializedSettingsKey = "serialized_key";
+        private const string IsStagingKey = "staging_key";
+
+        private static readonly string SerializedSettingsDefault = string.Empty;
+        private static readonly bool IsStagingDefault = false;
+
+        public static string SerializedSettings
         {
-            get { return AppSettings.GetValueOrDefault (ApiTokenKey, ApiTokenDefault); }
-            set { AppSettings.AddOrUpdateValue (ApiTokenKey, value); }
+            get { return AppSettings.GetValueOrDefault (SerializedSettingsKey, SerializedSettingsDefault); }
+            set { AppSettings.AddOrUpdateValue (SerializedSettingsKey, value); }
         }
 
-        public static DateTime SyncLastRun
+        public static bool IsStaging
         {
-            get { return AppSettings.GetValueOrDefault (SyncLastRunKey, SyncLastRunDefault); }
-            set { AppSettings.AddOrUpdateValue (SyncLastRunKey, value); }
+            get { return AppSettings.GetValueOrDefault (IsStagingKey, IsStagingDefault); }
+            set { AppSettings.AddOrUpdateValue (IsStagingKey, value); }
         }
 
-        public static bool UseDefaultTag
+        // Helper class to deserialize using private properties
+        // http://stackoverflow.com/questions/4066947/private-setters-in-json-net/4110232#4110232
+        public static JsonSerializerSettings GetNonPublicPropertiesResolverSettings ()
         {
-            get { return AppSettings.GetValueOrDefault (UseDefaultTagKey, UseDefaultTagDefault); }
-            set { AppSettings.AddOrUpdateValue (UseDefaultTagKey, value); }
+            var settings = new JsonSerializerSettings {
+                ContractResolver = new NonPublicPropertiesResolver()
+            };
+            return settings;
         }
 
-        public static string LastAppVersion
+        public class NonPublicPropertiesResolver : DefaultContractResolver
         {
-            get { return AppSettings.GetValueOrDefault (LastAppVersionKey, LastAppVersionDefault); }
-            set { AppSettings.AddOrUpdateValue (LastAppVersionKey, value); }
+            protected override JsonProperty CreateProperty (MemberInfo member, MemberSerialization memberSerialization)
+            {
+                var prop = base.CreateProperty (member, memberSerialization);
+                var pi = member as PropertyInfo;
+                if (pi != null) {
+                    prop.Readable = (pi.GetMethod != null);
+                    prop.Writable = (pi.SetMethod != null);
+                }
+                return prop;
+            }
         }
 
-        public static int LastReportZoom
+        class CrossSettingsTest : ISettings
         {
-            get { return AppSettings.GetValueOrDefault (LastReportZoomKey, LastReportZoomDefault); }
-            set { AppSettings.AddOrUpdateValue (LastReportZoomKey, value); }
+            public bool AddOrUpdateValue<T> (string key, T value)
+            {
+                return true;
+            }
+
+            public T GetValueOrDefault<T> (string key, T defaultValue = default (T))
+            {
+                return defaultValue;
+            }
+
+            public void Remove (string key)
+            {
+                // Do Nothing.
+            }
         }
-
-        public static bool GroupedEntries
-        {
-            get { return AppSettings.GetValueOrDefault (GroupedEntriesKey, GroupedEntriesDefault); }
-            set { AppSettings.AddOrUpdateValue (GroupedEntriesKey, value); }
-        }
-
-        public static bool ChooseProjectForNew
-        {
-            get { return AppSettings.GetValueOrDefault (ChooseProjectForNewKey, ChooseProjectForNewDefault); }
-            set { AppSettings.AddOrUpdateValue (ChooseProjectForNewKey, value); }
-        }
-
-        public static int ReportsCurrentItem
-        {
-            get { return AppSettings.GetValueOrDefault (ReportsCurrentItemKey, ReportsCurrentItemDefault); }
-            set { AppSettings.AddOrUpdateValue (ReportsCurrentItemKey, value); }
-        }
-
-        public static string ProjectSort
-        {
-            get { return AppSettings.GetValueOrDefault (ProjectSortKey, ProjectSortDefault); }
-            set { AppSettings.AddOrUpdateValue (ProjectSortKey, value); }
-        }
-
-        public static string InstallId
-        {
-            get { return AppSettings.GetValueOrDefault (InstallIdKey, InstallIdDefault); }
-            set { AppSettings.AddOrUpdateValue (InstallIdKey, value); }
-        }
-
-        // iOS only Settings
-
-        public static string RossPreferredStartView
-        {
-            get { return AppSettings.GetValueOrDefault (RossPreferredStartViewKey, RossPreferredStartViewDefault); }
-            set { AppSettings.AddOrUpdateValue (RossPreferredStartViewKey, value); }
-        }
-
-        public static bool RossReadDurOnlyNotice
-        {
-            get { return AppSettings.GetValueOrDefault (RossReadDurOnlyNoticeKey, RossReadDurOnlyNoticeDefault); }
-            set { AppSettings.AddOrUpdateValue (RossReadDurOnlyNoticeKey, value); }
-        }
-
-        // Android only Settings
-
-        public static string GcmRegistrationId
-        {
-            get { return AppSettings.GetValueOrDefault (GcmRegistrationIdKey, GcmRegistrationIdDefault); }
-            set { AppSettings.AddOrUpdateValue (GcmRegistrationIdKey, value); }
-        }
-
-        public static string GcmAppVersion
-        {
-            get { return AppSettings.GetValueOrDefault (GcmAppVersionKey, GcmAppVersionDefault); }
-            set { AppSettings.AddOrUpdateValue (GcmAppVersionKey, value); }
-        }
-
-        public static bool IdleNotification
-        {
-            get { return AppSettings.GetValueOrDefault (IdleNotificationKey, IdleNotificationDefault); }
-            set { AppSettings.AddOrUpdateValue (IdleNotificationKey, value); }
-        }
-
-        public static bool ShowNotification
-        {
-            get { return AppSettings.GetValueOrDefault (ShowNotificationKey, ShowNotificationDefault); }
-            set { AppSettings.AddOrUpdateValue (ShowNotificationKey, value); }
-        }
-
-        #endregion
-
     }
 }

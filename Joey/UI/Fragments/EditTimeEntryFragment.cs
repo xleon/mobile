@@ -193,6 +193,8 @@ namespace Toggl.Joey.UI.Fragments
             ConfigureOptionMenu ();
 
             // If project list needs to be opened?
+            // TODO: RX Restore from Settings
+            /*
             var settingsStore = ServiceContainer.Resolve<SettingsStore> ();
             var startedByFAB = false;
             // TODO: Needs startedByFAB
@@ -201,6 +203,7 @@ namespace Toggl.Joey.UI.Fragments
                 //LogTimeEntriesListFragment.NewTimeEntryStartedByFAB = false;
                 OpenProjectListActivity ();
             }
+            */
 
             // Finally set content visible.
             editTimeEntryContent.Visibility = ViewStates.Visible;

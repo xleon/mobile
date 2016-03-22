@@ -37,13 +37,10 @@ namespace Toggl.Joey.UI.Fragments
         private Binding<string, string> nameBinding;
         private Binding<string, string> clientBinding;
 
-        private Guid WorkspaceId { get; set; }
+        public Guid WorkspaceId { get; set; }
 
-        public NewProjectFragment (string workspaceId)
+        public NewProjectFragment ()
         {
-            var id = Guid.Empty;
-            Guid.TryParse (workspaceId, out id);
-            WorkspaceId = id;
         }
 
         public NewProjectFragment (IntPtr jref, Android.Runtime.JniHandleOwnership xfer) : base (jref, xfer)
@@ -52,7 +49,11 @@ namespace Toggl.Joey.UI.Fragments
 
         public static NewProjectFragment NewInstance (string workspaceId)
         {
-            return new NewProjectFragment (workspaceId);
+            var frg = new NewProjectFragment ();
+            var id = Guid.Empty;
+            Guid.TryParse (workspaceId, out id);
+            frg.WorkspaceId = id;
+            return frg;
         }
 
         public override View OnCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
@@ -93,6 +94,9 @@ namespace Toggl.Joey.UI.Fragments
             base.OnViewCreated (view, savedInstanceState);
             ViewModel = await NewProjectViewModel.Init (WorkspaceId);
             clientBinding = this.SetBinding (() => ViewModel.ClientName, () => SelectClientBit.TextField.Text);
+
+            ProjectBit.RequestFocus ();
+            ((MainDrawerActivity)Activity).ShowSoftKeyboard (ProjectBit.TextField, false);
         }
 
         public NewProjectFragment SetOnProjectCreatedHandler (IOnProjectCreatedHandler handler)
@@ -105,17 +109,6 @@ namespace Toggl.Joey.UI.Fragments
         {
             ViewModel.Dispose ();
             base.OnDestroyView ();
-        }
-
-        public override void OnStart ()
-        {
-            base.OnStart ();
-
-            // show keyboard
-            var inputService = (InputMethodManager)Activity.GetSystemService (Context.InputMethodService);
-            ProjectBit.TextField.PostDelayed (delegate {
-                inputService.ShowSoftInput (ProjectBit.TextField, ShowFlags.Implicit);
-            }, 100);
         }
 
         private async void SaveButtonHandler (object sender, EventArgs e)

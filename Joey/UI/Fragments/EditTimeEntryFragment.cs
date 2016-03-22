@@ -64,13 +64,10 @@ namespace Toggl.Joey.UI.Fragments
         private TextView stopTimeEditLabel;
         private ActionBar toolbar;
 
-        private Guid TimeEntryId { get; set; }
+        public Guid TimeEntryId { get; set; }
 
-        public EditTimeEntryFragment (string idString)
+        public EditTimeEntryFragment ()
         {
-            var id = Guid.Empty;
-            Guid.TryParse (idString, out id);
-            TimeEntryId = id;
         }
 
         public EditTimeEntryFragment (IntPtr jref, Android.Runtime.JniHandleOwnership xfer) : base (jref, xfer)
@@ -79,7 +76,11 @@ namespace Toggl.Joey.UI.Fragments
 
         public static EditTimeEntryFragment NewInstance (string timeEntryId)
         {
-            return new EditTimeEntryFragment (timeEntryId);
+            var frg = new EditTimeEntryFragment ();
+            var id = Guid.Empty;
+            Guid.TryParse (timeEntryId, out id);
+            frg.TimeEntryId = id;
+            return frg;
         }
 
         public override View OnCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)

@@ -40,13 +40,10 @@ namespace Toggl.Joey.UI.Fragments
         private ProjectListViewModel viewModel;
         private IOnProjectSelectedHandler updateProjectHandler;
 
-        private Guid WorkspaceId { get; set;}
+        public Guid WorkspaceId { get; set;}
 
-        public ProjectListFragment (string workspaceId)
+        public ProjectListFragment ()
         {
-            var id = Guid.Empty;
-            Guid.TryParse (workspaceId, out id);
-            WorkspaceId = id;
         }
 
         public ProjectListFragment (IntPtr jref, Android.Runtime.JniHandleOwnership xfer) : base (jref, xfer)
@@ -55,7 +52,11 @@ namespace Toggl.Joey.UI.Fragments
 
         public static ProjectListFragment NewInstance (string workspaceId)
         {
-            return new ProjectListFragment (workspaceId);
+            var frg = new ProjectListFragment ();
+            var id = Guid.Empty;
+            Guid.TryParse (workspaceId, out id);
+            frg.WorkspaceId = id;
+            return frg;
         }
 
         public ProjectListFragment SetOnSelectProjectHandler (IOnProjectSelectedHandler handler)
@@ -104,6 +105,7 @@ namespace Toggl.Joey.UI.Fragments
 
             ConfigureUIViews ();
             CreateWorkspaceTabs ();
+            ((MainDrawerActivity)Activity).HideSoftKeyboard (recyclerView, false);
         }
 
         private void ConfigureUIViews ()

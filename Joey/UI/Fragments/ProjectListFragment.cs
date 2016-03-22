@@ -18,13 +18,15 @@ using Activity = Android.Support.V7.App.AppCompatActivity;
 using Fragment = Android.Support.V4.App.Fragment;
 using SearchView = Android.Support.V7.Widget.SearchView;
 using Toolbar = Android.Support.V7.Widget.Toolbar;
+using Android.Transitions;
 
 namespace Toggl.Joey.UI.Fragments
 {
     public class ProjectListFragment : Fragment,
         Toolbar.IOnMenuItemClickListener,
         TabLayout.IOnTabSelectedListener,
-        SearchView.IOnQueryTextListener
+        SearchView.IOnQueryTextListener,
+        IOnProjectCreatedHandler
     {
         private static readonly string WorkspaceIdArgument = "workspace_id_param";
         private static readonly int ProjectCreatedRequestCode = 1;
@@ -36,18 +38,15 @@ namespace Toggl.Joey.UI.Fragments
         private LinearLayout emptyStateLayout;
         private LinearLayout searchEmptyState;
         private ProjectListViewModel viewModel;
+        private IOnProjectSelectedHandler updateProjectHandler;
 
-        private Guid WorkspaceId
-        {
-            get {
-                Guid id;
-                Guid.TryParse (Arguments.GetString (WorkspaceIdArgument), out id);
-                return id;
-            }
-        }
+        private Guid WorkspaceId { get; set;}
 
-        public ProjectListFragment ()
+        public ProjectListFragment (string workspaceId)
         {
+            var id = Guid.Empty;
+            Guid.TryParse (workspaceId, out id);
+            WorkspaceId = id;
         }
 
         public ProjectListFragment (IntPtr jref, Android.Runtime.JniHandleOwnership xfer) : base (jref, xfer)
@@ -56,13 +55,13 @@ namespace Toggl.Joey.UI.Fragments
 
         public static ProjectListFragment NewInstance (string workspaceId)
         {
-            var fragment = new ProjectListFragment ();
+            return new ProjectListFragment (workspaceId);
+        }
 
-            var args = new Bundle ();
-            args.PutString (WorkspaceIdArgument, workspaceId);
-            fragment.Arguments = args;
-
-            return fragment;
+        public ProjectListFragment SetOnSelectProjectHandler (IOnProjectSelectedHandler handler)
+        {
+            updateProjectHandler = handler;
+            return this;
         }
 
         public override View OnCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
@@ -143,12 +142,27 @@ namespace Toggl.Joey.UI.Fragments
 
         private void OnNewProjectFabClick (object sender, EventArgs e)
         {
-            // Show create project activity instead
-            var frg = NewProjectFragment.NewInstance (viewModel.CurrentWorkspaceId.ToString());
-            ((MainDrawerActivity)Activity).OpenSubView (frg, frg.Tag);
-//            var intent = new Intent (Activity, typeof (NewProjectActivity));
-//            intent.PutExtra (NewProjectActivity.WorkspaceIdArgument, viewModel.CurrentWorkspaceId.ToString ());
-//            StartActivityForResult (intent, ProjectCreatedRequestCode);
+            var newProjectFragment = NewProjectFragment.NewInstance (viewModel.CurrentWorkspaceId.ToString())
+                                     .SetOnProjectCreatedHandler (this);
+            if (Android.OS.Build.VERSION.SdkInt >= Android.OS.BuildVersionCodes.Lollipop) {
+                var inflater = TransitionInflater.From (Activity);
+
+                ExitTransition = inflater.InflateTransition (Android.Resource.Transition.Fade);
+                EnterTransition = inflater.InflateTransition (Android.Resource.Transition.NoTransition);
+                newProjectFragment.EnterTransition = inflater.InflateTransition (Android.Resource.Transition.SlideBottom);
+                newProjectFragment.ReturnTransition = inflater.InflateTransition (Android.Resource.Transition.Fade);
+            }
+
+            FragmentManager.BeginTransaction ()
+            .Replace (Resource.Id.ContentFrameLayout, newProjectFragment)
+            .AddToBackStack (newProjectFragment.Tag)
+            .Commit ();
+        }
+
+        public void OnProjectCreated (Guid projectId)
+        {
+            updateProjectHandler.OnProjectSelected (projectId, Guid.Empty);
+            Activity.OnBackPressed ();
         }
 
         private void OnItemSelected (CommonData m)
@@ -166,31 +180,8 @@ namespace Toggl.Joey.UI.Fragments
                 projectId = task.ProjectId;
                 taskId = task.Id;
             }
-
-            // Return selected data inside the
-            // intent.
-            var resultIntent = new Intent ();
-
-            resultIntent.PutExtra (BaseActivity.IntentProjectIdArgument, projectId.ToString ());
-            resultIntent.PutExtra (BaseActivity.IntentTaskIdArgument, taskId.ToString ());
-            Activity.SetResult (Result.Ok, resultIntent);
-            Activity.Finish();
-        }
-
-        public override void OnActivityResult (int requestCode, int resultCode, Intent data)
-        {
-            base.OnActivityResult (requestCode, resultCode, data);
-
-            // Bypass to close the activity
-            // if the project is created in NewProject activity,
-            // close the Project list activity
-            if (requestCode == ProjectCreatedRequestCode) {
-                if (resultCode == (int)Result.Ok) {
-                    data.PutExtra (BaseActivity.IntentTaskIdArgument, Guid.Empty.ToString ());
-                    Activity.SetResult (Result.Ok, data);
-                    Activity.Finish();
-                }
-            }
+            updateProjectHandler.OnProjectSelected (projectId, taskId);
+            Activity.OnBackPressed ();
         }
 
         public override void OnDestroyView ()
@@ -218,14 +209,6 @@ namespace Toggl.Joey.UI.Fragments
         public bool OnQueryTextSubmit (string query)
         {
             return true;
-        }
-
-        public override bool OnOptionsItemSelected (IMenuItem item)
-        {
-            if (item.ItemId == Android.Resource.Id.Home) {
-                Activity.OnBackPressed ();
-            }
-            return base.OnOptionsItemSelected (item);
         }
 
         public bool OnMenuItemClick (IMenuItem item)

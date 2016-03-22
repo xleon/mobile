@@ -9,6 +9,11 @@ using XPlatUtils;
 
 namespace Toggl.Phoebe.Data.ViewModels
 {
+    public interface IOnProjectCreatedHandler
+    {
+        void OnProjectCreated (Guid projectId);
+    }
+
     [ImplementPropertyChanged]
     public class NewProjectViewModel : IDisposable
     {

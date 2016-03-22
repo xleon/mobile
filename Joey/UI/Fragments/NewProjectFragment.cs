@@ -4,6 +4,7 @@ using Android.Content;
 using Android.OS;
 using Android.Views;
 using Android.Views.InputMethods;
+using Android.Widget;
 using GalaSoft.MvvmLight.Helpers;
 using Toggl.Joey.UI.Activities;
 using Toggl.Joey.UI.Views;
@@ -27,6 +28,7 @@ namespace Toggl.Joey.UI.Fragments
         public TogglField SelectClientBit { get; private set; }
         public ColorPickerRecyclerView ColorPicker { get; private set; }
         public NewProjectViewModel ViewModel { get; private set; }
+        private IOnProjectCreatedHandler projectCreatedHandler;
 
         // Binding to avoid weak references
         // to be collected by the
@@ -35,17 +37,13 @@ namespace Toggl.Joey.UI.Fragments
         private Binding<string, string> nameBinding;
         private Binding<string, string> clientBinding;
 
-        private Guid WorkspaceId
-        {
-            get {
-                Guid id;
-                Guid.TryParse (Arguments.GetString (WorkspaceIdArgument), out id);
-                return id;
-            }
-        }
+        private Guid WorkspaceId { get; set; }
 
-        public NewProjectFragment ()
+        public NewProjectFragment (string workspaceId)
         {
+            var id = Guid.Empty;
+            Guid.TryParse (workspaceId, out id);
+            WorkspaceId = id;
         }
 
         public NewProjectFragment (IntPtr jref, Android.Runtime.JniHandleOwnership xfer) : base (jref, xfer)
@@ -54,13 +52,7 @@ namespace Toggl.Joey.UI.Fragments
 
         public static NewProjectFragment NewInstance (string workspaceId)
         {
-            var fragment = new NewProjectFragment ();
-
-            var args = new Bundle ();
-            args.PutString (WorkspaceIdArgument, workspaceId);
-            fragment.Arguments = args;
-
-            return fragment;
+            return new NewProjectFragment (workspaceId);
         }
 
         public override View OnCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
@@ -101,6 +93,12 @@ namespace Toggl.Joey.UI.Fragments
             base.OnViewCreated (view, savedInstanceState);
             ViewModel = await NewProjectViewModel.Init (WorkspaceId);
             clientBinding = this.SetBinding (() => ViewModel.ClientName, () => SelectClientBit.TextField.Text);
+        }
+
+        public NewProjectFragment SetOnProjectCreatedHandler (IOnProjectCreatedHandler handler)
+        {
+            projectCreatedHandler = handler;
+            return this;
         }
 
         public override void OnDestroyView ()
@@ -147,10 +145,8 @@ namespace Toggl.Joey.UI.Fragments
 
             // Save project and send result.
             var newProjectData = await ViewModel.SaveProject (projectName, ColorPicker.Adapter.SelectedColor);
-            var resultIntent = new Intent ();
-            resultIntent.PutExtra (BaseActivity.IntentProjectIdArgument, newProjectData.Id.ToString ());
-            Activity.SetResult (Result.Ok, resultIntent);
-            Activity.Finish();
+
+            projectCreatedHandler.OnProjectCreated (newProjectData.Id);
         }
 
         private async void SelectClientBitClickedHandler (object sender, EventArgs e)
@@ -182,12 +178,9 @@ namespace Toggl.Joey.UI.Fragments
 
         public override bool OnOptionsItemSelected (IMenuItem item)
         {
-            if (item.ItemId == Android.Resource.Id.Home) {
-                var resultIntent = new Intent ();
-                Activity.SetResult (Result.Canceled, resultIntent);
-                Activity.Finish();
-            } else {
+            if (item.ItemId == Resource.Id.saveItem) {
                 SaveButtonHandler (this, null);
+                Activity.OnBackPressed ();
             }
             return base.OnOptionsItemSelected (item);
         }

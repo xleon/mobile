@@ -32,7 +32,7 @@ namespace Toggl.Joey.UI.Fragments
     public class EditTimeEntryFragment : Fragment,
         ChangeTimeEntryDurationDialogFragment.IChangeDuration,
         ChangeDateTimeDialogFragment.IChangeDateTime,
-        IOnTagSelectedHandler
+        IOnTagSelectedHandler, IOnProjectSelectedHandler
     {
         public static readonly string TransitionNameFabArgument = "TRANS_FAB";
         public static readonly string TransitionNameBodyArgument = "TRANS_BODY";
@@ -128,8 +128,6 @@ namespace Toggl.Joey.UI.Fragments
                 DurationTextView.TransitionName = Arguments.GetString (TransitionNameDurationArgument);
                 DescriptionField.TextField.Text = Arguments.GetString (TransitionValueDescriptionArgument);
                 DurationTextView.Text = Arguments.GetString (TransitionValueDurationArgument);
-            } else if (Arguments != null && Arguments.ContainsKey (TransitionNameFabArgument)) {
-                EditContentView.TransitionName = Arguments.GetString (TransitionNameFabArgument);
             }
 
             HasOptionsMenu = true;
@@ -176,8 +174,8 @@ namespace Toggl.Joey.UI.Fragments
                 .Show (FragmentManager, "stop_time_dialog");
             };
 
-            ProjectField.TextField.Click += (sender, e) => OpenProjectListActivity ();
-            ProjectField.Click += (sender, e) => OpenProjectListActivity ();
+            ProjectField.TextField.Click += (sender, e) => OpenProjectListFragment ();
+            ProjectField.Click += (sender, e) => OpenProjectListFragment ();
             TagsField.OnPressTagField += OnTagsEditTextClick;
 
             durationBinding = this.SetBinding (() => ViewModel.Duration, () => DurationTextView.Text);
@@ -210,7 +208,7 @@ namespace Toggl.Joey.UI.Fragments
             var settingsStore = ServiceContainer.Resolve<SettingsStore> ();
             if (settingsStore.ChooseProjectForNew && LogTimeEntriesListFragment.NewTimeEntry) {
                 LogTimeEntriesListFragment.NewTimeEntry = false;
-                OpenProjectListActivity ();
+                OpenProjectListFragment ();
             }
 
             // Finally set content visible.
@@ -243,22 +241,29 @@ namespace Toggl.Joey.UI.Fragments
             base.OnPause ();
         }
 
-        private void OpenProjectListActivity ()
+        private void OpenProjectListFragment ()
         {
-            var frg = ProjectListFragment.NewInstance (ViewModel.WorkspaceId.ToString());
-            ((MainDrawerActivity)Activity).OpenSubView (frg, frg.Tag);
+            var projectListFragment = ProjectListFragment.NewInstance (ViewModel.WorkspaceId.ToString ())
+                                      .SetOnSelectProjectHandler (this);
+
+            if (Android.OS.Build.VERSION.SdkInt >= Android.OS.BuildVersionCodes.Lollipop) {
+                var inflater = TransitionInflater.From (Activity);
+                ExitTransition = inflater.InflateTransition (Android.Resource.Transition.Fade);
+                EnterTransition = inflater.InflateTransition (Android.Resource.Transition.Fade);
+                projectListFragment.EnterTransition = inflater.InflateTransition (Android.Resource.Transition.SlideBottom);
+                projectListFragment.ReturnTransition = inflater.InflateTransition (Android.Resource.Transition.Fade);
+            }
+
+            FragmentManager.BeginTransaction ()
+            .Replace (Resource.Id.ContentFrameLayout, projectListFragment)
+            .AddToBackStack (projectListFragment.Tag)
+            .Commit ();
         }
 
-        public override async void OnActivityResult (int requestCode, int resultCode, Intent data)
+        public async void OnProjectSelected (Guid projectId, Guid taskId)
         {
-            base.OnActivityResult (requestCode, resultCode, data);
-            if (resultCode == (int)Result.Ok) {
-                var taskId = GetGuidFromIntent (data, BaseActivity.IntentTaskIdArgument);
-                var projectId = GetGuidFromIntent (data, BaseActivity.IntentProjectIdArgument);
-
-                await Util.AwaitPredicate (() => ViewModel != null);
-                ViewModel.SetProjectAndTask (projectId, taskId);
-            }
+            await Util.AwaitPredicate (() => ViewModel != null);
+            ViewModel.SetProjectAndTask (projectId, taskId);
         }
 
         private void OnTagsEditTextClick (object sender, EventArgs e)

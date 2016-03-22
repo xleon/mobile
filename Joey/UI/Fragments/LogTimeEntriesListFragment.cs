@@ -174,26 +174,13 @@ namespace Toggl.Joey.UI.Fragments
 
                 if (Android.OS.Build.VERSION.SdkInt >= Android.OS.BuildVersionCodes.Lollipop) {
                     var inflater = TransitionInflater.From (Activity);
-                    var logEditTransition = inflater.InflateTransition (Resource.Transition.log_edit_transition);
-
-                    SharedElementReturnTransition = logEditTransition;
-                    SharedElementEnterTransition = logEditTransition;
-                    editFragment.SharedElementEnterTransition = logEditTransition;
-                    editFragment.SharedElementReturnTransition = logEditTransition;
-
                     ExitTransition = inflater.InflateTransition (Android.Resource.Transition.Move);
                     EnterTransition = inflater.InflateTransition (Android.Resource.Transition.NoTransition);
-                    editFragment.EnterTransition = inflater.InflateTransition (Android.Resource.Transition.Fade);
+                    editFragment.EnterTransition = inflater.InflateTransition (Android.Resource.Transition.SlideBottom);
                     editFragment.ReturnTransition = inflater.InflateTransition (Android.Resource.Transition.Fade);
                 }
 
-                var bundle = new Bundle ();
-                StartStopBtn.TransitionName = "fab_transition";
-                bundle.PutString (EditTimeEntryFragment.TransitionNameFabArgument, StartStopBtn.TransitionName);
-                editFragment.Arguments = bundle;
-
                 FragmentManager.BeginTransaction ()
-                .AddSharedElement (StartStopBtn, StartStopBtn.TransitionName)
                 .Replace (Resource.Id.ContentFrameLayout, editFragment)
                 .AddToBackStack (editFragment.Tag)
                 .Commit ();

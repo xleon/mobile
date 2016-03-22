@@ -202,7 +202,7 @@ namespace Toggl.Joey.UI.Activities
 
         public override bool OnOptionsItemSelected (IMenuItem item)
         {
-            if (ToolbarMode == ToolbarModes.SubView) {
+            if (ToolbarMode == ToolbarModes.SubView && item.ItemId == Android.Resource.Id.Home) {
                 OnBackPressed ();
                 return true;
             }

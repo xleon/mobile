@@ -165,14 +165,18 @@ namespace Toggl.Phoebe._ViewModels
                     );
                 }
 
-                ActiveEntry = appState.ActiveEntry;
-                IsEntryRunning = ActiveEntry.Data.State == TimeEntryState.Running;
-                // Check if an entry is running.
-                if (IsEntryRunning && !durationTimer.Enabled) {
-                    durationTimer.Start ();
-                } else if (!IsEntryRunning && durationTimer.Enabled) {
-                    durationTimer.Stop ();
-                    Duration = TimeSpan.FromSeconds (0).ToString ().Substring (0, 8);
+                // Don't update ActiveEntry if both ActiveEntry and appState.ActiveEntry are empty
+                if (ActiveEntry == null || !(ActiveEntry.Data.Id == Guid.Empty && appState.ActiveEntry.Data.Id == Guid.Empty)) {
+                    ActiveEntry = appState.ActiveEntry;
+                    IsEntryRunning = ActiveEntry.Data.State == TimeEntryState.Running;
+                    // Check if an entry is running.
+                    if (IsEntryRunning && !durationTimer.Enabled) {
+                        durationTimer.Start ();
+                    }
+                    else if (!IsEntryRunning && durationTimer.Enabled) {
+                        durationTimer.Stop ();
+                        Duration = TimeSpan.FromSeconds (0).ToString ().Substring (0, 8);
+                    }
                 }
             });
         }

@@ -56,6 +56,7 @@ namespace Toggl.Phoebe._Reactive
             IReadOnlyDictionary<Guid, TagData> tags,
             IReadOnlyDictionary<Guid, RichTimeEntry> timeEntries)
         {
+            Settings = settings;
             AuthResult = authResult;
             DownloadResult = downloadResult;
             User = user;

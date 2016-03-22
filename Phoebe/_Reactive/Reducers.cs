@@ -295,9 +295,6 @@ namespace Toggl.Phoebe._Reactive
                 // This will throw an exception if user hasn't been correctly updated
                 var userDataInDb = updated.Single () as UserData;
 
-                // TODO RX: 
-                ServiceContainer.Resolve<Data.ISettingsStore> ().UserId = userDataInDb.Id;
-
                 return DataSyncMsg.Create (
                         state.With (
                             user: userDataInDb,

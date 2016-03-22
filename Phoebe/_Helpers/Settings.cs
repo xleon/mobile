@@ -1,4 +1,7 @@
-﻿using Plugin.Settings;
+﻿using System.Reflection;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
+using Plugin.Settings;
 using Plugin.Settings.Abstractions;
 
 namespace Toggl.Phoebe._Helpers
@@ -38,6 +41,30 @@ namespace Toggl.Phoebe._Helpers
         {
             get { return AppSettings.GetValueOrDefault (IsStagingKey, IsStagingDefault); }
             set { AppSettings.AddOrUpdateValue (IsStagingKey, value); }
+        }
+
+        // Helper class to deserialize using private properties
+        // http://stackoverflow.com/questions/4066947/private-setters-in-json-net/4110232#4110232
+        public static JsonSerializerSettings GetNonPublicPropertiesResolverSettings ()
+        {
+            var settings = new JsonSerializerSettings {
+                ContractResolver = new NonPublicPropertiesResolver()
+            };
+            return settings;
+        }
+
+        public class NonPublicPropertiesResolver : DefaultContractResolver
+        {
+            protected override JsonProperty CreateProperty (MemberInfo member, MemberSerialization memberSerialization)
+            {
+                var prop = base.CreateProperty (member, memberSerialization);
+                var pi = member as PropertyInfo;
+                if (pi != null) {
+                    prop.Readable = (pi.GetMethod != null);
+                    prop.Writable = (pi.SetMethod != null);
+                }
+                return prop;
+            }
         }
 
         class CrossSettingsTest : ISettings

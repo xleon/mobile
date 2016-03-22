@@ -329,26 +329,26 @@ namespace Toggl.Phoebe._Reactive
         private static readonly bool ShowWelcomeDefault = false;
 
         // Common values
-        public Guid UserId {get; set; }
-        public DateTime SyncLastRun { get; set; }
-        public bool UseDefaultTag { get; set; }
-        public string LastAppVersion { get; set; }
-        public int LastReportZoom { get; set; }
-        public bool GroupedEntries { get; set; }
-        public bool ChooseProjectForNew { get; set; }
-        public int ReportsCurrentItem { get; set; }
-        public string ProjectSort { get; set; }
-        public string InstallId  { get; set; }
+        public Guid UserId {get; private set; }
+        public DateTime SyncLastRun { get; private set; }
+        public bool UseDefaultTag { get; private set; }
+        public string LastAppVersion { get; private set; }
+        public int LastReportZoom { get; private set; }
+        public bool GroupedEntries { get; private set; }
+        public bool ChooseProjectForNew { get; private set; }
+        public int ReportsCurrentItem { get; private set; }
+        public string ProjectSort { get; private set; }
+        public string InstallId  { get; private set; }
         // iOS only  values
-        public string RossPreferredStartView { get; set; }
-        public bool RossReadDurOnlyNotice { get; set; }
-        public DateTime RossIgnoreSyncErrorsUntil { get; set; }
+        public string RossPreferredStartView { get; private set; }
+        public bool RossReadDurOnlyNotice { get; private set; }
+        public DateTime RossIgnoreSyncErrorsUntil { get; private set; }
         // Android only  values
-        public string GcmRegistrationId { get; set; }
-        public string GcmAppVersion { get; set; }
-        public bool IdleNotification { get; set; }
-        public bool ShowNotification { get; set; }
-        public bool ShowWelcome { get; set; }
+        public string GcmRegistrationId { get; private set; }
+        public string GcmAppVersion { get; private set; }
+        public bool IdleNotification { get; private set; }
+        public bool ShowNotification { get; private set; }
+        public bool ShowWelcome { get; private set; }
 
         public static SettingsState Init ()
         {
@@ -377,8 +377,8 @@ namespace Toggl.Phoebe._Reactive
                 settings.ShowNotification = ShowWelcomeDefault;
                 return settings;
             }
-            var saved = Newtonsoft.Json.JsonConvert.DeserializeObject<SettingsState> (Settings.SerializedSettings);
-            return saved;
+            return Newtonsoft.Json.JsonConvert.DeserializeObject<SettingsState> (Settings.SerializedSettings,
+                    Settings.GetNonPublicPropertiesResolverSettings ());
         }
 
         private T updateNullable<T> (Nullable<T> value, T @default, Func<T,T> update)

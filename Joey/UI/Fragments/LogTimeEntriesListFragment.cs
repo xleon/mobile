@@ -143,6 +143,8 @@ namespace Toggl.Joey.UI.Fragments
             });
             ((MainDrawerActivity)Activity).ToolbarMode = MainDrawerActivity.ToolbarModes.Normal;
 
+            ((MainDrawerActivity)Activity).HideSoftKeyboard (recyclerView);
+
             // Pass ViewModel to TimerComponent.
             timerComponent.SetViewModel (ViewModel);
             StartStopBtn.Click += StartStopClick;

@@ -282,7 +282,7 @@ namespace Toggl.Phoebe._Reactive
             const int endDate = Literals.TimeEntryLoadDays;
 
             try {
-				IList<TimeEntryJson> jsonEntries = null;
+                IList<TimeEntryJson> jsonEntries = null;
                 Tuple<UserData, DateTime> fullSyncInfo = null;
                 var newWorkspaces = new List<WorkspaceJson> ();
                 var newProjects = new List<ProjectJson> ();

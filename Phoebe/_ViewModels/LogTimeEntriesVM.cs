@@ -52,12 +52,12 @@ namespace Toggl.Phoebe._ViewModels
 
             ResetCollection (appState.Settings.GroupedEntries);
             subscriptionState = StoreManager
-                .Singleton
-                .Observe (x => x.State)
-                .StartWith (appState)
-                .Scan<AppState, Tuple<AppState, DownloadResult>> (
-                    null, (tuple, state) => Tuple.Create (state, tuple != null ? tuple.Item2 : null))
-                .Subscribe (tuple => UpdateState (tuple.Item1, tuple.Item2));
+                                .Singleton
+                                .Observe (x => x.State)
+                                .StartWith (appState)
+                                .Scan<AppState, Tuple<AppState, DownloadResult>> (
+                                    null, (tuple, state) => Tuple.Create (state, tuple != null ? tuple.Item2 : null))
+                                .Subscribe (tuple => UpdateState (tuple.Item1, tuple.Item2));
 
             // TODO: RX Review this line.
             // The ViewModel is created and start to load
@@ -70,7 +70,6 @@ namespace Toggl.Phoebe._ViewModels
         {
             DisposeCollection ();
             IsGroupedMode = isGroupedMode;
-
             timeEntryCollection = new TimeEntryCollectionVM (
                 isGroupedMode ? TimeEntryGroupMethod.ByDateAndTask : TimeEntryGroupMethod.Single);
         }
@@ -142,7 +141,7 @@ namespace Toggl.Phoebe._ViewModels
 
         public void ReportExperiment (string actionKey, string actionValue)
         {
-            if (Collection.Count == 0 && ServiceContainer.Resolve<Data.ISettingsStore> ().ShowWelcome) {
+            if (Collection.Count == 0 && StoreManager.Singleton.AppState.Settings.ShowWelcome) {
                 OBMExperimentManager.Send (actionKey, actionValue, StoreManager.Singleton.AppState.User);
             }
         }

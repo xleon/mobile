@@ -168,52 +168,52 @@ namespace Toggl.Phoebe._Reactive
                                 oldData = ctx.GetByColumn (newData.GetType (), nameof (newData.RemoteId), newData.RemoteId);
                             }
 
-                            if (oldData != null) {
-                                if (newData.CompareTo (oldData) >= 0) {
-                                    newData.Id = oldData.Id;
-                                    PutOrDelete (ctx, newData);
-                                }
-                            } else {
-                                newData.Id = Guid.NewGuid (); // Assign new Id
+                        if (oldData != null) {
+                            if (newData.CompareTo (oldData) >= 0) {
+                                newData.Id = oldData.Id;
                                 PutOrDelete (ctx, newData);
                             }
+                        } else {
+                            newData.Id = Guid.NewGuid (); // Assign new Id
+                            PutOrDelete (ctx, newData);
                         }
-
-                        if (serverMsg.FullSyncInfo != null) {
-                            // TODO: Throw exception if this is not successful?
-                            ctx.Put (serverMsg.FullSyncInfo.Item1);
-                        }
-                    });
-
-                    var hasMore = receivedData.OfType<TimeEntryData> ().Any ();
-                    var userData = state.User;
-                    var settings = state.Settings;
-
-                    if (serverMsg.FullSyncInfo != null) {
-                        userData = serverMsg.FullSyncInfo.Item1;
-                        settings = settings.With (syncLastRun: serverMsg.FullSyncInfo.Item2);
                     }
 
-                    return DataSyncMsg.Create (
-                        state.With (
-                            user: userData,
-                            settings: settings,
-                            downloadResult: state.DownloadResult.With (isSyncing: false, hasMore: hasMore, hadErrors: false),
-                            workspaces: state.Update (state.Workspaces, updated),
-                            projects: state.Update (state.Projects, updated),
-                            workspaceUsers: state.Update (state.WorkspaceUsers, updated),
-                            projectUsers: state.Update (state.ProjectUsers, updated),
-                            clients: state.Update (state.Clients, updated),
-                            tasks: state.Update (state.Tasks, updated),
-                            tags: state.Update (state.Tags, updated),
-                            // TODO: Check if the updated entries are within the current scroll view
-                            // Probably it's better to do this check in UpdateTimeEntries
-                            timeEntries: state.UpdateTimeEntries (updated)
-                        ));
-                },
-                ex => DataSyncMsg.Create (
-                    state.With (downloadResult: state.DownloadResult.With (isSyncing: false, hadErrors: true)))
-            );
+                    if (serverMsg.FullSyncInfo != null) {
+                        // TODO: Throw exception if this is not successful?
+                        ctx.Put (serverMsg.FullSyncInfo.Item1);
+                    }
+                });
+
+                var hasMore = receivedData.OfType<TimeEntryData> ().Any ();
+                var userData = state.User;
+                var settings = state.Settings;
+
+                if (serverMsg.FullSyncInfo != null) {
+                    userData = serverMsg.FullSyncInfo.Item1;
+                    settings = settings.With (syncLastRun: serverMsg.FullSyncInfo.Item2);
+                }
+
+                return DataSyncMsg.Create (
+                           state.With (
+                               user: userData,
+                               settings: settings,
+                               downloadResult: state.DownloadResult.With (isSyncing: false, hasMore: hasMore, hadErrors: false),
+                               workspaces: state.Update (state.Workspaces, updated),
+                               projects: state.Update (state.Projects, updated),
+                               workspaceUsers: state.Update (state.WorkspaceUsers, updated),
+                               projectUsers: state.Update (state.ProjectUsers, updated),
+                               clients: state.Update (state.Clients, updated),
+                               tasks: state.Update (state.Tasks, updated),
+                               tags: state.Update (state.Tags, updated),
+                               // TODO: Check if the updated entries are within the current scroll view
+                               // Probably it's better to do this check in UpdateTimeEntries
+                               timeEntries: state.UpdateTimeEntries (updated)
+                           ));
+            },
+            ex => DataSyncMsg.Create (
+                state.With (downloadResult: state.DownloadResult.With (isSyncing: false, hadErrors: true)))
+                   );
         }
 
         static DataSyncMsg<AppState> TimeEntryPut (AppState state, DataMsg msg)
@@ -415,7 +415,8 @@ namespace Toggl.Phoebe._Reactive
             var dataStore = ServiceContainer.Resolve <ISyncDataStore> ();
             dataStore.WipeTables ();
 
-            // TODO RX: Clear platform settings?
+            // Clear platform settings.
+            Settings.SerializedSettings = string.Empty;
 
             // Reset state
             var appState = AppState.Init ();

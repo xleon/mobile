@@ -29,12 +29,12 @@ namespace Toggl.Phoebe._ViewModels
         {
             grouper = new TimeEntryGrouper (groupMethod);
             disposable = StoreManager
-                .Singleton
-                .Observe (x => x.State.TimeEntries.Values)
-				// TODO: Recover buffer?
-				//.TimedBuffer (bufferMilliseconds)
-                .Scan (new List<IHolder> (), UpdateItems)
-                .Subscribe ();
+                         .Singleton
+                         .Observe (x => x.State.TimeEntries.Values)
+                         // TODO: Recover buffer?
+                         //.TimedBuffer (bufferMilliseconds)
+                         .Scan (new List<IHolder> (), UpdateItems)
+                         .Subscribe ();
         }
 
         public void Dispose ()
@@ -92,10 +92,10 @@ namespace Toggl.Phoebe._ViewModels
         private List<IHolder> CreateItemCollection (IEnumerable<TimeEntryHolder> timeHolders)
         {
             return grouper.Group (timeHolders)
-                          .OrderByDescending (x => x.GetStartTime ())
-                          .GroupBy (x => x.GetStartTime ().ToLocalTime ().Date)
-                          .SelectMany (gr => gr.Cast<IHolder>().Prepend (new DateHolder (gr.Key, gr.Cast<ITimeEntryHolder> ())))
-                          .ToList ();
+                   .OrderByDescending (x => x.GetStartTime ())
+                   .GroupBy (x => x.GetStartTime ().ToLocalTime ().Date)
+                   .SelectMany (gr => gr.Cast<IHolder>().Prepend (new DateHolder (gr.Key, gr.Cast<ITimeEntryHolder> ())))
+                   .ToList ();
         }
 
         public void RestoreTimeEntryFromUndo ()

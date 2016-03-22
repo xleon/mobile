@@ -5,6 +5,7 @@ using Toggl.Phoebe._Data;
 using Toggl.Phoebe._Data.Models;
 using Toggl.Phoebe._Helpers;
 using XPlatUtils;
+using Toggl.Phoebe.Logging;
 
 namespace Toggl.Phoebe._Reactive
 {
@@ -325,60 +326,59 @@ namespace Toggl.Phoebe._Reactive
         private static readonly string GcmAppVersionDefault = string.Empty;
         private static readonly bool IdleNotificationDefault = true;
         private static readonly bool ShowNotificationDefault = true;
+        private static readonly bool ShowWelcomeDefault = false;
 
         // Common values
-        public Guid UserId { get; private set; }
-        public DateTime SyncLastRun { get; private set; }
-        public bool UseDefaultTag { get; private set; }
-        public string LastAppVersion { get; private set; }
-        public int LastReportZoom { get; private set; }
-        public bool GroupedEntries { get; private set; }
-        public bool ChooseProjectForNew { get; private set; }
-        public int ReportsCurrentItem { get; private set; }
-        public string ProjectSort { get; private set; }
-        public string InstallId  { get; private set; }
+        public Guid UserId {get; set; }
+        public DateTime SyncLastRun { get; set; }
+        public bool UseDefaultTag { get; set; }
+        public string LastAppVersion { get; set; }
+        public int LastReportZoom { get; set; }
+        public bool GroupedEntries { get; set; }
+        public bool ChooseProjectForNew { get; set; }
+        public int ReportsCurrentItem { get; set; }
+        public string ProjectSort { get; set; }
+        public string InstallId  { get; set; }
         // iOS only  values
-        public string RossPreferredStartView { get; private set; }
-        public bool RossReadDurOnlyNotice { get; private set; }
-        public DateTime RossIgnoreSyncErrorsUntil { get; private set; }
+        public string RossPreferredStartView { get; set; }
+        public bool RossReadDurOnlyNotice { get; set; }
+        public DateTime RossIgnoreSyncErrorsUntil { get; set; }
         // Android only  values
-        public string GcmRegistrationId { get; private set; }
-        public string GcmAppVersion { get; private set; }
-        public bool IdleNotification { get; private set; }
-        public bool ShowNotification { get; private set; }
-
-        SettingsState (SettingsState savedSettingState = null)
-        {
-            UserId = (savedSettingState == null) ? UserIdDefault : savedSettingState.UserId;
-            SyncLastRun = (savedSettingState == null) ? SyncLastRunDefault : savedSettingState.SyncLastRun;
-            UseDefaultTag = (savedSettingState == null) ? UseDefaultTagDefault : savedSettingState.UseDefaultTag;
-            LastAppVersion = (savedSettingState == null) ? LastAppVersionDefault : savedSettingState.LastAppVersion;
-            LastReportZoom = (savedSettingState == null) ? LastReportZoomDefault : savedSettingState.LastReportZoom;
-            GroupedEntries = (savedSettingState == null) ? GroupedEntriesDefault : savedSettingState.GroupedEntries;
-            ChooseProjectForNew = (savedSettingState == null) ? ChooseProjectForNewDefault : savedSettingState.ChooseProjectForNew;
-            ReportsCurrentItem = (savedSettingState == null) ? ReportsCurrentItemDefault : savedSettingState.ReportsCurrentItem;
-            ProjectSort = (savedSettingState == null) ? ProjectSortDefault : savedSettingState.ProjectSort;
-            InstallId = (savedSettingState == null) ? InstallIdDefault : savedSettingState.InstallId;
-            // iOS only  values
-            RossPreferredStartView = (savedSettingState == null) ? RossPreferredStartViewDefault : savedSettingState.RossPreferredStartView;
-            RossReadDurOnlyNotice = (savedSettingState == null) ? RossReadDurOnlyNoticeDefault : savedSettingState.RossReadDurOnlyNotice;
-            RossIgnoreSyncErrorsUntil = (savedSettingState == null) ? RossIgnoreSyncErrorsUntilDefault : savedSettingState.RossIgnoreSyncErrorsUntil;
-            // Android only  values
-            GcmRegistrationId = (savedSettingState == null) ? GcmRegistrationIdDefault : savedSettingState.GcmRegistrationId;
-            GcmAppVersion = (savedSettingState == null) ? GcmAppVersionDefault : savedSettingState.GcmAppVersion;
-            IdleNotification = (savedSettingState == null) ? IdleNotificationDefault : savedSettingState.IdleNotification;
-            ShowNotification = (savedSettingState == null) ? ShowNotificationDefault : savedSettingState.ShowNotification;
-        }
+        public string GcmRegistrationId { get; set; }
+        public string GcmAppVersion { get; set; }
+        public bool IdleNotification { get; set; }
+        public bool ShowNotification { get; set; }
+        public bool ShowWelcome { get; set; }
 
         public static SettingsState Init ()
         {
             // If saved is empty, return default.
             if (Settings.SerializedSettings == string.Empty) {
-                return new SettingsState();
+                var settings = new SettingsState();
+                settings.UserId = UserIdDefault;
+                settings.SyncLastRun = SyncLastRunDefault;
+                settings.UseDefaultTag = UseDefaultTagDefault;
+                settings.LastAppVersion = LastAppVersionDefault;
+                settings.LastReportZoom = LastReportZoomDefault;
+                settings.GroupedEntries = GroupedEntriesDefault;
+                settings.ChooseProjectForNew = ChooseProjectForNewDefault;
+                settings.ReportsCurrentItem = ReportsCurrentItemDefault;
+                settings.ProjectSort = ProjectSortDefault;
+                settings.InstallId = InstallIdDefault;
+                // iOS only  values
+                settings.RossPreferredStartView = RossPreferredStartViewDefault;
+                settings.RossReadDurOnlyNotice = RossReadDurOnlyNoticeDefault;
+                settings.RossIgnoreSyncErrorsUntil = RossIgnoreSyncErrorsUntilDefault;
+                // Android only  values
+                settings.GcmRegistrationId = GcmRegistrationIdDefault;
+                settings.GcmAppVersion = GcmAppVersionDefault;
+                settings.IdleNotification = IdleNotificationDefault;
+                settings.ShowNotification = ShowNotificationDefault;
+                settings.ShowNotification = ShowWelcomeDefault;
+                return settings;
             }
-
             var saved = Newtonsoft.Json.JsonConvert.DeserializeObject<SettingsState> (Settings.SerializedSettings);
-            return new SettingsState (saved);
+            return saved;
         }
 
         private T updateNullable<T> (Nullable<T> value, T @default, Func<T,T> update)
@@ -411,9 +411,10 @@ namespace Toggl.Phoebe._Reactive
             string gcmRegistrationId = null,
             string gcmAppVersion = null,
             bool? idleNotification = null,
-            bool? showNotification = null)
+            bool? showNotification = null,
+            bool? showWelcome = null)
         {
-            var copy = new SettingsState (this);
+            var copy = new SettingsState ();
             updateNullable (userId, copy.UserId, x => copy.UserId = x);
             updateNullable (syncLastRun, copy.SyncLastRun, x => copy.SyncLastRun = x);
             updateNullable (useTag, copy.UseDefaultTag, x => copy.UseDefaultTag = x);
@@ -423,17 +424,20 @@ namespace Toggl.Phoebe._Reactive
             updateNullable (chooseProjectForNew, copy.ChooseProjectForNew, x => copy.ChooseProjectForNew = x);
             updateNullable (reportsCurrentItem, copy.ReportsCurrentItem, x => copy.ReportsCurrentItem = x);
             updateReference (projectSort, copy.ProjectSort, x => copy.ProjectSort = x);
-            updateReference (installId, copy.InstallId, x => copy.InstallId = x);
+            updateReference(installId, copy.InstallId, x => copy.InstallId = x);
             // iOS only  values
-            updateReference (rossPreferredStartView, copy.RossPreferredStartView, x => copy.RossPreferredStartView = x);
+            updateReference(rossPreferredStartView, copy.RossPreferredStartView, x => copy.RossPreferredStartView = x);
             updateNullable (rossReadDurOnlyNotice, copy.RossReadDurOnlyNotice, x => copy.RossReadDurOnlyNotice = x);
-            updateNullable (rossIgnoreSyncErrorsUntil, copy.RossIgnoreSyncErrorsUntil, x => copy.RossIgnoreSyncErrorsUntil = x);
+            updateNullable(rossIgnoreSyncErrorsUntil, copy.RossIgnoreSyncErrorsUntil, x => copy.RossIgnoreSyncErrorsUntil = x);
             // Android only  values
-            updateReference (gcmRegistrationId, copy.GcmRegistrationId, x => copy.GcmRegistrationId = x);
-            updateReference (gcmAppVersion, copy.GcmAppVersion, x => copy.GcmAppVersion = x);
-            updateNullable (idleNotification, copy.IdleNotification, x => copy.IdleNotification = x);
-            updateNullable (showNotification, copy.ShowNotification, x => copy.ShowNotification = x);
+            updateReference(gcmRegistrationId, copy.GcmRegistrationId, x => copy.GcmRegistrationId = x);
+            updateReference(gcmAppVersion, copy.GcmAppVersion, x => copy.GcmAppVersion = x);
+            updateNullable(idleNotification, copy.IdleNotification, x => copy.IdleNotification = x);
+            updateNullable(showNotification, copy.ShowNotification, x => copy.ShowNotification = x);
+            updateNullable(showWelcome, copy.ShowWelcome, x => copy.ShowWelcome = x);
 
+            // Save new copy serialized
+            Settings.SerializedSettings = Newtonsoft.Json.JsonConvert.SerializeObject (copy);
             return copy;
         }
     }

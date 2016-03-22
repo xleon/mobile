@@ -218,8 +218,8 @@ namespace Toggl.Joey.UI.Fragments
             editTimeEntryProgressBar.Visibility = ViewStates.Gone;
 
             if (LogTimeEntriesListFragment.NewTimeEntry) {
-//                DescriptionField.RequestFocus ();
-//                ((MainDrawerActivity)Activity).ShowSoftKeyboard (DescriptionField.TextField, false);
+                DescriptionField.RequestFocus ();
+                ((MainDrawerActivity)Activity).ShowSoftKeyboard (DescriptionField.TextField, false);
             }
         }
 

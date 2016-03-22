@@ -10,7 +10,17 @@ namespace Toggl.Phoebe._Helpers
     /// </summary>
     public static class Settings
     {
-        private static ISettings AppSettings { get { return CrossSettings.Current; } }
+        private static ISettings AppSettings
+        {
+            get {
+                #if __MOBILE__
+                return CrossSettings.Current;
+                #else
+                // Used for tests only
+                return new CrossSettingsTest ();
+                #endif
+            }
+        }
 
         private const string SerializedSettingsKey = "serialized_key";
         private const string IsStagingKey = "staging_key";
@@ -28,6 +38,24 @@ namespace Toggl.Phoebe._Helpers
         {
             get { return AppSettings.GetValueOrDefault (IsStagingKey, IsStagingDefault); }
             set { AppSettings.AddOrUpdateValue (IsStagingKey, value); }
+        }
+
+        class CrossSettingsTest : ISettings
+        {
+            public bool AddOrUpdateValue<T> (string key, T value)
+            {
+                return true;
+            }
+
+            public T GetValueOrDefault<T> (string key, T defaultValue = default (T))
+            {
+                return defaultValue;
+            }
+
+            public void Remove (string key)
+            {
+                // Do Nothing.
+            }
         }
     }
 }

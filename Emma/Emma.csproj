@@ -96,4 +96,10 @@
   <ItemGroup>
     <BundleResource Include="Resources\en.lproj\Localizable.strings" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Contrib\Cirrious.FluentLayout\Cirrious.FluentLayout\Cirrious.FluentLayouts.Touch.csproj">
+      <Project>{75D2DA9D-DFD4-49A1-98FB-FE0F0677EF0F}</Project>
+      <Name>Cirrious.FluentLayouts.Touch</Name>
+    </ProjectReference>
+  </ItemGroup>
 </Project>

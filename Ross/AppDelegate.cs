@@ -177,6 +177,7 @@ namespace Toggl.Ross
             Context.SharedInstance.Configure (out configureError);
             if (configureError != null) {
                 var log = ServiceContainer.Resolve<ILogger> ();
+                SignIn.SharedInstance.ClientID = Build.GoogleReverseClientUrl;
                 log.Info ("AppDelegate", string.Format ("Error configuring the Google context: {0}", configureError));
             }
         }

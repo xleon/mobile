@@ -51,9 +51,6 @@ namespace Toggl.Ross.ViewControllers
         {
             base.LoadView();
 
-            NavigationItem.LeftBarButtonItem = new UIBarButtonItem (
-                Image.IconNav.ImageWithRenderingMode (UIImageRenderingMode.AlwaysOriginal),
-                UIBarButtonItemStyle.Plain, OnNavigationButtonTouched);
 
             defaultEmptyView = new SimpleEmptyView {
                 Title = "LogEmptyTitle".Tr (),
@@ -93,6 +90,10 @@ namespace Toggl.Ross.ViewControllers
         public async override void ViewDidLoad ()
         {
             base.ViewDidLoad ();
+
+            NavigationItem.LeftBarButtonItem = new UIBarButtonItem (
+                Image.IconNav.ImageWithRenderingMode (UIImageRenderingMode.AlwaysOriginal),
+                UIBarButtonItemStyle.Plain, OnNavigationButtonTouched);
 
             EdgesForExtendedLayout = UIRectEdge.None;
             TableView.RegisterClassForCellReuse (typeof (TimeEntryCell), EntryCellId);

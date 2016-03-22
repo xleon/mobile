@@ -49,6 +49,8 @@
 			<array>
 				<string>{CF_BUNDLE_URL_SCHEMES}</string>
 			</array>
+			<key>CFBundleURLName</key>
+			<string>com.toggl.timer</string>
 		</dict>
 	</array>
 	<key>UIAppFonts</key>

@@ -266,7 +266,7 @@ namespace Toggl.Joey.UI.Activities
         public async void HideSoftKeyboard (View input)
         {
             await System.Threading.Tasks.Task.Delay (100);
-            ((InputMethodManager)GetSystemService (InputMethodService)).HideSoftInputFromWindow (input.WindowToken, HideSoftInputFlags.ImplicitOnly);
+            ((InputMethodManager)GetSystemService (InputMethodService)).HideSoftInputFromWindow (input.ApplicationWindowToken, HideSoftInputFlags.ImplicitOnly);
         }
 
         public override void OnBackPressed ()

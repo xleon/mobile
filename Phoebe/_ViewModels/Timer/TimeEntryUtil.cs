@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Collections.Generic;
 using System.Linq;
 using Toggl.Phoebe._Data.Diff;
@@ -21,10 +22,31 @@ namespace Toggl.Phoebe._ViewModels.Timer
         DateTime GetStartTime ();
     }
 
-    public interface IGrouper<T, TGroup>
+    public enum TimeEntryGroupMethod {
+        Single,
+        ByDateAndTask
+    }
+
+    public class TimeEntryGrouper
     {
-        IEnumerable<TGroup> Group (IEnumerable<T> items);
-        IEnumerable<T> Ungroup (IEnumerable<TGroup> groups);
+        readonly TimeEntryGroupMethod Method;
+
+        public TimeEntryGrouper (TimeEntryGroupMethod method)
+        {
+            Method = method;
+        }
+
+        public IEnumerable<ITimeEntryHolder> Group (IEnumerable<TimeEntryHolder> items)
+        {
+            return Method == TimeEntryGroupMethod.Single
+                ? items.Cast<ITimeEntryHolder> () : TimeEntryGroup.Group (items);
+        }
+
+        public IEnumerable<TimeEntryHolder> Ungroup (IEnumerable<ITimeEntryHolder> groups)
+        {
+            return Method == TimeEntryGroupMethod.Single
+                ? groups.Cast<TimeEntryHolder> () : TimeEntryGroup.Ungroup (groups.Cast<TimeEntryGroup> ());
+        }
     }
 }
 

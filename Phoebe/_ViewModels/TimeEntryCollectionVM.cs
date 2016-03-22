@@ -13,30 +13,21 @@ using XPlatUtils;
 
 namespace Toggl.Phoebe._ViewModels
 {
-    public abstract class TimeEntryCollectionVM : Data.Utils.ObservableRangeCollection<IHolder>, IDisposable
-    {
-        public abstract void Dispose ();
-        public abstract IEnumerable<IHolder> Data { get; }
-        public abstract void RestoreTimeEntryFromUndo ();
-        public abstract void RemoveTimeEntryWithUndo (ITimeEntryHolder timeEntryHolder);
-    }
-
-    public class TimeEntryCollectionVM<T> : TimeEntryCollectionVM
-        where T : ITimeEntryHolder
+    public class TimeEntryCollectionVM : Data.Utils.ObservableRangeCollection<IHolder>, IDisposable
     {
         IDisposable disposable;
         ITimeEntryHolder lastRemovedItem;
-        readonly IGrouper<TimeEntryHolder, T> grouper;
+        readonly TimeEntryGrouper grouper;
         System.Timers.Timer undoTimer = new System.Timers.Timer ();
 
-        public override IEnumerable<IHolder> Data
+        public IEnumerable<IHolder> Data
         {
             get { return Items; }
         }
 
-        public TimeEntryCollectionVM ()
+        public TimeEntryCollectionVM (TimeEntryGroupMethod groupMethod)
         {
-            grouper = CreateGrouper ();
+            grouper = new TimeEntryGrouper (groupMethod);
             disposable = StoreManager
                 .Singleton
                 .Observe (x => x.State.TimeEntries.Values)
@@ -46,7 +37,7 @@ namespace Toggl.Phoebe._ViewModels
                 .Subscribe ();
         }
 
-        public override void Dispose ()
+        public void Dispose ()
         {
             if (disposable != null) {
                 disposable.Dispose ();
@@ -54,30 +45,18 @@ namespace Toggl.Phoebe._ViewModels
             }
         }
 
-        private IGrouper<TimeEntryHolder, T> CreateGrouper ()
-        {
-            if (typeof (T) == typeof (TimeEntryGroup)) {
-                return (IGrouper<TimeEntryHolder, T>)new TimeEntryGroup.Grouper ();
-            } else if (typeof (T) == typeof (TimeEntryHolder)) {
-                return (IGrouper<TimeEntryHolder, T>)new TimeEntryHolder.Grouper ();
-            } else {
-                throw new NotSupportedException ();
-            }
-        }
-
         private List<IHolder> UpdateItems (List<IHolder> currentHolders, IEnumerable<RichTimeEntry> entries)
         {
             try {
-                var timeHolders = grouper.Ungroup (Items.OfType<T> ()).ToList ();
+                var timeHolders = entries.Select (x => new TimeEntryHolder (x)).ToList ();
 
                 // Create the new item collection from holders (sort and add headers...)
                 var newItemCollection = CreateItemCollection (timeHolders);
 
-                // TODO RX: Make sure there's no conflict between this and list updating on UI thread, see #1343
                 // Check diffs, modify ItemCollection and notify changes
                 var diffs = Diff.Calculate (currentHolders, newItemCollection);
 
-                // 5. Swap remove events to delete normal items before headers.
+                // Swap remove events to delete normal items before headers.
                 // iOS requierement.
                 diffs = Diff.SortRemoveEvents<IHolder,DateHolder> (diffs);
 
@@ -119,12 +98,12 @@ namespace Toggl.Phoebe._ViewModels
                           .ToList ();
         }
 
-        public override void RestoreTimeEntryFromUndo ()
+        public void RestoreTimeEntryFromUndo ()
         {
             RxChain.Send (new DataMsg.TimeEntriesRestoreFromUndo (lastRemovedItem.EntryCollection.Select (x => x.Data)));
         }
 
-        public override void RemoveTimeEntryWithUndo (ITimeEntryHolder timeEntryHolder)
+        public void RemoveTimeEntryWithUndo (ITimeEntryHolder timeEntryHolder)
         {
             if (timeEntryHolder == null) {
                 return;

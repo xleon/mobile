@@ -9,18 +9,6 @@ namespace Toggl.Phoebe._ViewModels.Timer
 {
     public class TimeEntryHolder : ITimeEntryHolder
     {
-        public class Grouper : IGrouper<TimeEntryHolder, TimeEntryHolder>
-        {
-            public IEnumerable<TimeEntryHolder> Group (IEnumerable<TimeEntryHolder> items)
-            {
-                return items;
-            }
-            public IEnumerable<TimeEntryHolder> Ungroup (IEnumerable<TimeEntryHolder> groups)
-            {
-                return groups;
-            }
-        }
-
         public TimeEntryInfo Info { get; set; } // TODO: Make set private again?
         public RichTimeEntry Entry { get; private set; }
         public IList<RichTimeEntry> EntryCollection

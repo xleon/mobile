@@ -72,9 +72,8 @@ namespace Toggl.Phoebe._ViewModels
             DisposeCollection ();
             IsGroupedMode = isGroupedMode;
 
-            timeEntryCollection = isGroupedMode
-                ? (TimeEntryCollectionVM)new TimeEntryCollectionVM<TimeEntryGroup> ()
-                : new TimeEntryCollectionVM<TimeEntryHolder> ();
+            timeEntryCollection = new TimeEntryCollectionVM (
+                isGroupedMode ? TimeEntryGroupMethod.ByDateAndTask : TimeEntryGroupMethod.Single);
         }
 
         public void Dispose ()

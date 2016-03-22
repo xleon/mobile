@@ -22,7 +22,7 @@ namespace Toggl.Phoebe._Data
     {
         void Put (ICommonData obj);
         void Delete (ICommonData obj);
-        ICommonData SingleOrDefault (Expression<Func<ICommonData, bool>> selector);
+        ICommonData GetByColumn (Type type, string colName, object colValue);
         IReadOnlyList<ICommonData> UpdatedItems { get; }
         SQLiteConnection Connection { get; }
     }

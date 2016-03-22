@@ -189,14 +189,35 @@ namespace Toggl.Phoebe._Data
                 }
             }
 
-            public ICommonData SingleOrDefault (Expression<Func<ICommonData, bool>> selector)
+            public ICommonData GetByColumn (Type type, string colName, object colValue)
             {
-                // TODO: Is it there a better way for this?
-                try {
-                    return conn.Get (selector);
-                } catch {
-                    return null;
+                IEnumerable<ICommonData> res;
+                var map = conn.GetMapping (type);
+                var query = $"SELECT * FROM [{map.TableName}] WHERE {colName}=?";
+
+                if (type == typeof (ClientData)) {
+                    res = conn.Query<ClientData> (query, colValue).Cast<ICommonData> ();
+                } else if (type == typeof (ProjectData)) {
+                    res = conn.Query<ProjectData> (query, colValue).Cast<ICommonData> ();
+                } else if (type == typeof (TaskData)) {
+                    res = conn.Query<TaskData> (query, colValue).Cast<ICommonData> ();
+                } else if (type == typeof (TimeEntryData)) {
+                    res = conn.Query<TimeEntryData> (query, colValue).Cast<ICommonData> ();
+                } else if (type == typeof (WorkspaceData)) {
+                    res = conn.Query<WorkspaceData> (query, colValue).Cast<ICommonData> ();
+                } else if (type == typeof (UserData)) {
+                    res = conn.Query<UserData> (query, colValue).Cast<ICommonData> ();
+                } else if (type == typeof (TagData)) {
+                    res = conn.Query<TagData> (query, colValue).Cast<ICommonData> ();
+                } else if (type == typeof (WorkspaceUserData)) {
+                    res = conn.Query<WorkspaceUserData> (query, colValue).Cast<ICommonData> ();
+                } else if (type == typeof (ProjectUserData)) {
+                    res = conn.Query<ProjectUserData> (query, colValue).Cast<ICommonData> ();
+                } else {
+                    throw new NotSupportedException (string.Format ("Cannot find table for {0}", type.Name));
                 }
+
+                return res.SingleOrDefault ();
             }
         }
     }

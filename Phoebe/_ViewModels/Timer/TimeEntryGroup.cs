@@ -12,29 +12,27 @@ namespace Toggl.Phoebe._ViewModels.Timer
     /// </summary>
     public class TimeEntryGroup : ITimeEntryHolder
     {
-        public class Grouper : IGrouper<TimeEntryHolder, TimeEntryGroup>
+        public static IEnumerable<TimeEntryGroup> Group (IEnumerable<TimeEntryHolder> items)
         {
-            public IEnumerable<TimeEntryGroup> Group (IEnumerable<TimeEntryHolder> items)
-            {
-                var key = default (Guid);
-                var tempDic = new Dictionary<Guid, List<TimeEntryHolder>> ();
-                foreach (var item in items) {
-                    if (tempDic.TryFindKey (out key, kv => kv.Value [0].Entry.Data.IsGroupableWith (item.Entry.Data))) {
-                        tempDic [key].Add (item);
-                    } else {
-                        tempDic.Add (item.Entry.Data.Id, new List<TimeEntryHolder> { item });
-                    }
-                }
-                foreach (var kvPair in tempDic) {
-                    yield return new TimeEntryGroup (kvPair.Value.Select (x => x.Entry));
+            var key = default (Guid);
+            var tempDic = new Dictionary<Guid, List<TimeEntryHolder>> ();
+            foreach (var item in items) {
+                if (tempDic.TryFindKey (out key, kv => kv.Value [0].Entry.Data.IsGroupableWith (item.Entry.Data))) {
+                    tempDic [key].Add (item);
+                } else {
+                    tempDic.Add (item.Entry.Data.Id, new List<TimeEntryHolder> { item });
                 }
             }
-            public IEnumerable<TimeEntryHolder> Ungroup (IEnumerable<TimeEntryGroup> groups)
-            {
-                foreach (var g in groups) {
-                    foreach (var data in g.EntryCollection) {
-                        yield return new TimeEntryHolder (data);
-                    }
+            foreach (var kvPair in tempDic) {
+                yield return new TimeEntryGroup (kvPair.Value.Select (x => x.Entry));
+            }
+        }
+
+        public static IEnumerable<TimeEntryHolder> Ungroup (IEnumerable<TimeEntryGroup> groups)
+        {
+            foreach (var g in groups) {
+                foreach (var data in g.EntryCollection) {
+                    yield return new TimeEntryHolder (data);
                 }
             }
         }

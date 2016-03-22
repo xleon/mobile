@@ -206,7 +206,9 @@ namespace Toggl.Phoebe._Reactive
                     var dataStore = ServiceContainer.Resolve<ISyncDataStore> ();
                     userData = dataStore.Table<UserData> ().Single (x => x.Id == settings.UserId);
                 }
-            } catch (ArgumentException) {
+            } catch (Exception ex) {
+                var logger = ServiceContainer.Resolve<ILogger> ();
+                logger.Error (typeof (AppState).Name, ex, "UserId in settings not found in db: {0}", ex.Message);
                 // When data is corrupt and cannot find user
                 settings = settings.With (userId: Guid.Empty);
             }

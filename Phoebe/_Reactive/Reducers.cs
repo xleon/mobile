@@ -157,14 +157,15 @@ namespace Toggl.Phoebe._Reactive
                     var updated = dataStore.Update (ctx => {
                         foreach (var newData in receivedData) {
                             ICommonData oldData = null;
+                            string tableName = newData.GetType ().Name;
                             // Check first if the newData has localId assigned
                             // (for example, the ones returned by TogglClient.Create)
                             if (newData.Id != Guid.Empty) {
-                                oldData = ctx.SingleOrDefault (x => x.Id == newData.Id);
+                                oldData = ctx.GetByColumn (newData.GetType (), nameof (newData.Id), newData.Id);
                             }
                             // If no localId, check if an item with the same RemoteId is in the db
                             else {
-                                oldData = ctx.SingleOrDefault (x => x.RemoteId == newData.RemoteId);
+                                oldData = ctx.GetByColumn (newData.GetType (), nameof (newData.RemoteId), newData.RemoteId);
                             }
 
                             if (oldData != null) {

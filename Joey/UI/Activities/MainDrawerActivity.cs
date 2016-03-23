@@ -267,6 +267,7 @@ namespace Toggl.Joey.UI.Activities
         {
             await System.Threading.Tasks.Task.Delay (100);
             ((InputMethodManager)GetSystemService (InputMethodService)).HideSoftInputFromWindow (input.ApplicationWindowToken, HideSoftInputFlags.ImplicitOnly);
+            ((InputMethodManager)GetSystemService (InputMethodService)).HideSoftInputFromWindow (input.ApplicationWindowToken, HideSoftInputFlags.None);
         }
 
         public override void OnBackPressed ()

@@ -335,7 +335,7 @@ namespace Toggl.Phoebe._Reactive
         private static readonly bool GroupedEntriesDefault = false;
         private static readonly bool ChooseProjectForNewDefault = false;
         private static readonly int ReportsCurrentItemDefault = 0;
-        private static readonly string ProjectSortDefault = string.Empty;
+        private static readonly string ProjectSortDefault = "Clients";
         private static readonly string InstallIdDefault = string.Empty;
         // iOS only Default values
         private static readonly string RossPreferredStartViewDefault = string.Empty;

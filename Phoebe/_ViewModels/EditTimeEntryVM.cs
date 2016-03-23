@@ -8,6 +8,7 @@ using Toggl.Phoebe._Data.Models;
 using Toggl.Phoebe._Helpers;
 using Toggl.Phoebe._Reactive;
 using XPlatUtils;
+using System.Reactive.Linq;
 
 namespace Toggl.Phoebe._ViewModels
 {
@@ -15,6 +16,7 @@ namespace Toggl.Phoebe._ViewModels
     {
         internal static readonly string DefaultTag = "mobile";
 
+        private IDisposable subscriptionState;
         private AppState appState;
         private RichTimeEntry richData;
         private RichTimeEntry previousData;
@@ -25,7 +27,7 @@ namespace Toggl.Phoebe._ViewModels
             durationTimer = new System.Timers.Timer ();
             durationTimer.Elapsed += DurationTimerCallback;
 
-            this.appState = state;
+            appState = state;
             IsManual = timeData.Id == Guid.Empty;
             richData = new RichTimeEntry (timeData, state);
 
@@ -43,6 +45,12 @@ namespace Toggl.Phoebe._ViewModels
                            // Hack to force tag saving even if there're no other changes
                            ? new RichTimeEntry (richData.Data.With (x => x.Tags = new List<string> ()), state)
                            : new RichTimeEntry (richData.Data, richData.Info);
+
+            subscriptionState = StoreManager
+                                .Singleton
+                                .Observe (x => x.State)
+                                .StartWith (state)
+                                .Subscribe (s => appState = s);
 
             ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Edit Time Entry";
         }
@@ -71,6 +79,7 @@ namespace Toggl.Phoebe._ViewModels
 
         public void Dispose ()
         {
+            subscriptionState.Dispose ();
             durationTimer.Elapsed -= DurationTimerCallback;
             durationTimer.Dispose ();
         }
@@ -139,25 +148,31 @@ namespace Toggl.Phoebe._ViewModels
 
         public void ChangeTimeEntryDuration (TimeSpan newDuration)
         {
-            UpdateView (x => x.SetDuration (newDuration));
+            UpdateView (x => x.SetDuration (newDuration), nameof (Duration), nameof (StartDate), nameof (StopDate));
             ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Change Duration";
         }
 
         public void ChangeTimeEntryStart (TimeSpan diffTime)
         {
-            UpdateView (x => x.StartTime += diffTime);
+            UpdateView (x => x.ChangeStartTime (x.StartTime + diffTime), nameof (Duration), nameof (StartDate), nameof (StopDate));
+            ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Change Start Time";
+        }
+
+        public void ChangeTimeEntryStart (DateTime newStartTime)
+        {
+            UpdateView (x => x.ChangeStartTime (newStartTime), nameof (Duration), nameof (StartDate), nameof (StopDate));
             ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Change Start Time";
         }
 
         public void ChangeTimeEntryStop (TimeSpan diffTime)
         {
-            UpdateView (x => {
-                x.StopTime += diffTime;
-                if (diffTime.TotalSeconds > 0) {
-                    x.StartTime = x.StartTime.Truncate (TimeSpan.TicksPerMinute);
-                    x.StopTime = ((DateTime)x.StopTime).Truncate (TimeSpan.TicksPerMinute);
-                }
-            });
+            UpdateView (x => x.ChangeStoptime (x.StopTime + diffTime),nameof (Duration), nameof (StopDate));
+            ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Change Stop Time";
+        }
+
+        public void ChangeTimeEntryStop (DateTime newStopTime)
+        {
+            UpdateView (x => x.ChangeStoptime (newStopTime), nameof (Duration), nameof (StopDate));
             ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Change Stop Time";
         }
 

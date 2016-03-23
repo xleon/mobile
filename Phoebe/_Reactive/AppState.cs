@@ -4,10 +4,8 @@ using System.Collections.Generic;
 using Toggl.Phoebe._Data;
 using Toggl.Phoebe._Data.Models;
 using Toggl.Phoebe._Helpers;
-using XPlatUtils;
 using Toggl.Phoebe.Logging;
-using System.Reflection;
-using System.Linq.Expressions;
+using XPlatUtils;
 
 namespace Toggl.Phoebe._Reactive
 {
@@ -244,6 +242,26 @@ namespace Toggl.Phoebe._Reactive
             : this (data, appState.LoadTimeEntryInfo (data))
         {
         }
+
+        public override int GetHashCode ()
+        {
+            return Data.GetHashCode ();
+        }
+
+        public override bool Equals (object obj)
+        {
+            if (ReferenceEquals (this, obj)) {
+                return true;
+            }
+            else {
+                // Quick way to compare time entries
+                var other = obj as RichTimeEntry;
+                return other != null &&
+                       Data.Id == other.Data.Id &&
+                       Data.ModifiedAt == other.Data.ModifiedAt &&
+                       Data.DeletedAt == other.Data.DeletedAt;
+            }
+        }
     }
 
     public class ActiveEntryInfo
@@ -298,11 +316,11 @@ namespace Toggl.Phoebe._Reactive
             DateTime? nextDownloadFrom = null)
         {
             return new DownloadResult (
-                       isSyncing.HasValue ? isSyncing.Value : this.IsSyncing,
-                       hasMore.HasValue ? hasMore.Value : this.HasMore,
-                       hadErrors.HasValue ? hadErrors.Value : this.HadErrors,
-                       downloadFrom.HasValue ? downloadFrom.Value : this.DownloadFrom,
-                       nextDownloadFrom.HasValue ? nextDownloadFrom.Value : this.NextDownloadFrom);
+                       isSyncing.HasValue ? isSyncing.Value : IsSyncing,
+                       hasMore.HasValue ? hasMore.Value : HasMore,
+                       hadErrors.HasValue ? hadErrors.Value : HadErrors,
+                       downloadFrom.HasValue ? downloadFrom.Value : DownloadFrom,
+                       nextDownloadFrom.HasValue ? nextDownloadFrom.Value : NextDownloadFrom);
         }
     }
 
@@ -349,7 +367,7 @@ namespace Toggl.Phoebe._Reactive
             );
         }
 
-        private T updateNullable<T> (Nullable<T> value, T @default, Func<T,T> update)
+        private T updateNullable<T> (T? value, T @default, Func<T,T> update)
         where T : struct
         {
             return value.HasValue ? update (value.Value) : @default;

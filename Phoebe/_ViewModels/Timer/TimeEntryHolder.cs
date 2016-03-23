@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using Toggl.Phoebe._Data.Diff;
-using Toggl.Phoebe._Data.Models;
 using Toggl.Phoebe._Helpers;
 using Toggl.Phoebe._Reactive;
 
@@ -9,7 +8,6 @@ namespace Toggl.Phoebe._ViewModels.Timer
 {
     public class TimeEntryHolder : ITimeEntryHolder
     {
-        public TimeEntryInfo Info { get; set; } // TODO: Make set private again?
         public RichTimeEntry Entry { get; private set; }
         public IList<RichTimeEntry> EntryCollection
         {
@@ -32,12 +30,17 @@ namespace Toggl.Phoebe._ViewModels.Timer
 
         public DiffComparison Compare (IDiffComparable other)
         {
-            if (ReferenceEquals (this, other)) {
-                return DiffComparison.Same;
-            } else {
-                var other2 = other as TimeEntryHolder;
-                return other2 != null && other2.Entry.Data.Id == Entry.Data.Id
-                       ? DiffComparison.Update : DiffComparison.Different;
+            var other2 = other as TimeEntryHolder;
+            if (other2 != null) {
+                if (Entry.Data.Id == other2.Entry.Data.Id) {
+                    return Entry.Equals (other2.Entry) ? DiffComparison.Same : DiffComparison.Update;
+                }
+                else {
+                    return DiffComparison.Different;
+                }
+            }
+            else {
+                return DiffComparison.Different;
             }
         }
 

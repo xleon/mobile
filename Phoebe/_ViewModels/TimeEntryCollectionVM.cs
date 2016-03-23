@@ -30,9 +30,9 @@ namespace Toggl.Phoebe._ViewModels
             grouper = new TimeEntryGrouper (groupMethod);
             disposable = StoreManager
                 .Singleton
-                .Observe (x => x.State.TimeEntries.Values)
-				// TODO: Recover buffer?
-				//.TimedBuffer (bufferMilliseconds)
+                .Observe (x => x.State.TimeEntries)
+                .DistinctUntilChanged ()
+                .Select (x => x.Values)
                 .Scan (new List<IHolder> (), UpdateItems)
                 .Subscribe ();
         }

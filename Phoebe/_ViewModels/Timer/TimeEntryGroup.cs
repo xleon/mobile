@@ -65,7 +65,7 @@ namespace Toggl.Phoebe._ViewModels.Timer
         {
             var other2 = other as TimeEntryGroup;
             if (other2 != null) {
-                if (EntryCollection.SequenceEqual (other2.EntryCollection, ReferenceEquals)) {
+                if (EntryCollection.SequenceEqual (other2.EntryCollection)) {
                     return DiffComparison.Same;
                 } else {
                     return Entry.Data.IsGroupableWith (other2.Entry.Data) ?

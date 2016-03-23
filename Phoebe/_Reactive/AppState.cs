@@ -14,6 +14,7 @@ namespace Toggl.Phoebe._Reactive
         public SettingsState Settings { get; private set; }
         public Net.AuthResult AuthResult { get; private set; }
         public DownloadResult DownloadResult { get; private set; }
+        public FullSyncResult FullSyncResult { get; private set; }
 
         public UserData User { get; private set; }
         public IReadOnlyDictionary<Guid, IWorkspaceData> Workspaces { get; private set; }
@@ -44,6 +45,7 @@ namespace Toggl.Phoebe._Reactive
             SettingsState settings,
             Net.AuthResult authResult,
             DownloadResult downloadResult,
+            FullSyncResult fullSyncResult,
             UserData user,
             IReadOnlyDictionary<Guid, IWorkspaceData> workspaces,
             IReadOnlyDictionary<Guid, IProjectData> projects,
@@ -57,6 +59,7 @@ namespace Toggl.Phoebe._Reactive
             Settings = settings;
             AuthResult = authResult;
             DownloadResult = downloadResult;
+            FullSyncResult = fullSyncResult;
             User = user;
             Workspaces = workspaces;
             Projects = projects;
@@ -72,6 +75,7 @@ namespace Toggl.Phoebe._Reactive
             SettingsState settings = null,
             Net.AuthResult? authResult = null,
             DownloadResult downloadResult = null,
+            FullSyncResult fullSyncResult = null,
             UserData user = null,
             IReadOnlyDictionary<Guid, IWorkspaceData> workspaces = null,
             IReadOnlyDictionary<Guid, IProjectData> projects = null,
@@ -86,6 +90,7 @@ namespace Toggl.Phoebe._Reactive
                        settings ?? Settings,
                        authResult ?? AuthResult,
                        downloadResult ?? DownloadResult,
+                       fullSyncResult ?? FullSyncResult,
                        user ?? User,
                        workspaces ?? Workspaces,
                        projects ?? Projects,
@@ -174,7 +179,8 @@ namespace Toggl.Phoebe._Reactive
         public IEnumerable<IProjectData> GetUserAccessibleProjects (Guid userId)
         {
             return Projects.Values.Where (
-                       p => p.IsActive && (p.IsPrivate || ProjectUsers.Values.Any (x => x.ProjectId == p.Id && x.UserId == userId)))
+                       p => p.IsActive &&
+                       (p.IsPrivate || ProjectUsers.Values.Any (x => x.ProjectId == p.Id && x.UserId == userId)))
                    .OrderBy (p => p.Name);
         }
 
@@ -215,6 +221,7 @@ namespace Toggl.Phoebe._Reactive
                        settings: settings,
                        authResult: Net.AuthResult.None,
                        downloadResult: DownloadResult.Empty,
+                       fullSyncResult:FullSyncResult.Empty,
                        user: userData,
                        workspaces: new Dictionary<Guid, IWorkspaceData> (),
                        projects: new Dictionary<Guid, IProjectData> (),
@@ -252,8 +259,7 @@ namespace Toggl.Phoebe._Reactive
         {
             if (ReferenceEquals (this, obj)) {
                 return true;
-            }
-            else {
+            } else {
                 // Quick way to compare time entries
                 var other = obj as RichTimeEntry;
                 return other != null &&
@@ -276,6 +282,41 @@ namespace Toggl.Phoebe._Reactive
         public ActiveEntryInfo (Guid id)
         {
             Id = id;
+        }
+    }
+
+    public class FullSyncResult
+    {
+        public bool IsSyncing { get; private set; }
+        public DateTime SyncLastRun { get; private set; }
+        public bool HadErrors { get; private set; }
+
+        public static FullSyncResult Empty
+        {
+            get {
+                // Initial Date for full sync.
+                // the last 5 days.
+                var syncLastRun = Time.UtcNow.AddDays (-5);
+                return new FullSyncResult (false, true, syncLastRun);
+            }
+        }
+
+        public FullSyncResult (bool isSyncing, bool hadErrors, DateTime syncLastRun)
+        {
+            IsSyncing = isSyncing;
+            HadErrors = hadErrors;
+            SyncLastRun = syncLastRun;
+        }
+
+        public FullSyncResult With (
+            bool? isSyncing = null,
+            bool? hadErrors = null,
+            DateTime? syncLastRun = null)
+        {
+            return new FullSyncResult (
+                       isSyncing.HasValue ? isSyncing.Value : IsSyncing,
+                       hadErrors.HasValue ? hadErrors.Value : HadErrors,
+                       syncLastRun.HasValue ? syncLastRun.Value : SyncLastRun);
         }
     }
 
@@ -402,8 +443,7 @@ namespace Toggl.Phoebe._Reactive
         }
 
         private T updateNullable<T> (T? value, T @default, Func<T,T> update)
-        where T : struct
-        {
+        where T : struct {
             return value.HasValue ? update (value.Value) : @default;
         }
 

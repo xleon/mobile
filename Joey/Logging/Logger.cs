@@ -1,7 +1,6 @@
 using System;
-using Toggl.Joey.Data;
+using Toggl.Phoebe;
 using Toggl.Phoebe.Logging;
-using XPlatUtils;
 
 namespace Toggl.Joey.Logging
 {
@@ -47,7 +46,7 @@ namespace Toggl.Joey.Logging
                 }
                 break;
             default:
-                Android.Util.Log.Error ("Logger", String.Format ("Invalid logger level: {0}", level));
+                Android.Util.Log.Error ("Logger", string.Format ("Invalid logger level: {0}", level));
                 if (exc == null) {
                     Android.Util.Log.Info (tag, message);
                 } else {
@@ -59,13 +58,15 @@ namespace Toggl.Joey.Logging
 
         protected override void AddExtraMetadata (Metadata md)
         {
-            var settings = ServiceContainer.Resolve<SettingsStore> ();
-            md.AddToTab ("State", "Experiment", settings.ExperimentId);
-            md.AddToTab ("State", "Push registered", String.IsNullOrWhiteSpace (settings.GcmRegistrationId) ? "No" : "Yes");
+            // TODO: RX Better way to do that!
+            var settings = Phoebe._Reactive.StoreManager.Singleton.AppState.Settings;
+            md.AddToTab ("State", "Experiment", OBMExperimentManager.ExperimentNumber);
+            md.AddToTab ("State", "Push registered", string.IsNullOrWhiteSpace (settings.GcmRegistrationId) ? "No" : "Yes");
 
             md.AddToTab ("Settings", "Show projects for new", settings.ChooseProjectForNew ? "Yes" : "No");
             md.AddToTab ("Settings", "Idle notifications", settings.IdleNotification ? "Yes" : "No");
             md.AddToTab ("Settings", "Add default tag", settings.UseDefaultTag ? "Yes" : "No");
+            md.AddToTab ("Settings", "Is Grouped", settings.GroupedEntries ? "Yes" : "No");
         }
     }
 }

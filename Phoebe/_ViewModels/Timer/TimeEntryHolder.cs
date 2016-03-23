@@ -34,12 +34,10 @@ namespace Toggl.Phoebe._ViewModels.Timer
             if (other2 != null) {
                 if (Entry.Data.Id == other2.Entry.Data.Id) {
                     return Entry.Equals (other2.Entry) ? DiffComparison.Same : DiffComparison.Update;
-                }
-                else {
+                } else {
                     return DiffComparison.Different;
                 }
-            }
-            else {
+            } else {
                 return DiffComparison.Different;
             }
         }

@@ -1,11 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Toggl.Phoebe.Logging;
 using Toggl.Phoebe._Data;
 using Toggl.Phoebe._Data.Models;
 using Toggl.Phoebe._Helpers;
-using Toggl.Phoebe._Net;
 using XPlatUtils;
 using Toggl.Phoebe.Net;
 
@@ -75,7 +73,8 @@ namespace Toggl.Phoebe._Reactive
         {
             return new TagCompositeReducer<AppState> ()
                    .Add (typeof (DataMsg.Request), ServerRequest)
-                   .Add (typeof (DataMsg.ReceivedFromServer), ReceivedFromServer)
+                   .Add (typeof (DataMsg.ReceivedFromSync), ReceivedFromSync)
+                   .Add (typeof (DataMsg.ReceivedFromDownload), ReceivedFromDownload)
                    .Add (typeof (DataMsg.TimeEntriesLoad), TimeEntriesLoad)
                    .Add (typeof (DataMsg.TimeEntryPut), TimeEntryPut)
                    .Add (typeof (DataMsg.TimeEntryDelete), TimeEntryDelete)
@@ -102,6 +101,21 @@ namespace Toggl.Phoebe._Reactive
             return DataSyncMsg.Create (newState, request: request);
         }
 
+        static DataSyncMsg<AppState> FullSync (AppState state, DataMsg msg)
+        {
+            var syncDate = state.Settings.SyncLastRun;
+            FullSyncResult syncResult = state.FullSyncResult;
+
+            syncResult = syncResult.With (
+                             isSyncing: true,
+                             hadErrors:false,
+                             syncLastRun:syncDate);
+
+            return DataSyncMsg.Create (
+                       state.With (fullSyncResult:syncResult),
+                       request: new ServerRequest.FullSync ());
+        }
+
         static DataSyncMsg<AppState> TimeEntriesLoad (AppState state, DataMsg msg)
         {
             var dataStore = ServiceContainer.Resolve <ISyncDataStore> ();
@@ -113,93 +127,71 @@ namespace Toggl.Phoebe._Reactive
             DownloadResult downloadInfo = state.DownloadResult;
             IList<TimeEntryData> dbEntries = new List<TimeEntryData> ();
 
-            if (fullSync) {
-                downloadInfo = downloadInfo.With (
-                                   isSyncing: true,
-                                   downloadFrom: DateTime.UtcNow,
-                                   nextDownloadFrom: endDate);
-            } else {
-                var startDate = GetDatesByDays (dataStore, endDate, Literals.TimeEntryLoadDays);
+            var startDate = GetDatesByDays (dataStore, endDate, Literals.TimeEntryLoadDays);
+            dbEntries = dataStore
+                        .Table<TimeEntryData> ()
+                        .Where (r =>
+                                r.State != TimeEntryState.New &&
+                                r.StartTime >= startDate && r.StartTime < endDate &&
+                                r.DeletedAt == null)
+                        // TODO TODO TODO: Rx why the entries are saved without local user ID.
+                        //r.UserId == state.User.Id)
+                        .Take (Literals.TimeEntryLoadMaxInit)
+                        .OrderByDescending (r => r.StartTime)
+                        .ToList ();
 
-                dbEntries = dataStore
-                            .Table<TimeEntryData> ()
-                            .Where (r =>
-                                    r.State != TimeEntryState.New &&
-                                    r.StartTime >= startDate && r.StartTime < endDate &&
-                                    r.DeletedAt == null &&
-                                    r.UserId == state.User.Id)
-                            .Take (Literals.TimeEntryLoadMaxInit)
-                            .OrderByDescending (r => r.StartTime)
-                            .ToList ();
-
-                downloadInfo =
-                    downloadInfo.With (
-                        isSyncing: true,
-                        downloadFrom: endDate,
-                        nextDownloadFrom: dbEntries.Any ()
-                        ? dbEntries.Min (x => x.StartTime)
-                        : endDate);
-            }
+            downloadInfo =
+                downloadInfo.With (
+                    isSyncing: true,
+                    downloadFrom: endDate,
+                    nextDownloadFrom: dbEntries.Any ()
+                    ? dbEntries.Min (x => x.StartTime)
+                    : endDate);
 
             return DataSyncMsg.Create (
                        state.With (
                            downloadResult: downloadInfo,
                            timeEntries: state.UpdateTimeEntries (dbEntries)),
-                       request: new ServerRequest.DownloadEntries (fullSync));
+                       request: new ServerRequest.DownloadEntries ());
         }
 
-        static DataSyncMsg<AppState> ReceivedFromServer (AppState state, DataMsg msg)
+        static DataSyncMsg<AppState> ReceivedFromSync (AppState state, DataMsg msg)
         {
-            var serverMsg = msg as DataMsg.ReceivedFromServer;
+            var serverMsg = msg as DataMsg.ReceivedFromSync;
             return serverMsg.Data.Match (receivedData => {
-
-                var dataStore = ServiceContainer.Resolve <ISyncDataStore> ();
-                var updated = dataStore.Update (ctx => {
-
-                    // TODO RX: Merge received items with data in db
-
-                    foreach (var newData in receivedData) {
-                        ICommonData oldData = null;
-                        // Check first if the newData has localId assigned
-                        // (for example, the ones returned by TogglClient.Create)
-                        if (newData.Id != Guid.Empty) {
-                            oldData = ctx.GetByColumn (newData.GetType (), nameof (ICommonData.Id), newData.Id);
-                        }
-                        // If no localId, check if an item with the same RemoteId is in the db
-                        else {
-                            oldData = ctx.GetByColumn (newData.GetType (), nameof (ICommonData.RemoteId), newData.RemoteId);
-                        }
-
-                        if (oldData != null) {
-                            if (newData.CompareTo (oldData) >= 0) {
-                                newData.Id = oldData.Id;
-                                PutOrDelete (ctx, newData);
-                            }
-                        } else {
-                            newData.Id = Guid.NewGuid (); // Assign new Id
-                            PutOrDelete (ctx, newData);
-                        }
-                    }
-
-                    if (serverMsg.FullSyncInfo != null) {
-                        // TODO: Throw exception if this is not successful?
-                        ctx.Put (serverMsg.FullSyncInfo.Item1);
-                    }
-                });
-
-                var hasMore = receivedData.OfType<TimeEntryData> ().Any ();
-                var userData = state.User;
-                var settings = state.Settings;
-
-                if (serverMsg.FullSyncInfo != null) {
-                    userData = serverMsg.FullSyncInfo.Item1;
-                    settings = settings.With (syncLastRun: serverMsg.FullSyncInfo.Item2);
-                }
-
+                // Side effect operation.
+                var updated = UpdateData (state, receivedData);
+                // Modify state.
                 return DataSyncMsg.Create (
                            state.With (
-                               user: userData,
-                               settings: settings,
+                               user: serverMsg.FullSyncInfo.Item1,
+                               fullSyncResult: state.FullSyncResult.With (isSyncing:false, hadErrors:false, syncLastRun:serverMsg.FullSyncInfo.Item2),
+                               settings: state.Settings.With (syncLastRun: serverMsg.FullSyncInfo.Item2),
+                               workspaces: state.Update (state.Workspaces, updated),
+                               projects: state.Update (state.Projects, updated),
+                               workspaceUsers: state.Update (state.WorkspaceUsers, updated),
+                               projectUsers: state.Update (state.ProjectUsers, updated),
+                               clients: state.Update (state.Clients, updated),
+                               tasks: state.Update (state.Tasks, updated),
+                               tags: state.Update (state.Tags, updated),
+                               // TODO: Check if the updated entries are within the current scroll view
+                               // Probably it's better to do this check in UpdateTimeEntries
+                               timeEntries: state.UpdateTimeEntries (updated)
+                           ));
+            },
+            ex => DataSyncMsg.Create (state.With (fullSyncResult: state.FullSyncResult.With (isSyncing: false, hadErrors: true))));
+        }
+
+        static DataSyncMsg<AppState> ReceivedFromDownload (AppState state, DataMsg msg)
+        {
+            var serverMsg = msg as DataMsg.ReceivedFromDownload;
+            return serverMsg.Data.Match (receivedData => {
+                // Side effect operation.
+                var updated = UpdateData (state, receivedData);
+                // Modify state.
+                var hasMore = receivedData.OfType<TimeEntryData> ().Any ();
+                return DataSyncMsg.Create (
+                           state.With (
                                downloadResult: state.DownloadResult.With (isSyncing: false, hasMore: hasMore, hadErrors: false),
                                workspaces: state.Update (state.Workspaces, updated),
                                projects: state.Update (state.Projects, updated),
@@ -441,6 +433,113 @@ namespace Toggl.Phoebe._Reactive
         }
 
         #region Util
+        static IReadOnlyList<ICommonData> UpdateData (AppState state, IEnumerable<CommonData> receivedData)
+        {
+            var dataStore = ServiceContainer.Resolve <ISyncDataStore> ();
+            var updated = dataStore.Update (ctx => {
+                foreach (var newData in receivedData) {
+                    ICommonData oldData = null;
+                    // Check first if the newData has localId assigned
+                    // (for example, the ones returned by TogglClient.Create)
+                    if (newData.Id != Guid.Empty) {
+                        oldData = ctx.GetByColumn (newData.GetType (), nameof (ICommonData.Id), newData.Id);
+                    }
+                    // If no localId, check if an item with the same RemoteId is in the db
+                    else {
+                        oldData = ctx.GetByColumn (newData.GetType (), nameof (ICommonData.RemoteId), newData.RemoteId);
+                    }
+
+                    if (oldData != null) {
+                        // TODO RX check this criteria to compare.
+                        // and evaluate if local relations are needed.
+                        if (newData.CompareTo (oldData) >= 0) {
+                            newData.Id = oldData.Id;
+                            var data = BuildLocalRelationships (state, newData); // Set local Id values.
+                            PutOrDelete (ctx, data);
+                        }
+                    } else {
+                        newData.Id = Guid.NewGuid (); // Assign new Id
+                        var data = BuildLocalRelationships (state, newData); // Set local Id values.
+                        PutOrDelete (ctx, data);
+                    }
+                }
+            });
+            return updated;
+        }
+
+
+        static ICommonData BuildLocalRelationships (AppState state, ICommonData data)
+        {
+            // Build local relationships.
+            // Object that comes from server needs to be
+            // filled with local Ids.
+
+            if (data is TimeEntryData) {
+                var te = (TimeEntryData)data;
+                te.UserId = state.User.Id;
+                te.WorkspaceId = state.User.DefaultWorkspaceId;
+                if (te.ProjectRemoteId.HasValue &&
+                        state.Projects.Any (x => x.Value.RemoteId == te.ProjectRemoteId.Value)) {
+                    te.ProjectId = state.Projects.Single (x => x.Value.RemoteId == te.ProjectRemoteId.Value).Value.Id;
+                }
+
+                if (te.TaskRemoteId.HasValue &&
+                        state.Tasks.Any (x => x.Value.RemoteId == te.TaskRemoteId.Value)) {
+                    te.TaskId = state.Tasks.Single (x => x.Value.RemoteId == te.TaskRemoteId.Value).Value.Id;
+                }
+                return te;
+            }
+
+            if (data is ProjectData) {
+                var pr = (ProjectData)data;
+                pr.WorkspaceId = state.User.DefaultWorkspaceId;
+                if (pr.ClientRemoteId.HasValue &&
+                        state.Clients.Any (x => x.Value.RemoteId == pr.ClientRemoteId.Value)) {
+                    pr.ClientId = state.Clients.Single (x => x.Value.RemoteId == pr.ClientRemoteId.Value).Value.Id;
+                }
+                return pr;
+            }
+
+            if (data is WorkspaceUserData) {
+                var ws = (WorkspaceUserData)data;
+                ws.UserId = state.User.Id;
+                ws.WorkspaceId = state.User.DefaultWorkspaceId;
+                return ws;
+            }
+
+            if (data is ClientData) {
+                var cl = (ClientData)data;
+                cl.WorkspaceId = state.User.DefaultWorkspaceId;
+                return cl;
+            }
+
+            if (data is TaskData) {
+                var ts = (TaskData)data;
+                ts.WorkspaceId = state.User.DefaultWorkspaceId;
+                if (state.Projects.Any (x => x.Value.RemoteId == ts.ProjectRemoteId)) {
+                    ts.ProjectId = state.Projects.Single (x => x.Value.RemoteId == ts.ProjectRemoteId).Value.Id;
+                }
+                return ts;
+            }
+
+            if (data is ProjectUserData) {
+                var ps = (ProjectUserData)data;
+                ps.UserId = state.User.Id;
+                if (state.Projects.Any (x => x.Value.RemoteId == ps.ProjectRemoteId)) {
+                    ps.ProjectId = state.Projects.Single (x => x.Value.RemoteId == ps.ProjectRemoteId).Value.Id;
+                }
+                return ps;
+            }
+
+            if (data is TagData) {
+                var t = (TagData)data;
+                t.WorkspaceId = state.User.DefaultWorkspaceId;
+                return t;
+            }
+
+            return data;
+        }
+
         static void PutOrDelete (ISyncDataStoreContext ctx, ICommonData data)
         {
             if (data.DeletedAt == null) {

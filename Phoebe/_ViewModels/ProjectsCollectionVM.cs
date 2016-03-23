@@ -36,10 +36,9 @@ namespace Toggl.Phoebe._ViewModels
                     .OrderBy (r => r.Name).ToList ();
 
             projects = appState.GetUserAccessibleProjects (userData.Id).Select (
-                           p => new SuperProjectData (
-                p,
-                clients.FirstOrDefault (c => c.Id == p.ClientId),
-                tasks.Count (t => t.ProjectId == p.Id))).ToList ();
+                           p => new SuperProjectData (p,
+                                   clients.FirstOrDefault (c => c.Id == p.ClientId),
+                                   tasks.Count (t => t.ProjectId == p.Id))).ToList ();
 
             // Create collection
             CreateSortedCollection (projects);

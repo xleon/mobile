@@ -56,8 +56,9 @@ namespace Toggl.Phoebe._Reactive
             // TODO: Use Throttle here?
             .SelectAsync (async x => {
                 if (x.Item1 is ServerRequest.DownloadEntries) {
-                    var req = x.Item1 as ServerRequest.DownloadEntries;
-                    await DownloadEntries (x.Item2, req.FullSync);
+                    await DownloadEntries (x.Item2);
+                } else if (x.Item1 is ServerRequest.FullSync) {
+                    await FullSync (x.Item2);
                 } else if (x.Item1 is ServerRequest.Authenticate) {
                     var req = x.Item1 as ServerRequest.Authenticate;
                     await AuthenticateAsync (req.Username, req.Password);
@@ -115,7 +116,7 @@ namespace Toggl.Phoebe._Reactive
 
             // Return remote objects
             if (remoteObjects.Count > 0) {
-                RxChain.Send (new DataMsg.ReceivedFromServer (remoteObjects));
+                RxChain.Send (new DataMsg.ReceivedFromDownload (remoteObjects));
             }
 
             foreach (var req in syncMsg.ServerRequests) {
@@ -283,7 +284,52 @@ namespace Toggl.Phoebe._Reactive
                               authResult, userJson != null ? mapper.Map<UserData> (userJson) : null));
         }
 
-        async Task DownloadEntries (AppState state, bool fullSync)
+        async Task FullSync (AppState state)
+        {
+            string authToken = state.User.ApiToken;
+            var sinceDate = state.Settings.SyncLastRun;
+            try {
+                IList<TimeEntryJson> jsonEntries = null;
+                var newWorkspaces = new List<WorkspaceJson> ();
+                var newProjects = new List<ProjectJson> ();
+                var newClients = new List<ClientJson> ();
+                var newTasks = new List<TaskJson> ();
+                var newTags = new List<TagJson> ();
+
+                // TODO RX: Check if since date is older than 2 months, see #1301
+                var changes = await client.GetChanges (authToken, state.Settings.SyncLastRun);
+                jsonEntries = changes.TimeEntries.ToList ();
+                newWorkspaces = changes.Workspaces.ToList ();
+                newProjects = changes.Projects.ToList ();
+                newClients = changes.Clients.ToList ();
+                newTasks = changes.Tasks.ToList ();
+                newTags = changes.Tags.ToList ();
+                var fullSyncInfo = Tuple.Create (mapper.Map<UserData> (changes.User), changes.Timestamp);
+
+                RxChain.Send (new DataMsg.ReceivedFromSync (
+                                  jsonEntries.Select (mapper.Map<TimeEntryData>).Cast<CommonData> ()
+                                  .Concat (newWorkspaces.Select (mapper.Map<WorkspaceData>).Cast<CommonData> ())
+                                  .Concat (newProjects.Select (mapper.Map<ProjectData>).Cast<CommonData> ())
+                                  .Concat (newClients.Select (mapper.Map<ClientData>).Cast<CommonData> ())
+                                  .Concat (newTasks.Select (mapper.Map<TaskData>).Cast<CommonData> ())
+                                  .Concat (newTags.Select (mapper.Map<TagData>).Cast<CommonData> ())
+                                  .ToList (), fullSyncInfo));
+            } catch (Exception exc) {
+                var tag = this.GetType ().Name;
+                var logger = ServiceContainer.Resolve<ILogger> ();
+                string errorMsg = string.Format ("Failed to sync data since {0}", sinceDate);
+
+                if (exc.IsNetworkFailure () || exc is TaskCanceledException) {
+                    logger.Info (tag, exc, errorMsg);
+                } else {
+                    logger.Warning (tag, exc, errorMsg);
+                }
+
+                RxChain.Send (new DataMsg.ReceivedFromSync (exc));
+            }
+        }
+
+        async Task DownloadEntries (AppState state)
         {
             long? clientRemoteId = null;
             string authToken = state.User.ApiToken;
@@ -292,83 +338,70 @@ namespace Toggl.Phoebe._Reactive
 
             try {
                 IList<TimeEntryJson> jsonEntries = null;
-                Tuple<UserData, DateTime> fullSyncInfo = null;
                 var newWorkspaces = new List<WorkspaceJson> ();
                 var newProjects = new List<ProjectJson> ();
                 var newClients = new List<ClientJson> ();
                 var newTasks = new List<TaskJson> ();
                 var newTags = new List<TagData> ();
 
-                if (fullSync) {
-                    // TODO RX: Check if since date is older than 2 months, see #1301
-                    var changes = await client.GetChanges (authToken, state.Settings.SyncLastRun);
-                    jsonEntries = changes.TimeEntries.ToList ();
-                    newWorkspaces = changes.Workspaces.ToList ();
-                    newProjects = changes.Projects.ToList ();
-                    newClients = changes.Clients.ToList ();
-                    newTasks = changes.Tasks.ToList ();
-                    newTags = changes.Tags.Select (mapper.Map<TagData>).ToList ();
-                    fullSyncInfo = Tuple.Create (mapper.Map<UserData> (changes.User), changes.Timestamp);
+                // Download new Entries
+                jsonEntries = await client.ListTimeEntries (authToken, startDate, endDate);
 
-                } else {
-                    // Download new Entries
-                    jsonEntries = await client.ListTimeEntries (authToken, startDate, endDate);
+                // Check the state contains all related objects
+                foreach (var entry in jsonEntries) {
+                    if (state.Workspaces.Values.All (x => x.RemoteId != entry.WorkspaceRemoteId) &&
+                            newWorkspaces.All (x => x.RemoteId != entry.WorkspaceRemoteId)) {
+                        newWorkspaces.Add (await client.Get<WorkspaceJson> (authToken, entry.WorkspaceRemoteId));
+                    }
 
-                    // Check the state contains all related objects
-                    foreach (var entry in jsonEntries) {
-                        if (state.Workspaces.Values.All (x => x.RemoteId != entry.WorkspaceRemoteId) &&
-                                newWorkspaces.All (x => x.RemoteId != entry.WorkspaceRemoteId)) {
-                            newWorkspaces.Add (await client.Get<WorkspaceJson> (authToken, entry.WorkspaceRemoteId));
+                    if (entry.ProjectRemoteId.HasValue) {
+                        var projectData = state.Projects.Values.FirstOrDefault (
+                                              x => x.RemoteId == entry.ProjectRemoteId);
+
+                        if (projectData != null) {
+                            clientRemoteId = projectData.ClientRemoteId;
+                        } else {
+                            var projectJson = newProjects.FirstOrDefault (x => x.RemoteId == entry.ProjectRemoteId);
+                            if (projectJson == null) {
+                                projectJson = await client.Get<ProjectJson> (authToken, entry.ProjectRemoteId.Value);
+                                newProjects.Add (projectJson);
+                            }
+                            clientRemoteId = (projectJson as ProjectJson).ClientRemoteId;
                         }
 
-                        if (entry.ProjectRemoteId.HasValue) {
-                            var projectData = state.Projects.Values.FirstOrDefault (
-                                                  x => x.RemoteId == entry.ProjectRemoteId);
-
-                            if (projectData != null) {
-                                clientRemoteId = projectData.ClientRemoteId;
-                            } else {
-                                var projectJson = newProjects.FirstOrDefault (x => x.RemoteId == entry.ProjectRemoteId);
-                                if (projectJson == null) {
-                                    projectJson = await client.Get<ProjectJson> (authToken, entry.ProjectRemoteId.Value);
-                                    newProjects.Add (projectJson);
-                                }
-                                clientRemoteId = (projectJson as ProjectJson).ClientRemoteId;
-                            }
-
-                            if (clientRemoteId.HasValue) {
-                                if (state.Clients.Values.All (x => x.RemoteId != clientRemoteId) &&
-                                        newClients.All (x => x.RemoteId != clientRemoteId)) {
-                                    newClients.Add (await client.Get<ClientJson> (authToken, clientRemoteId.Value));
-                                }
-                            }
-                        }
-
-                        if (entry.TaskRemoteId.HasValue) {
-                            if (state.Tasks.Values.All (x => x.RemoteId != entry.TaskRemoteId) &&
-                                    newTasks.All (x => x.RemoteId != entry.TaskRemoteId)) {
-                                newTasks.Add (await client.Get<TaskJson> (authToken, entry.TaskRemoteId.Value));
-                            }
-                        }
-
-                        var tags = entry.Tags ?? new List<string> ();
-                        foreach (var tag in tags) {
-                            if (state.Tags.Values.All (x => x.WorkspaceRemoteId != entry.WorkspaceRemoteId || x.Name != tag) &&
-                                    newTags.All (x => x.WorkspaceRemoteId != entry.WorkspaceRemoteId || x.Name != tag)) {
-                                newTags.Add (new TagData (tag, Guid.Empty, entry.WorkspaceRemoteId));
+                        if (clientRemoteId.HasValue) {
+                            if (state.Clients.Values.All (x => x.RemoteId != clientRemoteId) &&
+                                    newClients.All (x => x.RemoteId != clientRemoteId)) {
+                                newClients.Add (await client.Get<ClientJson> (authToken, clientRemoteId.Value));
                             }
                         }
                     }
+
+                    if (entry.TaskRemoteId.HasValue) {
+                        if (state.Tasks.Values.All (x => x.RemoteId != entry.TaskRemoteId) &&
+                                newTasks.All (x => x.RemoteId != entry.TaskRemoteId)) {
+                            newTasks.Add (await client.Get<TaskJson> (authToken, entry.TaskRemoteId.Value));
+                        }
+                    }
+
+                    // TODO RX: How to get the tag without a remote id?
+                    // TODO: Getting some null reference errors in this code
+                    //foreach (var tag in entry.Tags) {
+                    //    if (state.Tags.Values.All (x => x.WorkspaceRemoteId != entry.WorkspaceRemoteId || x.Name != tag) &&
+                    //            newTags.All (x => x.WorkspaceRemoteId != entry.WorkspaceRemoteId || x.Name != tag)) {
+                    //         newTags.Add (await client.Get<TagJson> (authToken, tagRemoteId));
+                    //    }
+                    //}
                 }
 
-                RxChain.Send (new DataMsg.ReceivedFromServer (
+                RxChain.Send (new DataMsg.ReceivedFromDownload (
                                   jsonEntries.Select (mapper.Map<TimeEntryData>).Cast<CommonData> ()
                                   .Concat (newWorkspaces.Select (mapper.Map<WorkspaceData>).Cast<CommonData> ())
                                   .Concat (newProjects.Select (mapper.Map<ProjectData>).Cast<CommonData> ())
                                   .Concat (newClients.Select (mapper.Map<ClientData>).Cast<CommonData> ())
                                   .Concat (newTasks.Select (mapper.Map<TaskData>).Cast<CommonData> ())
-                                  .Concat (newTags.Cast<CommonData> ())
-                                  .ToList (), fullSyncInfo));
+                                  .Concat (newTags.Select (mapper.Map<TagData>).Cast<CommonData> ())
+                                  .ToList ()));
 
             } catch (Exception exc) {
                 var tag = this.GetType ().Name;
@@ -383,7 +416,7 @@ namespace Toggl.Phoebe._Reactive
                     logger.Warning (tag, exc, errorMsg);
                 }
 
-                RxChain.Send (new DataMsg.ReceivedFromServer (exc));
+                RxChain.Send (new DataMsg.ReceivedFromDownload (exc));
             }
         }
     }

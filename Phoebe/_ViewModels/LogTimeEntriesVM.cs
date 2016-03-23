@@ -32,9 +32,8 @@ namespace Toggl.Phoebe._ViewModels
         }
 
         private TimeEntryCollectionVM timeEntryCollection;
-        private Subscription<Data.SettingChangedMessage> subscriptionSettingChanged;
         private readonly System.Timers.Timer durationTimer;
-        private readonly IDisposable subscriptionState;
+        private readonly IDisposable subscriptionSettings, subscriptionState;
 
         public bool IsGroupedMode { get; private set; }
         public string Duration { get; private set; }
@@ -53,12 +52,12 @@ namespace Toggl.Phoebe._ViewModels
 
             ResetCollection (appState.Settings.GroupedEntries);
             subscriptionState = StoreManager
-                .Singleton
-                .Observe (x => x.State)
-                .StartWith (appState)
-                .Scan<AppState, Tuple<AppState, DownloadResult>> (
-                    null, (tuple, state) => Tuple.Create (state, tuple != null ? tuple.Item2 : null))
-                .Subscribe (tuple => UpdateState (tuple.Item1, tuple.Item2));
+                                .Singleton
+                                .Observe (x => x.State)
+                                .StartWith (appState)
+                                .Scan<AppState, Tuple<AppState, DownloadResult>> (
+                                    null, (tuple, state) => Tuple.Create (state, tuple != null ? tuple.Item2 : null))
+                                .Subscribe (tuple => UpdateState (tuple.Item1, tuple.Item2));
 
             // TODO: RX Review this line.
             // The ViewModel is created and start to load
@@ -71,21 +70,20 @@ namespace Toggl.Phoebe._ViewModels
         {
             DisposeCollection ();
             IsGroupedMode = isGroupedMode;
-
             timeEntryCollection = new TimeEntryCollectionVM (
                 isGroupedMode ? TimeEntryGroupMethod.ByDateAndTask : TimeEntryGroupMethod.Single);
         }
 
         public void Dispose ()
         {
-            var bus = ServiceContainer.Resolve<MessageBus> ();
-            if (subscriptionSettingChanged != null) {
-                bus.Unsubscribe (subscriptionSettingChanged);
-                subscriptionSettingChanged = null;
+            if (subscriptionSettings != null) {
+                subscriptionSettings.Dispose ();
             }
+
             if (subscriptionState != null) {
                 subscriptionState.Dispose ();
             }
+
             durationTimer.Elapsed -= DurationTimerCallback;
             DisposeCollection ();
         }
@@ -119,6 +117,9 @@ namespace Toggl.Phoebe._ViewModels
                 RxChain.Send (new DataMsg.TimeEntryContinue (timeEntryHolder.Entry.Data));
                 ServiceContainer.Resolve<ITracker> ().SendTimerStartEvent (TimerStartSource.AppContinue);
             }
+
+            // Set ShowWelcome setting to false.
+            RxChain.Send (new DataMsg.UpdateSetting (nameof (SettingsState.ShowWelcome),false));
         }
 
         public void StartStopTimeEntry (bool startedByFAB = false)
@@ -141,12 +142,24 @@ namespace Toggl.Phoebe._ViewModels
             RxChain.Send (new DataMsg.TimeEntryDelete (te.Entry.Data));
         }
 
+        #region Extra
         public void ReportExperiment (string actionKey, string actionValue)
         {
-            if (Collection.Count == 0 && ServiceContainer.Resolve<Data.ISettingsStore> ().ShowWelcome) {
+            if (Collection.Count == 0 && StoreManager.Singleton.AppState.Settings.ShowWelcome) {
                 OBMExperimentManager.Send (actionKey, actionValue, StoreManager.Singleton.AppState.User);
             }
         }
+
+        public bool IsInExperiment ()
+        {
+            return OBMExperimentManager.IncludedInExperiment (StoreManager.Singleton.AppState.User);
+        }
+
+        public bool IsWelcomeMessageShown ()
+        {
+            return StoreManager.Singleton.AppState.Settings.ShowWelcome;
+        }
+        #endregion
 
         private void UpdateState (AppState appState, DownloadResult prevDownloadResult)
         {
@@ -165,14 +178,13 @@ namespace Toggl.Phoebe._ViewModels
                 }
 
                 // Don't update ActiveEntry if both ActiveEntry and appState.ActiveEntry are empty
-                if (ActiveEntry == null || !(ActiveEntry.Data.Id == Guid.Empty && appState.ActiveEntry.Data.Id == Guid.Empty)) {
+                if (ActiveEntry == null || ! (ActiveEntry.Data.Id == Guid.Empty && appState.ActiveEntry.Data.Id == Guid.Empty)) {
                     ActiveEntry = appState.ActiveEntry;
                     IsEntryRunning = ActiveEntry.Data.State == TimeEntryState.Running;
                     // Check if an entry is running.
                     if (IsEntryRunning && !durationTimer.Enabled) {
                         durationTimer.Start ();
-                    }
-                    else if (!IsEntryRunning && durationTimer.Enabled) {
+                    } else if (!IsEntryRunning && durationTimer.Enabled) {
                         durationTimer.Stop ();
                         Duration = TimeSpan.FromSeconds (0).ToString ().Substring (0, 8);
                     }

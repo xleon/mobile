@@ -121,7 +121,7 @@ namespace Toggl.Joey.UI.Activities
             DrawerImage.ImageUrl = userData.ImageUrl;
 
             // Make sure that the user will see newest data when they start the activity
-            ServiceContainer.Resolve<ISyncManager> ().Run ();
+            //ServiceContainer.Resolve<ISyncManager> ().Run ();
         }
 
         public ToolbarModes ToolbarMode

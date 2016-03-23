@@ -29,12 +29,12 @@ namespace Toggl.Phoebe._ViewModels
         {
             grouper = new TimeEntryGrouper (groupMethod);
             disposable = StoreManager
-                .Singleton
-                .Observe (x => x.State.TimeEntries)
-                .DistinctUntilChanged ()
-                .Select (x => x.Values)
-                .Scan (new List<IHolder> (), UpdateItems)
-                .Subscribe ();
+                         .Singleton
+                         .Observe (x => x.State.TimeEntries)
+                         .DistinctUntilChanged ()
+                         .Select (x => x.Values)
+                         .Scan (new List<IHolder> (), UpdateItems)
+                         .Subscribe ();
         }
 
         public void Dispose ()
@@ -59,7 +59,7 @@ namespace Toggl.Phoebe._ViewModels
                 // Swap remove events to delete normal items before headers.
                 // iOS requierement.
                 diffs = Diff.SortRemoveEvents<IHolder,DateHolder> (diffs);
-
+                Console.WriteLine ("updates: " + diffs.Count);
                 // CollectionChanged events must be fired on UI thread
                 ServiceContainer.Resolve<IPlatformUtils> ().DispatchOnUIThread (() => {
                     foreach (var diff in diffs) {
@@ -92,10 +92,10 @@ namespace Toggl.Phoebe._ViewModels
         private List<IHolder> CreateItemCollection (IEnumerable<TimeEntryHolder> timeHolders)
         {
             return grouper.Group (timeHolders)
-                          .OrderByDescending (x => x.GetStartTime ())
-                          .GroupBy (x => x.GetStartTime ().ToLocalTime ().Date)
-                          .SelectMany (gr => gr.Cast<IHolder>().Prepend (new DateHolder (gr.Key, gr.Cast<ITimeEntryHolder> ())))
-                          .ToList ();
+                   .OrderByDescending (x => x.GetStartTime ())
+                   .GroupBy (x => x.GetStartTime ().ToLocalTime ().Date)
+                   .SelectMany (gr => gr.Cast<IHolder>().Prepend (new DateHolder (gr.Key, gr.Cast<ITimeEntryHolder> ())))
+                   .ToList ();
         }
 
         public void RestoreTimeEntryFromUndo ()

@@ -264,6 +264,28 @@ namespace Toggl.Phoebe._Data
                 }
             }
         }
+
+        public sealed class UpdateSetting : DataMsg
+        {
+            public class SettingChangeInfo : Tuple<string, object>
+            {
+                public SettingChangeInfo (string propName, object value) : base (propName, value)
+                {
+                }
+            }
+
+            public Either<SettingChangeInfo, Exception> Data
+            {
+                get { return RawData.CastLeft<SettingChangeInfo> (); }
+                set { RawData = value.CastLeft<object> (); }
+            }
+
+            public UpdateSetting (string settingName, object value)
+            {
+                var info = new SettingChangeInfo (settingName, value);
+                Data = Either<SettingChangeInfo, Exception>.Left (info);
+            }
+        }
     }
 
     public abstract class ServerRequest

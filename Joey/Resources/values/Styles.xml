@@ -24,7 +24,7 @@
         <item name="android:selectableItemBackgroundBorderless">@drawable/play_button_background</item>
     </style>
     <style name="Theme.Toggl.Main" parent="Theme.Toggl.App">
-        <item name="colorControlNormal">#d9d9d9</item>
+        <item name="colorControlNormal">#000000</item>
         <item name="colorControlActivated">#d9d9d9</item>
         <item name="colorControlHighlight">#d9d9d9</item>
     </style>

@@ -3,14 +3,26 @@ using SQLite.Net.Attributes;
 
 namespace Toggl.Phoebe._Data.Models
 {
+    public interface ITaskData : ICommonData
+    {
+        string Name { get; }
+        bool IsActive { get; }
+        long Estimate { get; }
+        long WorkspaceRemoteId { get; }
+        long ProjectRemoteId { get; }
+        Guid WorkspaceId { get; }
+        Guid ProjectId { get; }
+        ITaskData With (Action<TaskData> transform);
+    }
+
     [Table ("TaskModel")]
-    public class TaskData : CommonData
+    public class TaskData : CommonData, ITaskData
     {
         public TaskData ()
         {
         }
 
-        public TaskData (TaskData other) : base (other)
+        protected TaskData (TaskData other) : base (other)
         {
             Name = other.Name;
             IsActive = other.IsActive;
@@ -19,6 +31,16 @@ namespace Toggl.Phoebe._Data.Models
             ProjectId = other.ProjectId;
             WorkspaceRemoteId = other.WorkspaceRemoteId;
             ProjectRemoteId = other.ProjectRemoteId;
+        }
+
+        public override object Clone ()
+        {
+            return new TaskData (this);
+        }
+
+        public ITaskData With (Action<TaskData> transform)
+        {
+            return base.With (transform);
         }
 
         public string Name { get; set; }

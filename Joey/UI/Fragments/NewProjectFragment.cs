@@ -163,14 +163,10 @@ namespace Toggl.Joey.UI.Fragments
             }
         }
 
-        #region IOnClientSelectedListener implementation
-
-        public void OnClientSelected (ClientData data)
+        public void OnClientSelected (IClientData data)
         {
             ViewModel.SetClient (data);
         }
-
-        #endregion
 
         public override void OnCreateOptionsMenu (IMenu menu, MenuInflater inflater)
         {

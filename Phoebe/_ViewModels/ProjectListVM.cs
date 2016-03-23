@@ -52,7 +52,7 @@ namespace Toggl.Phoebe._ViewModels
         }
 
         #region Observable properties
-        public List<WorkspaceData> WorkspaceList { get; private set; }
+        public List<IWorkspaceData> WorkspaceList { get; private set; }
 
         public ProjectsCollectionVM ProjectList { get; private set; }
 
@@ -70,7 +70,7 @@ namespace Toggl.Phoebe._ViewModels
 
         public void ChangeListSorting (ProjectsCollectionVM.SortProjectsBy sortBy)
         {
-            // TODO TODO TODO: Danger! Mutating a property from a service
+            // TODO RX: TODO TODO TODO: Danger! Mutating a property from a service
             ProjectList.SortBy = sortBy;
             var settingsStore = ServiceContainer.Resolve<Data.ISettingsStore> ();
             settingsStore.SortProjectsBy = sortBy.ToString ();

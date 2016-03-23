@@ -11,7 +11,7 @@ namespace Toggl.Phoebe._ViewModels
 {
     public interface IOnClientSelectedHandler
     {
-        void OnClientSelected (ClientData data);
+        void OnClientSelected (IClientData data);
     }
 
     public class ClientListVM : IDisposable
@@ -20,7 +20,7 @@ namespace Toggl.Phoebe._ViewModels
         {
             ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Select Client";
 
-            ClientDataCollection = new ObservableRangeCollection<ClientData> ();
+            ClientDataCollection = new ObservableRangeCollection<IClientData> ();
             var clients =  appState.Clients.Values.Where (r => r.DeletedAt == null && r.WorkspaceId == workspaceId).ToList ();
             if (!clients.Any ()) {
                 clients.Add (new ClientData { Name = "No client" });
@@ -33,9 +33,9 @@ namespace Toggl.Phoebe._ViewModels
         {
         }
 
-        public ObservableRangeCollection<ClientData> ClientDataCollection { get; set;}
+        public ObservableRangeCollection<IClientData> ClientDataCollection { get; set;}
 
-        private void Sort (List<ClientData> clients)
+        private void Sort (List<IClientData> clients)
         {
             clients.Sort ((a, b) => string.Compare (
                               a.Name ?? string.Empty,

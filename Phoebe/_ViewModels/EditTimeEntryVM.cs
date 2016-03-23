@@ -20,14 +20,14 @@ namespace Toggl.Phoebe._ViewModels
         private RichTimeEntry previousData;
         private System.Timers.Timer durationTimer;
 
-        private void Init (AppState state, TimeEntryData timeData, List<string> tagList)
+        private void Init (AppState state, ITimeEntryData timeData, List<string> tagList)
         {
             durationTimer = new System.Timers.Timer ();
             durationTimer.Elapsed += DurationTimerCallback;
 
             this.appState = state;
             IsManual = timeData.Id == Guid.Empty;
-            richData = new RichTimeEntry (state, timeData);
+            richData = new RichTimeEntry (timeData, state);
 
             UpdateView (x => {
                 x.Tags = tagList;
@@ -41,7 +41,7 @@ namespace Toggl.Phoebe._ViewModels
             // Save previous state.
             previousData = IsManual
                            // Hack to force tag saving even if there're no other changes
-                           ? new RichTimeEntry (state, richData.Data.With (x => x.Tags = new List<string> ()))
+                           ? new RichTimeEntry (richData.Data.With (x => x.Tags = new List<string> ()), state)
                            : new RichTimeEntry (richData.Data, richData.Info);
 
             ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Edit Time Entry";
@@ -49,15 +49,15 @@ namespace Toggl.Phoebe._ViewModels
 
         public EditTimeEntryVM (AppState appState, Guid timeEntryId)
         {
-            TimeEntryData data;
+            ITimeEntryData data;
             List<string> tagList;
 
             if (timeEntryId == Guid.Empty) {
                 data = appState.GetTimeEntryDraft ();
-                tagList = GetDefaultTagList (appState, data.WorkspaceId).Select (x => x.Name).ToList ();
+                tagList = GetDefaultTagList (appState, data).Select (x => x.Name).ToList ();
             } else {
                 var richTe = appState.TimeEntries[timeEntryId];
-                data = new TimeEntryData (richTe.Data);
+                data = richTe.Data;
                 tagList = new List<string> (richTe.Data.Tags);
             }
 
@@ -66,7 +66,7 @@ namespace Toggl.Phoebe._ViewModels
 
         public EditTimeEntryVM (AppState appState, ITimeEntryData timeEntryData, List<string> tagList)
         {
-            Init (appState, new TimeEntryData (timeEntryData), tagList);
+            Init (appState, timeEntryData, tagList);
         }
 
         public void Dispose ()
@@ -123,7 +123,7 @@ namespace Toggl.Phoebe._ViewModels
         public string ProjectName { get { return richData.Info.ProjectData.Name ?? ""; } }
         public string TaskName { get { return richData.Info.TaskData.Name ?? ""; } }
         public string ClientName { get { return richData.Info.ClientData.Name ?? ""; } }
-        public IReadOnlyList<TagData> TagList { get { return richData.Info.Tags; } }
+        public IReadOnlyList<ITagData> TagList { get { return richData.Info.Tags; } }
 
         #endregion
 
@@ -208,10 +208,7 @@ namespace Toggl.Phoebe._ViewModels
 
                 var oldProjectId = richData.Data.ProjectId;
 
-                richData = new RichTimeEntry (
-                    appState,
-                    richData.Data.With (updater)
-                );
+                richData = new RichTimeEntry (richData.Data.With (updater), appState);
 
                 if (richData.Data.State == TimeEntryState.Running && !durationTimer.Enabled) {
                     durationTimer.Start ();
@@ -242,13 +239,13 @@ namespace Toggl.Phoebe._ViewModels
                     var workspace = appState.Workspaces[richData.Info.ProjectData.WorkspaceId];
 
                     richData = new RichTimeEntry (
-                        appState,
-                    richData.Data.With (x => {
-                        x.WorkspaceId = workspace.Id;
-                        x.IsBillable = workspace.IsPremium && x.IsBillable;
-                        x.Tags = UpdateTagsWithWorkspace (appState, x.Id, workspace.Id, TagList)
-                                 .Select (t => t.Name).ToList ();
-                    })
+                        richData.Data.With (x => {
+                            x.WorkspaceId = workspace.Id;
+                            x.IsBillable = workspace.IsPremium && x.IsBillable;
+                            x.Tags = UpdateTagsWithWorkspace (appState, x.Id, workspace.Id, TagList)
+                                     .Select (t => t.Name).ToList ();
+                        }),
+                        appState
                     );
                 }
             }
@@ -265,36 +262,37 @@ namespace Toggl.Phoebe._ViewModels
             });
         }
 
-        private static List<TagData> GetDefaultTagList (AppState appState, Guid workspaceId)
+        private static List<ITagData> GetDefaultTagList (AppState appState, ITimeEntryData data)
         {
             if (!ServiceContainer.Resolve<Data.ISettingsStore> ().UseDefaultTag) {
-                return new List<TagData> ();
+                return new List<ITagData> ();
             }
 
-            var defaultTagList = appState.Tags.Values.Where (
-                                     r => r.Name == DefaultTag && r.WorkspaceId == workspaceId).ToList ();
+            var defaultTagList =
+                appState.Tags.Values.Where (
+                    r => r.Name == DefaultTag && r.WorkspaceId == data.WorkspaceId).ToList ();
 
             if (defaultTagList.Count == 0) {
-                defaultTagList = new List<TagData> { new TagData (workspaceId, DefaultTag) };
+                defaultTagList = new List<ITagData> { new TagData (DefaultTag, data.WorkspaceId, data.WorkspaceRemoteId) };
                 RxChain.Send (new DataMsg.TagsPut (defaultTagList));
             }
             return defaultTagList;
         }
 
-        private static List<TagData> UpdateTagsWithWorkspace (AppState appState, Guid timeEntryId, Guid workspaceId, IEnumerable<TagData> oldTagList)
+        private static List<ITagData> UpdateTagsWithWorkspace (AppState appState, Guid timeEntryId, Guid workspaceId, IEnumerable<ITagData> oldTagList)
         {
             // Get new workspace tag list.
             var tagList = appState.Tags.Values.Where (r => r.WorkspaceId == workspaceId).ToList ();
 
             // Get new tags to create and existing tags from previous workspace.
-            var tagsToCreate = new List<TagData> (oldTagList.Where (t => tagList.IndexOf (n => n.Name.Equals (t.Name)) == -1));
-            var commonTags = new List<TagData> (tagList.Where (t => oldTagList.IndexOf (n => n.Name.Equals (t.Name)) != -1));
+            var tagsToCreate = new List<ITagData> (oldTagList.Where (t => tagList.IndexOf (n => n.Name.Equals (t.Name)) == -1));
+            var commonTags = new List<ITagData> (tagList.Where (t => oldTagList.IndexOf (n => n.Name.Equals (t.Name)) != -1));
 
             // Create new tags
-            var newTags = tagsToCreate.Select (x => new TagData {
-                WorkspaceId = workspaceId,
-                Name = x.Name
-            }).ToList ();
+            var newTags = tagsToCreate.Select (x => x.With (y => {
+                y.WorkspaceId = workspaceId;
+                y.Name = x.Name;
+            })).ToList ();
             RxChain.Send (new DataMsg.TagsPut (newTags));
 
             // Create new tags and concat both lists

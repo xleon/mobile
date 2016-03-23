@@ -16,13 +16,13 @@ namespace Toggl.Phoebe._Reactive
         public DownloadResult DownloadResult { get; private set; }
 
         public UserData User { get; private set; }
-        public IReadOnlyDictionary<Guid, WorkspaceData> Workspaces { get; private set; }
-        public IReadOnlyDictionary<Guid, ProjectData> Projects { get; private set; }
-        public IReadOnlyDictionary<Guid, WorkspaceUserData> WorkspaceUsers { get; private set; }
-        public IReadOnlyDictionary<Guid, ProjectUserData> ProjectUsers { get; private set; }
-        public IReadOnlyDictionary<Guid, ClientData> Clients { get; private set; }
-        public IReadOnlyDictionary<Guid, TaskData> Tasks { get; private set; }
-        public IReadOnlyDictionary<Guid, TagData> Tags { get; private set; }
+        public IReadOnlyDictionary<Guid, IWorkspaceData> Workspaces { get; private set; }
+        public IReadOnlyDictionary<Guid, IProjectData> Projects { get; private set; }
+        public IReadOnlyDictionary<Guid, IWorkspaceUserData> WorkspaceUsers { get; private set; }
+        public IReadOnlyDictionary<Guid, IProjectUserData> ProjectUsers { get; private set; }
+        public IReadOnlyDictionary<Guid, IClientData> Clients { get; private set; }
+        public IReadOnlyDictionary<Guid, ITaskData> Tasks { get; private set; }
+        public IReadOnlyDictionary<Guid, ITagData> Tags { get; private set; }
         public IReadOnlyDictionary<Guid, RichTimeEntry> TimeEntries { get; private set; }
 
         // AppState instances are immutable snapshots, so it's safe to use a cache for ActiveEntry
@@ -31,7 +31,7 @@ namespace Toggl.Phoebe._Reactive
         {
             get {
                 if (_activeEntryCache == null) {
-                    _activeEntryCache = new RichTimeEntry (this, new TimeEntryData ());
+                    _activeEntryCache = new RichTimeEntry (new TimeEntryData (), this);
                     if (TimeEntries.Count > 0)
                         _activeEntryCache = TimeEntries.Values.SingleOrDefault (
                                                 x => x.Data.State == TimeEntryState.Running) ?? _activeEntryCache;
@@ -45,13 +45,13 @@ namespace Toggl.Phoebe._Reactive
             Net.AuthResult authResult,
             DownloadResult downloadResult,
             UserData user,
-            IReadOnlyDictionary<Guid, WorkspaceData> workspaces,
-            IReadOnlyDictionary<Guid, ProjectData> projects,
-            IReadOnlyDictionary<Guid, WorkspaceUserData> workspaceUsers,
-            IReadOnlyDictionary<Guid, ProjectUserData> projectUsers,
-            IReadOnlyDictionary<Guid, ClientData> clients,
-            IReadOnlyDictionary<Guid, TaskData> tasks,
-            IReadOnlyDictionary<Guid, TagData> tags,
+            IReadOnlyDictionary<Guid, IWorkspaceData> workspaces,
+            IReadOnlyDictionary<Guid, IProjectData> projects,
+            IReadOnlyDictionary<Guid, IWorkspaceUserData> workspaceUsers,
+            IReadOnlyDictionary<Guid, IProjectUserData> projectUsers,
+            IReadOnlyDictionary<Guid, IClientData> clients,
+            IReadOnlyDictionary<Guid, ITaskData> tasks,
+            IReadOnlyDictionary<Guid, ITagData> tags,
             IReadOnlyDictionary<Guid, RichTimeEntry> timeEntries)
         {
             Settings = settings;
@@ -73,13 +73,13 @@ namespace Toggl.Phoebe._Reactive
             Net.AuthResult? authResult = null,
             DownloadResult downloadResult = null,
             UserData user = null,
-            IReadOnlyDictionary<Guid, WorkspaceData> workspaces = null,
-            IReadOnlyDictionary<Guid, ProjectData> projects = null,
-            IReadOnlyDictionary<Guid, WorkspaceUserData> workspaceUsers = null,
-            IReadOnlyDictionary<Guid, ProjectUserData> projectUsers = null,
-            IReadOnlyDictionary<Guid, ClientData> clients = null,
-            IReadOnlyDictionary<Guid, TaskData> tasks = null,
-            IReadOnlyDictionary<Guid, TagData> tags = null,
+            IReadOnlyDictionary<Guid, IWorkspaceData> workspaces = null,
+            IReadOnlyDictionary<Guid, IProjectData> projects = null,
+            IReadOnlyDictionary<Guid, IWorkspaceUserData> workspaceUsers = null,
+            IReadOnlyDictionary<Guid, IProjectUserData> projectUsers = null,
+            IReadOnlyDictionary<Guid, IClientData> clients = null,
+            IReadOnlyDictionary<Guid, ITaskData> tasks = null,
+            IReadOnlyDictionary<Guid, ITagData> tags = null,
             IReadOnlyDictionary<Guid, RichTimeEntry> timeEntries = null)
         {
             return new AppState (
@@ -103,7 +103,7 @@ namespace Toggl.Phoebe._Reactive
         /// </summary>
         public IReadOnlyDictionary<Guid, T> Update<T> (
             IReadOnlyDictionary<Guid, T> oldItems, IEnumerable<ICommonData> newItems)
-        where T : CommonData
+        where T : ICommonData
         {
             var dic = oldItems.ToDictionary (x => x.Key, x => x.Value);
             foreach (var newItem in newItems.OfType<T> ()) {
@@ -171,7 +171,7 @@ namespace Toggl.Phoebe._Reactive
                        color);
         }
 
-        public IEnumerable<ProjectData> GetUserAccessibleProjects (Guid userId)
+        public IEnumerable<IProjectData> GetUserAccessibleProjects (Guid userId)
         {
             return Projects.Values.Where (
                        p => p.IsActive && (p.IsPrivate || ProjectUsers.Values.Any (x => x.ProjectId == p.Id && x.UserId == userId)))
@@ -216,13 +216,13 @@ namespace Toggl.Phoebe._Reactive
                        authResult: Net.AuthResult.None,
                        downloadResult: DownloadResult.Empty,
                        user: userData,
-                       workspaces: new Dictionary<Guid, WorkspaceData> (),
-                       projects: new Dictionary<Guid, ProjectData> (),
-                       workspaceUsers: new Dictionary<Guid, WorkspaceUserData> (),
-                       projectUsers: new Dictionary<Guid, ProjectUserData> (),
-                       clients: new Dictionary<Guid, ClientData> (),
-                       tasks: new Dictionary<Guid, TaskData> (),
-                       tags: new Dictionary<Guid, TagData> (),
+                       workspaces: new Dictionary<Guid, IWorkspaceData> (),
+                       projects: new Dictionary<Guid, IProjectData> (),
+                       workspaceUsers: new Dictionary<Guid, IWorkspaceUserData> (),
+                       projectUsers: new Dictionary<Guid, IProjectUserData> (),
+                       clients: new Dictionary<Guid, IClientData> (),
+                       tasks: new Dictionary<Guid, ITaskData> (),
+                       tags: new Dictionary<Guid, ITagData> (),
                        timeEntries: new Dictionary<Guid, RichTimeEntry> ());
         }
     }
@@ -234,11 +234,11 @@ namespace Toggl.Phoebe._Reactive
 
         public RichTimeEntry (ITimeEntryData data, TimeEntryInfo info)
         {
-            Data = (ITimeEntryData)data.Clone ();
+            Data = data;
             Info = info;
         }
 
-        public RichTimeEntry (AppState appState, ITimeEntryData data)
+        public RichTimeEntry (ITimeEntryData data, AppState appState)
         : this (data, appState.LoadTimeEntryInfo (data))
         {
         }

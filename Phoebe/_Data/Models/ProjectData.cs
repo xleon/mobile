@@ -3,8 +3,24 @@ using SQLite.Net.Attributes;
 
 namespace Toggl.Phoebe._Data.Models
 {
+    public interface IProjectData : ICommonData
+    {
+        string Name { get; }
+		int Color { get; }
+        bool IsActive { get; }
+        bool IsBillable { get; }
+        bool IsPrivate { get; }
+        bool IsTemplate { get; }
+        bool UseTasksEstimate { get; }
+        long WorkspaceRemoteId { get; }
+        long? ClientRemoteId { get; }
+        Guid WorkspaceId { get; }
+        Guid ClientId { get; }
+        IProjectData With (Action<ProjectData> transform);
+    }
+
     [Table ("ProjectModel")]
-    public class ProjectData : CommonData
+    public class ProjectData : CommonData, IProjectData
     {
 
         public static readonly string[] HexColors = {
@@ -23,7 +39,7 @@ namespace Toggl.Phoebe._Data.Models
         {
         }
 
-        public ProjectData (ProjectData other) : base (other)
+        protected ProjectData (ProjectData other) : base (other)
         {
             Name = other.Name;
             Color = other.Color;
@@ -36,6 +52,16 @@ namespace Toggl.Phoebe._Data.Models
             ClientId = other.ClientId;
             ClientRemoteId = other.ClientRemoteId;
             WorkspaceRemoteId = other.WorkspaceRemoteId;
+        }
+
+        public override object Clone ()
+        {
+            return new ProjectData (this);
+        }
+
+        public IProjectData With (Action<ProjectData> transform)
+        {
+            return base.With (transform);
         }
 
         public string Name { get; set; }

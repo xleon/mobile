@@ -32,7 +32,7 @@ namespace Toggl.Joey.UI.Fragments
         // to avoid weak references to be removed
         private Binding<string, string> durationBinding, projectBinding, clientBinding, descriptionBinding;
         private Binding<DateTime, string> startTimeBinding, stopTimeBinding;
-        private Binding<IReadOnlyList<TagData>, List<string>> tagBinding;
+        private Binding<IReadOnlyList<ITagData>, List<string>> tagBinding;
         private Binding<bool, ViewStates> isPremiumBinding;
         private Binding<bool, bool> isBillableBinding, billableBinding, isRunningBinding, saveMenuBinding, syncErrorBinding;
 
@@ -261,14 +261,14 @@ namespace Toggl.Joey.UI.Fragments
             }
         }
 
-        public void OnCreateNewTag (TagData newTagData)
+        public void OnCreateNewTag (ITagData newTagData)
         {
             var newTagList = ViewModel.TagList.ToList ();
             newTagList.Add (newTagData);
             ViewModel.ChangeTagList (newTagList.Select (t => t.Name));
         }
 
-        public void OnModifyTagList (List<TagData> newTagList)
+        public void OnModifyTagList (List<ITagData> newTagList)
         {
             ViewModel.ChangeTagList (newTagList.Select (t => t.Name));
         }

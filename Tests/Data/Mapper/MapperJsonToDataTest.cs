@@ -37,8 +37,7 @@ namespace Toggl.Phoebe.Tests.Data.Mapper
             Assert.That (commonData.RemoteId, Is.EqualTo (commonJson.RemoteId));
             Assert.That (commonData.ModifiedAt, Is.EqualTo (commonJson.ModifiedAt.ToUtc()));
             Assert.That (commonData.DeletedAt, Is.Null);
-            Assert.That (commonData.IsDirty, Is.False);
-            Assert.That (commonData.RemoteRejected, Is.False);
+            Assert.That (commonData.SyncPending, Is.False);
             Assert.That (commonData.Id, Is.EqualTo (Guid.Empty));
 
             commonJson.DeletedAt = DateTime.Now;
@@ -64,8 +63,7 @@ namespace Toggl.Phoebe.Tests.Data.Mapper
             Assert.That (clientData.RemoteId, Is.EqualTo (clientJson.RemoteId));
             Assert.That (clientData.ModifiedAt, Is.EqualTo (clientJson.ModifiedAt.ToUtc()));
             Assert.That (clientData.DeletedAt, Is.Null);
-            Assert.That (clientData.IsDirty, Is.False);
-            Assert.That (clientData.RemoteRejected, Is.False);
+            Assert.That (clientData.SyncPending, Is.False);
             Assert.That (clientData.Id, Is.EqualTo (Guid.Empty));
 
             clientJson.DeletedAt = DateTime.Now;

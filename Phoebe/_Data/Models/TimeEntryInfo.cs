@@ -7,19 +7,19 @@ namespace Toggl.Phoebe._Data.Models
 {
     public class TimeEntryInfo
     {
-        public WorkspaceData WorkspaceData { get; private set; }
-        public ProjectData ProjectData { get; private set; }
-        public ClientData ClientData { get; private set; }
-        public TaskData TaskData { get; private set; }
-        public IReadOnlyList<TagData> Tags { get; private set; }
+        public IWorkspaceData WorkspaceData { get; private set; }
+        public IProjectData ProjectData { get; private set; }
+        public IClientData ClientData { get; private set; }
+        public ITaskData TaskData { get; private set; }
+        public IReadOnlyList<ITagData> Tags { get; private set; }
         public int Color { get; private set; }
 
         public TimeEntryInfo (
-            WorkspaceData wsData,
-            ProjectData projectData,
-            ClientData clientData,
-            TaskData taskData,
-            IReadOnlyList<TagData> tags,
+            IWorkspaceData wsData,
+            IProjectData projectData,
+            IClientData clientData,
+            ITaskData taskData,
+            IReadOnlyList<ITagData> tags,
             int color)
         {
             WorkspaceData = wsData;
@@ -31,11 +31,11 @@ namespace Toggl.Phoebe._Data.Models
         }
 
         public TimeEntryInfo With (
-            WorkspaceData wsData = null,
-            ProjectData projectData = null,
-            ClientData clientData = null,
-            TaskData taskData = null,
-            IReadOnlyList<TagData> tags = null,
+            IWorkspaceData wsData = null,
+            IProjectData projectData = null,
+            IClientData clientData = null,
+            ITaskData taskData = null,
+            IReadOnlyList<ITagData> tags = null,
             int? color = null)
         {
             return new TimeEntryInfo (
@@ -44,8 +44,7 @@ namespace Toggl.Phoebe._Data.Models
                        clientData ?? this.ClientData,
                        taskData ?? this.TaskData,
                        tags ?? this.Tags,
-                       color.HasValue ? color.Value : this.Color
-                   );
+                       color.HasValue ? color.Value : this.Color);
         }
     }
 }

@@ -112,7 +112,7 @@ namespace Toggl.Joey.UI.Fragments
             listView.Adapter = viewModel.ClientDataCollection.GetAdapter (GetClientView);
         }
 
-        private View GetClientView (int position, ClientData clientData, View convertView)
+        private View GetClientView (int position, IClientData clientData, View convertView)
         {
             View view = convertView ?? LayoutInflater.FromContext (Activity).Inflate (Resource.Layout.TagListItem, null);
             var nameCheckedTextView = view.FindViewById<CheckedTextView> (Resource.Id.NameCheckedTextView).SetFont (Font.Roboto);

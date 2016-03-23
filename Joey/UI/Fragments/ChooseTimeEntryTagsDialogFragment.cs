@@ -130,7 +130,7 @@ namespace Toggl.Joey.UI.Fragments
             updateTagHandler.OnModifyTagList (SelectedTags);
         }
 
-        private View GetTagView (int position, TagData tagData, View convertView)
+        private View GetTagView (int position, ITagData tagData, View convertView)
         {
             View view = convertView ?? LayoutInflater.FromContext (Activity).Inflate (Resource.Layout.TagListItem, null);
             var nameCheckedTextView = view.FindViewById<CheckedTextView> (Resource.Id.NameCheckedTextView).SetFont (Font.Roboto);
@@ -138,10 +138,10 @@ namespace Toggl.Joey.UI.Fragments
             return view;
         }
 
-        private List<TagData> SelectedTags
+        private List<ITagData> SelectedTags
         {
             get {
-                var list = new List<TagData> ();
+                var list = new List<ITagData> ();
                 for (int i = 0; i < viewModel.TagCollection.Count; i++) {
                     if (listView.CheckedItemPositions.Get (i)) {
                         list.Add (viewModel.TagCollection [i]);

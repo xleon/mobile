@@ -11,7 +11,7 @@ namespace Toggl.Phoebe._ViewModels
 {
     public class NewClientVM : IDisposable
     {
-        private ClientData model;
+        private IClientData model;
         private readonly AppState appState;
 
         public NewClientVM (AppState appState, Guid workspaceId)
@@ -19,6 +19,7 @@ namespace Toggl.Phoebe._ViewModels
             var workspace = appState.Workspaces[workspaceId];
             this.appState = appState;
             model = new ClientData {
+                SyncPending = true,
                 Id = Guid.NewGuid (),
                 WorkspaceId = workspaceId,
                 WorkspaceRemoteId = workspace.RemoteId.HasValue ? workspace.RemoteId.Value : 0
@@ -30,7 +31,7 @@ namespace Toggl.Phoebe._ViewModels
         {
         }
 
-        public ClientData SaveClient (string clientName, SyncTestOptions testOptions = null)
+        public IClientData SaveClient (string clientName, SyncTestOptions testOptions = null)
         {
             // Save client name to make sure it doesn't change while iterating
             var existing =
@@ -38,11 +39,7 @@ namespace Toggl.Phoebe._ViewModels
                 .SingleOrDefault (
                     r => r.WorkspaceId == model.WorkspaceId && r.Name == clientName);
 
-            if (existing != null) {
-                model = existing;
-            } else {
-                model.Name = clientName;
-            }
+            model = existing ?? model.With (x => x.Name = clientName);
 
             RxChain.Send (new DataMsg.ClientDataPut (model), testOptions);
 

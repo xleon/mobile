@@ -1,9 +1,27 @@
+using System;
 using SQLite.Net.Attributes;
 
 namespace Toggl.Phoebe._Data.Models
 {
+    public interface IWorkspaceData : ICommonData
+    {
+        string Name { get; }
+        bool IsPremium { get; }
+        decimal? DefaultRate { get; }
+        string DefaultCurrency { get; }
+        AccessLevel ProjectCreationPrivileges { get; }
+        AccessLevel BillableRatesVisibility { get; }
+        bool OnlyAdminsMayCreateProjects { get; }
+        bool OnlyAdminsSeeBillableRates { get; }
+        RoundingMode RoundingMode { get; }
+        int RoundingPercision { get; }
+        string LogoUrl { get; }
+        bool IsAdmin { get; }
+        IWorkspaceData With (Action<WorkspaceData> transform);
+    }
+
     [Table ("WorkspaceModel")]
-    public class WorkspaceData : CommonData
+    public class WorkspaceData : CommonData, IWorkspaceData
     {
         public WorkspaceData ()
         {
@@ -23,6 +41,16 @@ namespace Toggl.Phoebe._Data.Models
             RoundingPercision = other.RoundingPercision;
             LogoUrl = other.LogoUrl;
             IsAdmin = other.IsAdmin;
+        }
+
+        public override object Clone ()
+        {
+            return new WorkspaceData (this);
+        }
+
+        public IWorkspaceData With (Action<WorkspaceData> transform)
+        {
+            return base.With (transform);
         }
 
         public string Name { get; set; }

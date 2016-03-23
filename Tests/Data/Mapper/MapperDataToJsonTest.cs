@@ -94,11 +94,10 @@ namespace Toggl.Phoebe.Tests.Data.Mapper
                 Color = 3,
                 IsActive = true,
                 IsBillable = true,
-                IsDirty = true,
+                SyncPending = true,
                 IsPrivate = true,
                 IsTemplate = true,
-                UseTasksEstimate = true,
-                RemoteRejected = false
+                UseTasksEstimate = true
             };
 
             var projectJson = mapper.Map<ProjectJson> (projectData);
@@ -155,7 +154,6 @@ namespace Toggl.Phoebe.Tests.Data.Mapper
         public void TestWorkspaceUserJsonMap()
         {
             var workspaceUserData = new WorkspaceUserData {
-                RemoteRejected = true,
                 WorkspaceId = Guid.Empty,
                 UserId = Guid.Empty,
                 RemoteId = 123,

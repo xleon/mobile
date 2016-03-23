@@ -8,9 +8,8 @@ namespace Toggl.Phoebe._Data.Models
         Guid Id { get; }
         DateTime ModifiedAt { get; }
         DateTime? DeletedAt { get; }
-        bool IsDirty { get; }
+        bool SyncPending { get; }
         long? RemoteId { get; }
-        bool RemoteRejected { get; }
     }
 
     public abstract class CommonData : ICommonData
@@ -30,14 +29,20 @@ namespace Toggl.Phoebe._Data.Models
             Id = other.Id;
             ModifiedAt = other.ModifiedAt;
             DeletedAt = other.DeletedAt;
-            IsDirty = other.IsDirty;
+            SyncPending = other.SyncPending;
             RemoteId = other.RemoteId;
-            RemoteRejected = other.RemoteRejected;
         }
 
-        public object Clone ()
+        public abstract object Clone ();
+
+        protected T With<T> (Action<T> transform)
+        where T : CommonData
         {
-            throw new Exception ("Cannot clone abstract objects");
+            var newItem = (T)Clone ();
+            newItem.ModifiedAt = Time.UtcNow;
+            newItem.SyncPending = true;
+            transform (newItem);
+            return newItem;
         }
 
         /// <summary>
@@ -70,11 +75,9 @@ namespace Toggl.Phoebe._Data.Models
 
         public DateTime? DeletedAt { get; set; }
 
-        public bool IsDirty { get; set; }
+        public bool SyncPending { get; set; }
 
         [Unique]
         public long? RemoteId { get; set; }
-
-        public bool RemoteRejected { get; set; }
     }
 }

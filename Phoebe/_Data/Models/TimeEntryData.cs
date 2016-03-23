@@ -28,7 +28,6 @@ namespace Toggl.Phoebe._Data.Models
         Guid ProjectId { get; }
         Guid TaskId { get; }
         IReadOnlyList<string> Tags { get; }
-
         ITimeEntryData With (Action<TimeEntryData> transform);
     }
 
@@ -40,7 +39,7 @@ namespace Toggl.Phoebe._Data.Models
             State = TimeEntryState.New;
         }
 
-        public TimeEntryData (ITimeEntryData other) : base (other)
+        protected TimeEntryData (ITimeEntryData other) : base (other)
         {
             State = other.State;
             Description = other.Description;
@@ -58,16 +57,14 @@ namespace Toggl.Phoebe._Data.Models
             TaskRemoteId = other.TaskRemoteId;
         }
 
+		public override object Clone ()
+		{
+			return new TimeEntryData (this);
+		}
+  
         public ITimeEntryData With (Action<TimeEntryData> transform)
         {
-            var newEntry = new TimeEntryData (this);
-            transform (newEntry);
-            return newEntry;
-        }
-
-        public new object Clone ()
-        {
-            return new TimeEntryData (this);
+            return base.With (transform);
         }
 
         public TimeEntryState State { get; set; }
@@ -99,19 +96,20 @@ namespace Toggl.Phoebe._Data.Models
         public Guid TaskId { get; set; }
 
         [Ignore]
-        public List<string> Tags
-        {
-            get {
-                return JsonConvert.DeserializeObject<List<string>> (RawTags ?? "[]");
-            } set {
-                RawTags = JsonConvert.SerializeObject (value);
-            }
-        }
+        public List<string> Tags { get; set; }
 
-        IReadOnlyList<string> ITimeEntryData.Tags => Tags;
+        IReadOnlyList<string> ITimeEntryData.Tags => Tags ?? new List<string> ();
 
         [JsonIgnore]
-        public string RawTags { get; set; }
+        public string RawTags
+        {
+            get {
+				return JsonConvert.SerializeObject (Tags);
+            }
+            set {
+				Tags = JsonConvert.DeserializeObject<List<string>> (value ?? "[]");
+            }
+        }
 
         public static string GetFormattedDuration (UserData user, TimeSpan duration)
         {

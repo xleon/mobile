@@ -11,7 +11,7 @@ namespace Toggl.Phoebe._ViewModels
 {
     public class NewTagVM : IDisposable
     {
-        private readonly WorkspaceData workspace;
+        private readonly IWorkspaceData workspace;
         private readonly AppState appState;
 
         public NewTagVM (AppState appState, Guid workspaceId)
@@ -25,7 +25,7 @@ namespace Toggl.Phoebe._ViewModels
         {
         }
 
-        public TagData SaveTag (string tagName, SyncTestOptions testOptions = null)
+        public ITagData SaveTag (string tagName, SyncTestOptions testOptions = null)
         {
             var existing =
                 appState.Tags.Values.SingleOrDefault (

@@ -8,11 +8,11 @@ using Toggl.Phoebe._Reactive;
 
 namespace Toggl.Phoebe._ViewModels
 {
-    public class ProjectsCollectionVM : ObservableRangeCollection<CommonData>
+    public class ProjectsCollectionVM : ObservableRangeCollection<ICommonData>
     {
-        private List<ClientData> clients;
+        private List<IClientData> clients;
         private List<SuperProjectData> projects;
-        private List<TaskData> tasks;
+        private List<ITaskData> tasks;
         private SortProjectsBy sortBy;
         private Guid workspaceId;
         private string projectNameFilter;
@@ -94,7 +94,7 @@ namespace Toggl.Phoebe._ViewModels
         private void CreateSortedCollection (IEnumerable<SuperProjectData> projectList)
         {
             var enumerable = projectList as IList<SuperProjectData> ?? projectList.ToList ();
-            var data = new List<CommonData> ();
+            var data = new List<ICommonData> ();
 
             // TODO: Maybe group using linq is clearer
             if (sortBy == SortProjectsBy.Clients) {
@@ -122,12 +122,12 @@ namespace Toggl.Phoebe._ViewModels
             Reset (data);
         }
 
-        public void AddTasks (ProjectData project)
+        public void AddTasks (IProjectData project)
         {
             // Remove previous tasks
-            var oldTaskIndex = this.IndexOf (p => p is TaskData);
+            var oldTaskIndex = this.IndexOf (p => p is ITaskData);
             if (oldTaskIndex != -1) {
-                RemoveRange (this.OfType<TaskData> ());
+                RemoveRange (this.OfType<ITaskData> ());
             }
 
             // Insert new tasks
@@ -137,7 +137,7 @@ namespace Toggl.Phoebe._ViewModels
             }
         }
 
-        public IEnumerable<CommonData> Data
+        public IEnumerable<ICommonData> Data
         {
             get {
                 return this;
@@ -150,8 +150,9 @@ namespace Toggl.Phoebe._ViewModels
             public int TaskNumber { get; private set; }
             public bool IsEmpty { get; private set; }
 
-            public SuperProjectData (ProjectData dataObject,
-                                     ClientData client, int taskNumber, bool isEmpty = false) : base (dataObject)
+            public SuperProjectData (
+                IProjectData dataObject, IClientData client, int taskNumber, bool isEmpty = false)
+                : base ((ProjectData)dataObject)
             {
                 TaskNumber = taskNumber;
                 IsEmpty = isEmpty;

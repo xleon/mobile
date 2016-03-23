@@ -168,23 +168,32 @@ namespace Toggl.Phoebe._Reactive
 
         async Task SendMessage (string authToken, List<CommonData> remoteObjects, Guid localId, CommonJson json)
         {
-            if (json.DeletedAt == null) {
-                CommonJson response;
-                if (json.RemoteId != null) {
-                    // TODO: Save the response to remoteObjects here too?
-                    response = await client.Update (authToken, json);
-                } else {
-                    response = await client.Create (authToken, json);
+            try {
+                if (json.DeletedAt == null) {
+                    CommonJson response;
+                    if (json.RemoteId != null) {
+                        response = await client.Update (authToken, json);
+                    }
+                    else {
+                        response = await client.Create (authToken, json);
+                    }
+                    var resData = mapper.Map (response);
+                    resData.Id = localId;
+                    remoteObjects.Add (resData);
                 }
-                var resData = mapper.Map (response);
-                resData.Id = localId;
-                remoteObjects.Add (resData);
-            } else {
-                if (json.RemoteId != null) {
-                    await client.Delete (authToken, json);
-                } else {
-                    // TODO: Make sure the item has not been assigned a remoteId by a previous item in the queue
+                else {
+                    if (json.RemoteId != null) {
+                        await client.Delete (authToken, json);
+                    }
+                    else {
+                        // TODO: Make sure the item has not been assigned a remoteId while waiting in the queue?
+                    }
                 }
+            }
+            catch {
+                // TODO RX: Check the rejection reason: if an item is being specifically rejected,
+                // discard it so it doesn't block the syncing of other items
+                throw;
             }
         }
 
@@ -288,7 +297,7 @@ namespace Toggl.Phoebe._Reactive
                 var newProjects = new List<ProjectJson> ();
                 var newClients = new List<ClientJson> ();
                 var newTasks = new List<TaskJson> ();
-                var newTags = new List<TagJson> ();
+                var newTags = new List<TagData> ();
 
                 if (fullSync) {
                     // TODO RX: Check if since date is older than 2 months, see #1301
@@ -298,7 +307,7 @@ namespace Toggl.Phoebe._Reactive
                     newProjects = changes.Projects.ToList ();
                     newClients = changes.Clients.ToList ();
                     newTasks = changes.Tasks.ToList ();
-                    newTags = changes.Tags.ToList ();
+                    newTags = changes.Tags.Select (mapper.Map<TagData>).ToList ();
                     fullSyncInfo = Tuple.Create (mapper.Map<UserData> (changes.User), changes.Timestamp);
 
                 } else {
@@ -342,14 +351,13 @@ namespace Toggl.Phoebe._Reactive
                             }
                         }
 
-                        // TODO RX: How to get the tag without a remote id?
-                        // TODO: Getting some null reference errors in this code
-                        //foreach (var tag in entry.Tags) {
-                        //    if (state.Tags.Values.All (x => x.WorkspaceRemoteId != entry.WorkspaceRemoteId || x.Name != tag) &&
-                        //            newTags.All (x => x.WorkspaceRemoteId != entry.WorkspaceRemoteId || x.Name != tag)) {
-                        //         newTags.Add (await client.Get<TagJson> (authToken, tagRemoteId));
-                        //    }
-                        //}
+                        var tags = entry.Tags ?? new List<string> ();
+                        foreach (var tag in tags) {
+                            if (state.Tags.Values.All (x => x.WorkspaceRemoteId != entry.WorkspaceRemoteId || x.Name != tag) &&
+                                    newTags.All (x => x.WorkspaceRemoteId != entry.WorkspaceRemoteId || x.Name != tag)) {
+                                newTags.Add (new TagData (tag, Guid.Empty, entry.WorkspaceRemoteId));
+                            }
+                        }
                     }
                 }
 
@@ -359,7 +367,7 @@ namespace Toggl.Phoebe._Reactive
                                   .Concat (newProjects.Select (mapper.Map<ProjectData>).Cast<CommonData> ())
                                   .Concat (newClients.Select (mapper.Map<ClientData>).Cast<CommonData> ())
                                   .Concat (newTasks.Select (mapper.Map<TaskData>).Cast<CommonData> ())
-                                  .Concat (newTags.Select (mapper.Map<TagData>).Cast<CommonData> ())
+                                  .Concat (newTags.Cast<CommonData> ())
                                   .ToList (), fullSyncInfo));
 
             } catch (Exception exc) {

@@ -50,7 +50,6 @@ namespace Toggl.Phoebe._Data
                        typeof (ClientData),
                        typeof (TaskData),
                        typeof (TagData),
-                       typeof (TimeEntryTagData),
                        typeof (TimeEntryData)
             };
         }

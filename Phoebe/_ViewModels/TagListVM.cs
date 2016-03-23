@@ -12,9 +12,9 @@ namespace Toggl.Phoebe._ViewModels
 {
     public interface IOnTagSelectedHandler
     {
-        void OnCreateNewTag (TagData newTagData);
+        void OnCreateNewTag (ITagData newTagData);
 
-        void OnModifyTagList (List<TagData> newTagList);
+        void OnModifyTagList (List<ITagData> newTagList);
     }
 
     public class TagListVM : IDisposable
@@ -35,12 +35,12 @@ namespace Toggl.Phoebe._ViewModels
             TagCollection = null;
         }
 
-        public ObservableRangeCollection<TagData> TagCollection { get; set; }
+        public ObservableRangeCollection<ITagData> TagCollection { get; set; }
 
-        private ObservableRangeCollection<TagData> LoadTags (
+        private ObservableRangeCollection<ITagData> LoadTags (
             AppState appState, Guid workspaceId, List<Guid> previousSelectedIds)
         {
-            var tagCollection = new ObservableRangeCollection<TagData> ();
+            var tagCollection = new ObservableRangeCollection<ITagData> ();
 
             var selectedTags =
                 appState.Tags.Values.Where (

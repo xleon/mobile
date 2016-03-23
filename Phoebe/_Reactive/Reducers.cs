@@ -155,6 +155,9 @@ namespace Toggl.Phoebe._Reactive
 
                 var dataStore = ServiceContainer.Resolve <ISyncDataStore> ();
                 var updated = dataStore.Update (ctx => {
+
+                    // TODO RX: Merge received items with data in db
+
                     foreach (var newData in receivedData) {
                         ICommonData oldData = null;
                         // Check first if the newData has localId assigned
@@ -232,9 +235,8 @@ namespace Toggl.Phoebe._Reactive
             var entryData = (msg as DataMsg.TimeEntryDelete).Data.ForceLeft ();
             var dataStore = ServiceContainer.Resolve <ISyncDataStore> ();
 
-            var updated = dataStore.Update (ctx => ctx.Delete (new TimeEntryData (entryData) {
-                DeletedAt = Time.UtcNow
-            }));
+            var updated = dataStore.Update (ctx => ctx.Delete (
+                entryData.With (x => x.DeletedAt = Time.UtcNow)));
 
             // TODO: Check updated.Count == 1?
             return DataSyncMsg.Create (
@@ -325,21 +327,24 @@ namespace Toggl.Phoebe._Reactive
                 // Stop ActiveEntry if necessary
                 var prev = state.ActiveEntry.Data;
                 if (prev.Id != Guid.Empty && prev.State == TimeEntryState.Running) {
-                    ctx.Put (new TimeEntryData (prev) {
-                        State = TimeEntryState.Finished,
-                        StopTime = Time.UtcNow
-                    });
+                    ctx.Put (prev.With (x => {
+                        x.State = TimeEntryState.Finished;
+                        x.StopTime = Time.UtcNow;
+                    }));
                 }
 
                 // TODO RX: Review the conditions to create a new time entry
                 TimeEntryData newEntry = null;
                 if (entryData.Id == Guid.Empty) {
                     newEntry = state.GetTimeEntryDraft ();
-                } else {
+                }
+                else {
                     CheckTimeEntryState (entryData, TimeEntryState.Finished, "continue");
-                    newEntry = new TimeEntryData (entryData);
+                    newEntry = (TimeEntryData)entryData.Clone ();
                 }
 
+				newEntry.ModifiedAt = Time.UtcNow;
+                newEntry.SyncPending = true;
                 newEntry.RemoteId = null;
                 newEntry.Id = Guid.NewGuid ();
                 newEntry.State = TimeEntryState.Running;
@@ -359,10 +364,10 @@ namespace Toggl.Phoebe._Reactive
 
             CheckTimeEntryState (entryData, TimeEntryState.Running, "stop");
 
-            var updated = dataStore.Update (ctx => ctx.Put (new TimeEntryData (entryData) {
-                State = TimeEntryState.Finished,
-                StopTime = Time.UtcNow
-            }));
+            var updated = dataStore.Update (ctx => ctx.Put (entryData.With (x => {
+                x.State = TimeEntryState.Finished;
+                x.StopTime = Time.UtcNow;
+            })));
 
             // TODO: Check updated.Count == 1?
             return DataSyncMsg.Create (
@@ -371,10 +376,9 @@ namespace Toggl.Phoebe._Reactive
 
         static DataSyncMsg<AppState> TimeEntriesRemoveWithUndo (AppState state, DataMsg msg)
         {
-            var removed = (msg as DataMsg.TimeEntriesRemoveWithUndo).Data.ForceLeft ()
-            .Select (x => new TimeEntryData (x) {
-                DeletedAt = Time.UtcNow
-            });
+            var removed = (msg as DataMsg.TimeEntriesRemoveWithUndo)
+                .Data.ForceLeft ()
+                .Select (x => x.With (y => y.DeletedAt = Time.UtcNow));
 
             // Only update state, don't touch the db, nor send sync messages
             return DataSyncMsg.Create (state.With (timeEntries: state.UpdateTimeEntries (removed)));
@@ -394,11 +398,8 @@ namespace Toggl.Phoebe._Reactive
             var dataStore = ServiceContainer.Resolve <ISyncDataStore> ();
 
             var removed = dataStore.Update (ctx => {
-                foreach (var entryData in entryMsg) {
-                    ctx.Delete (new TimeEntryData (entryData) {
-                        DeletedAt = Time.UtcNow
-                    });
-                }
+                foreach (var entryData in entryMsg)
+                    ctx.Delete (entryData.With(x => x.DeletedAt = Time.UtcNow));
             });
 
             // TODO: Check removed.Count?

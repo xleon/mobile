@@ -87,7 +87,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)_Data\Models\TimeCorrectionData.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)_Data\Models\TimeEntryData.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)_Data\Models\TimeEntryInfo.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)_Data\Models\TimeEntryTagData.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)_Data\Models\UserData.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)_Data\Models\UserRelatedData.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)_Data\Models\WorkspaceData.cs" />

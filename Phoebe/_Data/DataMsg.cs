@@ -182,15 +182,15 @@ namespace Toggl.Phoebe._Data
 
         public sealed class TagsPut : DataMsg
         {
-            public Either<IEnumerable<TagData>, Exception> Data
+            public Either<IEnumerable<ITagData>, Exception> Data
             {
-                get { return RawData.CastLeft<IEnumerable<TagData>> (); }
+                get { return RawData.CastLeft<IEnumerable<ITagData>> (); }
                 set { RawData = value.CastLeft<object> (); }
             }
 
-            public TagsPut (IEnumerable<TagData> tags)
+            public TagsPut (IEnumerable<ITagData> tags)
             {
-                Data = Either<IEnumerable<TagData>, Exception>.Left (tags);
+                Data = Either<IEnumerable<ITagData>, Exception>.Left (tags);
             }
         }
 
@@ -211,29 +211,29 @@ namespace Toggl.Phoebe._Data
 
         public sealed class ProjectDataPut : DataMsg
         {
-            public Either<Tuple<ProjectData, ProjectUserData>, Exception> Data
+            public Either<Tuple<IProjectData, IProjectUserData>, Exception> Data
             {
-                get { return RawData.CastLeft<Tuple<ProjectData, ProjectUserData>> (); }
+                get { return RawData.CastLeft<Tuple<IProjectData, IProjectUserData>> (); }
                 set { RawData = value.CastLeft<object> (); }
             }
 
-            public ProjectDataPut (ProjectData project, ProjectUserData projectUser)
+            public ProjectDataPut (IProjectData project, IProjectUserData projectUser)
             {
-                Data = Either<Tuple<ProjectData, ProjectUserData>, Exception>.Left (Tuple.Create (project, projectUser));
+                Data = Either<Tuple<IProjectData, IProjectUserData>, Exception>.Left (Tuple.Create (project, projectUser));
             }
         }
 
         public sealed class ClientDataPut : DataMsg
         {
-            public Either<ClientData, Exception> Data
+            public Either<IClientData, Exception> Data
             {
-                get { return RawData.CastLeft<ClientData> (); }
+                get { return RawData.CastLeft<IClientData> (); }
                 set { RawData = value.CastLeft<object> (); }
             }
 
-            public ClientDataPut (ClientData data)
+            public ClientDataPut (IClientData data)
             {
-                Data = Either<ClientData, Exception>.Left (data);
+                Data = Either<IClientData, Exception>.Left (data);
             }
         }
 
@@ -249,18 +249,18 @@ namespace Toggl.Phoebe._Data
                 }
             }
 
-            public Either<UserData, AuthException> Data
+            public Either<IUserData, AuthException> Data
             {
-                get { return RawData.Cast<UserData,AuthException> (); }
-                set { RawData = value.Cast<object,Exception> (); }
+                get { return RawData.Cast<IUserData, AuthException> (); }
+                set { RawData = value.Cast<object, Exception> (); }
             }
 
-            public UserDataPut (Net.AuthResult authResult, UserData data = null)
+            public UserDataPut (Net.AuthResult authResult, IUserData data = null)
             {
                 if (authResult == Net.AuthResult.Success && data != null) {
-                    Data = Either<UserData, AuthException>.Left (data);
+                    Data = Either<IUserData, AuthException>.Left (data);
                 } else {
-                    Data = Either<UserData, AuthException>.Right (new AuthException (authResult));
+                    Data = Either<IUserData, AuthException>.Right (new AuthException (authResult));
                 }
             }
         }

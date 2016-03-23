@@ -14,7 +14,7 @@ namespace Toggl.Phoebe._ViewModels
     public class NewProjectVM : IDisposable
     {
         private readonly AppState appState;
-        private readonly WorkspaceData workspace;
+        private readonly IWorkspaceData workspace;
         private readonly ProjectData model;
 
         public NewProjectVM (AppState appState, Guid workspaceId)
@@ -26,7 +26,8 @@ namespace Toggl.Phoebe._ViewModels
                 WorkspaceId = workspaceId,
                 WorkspaceRemoteId = workspace.RemoteId.HasValue ? workspace.RemoteId.Value : 0,
                 IsActive = true,
-                IsPrivate = true
+                IsPrivate = true,
+                SyncPending = true
             };
             ServiceContainer.Resolve<ITracker> ().CurrentScreen = "New Project";
         }
@@ -37,14 +38,14 @@ namespace Toggl.Phoebe._ViewModels
 
         public string ClientName { get; set; }
 
-        public void SetClient (ClientData clientData)
+        public void SetClient (IClientData clientData)
         {
             model.ClientId = clientData.Id;
             model.ClientRemoteId = clientData.RemoteId;
             ClientName = clientData.Name;
         }
 
-        public ProjectData SaveProject (string projectName, int projectColor, SyncTestOptions testOptions = null)
+        public IProjectData SaveProject (string projectName, int projectColor, SyncTestOptions testOptions = null)
         {
             model.Name = projectName;
             model.Color = projectColor;
@@ -54,7 +55,8 @@ namespace Toggl.Phoebe._ViewModels
                 ProjectId = model.Id,
                 UserId = appState.User.Id,
                 ProjectRemoteId = model.RemoteId.HasValue ? model.RemoteId.Value : 0,
-                UserRemoteId = appState.User.RemoteId.HasValue ? appState.User.RemoteId.Value : 0
+                UserRemoteId = appState.User.RemoteId.HasValue ? appState.User.RemoteId.Value : 0,
+                SyncPending = true
             };
 
             // Save new project and relationship

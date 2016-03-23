@@ -13,7 +13,7 @@ using XPlatUtils;
 
 namespace Toggl.Joey.UI.Adapters
 {
-    public class ProjectListAdapter : RecyclerCollectionDataAdapter<CommonData>
+    public class ProjectListAdapter : RecyclerCollectionDataAdapter<ICommonData>
     {
         protected const int ViewTypeProject = ViewTypeContent;
         protected const int ViewTypeClient = ViewTypeContent + 1;

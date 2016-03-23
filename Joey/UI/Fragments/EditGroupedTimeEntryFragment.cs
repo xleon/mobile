@@ -8,6 +8,7 @@ using Android.Graphics;
 using Android.OS;
 using Android.Support.V4.App;
 using Android.Support.V7.Widget;
+using Android.Transitions;
 using Android.Views;
 using Android.Widget;
 using GalaSoft.MvvmLight.Helpers;
@@ -170,8 +171,20 @@ namespace Toggl.Joey.UI.Fragments
 
         private void OnProjectEditTextClick (object sender, EventArgs e)
         {
-            var frg = ProjectListFragment.NewInstance (ViewModel.WorkspaceId.ToString());
-            ((MainDrawerActivity)Activity).OpenSubView (frg, frg.Tag);
+            var projectListFragment = ProjectListFragment.NewInstance (ViewModel.WorkspaceId.ToString());
+
+            if (Android.OS.Build.VERSION.SdkInt >= Android.OS.BuildVersionCodes.Lollipop) {
+                var inflater = TransitionInflater.From (Activity);
+                ExitTransition = inflater.InflateTransition (Android.Resource.Transition.Fade);
+                EnterTransition = inflater.InflateTransition (Android.Resource.Transition.Fade);
+                projectListFragment.EnterTransition = inflater.InflateTransition (Android.Resource.Transition.Fade);
+                projectListFragment.ReturnTransition = inflater.InflateTransition (Android.Resource.Transition.Fade);
+            }
+
+            FragmentManager.BeginTransaction ()
+            .Replace (Resource.Id.ContentFrameLayout, projectListFragment)
+            .AddToBackStack (projectListFragment.Tag)
+            .Commit ();
         }
 
         public override async void OnActivityResult (int requestCode, int resultCode, Intent data)

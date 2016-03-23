@@ -148,16 +148,6 @@ namespace Toggl.Joey.UI.Activities
             }
         }
 
-        public void OpenSubView (Fragment frag, string tag)
-        {
-            FragmentManager.BeginTransaction ()
-            .Add (frag, tag)
-            .AddToBackStack (tag)
-            .Attach (frag)
-            .Commit ();
-            OpenFragment (frag);
-        }
-
         private void AdjustToolbar()
         {
             switch (toolbarMode) {

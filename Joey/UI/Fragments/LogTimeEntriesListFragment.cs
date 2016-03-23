@@ -172,8 +172,8 @@ namespace Toggl.Joey.UI.Fragments
             var timeEntryData = await ViewModel.StartStopTimeEntry ();
             if (timeEntryData.State == TimeEntryState.Running) {
                 NewTimeEntry = true;
-                var editFragment = EditTimeEntryFragment.NewInstance (timeEntryData.Id.ToString ());
 
+                var editFragment = EditTimeEntryFragment.NewInstance (timeEntryData.Id.ToString ());
                 if (Android.OS.Build.VERSION.SdkInt >= Android.OS.BuildVersionCodes.Lollipop) {
                     var inflater = TransitionInflater.From (Activity);
                     ExitTransition = inflater.InflateTransition (Android.Resource.Transition.Move);
@@ -267,10 +267,21 @@ namespace Toggl.Joey.UI.Fragments
         public override bool OnOptionsItemSelected (IMenuItem item)
         {
             NewTimeEntry = true;
-            //TODO open-edit
-            var frg = EditTimeEntryFragment.NewInstance (ViewModel.GetActiveTimeEntry ().Id.ToString());
-            ((MainDrawerActivity)Activity).OpenSubView (frg, frg.Tag);
-            // new List<string> { ViewModel.GetActiveTimeEntry ().Id.ToString ()}
+
+            var editFragment = EditTimeEntryFragment.NewInstance (ViewModel.GetActiveTimeEntry ().Id.ToString());
+            if (Android.OS.Build.VERSION.SdkInt >= Android.OS.BuildVersionCodes.Lollipop) {
+                var inflater = TransitionInflater.From (Activity);
+                ExitTransition = inflater.InflateTransition (Android.Resource.Transition.Move);
+                EnterTransition = inflater.InflateTransition (Android.Resource.Transition.NoTransition);
+                editFragment.EnterTransition = inflater.InflateTransition (Android.Resource.Transition.Fade);
+                editFragment.ReturnTransition = inflater.InflateTransition (Android.Resource.Transition.Fade);
+            }
+
+            FragmentManager.BeginTransaction ()
+            .Replace (Resource.Id.ContentFrameLayout, editFragment)
+            .AddToBackStack (editFragment.Tag)
+            .Commit ();
+
             return base.OnOptionsItemSelected (item);
         }
 
@@ -318,17 +329,11 @@ namespace Toggl.Joey.UI.Fragments
 
             var bundle = new Bundle ();
             bundle.PutString (EditTimeEntryFragment.TransitionNameBodyArgument, cView.BackgroundLayout.TransitionName);
-            bundle.PutString (EditTimeEntryFragment.TransitionNameDescriptionArgument, cView.DescriptionTextView.TransitionName);
-            bundle.PutString (EditTimeEntryFragment.TransitionNameDurationArgument, cView.DurationTextView.TransitionName);
-            bundle.PutString (EditTimeEntryFragment.TransitionValueDescriptionArgument, cView.DescriptionTextView.Text);
-            bundle.PutString (EditTimeEntryFragment.TransitionValueDurationArgument, cView.DurationTextView.Text);
 
             editFragment.Arguments = bundle;
-
+            NewTimeEntry = false;
             FragmentManager.BeginTransaction ()
-            .AddSharedElement (cView.DescriptionTextView, cView.DescriptionTextView.TransitionName)
             .AddSharedElement (cView.BackgroundLayout, cView.BackgroundLayout.TransitionName)
-            .AddSharedElement (cView.DurationTextView, cView.DurationTextView.TransitionName)
             .Replace (Resource.Id.ContentFrameLayout, editFragment)
             .AddToBackStack (editFragment.Tag)
             .Commit ();

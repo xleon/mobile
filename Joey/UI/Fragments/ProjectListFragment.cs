@@ -146,9 +146,9 @@ namespace Toggl.Joey.UI.Fragments
         {
             var newProjectFragment = NewProjectFragment.NewInstance (viewModel.CurrentWorkspaceId.ToString())
                                      .SetOnProjectCreatedHandler (this);
+
             if (Android.OS.Build.VERSION.SdkInt >= Android.OS.BuildVersionCodes.Lollipop) {
                 var inflater = TransitionInflater.From (Activity);
-
                 ExitTransition = inflater.InflateTransition (Android.Resource.Transition.Fade);
                 EnterTransition = inflater.InflateTransition (Android.Resource.Transition.NoTransition);
                 newProjectFragment.EnterTransition = inflater.InflateTransition (Android.Resource.Transition.SlideBottom);

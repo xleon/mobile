@@ -36,10 +36,6 @@ namespace Toggl.Joey.UI.Fragments
     {
         public static readonly string TransitionNameFabArgument = "TRANS_FAB";
         public static readonly string TransitionNameBodyArgument = "TRANS_BODY";
-        public static readonly string TransitionNameDurationArgument = "TRANS_DURATION";
-        public static readonly string TransitionNameDescriptionArgument = "TRANS_DESCRIPTION";
-        public static readonly string TransitionValueDescriptionArgument = "TRANS_DESCRIPTION_VALUE";
-        public static readonly string TransitionValueDurationArgument = "TRANS_DURATION_VALUE";
 
         // to avoid weak references to be removed
         private Binding<string, string> durationBinding, projectBinding, clientBinding, descriptionBinding;
@@ -125,10 +121,6 @@ namespace Toggl.Joey.UI.Fragments
 
             if (Arguments != null && Arguments.ContainsKey (TransitionNameBodyArgument)) {
                 EditContentView.TransitionName = Arguments.GetString (TransitionNameBodyArgument);
-                DescriptionField.TransitionName = Arguments.GetString (TransitionNameDescriptionArgument);
-                DurationTextView.TransitionName = Arguments.GetString (TransitionNameDurationArgument);
-                DescriptionField.TextField.Text = Arguments.GetString (TransitionValueDescriptionArgument);
-                DurationTextView.Text = Arguments.GetString (TransitionValueDurationArgument);
             }
 
             HasOptionsMenu = true;

@@ -6,6 +6,7 @@ namespace Toggl.Phoebe._Helpers
     {
         public const int TimeEntryLoadMaxInit = 100;
         public const int TimeEntryLoadDays = 5;
+        public const int TimeEntrySyncDays = 5;
         public const int TimeEntryRemoveUndoSeconds = 5;
     }
 }

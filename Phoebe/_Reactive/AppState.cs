@@ -205,10 +205,24 @@ namespace Toggl.Phoebe._Reactive
         {
             var userData = new UserData ();
             var settings = SettingsState.Init ();
+            var projects = new Dictionary<Guid, ProjectData> ();
+            var projectUsers = new Dictionary<Guid, ProjectUserData> ();
+            var workspaces = new Dictionary<Guid, WorkspaceData> ();
+            var workspaceUserData = new Dictionary<Guid, WorkspaceUserData> ();
+            var clients = new Dictionary<Guid, ClientData> ();
+            var tasks = new Dictionary<Guid, TaskData> ();
+            var tags = new Dictionary<Guid, TagData> ();
+
             try {
                 if (settings.UserId != Guid.Empty) {
                     var dataStore = ServiceContainer.Resolve<ISyncDataStore> ();
                     userData = dataStore.Table<UserData> ().Single (x => x.Id == settings.UserId);
+                    dataStore.Table<WorkspaceData> ().ForEach (x => workspaces.Add (x.Id, x));
+                    dataStore.Table<WorkspaceUserData> ().ForEach (x => workspaceUserData.Add (x.Id, x));
+                    dataStore.Table<ProjectData> ().ForEach (x => projects.Add (x.Id, x));
+                    dataStore.Table<ProjectUserData> ().ForEach (x => projectUsers.Add (x.Id, x));
+                    dataStore.Table<ClientData> ().ForEach (x => clients.Add (x.Id, x));
+                    dataStore.Table<TaskData> ().ForEach (x => tasks.Add (x.Id, x));
                 }
             } catch (Exception ex) {
                 var logger = ServiceContainer.Resolve<ILogger> ();
@@ -223,13 +237,13 @@ namespace Toggl.Phoebe._Reactive
                        downloadResult: DownloadResult.Empty,
                        fullSyncResult:FullSyncResult.Empty,
                        user: userData,
-                       workspaces: new Dictionary<Guid, IWorkspaceData> (),
-                       projects: new Dictionary<Guid, IProjectData> (),
-                       workspaceUsers: new Dictionary<Guid, IWorkspaceUserData> (),
-                       projectUsers: new Dictionary<Guid, IProjectUserData> (),
-                       clients: new Dictionary<Guid, IClientData> (),
-                       tasks: new Dictionary<Guid, ITaskData> (),
-                       tags: new Dictionary<Guid, ITagData> (),
+                       workspaces: workspaces,
+                       projects: projects,
+                       workspaceUsers: workspaceUserData,
+                       projectUsers: projectUsers,
+                       clients: clients,
+                       tasks: tasks,
+                       tags: tags,
                        timeEntries: new Dictionary<Guid, RichTimeEntry> ());
         }
     }
@@ -369,7 +383,7 @@ namespace Toggl.Phoebe._Reactive
     {
         // Common Default values
         private static readonly Guid UserIdDefault = Guid.Empty;
-        private static readonly DateTime SyncLastRunDefault = DateTime.MinValue;
+        private static readonly DateTime SyncLastRunDefault = DateTime.Now.AddDays (-Literals.TimeEntrySyncDays);
         private static readonly bool UseDefaultTagDefault = true;
         private static readonly string LastAppVersionDefault = string.Empty;
         private static readonly int LastReportZoomDefault = 0;

@@ -287,7 +287,7 @@ namespace Toggl.Phoebe._Reactive
         async Task FullSync (AppState state)
         {
             string authToken = state.User.ApiToken;
-            var sinceDate = state.Settings.SyncLastRun;
+            var sinceDate = state.FullSyncResult.SyncLastRun;
             try {
                 IList<TimeEntryJson> jsonEntries = null;
                 var newWorkspaces = new List<WorkspaceJson> ();

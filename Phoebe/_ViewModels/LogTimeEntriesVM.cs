@@ -35,6 +35,8 @@ namespace Toggl.Phoebe._ViewModels
         private readonly System.Timers.Timer durationTimer;
         private readonly IDisposable subscriptionSettings, subscriptionState;
 
+        public bool IsFullSyncing { get; private set; }
+        public bool HasSyncErrors { get; private set; }
         public bool IsGroupedMode { get; private set; }
         public string Duration { get; private set; }
         public bool IsEntryRunning { get; private set; }
@@ -95,11 +97,18 @@ namespace Toggl.Phoebe._ViewModels
             }
         }
 
-        public void LoadMore (bool fullSync = false)
+        public void TriggerFullSync ()
+        {
+            ServiceContainer.Resolve<IPlatformUtils> ().DispatchOnUIThread (() => {
+                RxChain.Send (new DataMsg.FullSync ());
+            });
+        }
+
+        public void LoadMore ()
         {
             ServiceContainer.Resolve<IPlatformUtils> ().DispatchOnUIThread (() => {
                 LoadInfo = new LoadInfoType (true, true, false);
-                RxChain.Send (new DataMsg.TimeEntriesLoad (fullSync));
+                RxChain.Send (new DataMsg.TimeEntriesLoad ());
             });
         }
 
@@ -167,6 +176,10 @@ namespace Toggl.Phoebe._ViewModels
                 if (appState.Settings.GroupedEntries != IsGroupedMode) {
                     ResetCollection (appState.Settings.GroupedEntries);
                 }
+
+                // Check full Sync info
+                HasSyncErrors = appState.FullSyncResult.HadErrors;
+                IsFullSyncing = appState.FullSyncResult.IsSyncing;
 
                 // Check if DownloadResult has changed
                 if (LoadInfo == null || prevDownloadResult != appState.DownloadResult) {

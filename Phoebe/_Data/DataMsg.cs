@@ -2,15 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Threading.Tasks;
 using Newtonsoft.Json;
-using Toggl.Phoebe._Data;
 using Toggl.Phoebe._Data.Json;
 using Toggl.Phoebe._Data.Models;
 using Toggl.Phoebe._Helpers;
 using Toggl.Phoebe._Reactive;
-using Toggl.Phoebe.Logging;
-using XPlatUtils;
 
 namespace Toggl.Phoebe._Data
 {
@@ -78,26 +74,16 @@ namespace Toggl.Phoebe._Data
             }
         }
 
-        public sealed class TimeEntriesSync : DataMsg
-        {
-        }
-
         public sealed class ResetState : DataMsg
         {
         }
 
         public sealed class TimeEntriesLoad : DataMsg
         {
-            public Either<bool, Exception> Data
-            {
-                get { return RawData.CastLeft<bool> (); }
-                set { RawData = value.CastLeft<object> (); }
-            }
+        }
 
-            public TimeEntriesLoad (bool fullSync = false)
-            {
-                Data = Either<bool, Exception>.Left (fullSync);
-            }
+        public sealed class FullSync : DataMsg
+        {
         }
 
         public sealed class TimeEntryStop : DataMsg

@@ -101,7 +101,7 @@ namespace Toggl.Phoebe._ViewModels
                 // Add section without client
                 data.Add (new ClientData ());
                 data.Add (GetEmptyProject ());
-                enumerable.Where (p => p.ClientId == null && p.WorkspaceId == workspaceId).ForEach (data.Add);
+                enumerable.Where (p => p.ClientId == Guid.Empty && p.WorkspaceId == workspaceId).ForEach (data.Add);
 
                 // Add normal sections
                 var sectionHeaders = clients.Where (p => p.WorkspaceId == workspaceId);
@@ -155,7 +155,7 @@ namespace Toggl.Phoebe._ViewModels
             {
                 TaskNumber = taskNumber;
                 IsEmpty = isEmpty;
-                ClientName = client != null ? client.Name : "";
+                ClientName = client != null ? client.Name : string.Empty;
             }
         }
 

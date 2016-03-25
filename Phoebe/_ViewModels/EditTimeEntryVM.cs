@@ -124,25 +124,36 @@ namespace Toggl.Phoebe._ViewModels
         }
 
         public bool IsRunning { get { return richData.Data.State == TimeEntryState.Running; } }
-        public string Description { get { return richData.Data.Description ?? ""; } }
+        public string Description { get { return richData.Data.Description ?? string.Empty; } }
         public bool IsBillable { get { return richData.Data.IsBillable; } }
         public bool IsPremium { get { return richData.Info.WorkspaceData.IsPremium; } }
         public Guid WorkspaceId { get { return richData.Data.WorkspaceId; } }
-
-        public string ProjectName { get { return richData.Info.ProjectData.Name ?? ""; } }
-        public string TaskName { get { return richData.Info.TaskData.Name ?? ""; } }
-        public string ClientName { get { return richData.Info.ClientData.Name ?? ""; } }
+        public string ProjectName { get { return richData.Info.ProjectData.Name ?? string.Empty; } }
+        public string TaskName { get { return richData.Info.TaskData.Name ?? string.Empty; } }
+        public string ClientName { get { return richData.Info.ClientData.Name ?? string.Empty; } }
         public IReadOnlyList<ITagData> TagList { get { return richData.Info.Tags; } }
 
         #endregion
 
         public void ChangeProjectAndTask (Guid projectId, Guid taskId)
         {
+            long? remoteProjectId = null;
+            long? remoteTaskId = null;
+
+            if (projectId != Guid.Empty) {
+                remoteProjectId = StoreManager.Singleton.AppState.Projects [projectId].RemoteId;
+            }
+            if (taskId != Guid.Empty) {
+                remoteTaskId = StoreManager.Singleton.AppState.Tasks [taskId].RemoteId;
+            }
+
             if (projectId != richData.Data.ProjectId || taskId != richData.Data.TaskId) {
                 UpdateView (x => {
+                    x.TaskRemoteId = remoteTaskId;
+                    x.ProjectRemoteId = remoteProjectId;
                     x.ProjectId = projectId;
                     x.TaskId = taskId;
-                });
+                }, nameof (ProjectName));
             }
         }
 
@@ -194,10 +205,8 @@ namespace Toggl.Phoebe._ViewModels
         public void Save ()
         {
             if (!IsManual) {
-                // TODO: Would be more efficient to use structural equality here?
-                bool hasChanged = previousData != richData;
-
-                if (hasChanged) {
+                // If Public properties are not equal, save it.
+                if (!previousData.Data.PublicInstancePropertiesEqual (richData.Data, "Tags")) {
                     RxChain.Send (new DataMsg.TimeEntryPut (richData.Data));
                     RxChain.Send (new DataMsg.TagsPut (TagList));
                     previousData = richData;

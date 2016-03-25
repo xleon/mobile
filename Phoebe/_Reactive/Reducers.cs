@@ -158,13 +158,14 @@ namespace Toggl.Phoebe._Reactive
             var serverMsg = msg as DataMsg.ReceivedFromSync;
             return serverMsg.Data.Match (receivedData => {
                 // Side effect operation.
-                var updated = UpdateData (state, receivedData);
+                // Update state inside.
+                state = UpdateStateWithNewData (state, receivedData);
 
                 // Update user
                 var dataStore = ServiceContainer.Resolve <ISyncDataStore> ();
                 UserData user = serverMsg.FullSyncInfo.Item1;
                 user.Id = state.User.Id;
-                user.DefaultWorkspaceId = state.User.DefaultWorkspaceId;
+                user.DefaultWorkspaceId = state.Workspaces.Values.Single (x => x.RemoteId == user.DefaultWorkspaceRemoteId).Id;
                 var userUpdated = (UserData)dataStore.Update (ctx => ctx.Put (user)).Single ();
 
                 // Modify state.
@@ -172,18 +173,7 @@ namespace Toggl.Phoebe._Reactive
                            state.With (
                                user: userUpdated,
                                fullSyncResult: state.FullSyncResult.With (isSyncing:false, hadErrors:false, syncLastRun:serverMsg.FullSyncInfo.Item2),
-                               settings: state.Settings.With (syncLastRun: serverMsg.FullSyncInfo.Item2),
-                               workspaces: state.Update (state.Workspaces, updated),
-                               projects: state.Update (state.Projects, updated),
-                               workspaceUsers: state.Update (state.WorkspaceUsers, updated),
-                               projectUsers: state.Update (state.ProjectUsers, updated),
-                               clients: state.Update (state.Clients, updated),
-                               tasks: state.Update (state.Tasks, updated),
-                               tags: state.Update (state.Tags, updated),
-                               // TODO: Check if the updated entries are within the current scroll view
-                               // Probably it's better to do this check in UpdateTimeEntries
-                               timeEntries: state.UpdateTimeEntries (updated)
-                           ));
+                               settings: state.Settings.With (syncLastRun: serverMsg.FullSyncInfo.Item2)));
             },
             ex => DataSyncMsg.Create (state.With (fullSyncResult: state.FullSyncResult.With (isSyncing: false, hadErrors: true))));
         }
@@ -193,23 +183,14 @@ namespace Toggl.Phoebe._Reactive
             var serverMsg = msg as DataMsg.ReceivedFromDownload;
             return serverMsg.Data.Match (receivedData => {
                 // Side effect operation.
-                var updated = UpdateData (state, receivedData);
-                // Modify state.
+                // Update state inside.
+                state = UpdateStateWithNewData (state, receivedData);
+
+                // Modify state with download info
                 var hasMore = receivedData.OfType<TimeEntryData> ().Any ();
                 return DataSyncMsg.Create (
-                           state.With (
-                               downloadResult: state.DownloadResult.With (isSyncing: false, hasMore: hasMore, hadErrors: false),
-                               workspaces: state.Update (state.Workspaces, updated),
-                               projects: state.Update (state.Projects, updated),
-                               workspaceUsers: state.Update (state.WorkspaceUsers, updated),
-                               projectUsers: state.Update (state.ProjectUsers, updated),
-                               clients: state.Update (state.Clients, updated),
-                               tasks: state.Update (state.Tasks, updated),
-                               tags: state.Update (state.Tags, updated),
-                               // TODO: Check if the updated entries are within the current scroll view
-                               // Probably it's better to do this check in UpdateTimeEntries
-                               timeEntries: state.UpdateTimeEntries (updated)
-                           ));
+                           state.With (downloadResult: state.DownloadResult.With (isSyncing: false, hasMore: hasMore, hadErrors: false)
+                                      ));
             },
             ex => DataSyncMsg.Create (state.With (downloadResult: state.DownloadResult.With (isSyncing: false, hadErrors: true))));
         }
@@ -285,13 +266,7 @@ namespace Toggl.Phoebe._Reactive
                 // workspace created with default data and will be
                 // updated in the next sync.
                 var dataStore = ServiceContainer.Resolve<ISyncDataStore> ();
-                var updated = dataStore.Update (ctx => {
-                    var defaultWs = new WorkspaceData { RemoteId = userData.DefaultWorkspaceRemoteId };
-                    ctx.Put (defaultWs);
-                    defaultWs = ctx.Connection.Get<WorkspaceData> (x => x.RemoteId == userData.DefaultWorkspaceRemoteId);
-                    userData.DefaultWorkspaceId = defaultWs.Id;
-                    ctx.Put (userData);
-                });
+                var updated = dataStore.Update (ctx => { ctx.Put (userData); });
 
                 // This will throw an exception if user hasn't been correctly updated
                 var userDataInDb = updated.OfType<UserData> ().Single ();
@@ -443,12 +418,13 @@ namespace Toggl.Phoebe._Reactive
         }
 
         #region Util
-        static IReadOnlyList<ICommonData> UpdateData (AppState state, IEnumerable<CommonData> receivedData)
+        static AppState UpdateStateWithNewData (AppState state, IEnumerable<CommonData> receivedData)
         {
             var dataStore = ServiceContainer.Resolve <ISyncDataStore> ();
-            var updated = dataStore.Update (ctx => {
-                foreach (var newData in receivedData) {
+            dataStore.Update (ctx => {
+                for (var i = 0; i < receivedData.Count (); i++) {
                     ICommonData oldData = null;
+                    CommonData newData = receivedData.ElementAt (i);
                     // Check first if the newData has localId assigned
                     // (for example, the ones returned by TogglClient.Create)
                     if (newData.Id != Guid.Empty) {
@@ -469,15 +445,28 @@ namespace Toggl.Phoebe._Reactive
                         }
                     } else {
                         newData.Id = Guid.NewGuid (); // Assign new Id
-                        var data = BuildLocalRelationships (state, newData); // Set local Id values.
-                        PutOrDelete (ctx, data);
+                        newData = BuildLocalRelationships (state, newData); // Set local Id values.
+                        PutOrDelete (ctx, newData);
                     }
+
+                    // TODO RX Create a single update method
+                    var updatedList = new List<ICommonData> {newData};
+                    state = state.With (
+                                workspaces: state.Update (state.Workspaces, updatedList),
+                                projects: state.Update (state.Projects, updatedList),
+                                workspaceUsers: state.Update (state.WorkspaceUsers, updatedList),
+                                projectUsers: state.Update (state.ProjectUsers, updatedList),
+                                clients: state.Update (state.Clients, updatedList),
+                                tasks: state.Update (state.Tasks, updatedList),
+                                tags: state.Update (state.Tags, updatedList),
+                                timeEntries: state.UpdateTimeEntries (updatedList)
+                            );
                 }
             });
-            return updated;
+            return state;
         }
 
-        static ICommonData BuildLocalRelationships (AppState state, ICommonData data)
+        static CommonData BuildLocalRelationships (AppState state, CommonData data)
         {
             // Build local relationships.
             // Object that comes from server needs to be
@@ -486,7 +475,7 @@ namespace Toggl.Phoebe._Reactive
             if (data is TimeEntryData) {
                 var te = (TimeEntryData)data;
                 te.UserId = state.User.Id;
-                te.WorkspaceId = state.User.DefaultWorkspaceId;
+                te.WorkspaceId = state.Workspaces.Values.Single (x => x.RemoteId == te.WorkspaceRemoteId).Id;
                 if (te.ProjectRemoteId.HasValue &&
                         state.Projects.Any (x => x.Value.RemoteId == te.ProjectRemoteId.Value)) {
                     te.ProjectId = state.Projects.Single (x => x.Value.RemoteId == te.ProjectRemoteId.Value).Value.Id;
@@ -501,7 +490,7 @@ namespace Toggl.Phoebe._Reactive
 
             if (data is ProjectData) {
                 var pr = (ProjectData)data;
-                pr.WorkspaceId = state.User.DefaultWorkspaceId;
+                pr.WorkspaceId = state.Workspaces.Values.Single (x => x.RemoteId == pr.WorkspaceRemoteId).Id;
                 if (pr.ClientRemoteId.HasValue &&
                         state.Clients.Any (x => x.Value.RemoteId == pr.ClientRemoteId.Value)) {
                     pr.ClientId = state.Clients.Single (x => x.Value.RemoteId == pr.ClientRemoteId.Value).Value.Id;
@@ -509,46 +498,30 @@ namespace Toggl.Phoebe._Reactive
                 return pr;
             }
 
-            if (data is WorkspaceUserData) {
-                var ws = (WorkspaceUserData)data;
-                ws.UserId = state.User.Id;
-                ws.WorkspaceId = state.User.DefaultWorkspaceId;
-                return ws;
-            }
-
             if (data is ClientData) {
                 var cl = (ClientData)data;
-                cl.WorkspaceId = state.User.DefaultWorkspaceId;
+                cl.WorkspaceId = state.Workspaces.Values.Single (x => x.RemoteId == cl.WorkspaceRemoteId).Id;
                 return cl;
             }
 
             if (data is TaskData) {
                 var ts = (TaskData)data;
-                ts.WorkspaceId = state.User.DefaultWorkspaceId;
+                ts.WorkspaceId = state.Workspaces.Values.Single (x => x.RemoteId == ts.WorkspaceRemoteId).Id;
                 if (state.Projects.Any (x => x.Value.RemoteId == ts.ProjectRemoteId)) {
                     ts.ProjectId = state.Projects.Single (x => x.Value.RemoteId == ts.ProjectRemoteId).Value.Id;
                 }
                 return ts;
             }
 
-            if (data is ProjectUserData) {
-                var ps = (ProjectUserData)data;
-                ps.UserId = state.User.Id;
-                if (state.Projects.Any (x => x.Value.RemoteId == ps.ProjectRemoteId)) {
-                    ps.ProjectId = state.Projects.Single (x => x.Value.RemoteId == ps.ProjectRemoteId).Value.Id;
-                }
-                return ps;
-            }
-
             if (data is TagData) {
                 var t = (TagData)data;
-                t.WorkspaceId = state.User.DefaultWorkspaceId;
+                t.WorkspaceId = state.Workspaces.Values.Single (x => x.RemoteId == t.WorkspaceRemoteId).Id;
                 return t;
             }
 
             if (data is UserData) {
                 var u = (UserData)data;
-                u.DefaultWorkspaceId = state.User.DefaultWorkspaceId;
+                u.DefaultWorkspaceId = state.Workspaces.Values.Single (x => x.RemoteId == u.DefaultWorkspaceRemoteId).Id;
             }
 
             return data;

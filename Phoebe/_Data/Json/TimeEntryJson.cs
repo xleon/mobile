@@ -1,12 +1,14 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using Newtonsoft.Json;
 
 namespace Toggl.Phoebe._Data.Json
 {
     public class TimeEntryJson : CommonJson
     {
-        [JsonProperty ("description")]
+        [DefaultValue ("")]
+        [JsonProperty (PropertyName = "description", DefaultValueHandling = DefaultValueHandling.Populate)]
         public string Description { get; set; }
 
         [JsonProperty ("billable")]

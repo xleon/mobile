@@ -50,6 +50,9 @@ namespace Toggl.Phoebe._ViewModels
             model.Name = projectName;
             model.Color = projectColor;
 
+            // TODO: RX for the moment, ProjectUserData
+            // is not used in any case.
+            /*
             var projectUser = new ProjectUserData {
                 Id = Guid.NewGuid (),
                 ProjectId = model.Id,
@@ -58,9 +61,9 @@ namespace Toggl.Phoebe._ViewModels
                 UserRemoteId = appState.User.RemoteId.HasValue ? appState.User.RemoteId.Value : 0,
                 SyncPending = true
             };
-
+            */
             // Save new project and relationship
-            RxChain.Send (new DataMsg.ProjectDataPut (model, projectUser), testOptions);
+            RxChain.Send (new DataMsg.ProjectDataPut (model), testOptions);
 
             return model;
         }

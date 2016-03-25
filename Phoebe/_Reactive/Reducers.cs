@@ -122,8 +122,6 @@ namespace Toggl.Phoebe._Reactive
             var dataStore = ServiceContainer.Resolve <ISyncDataStore> ();
             var endDate = state.DownloadResult.NextDownloadFrom;
 
-            // TODO RX: Should we load entries from db also in full sync? What should be the startDate?
-
             DownloadResult downloadInfo = state.DownloadResult;
             IList<TimeEntryData> dbEntries = new List<TimeEntryData> ();
 
@@ -161,10 +159,18 @@ namespace Toggl.Phoebe._Reactive
             return serverMsg.Data.Match (receivedData => {
                 // Side effect operation.
                 var updated = UpdateData (state, receivedData);
+
+                // Update user
+                var dataStore = ServiceContainer.Resolve <ISyncDataStore> ();
+                UserData user = serverMsg.FullSyncInfo.Item1;
+                user.Id = state.User.Id;
+                user.DefaultWorkspaceId = state.User.DefaultWorkspaceId;
+                var userUpdated = (UserData)dataStore.Update (ctx => ctx.Put (user)).Single ();
+
                 // Modify state.
                 return DataSyncMsg.Create (
                            state.With (
-                               user: serverMsg.FullSyncInfo.Item1,
+                               user: userUpdated,
                                fullSyncResult: state.FullSyncResult.With (isSyncing:false, hadErrors:false, syncLastRun:serverMsg.FullSyncInfo.Item2),
                                settings: state.Settings.With (syncLastRun: serverMsg.FullSyncInfo.Item2),
                                workspaces: state.Update (state.Workspaces, updated),
@@ -265,32 +271,36 @@ namespace Toggl.Phoebe._Reactive
             var data = (msg as DataMsg.ProjectDataPut).Data.ForceLeft ();
             var dataStore = ServiceContainer.Resolve <ISyncDataStore> ();
 
-            var updated = dataStore.Update (ctx => {
-                ctx.Put (data.Item1);
-                ctx.Put (data.Item2);
-            });
+            var updated = dataStore.Update (ctx => ctx.Put (data));
 
-            return DataSyncMsg.Create (
-                       state.With (
-                           projects: state.Update (state.Projects, updated),
-                           projectUsers: state.Update (state.ProjectUsers, updated)
-                       ), updated);
+            return DataSyncMsg.Create (state.With (projects: state.Update (state.Projects, updated)), updated);
         }
 
         static DataSyncMsg<AppState> UserDataPut (AppState state, DataMsg msg)
         {
             return (msg as DataMsg.UserDataPut).Data.Match (
             userData => {
+
+                // Create user and workspace at the same time,
+                // workspace created with default data and will be
+                // updated in the next sync.
                 var dataStore = ServiceContainer.Resolve<ISyncDataStore> ();
-                var updated = dataStore.Update (ctx => ctx.Put (userData));
+                var updated = dataStore.Update (ctx => {
+                    var defaultWs = new WorkspaceData { RemoteId = userData.DefaultWorkspaceRemoteId };
+                    ctx.Put (defaultWs);
+                    defaultWs = ctx.Connection.Get<WorkspaceData> (x => x.RemoteId == userData.DefaultWorkspaceRemoteId);
+                    userData.DefaultWorkspaceId = defaultWs.Id;
+                    ctx.Put (userData);
+                });
 
                 // This will throw an exception if user hasn't been correctly updated
-                var userDataInDb = updated.Single () as UserData;
+                var userDataInDb = updated.OfType<UserData> ().Single ();
 
                 return DataSyncMsg.Create (
                            state.With (
                                user: userDataInDb,
                                authResult: AuthResult.Success,
+                               workspaces: state.Update (state.Workspaces, updated),
                                settings: state.Settings.With (userId: userDataInDb.Id)));
             },
             ex => {
@@ -467,7 +477,6 @@ namespace Toggl.Phoebe._Reactive
             return updated;
         }
 
-
         static ICommonData BuildLocalRelationships (AppState state, ICommonData data)
         {
             // Build local relationships.
@@ -535,6 +544,11 @@ namespace Toggl.Phoebe._Reactive
                 var t = (TagData)data;
                 t.WorkspaceId = state.User.DefaultWorkspaceId;
                 return t;
+            }
+
+            if (data is UserData) {
+                var u = (UserData)data;
+                u.DefaultWorkspaceId = state.User.DefaultWorkspaceId;
             }
 
             return data;

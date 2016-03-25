@@ -35,7 +35,7 @@ namespace Toggl.Phoebe._ViewModels
                     .Where (r => r.IsActive)
                     .OrderBy (r => r.Name).ToList ();
 
-            projects = appState.GetUserAccessibleProjects (userData.Id).Select (
+            projects = appState.Projects.Values.Where (p => p.IsActive).Select (
                            p => new SuperProjectData (p,
                                    clients.FirstOrDefault (c => c.Id == p.ClientId),
                                    tasks.Count (t => t.ProjectId == p.Id))).ToList ();

@@ -383,7 +383,7 @@ namespace Toggl.Phoebe._Reactive
     {
         // Common Default values
         private static readonly Guid UserIdDefault = Guid.Empty;
-        private static readonly DateTime SyncLastRunDefault = DateTime.Now.AddDays (-Literals.TimeEntrySyncDays);
+        private static readonly DateTime SyncLastRunDefault = DateTime.MinValue;
         private static readonly bool UseDefaultTagDefault = true;
         private static readonly string LastAppVersionDefault = string.Empty;
         private static readonly int LastReportZoomDefault = 0;

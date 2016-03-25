@@ -287,7 +287,13 @@ namespace Toggl.Phoebe._Reactive
         async Task FullSync (AppState state)
         {
             string authToken = state.User.ApiToken;
-            var sinceDate = state.FullSyncResult.SyncLastRun;
+            DateTime? sinceDate = state.FullSyncResult.SyncLastRun;
+            // If Since value is less than two months
+            // Use null and let server pick the correct value
+            if (sinceDate < DateTime.Now.Date.AddMonths (-2)) {
+                sinceDate = null;
+            }
+
             try {
                 IList<TimeEntryJson> jsonEntries = null;
                 var newWorkspaces = new List<WorkspaceJson> ();
@@ -296,8 +302,7 @@ namespace Toggl.Phoebe._Reactive
                 var newTasks = new List<TaskJson> ();
                 var newTags = new List<TagJson> ();
 
-                // TODO RX: Check if since date is older than 2 months, see #1301
-                var changes = await client.GetChanges (authToken, state.Settings.SyncLastRun);
+                var changes = await client.GetChanges (authToken, sinceDate);
                 jsonEntries = changes.TimeEntries.ToList ();
                 newWorkspaces = changes.Workspaces.ToList ();
                 newProjects = changes.Projects.ToList ();
@@ -317,7 +322,7 @@ namespace Toggl.Phoebe._Reactive
             } catch (Exception exc) {
                 var tag = this.GetType ().Name;
                 var logger = ServiceContainer.Resolve<ILogger> ();
-                string errorMsg = string.Format ("Failed to sync data since {0}", sinceDate);
+                string errorMsg = string.Format ("Failed to sync data since {0}", state.FullSyncResult.SyncLastRun);
 
                 if (exc.IsNetworkFailure () || exc is TaskCanceledException) {
                     logger.Info (tag, exc, errorMsg);

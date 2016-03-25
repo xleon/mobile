@@ -10,6 +10,7 @@ namespace UITests
             {
                 return ConfigureApp
                     .Android
+                    .InstalledApp("com.toggl.timer")
                     .StartApp();
             }
 

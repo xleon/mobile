@@ -81,9 +81,6 @@ namespace Toggl.Phoebe._Reactive
                    .Add (typeof (DataMsg.TimeEntryDelete), TimeEntryDelete)
                    .Add (typeof (DataMsg.TimeEntryContinue), TimeEntryContinue)
                    .Add (typeof (DataMsg.TimeEntryStop), TimeEntryStop)
-                   .Add (typeof (DataMsg.TimeEntriesRemoveWithUndo), TimeEntriesRemoveWithUndo)
-                   .Add (typeof (DataMsg.TimeEntriesRestoreFromUndo), TimeEntriesRestoreFromUndo)
-                   .Add (typeof (DataMsg.TimeEntriesRemovePermanently), TimeEntriesRemovePermanently)
                    .Add (typeof (DataMsg.TagsPut), TagsPut)
                    .Add (typeof (DataMsg.ClientDataPut), ClientDataPut)
                    .Add (typeof (DataMsg.ProjectDataPut), ProjectDataPut)
@@ -349,40 +346,6 @@ namespace Toggl.Phoebe._Reactive
             // TODO: Check updated.Count == 1?
             return DataSyncMsg.Create (
                        state.With (timeEntries: state.UpdateTimeEntries (updated)), updated);
-        }
-
-        static DataSyncMsg<AppState> TimeEntriesRemoveWithUndo (AppState state, DataMsg msg)
-        {
-            var removed = (msg as DataMsg.TimeEntriesRemoveWithUndo)
-                .Data.ForceLeft ()
-                .Select (x => x.With (y => y.DeletedAt = Time.UtcNow));
-
-            // Only update state, don't touch the db, nor send sync messages
-            return DataSyncMsg.Create (state.With (timeEntries: state.UpdateTimeEntries (removed)));
-        }
-
-        static DataSyncMsg<AppState> TimeEntriesRestoreFromUndo (AppState state, DataMsg msg)
-        {
-            var restored = (msg as DataMsg.TimeEntriesRestoreFromUndo).Data.ForceLeft ();
-
-            // Only update state, don't touch the db, nor send sync messages
-            return DataSyncMsg.Create (state.With (timeEntries: state.UpdateTimeEntries (restored)));
-        }
-
-        static DataSyncMsg<AppState> TimeEntriesRemovePermanently (AppState state, DataMsg msg)
-        {
-            var entryMsg = (msg as DataMsg.TimeEntriesRemovePermanently).Data.ForceLeft ();
-            var dataStore = ServiceContainer.Resolve <ISyncDataStore> ();
-
-            var removed = dataStore.Update (ctx => {
-                foreach (var entryData in entryMsg)
-                    ctx.Delete (entryData.With(x => x.DeletedAt = Time.UtcNow));
-            });
-
-            // TODO: Check removed.Count?
-            return DataSyncMsg.Create (
-                       state.With (timeEntries: state.UpdateTimeEntries (removed)),
-                       removed);
         }
 
         static DataSyncMsg<AppState> Reset (AppState state, DataMsg msg)

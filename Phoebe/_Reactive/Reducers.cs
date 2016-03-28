@@ -212,7 +212,7 @@ namespace Toggl.Phoebe._Reactive
             var dataStore = ServiceContainer.Resolve <ISyncDataStore> ();
 
             var updated = dataStore.Update (ctx => ctx.Delete (
-                entryData.With (x => x.DeletedAt = Time.UtcNow)));
+                                                entryData.With (x => x.DeletedAt = Time.UtcNow)));
 
             // TODO: Check updated.Count == 1?
             return DataSyncMsg.Create (
@@ -311,13 +311,12 @@ namespace Toggl.Phoebe._Reactive
                 TimeEntryData newEntry = null;
                 if (entryData.Id == Guid.Empty) {
                     newEntry = state.GetTimeEntryDraft ();
-                }
-                else {
+                } else {
                     CheckTimeEntryState (entryData, TimeEntryState.Finished, "continue");
                     newEntry = (TimeEntryData)entryData.Clone ();
                 }
 
-				newEntry.ModifiedAt = Time.UtcNow;
+                newEntry.ModifiedAt = Time.UtcNow;
                 newEntry.SyncPending = true;
                 newEntry.RemoteId = null;
                 newEntry.Id = Guid.NewGuid ();

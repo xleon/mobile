@@ -71,6 +71,7 @@ namespace Toggl.Phoebe._Data
         public void WipeTables ()
         {
             var dataObjects = DiscoverDataModels();
+
             foreach (var t in dataObjects) {
                 var map = cnn.GetMapping (t);
                 var query = string.Format ("DELETE FROM \"{0}\"", map.TableName);
@@ -83,6 +84,7 @@ namespace Toggl.Phoebe._Data
         const string QueueInsertSql = "INSERT INTO [__QUEUE__{0}] VALUES (?)";
         const string QueueSelectFirstSql = "SELECT rowid, * FROM [__QUEUE__{0}] ORDER BY rowid LIMIT 1";
         const string QueueDeleteSql = "DELETE FROM [__QUEUE__{0}] WHERE rowid = ?";
+        const string QueueResetSql = "DELETE FROM [__QUEUE__{0}]";
         const string QueueCountSql = "SELECT COUNT(*) FROM [__QUEUE__{0}]";
 
         class QueueItem
@@ -95,6 +97,12 @@ namespace Toggl.Phoebe._Data
         private void CreateQueueTable (string queueId)
         {
             cnn.Execute (string.Format (QueueCreateSql, queueId));
+        }
+
+        public int ResetQueue (string queueId)
+        {
+            CreateQueueTable (queueId);
+            return cnn.ExecuteScalar<int> (string.Format (QueueResetSql, queueId));
         }
 
         public int GetQueueSize (string queueId)

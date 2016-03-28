@@ -151,7 +151,7 @@ namespace Toggl.Phoebe._ViewModels
 
             public SuperProjectData (
                 IProjectData dataObject, IClientData client, int taskNumber, bool isEmpty = false)
-                : base ((ProjectData)dataObject)
+            : base ((ProjectData)dataObject)
             {
                 TaskNumber = taskNumber;
                 IsEmpty = isEmpty;

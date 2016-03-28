@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using Android.App;
 using Android.Content.PM;
 using Android.OS;
@@ -15,8 +14,6 @@ using Toggl.Joey.UI.Views;
 using Toggl.Phoebe._Data;
 using Toggl.Phoebe._Data.Models;
 using Toggl.Phoebe._Reactive;
-using Toggl.Phoebe.Net;
-using XPlatUtils;
 using ActionBarDrawerToggle = Android.Support.V7.App.ActionBarDrawerToggle;
 using Fragment = Android.Support.V4.App.Fragment;
 using Toolbar = Android.Support.V7.Widget.Toolbar;
@@ -64,7 +61,6 @@ namespace Toggl.Joey.UI.Activities
         private FrameLayout DrawerSyncView { get; set; }
 
         public Toolbar MainToolbar { get; set; }
-
 
         protected override void OnCreateActivity (Bundle state)
         {

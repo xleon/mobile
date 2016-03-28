@@ -105,7 +105,10 @@ namespace Toggl.Joey.UI.Fragments
 
             ConfigureUIViews ();
             CreateWorkspaceTabs ();
-            ((MainDrawerActivity)Activity).HideSoftKeyboard (recyclerView);
+            var activity = (MainDrawerActivity)Activity;
+            if (activity != null) {
+                activity.HideSoftKeyboard (recyclerView);
+            }
         }
 
         private void ConfigureUIViews ()

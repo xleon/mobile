@@ -2,15 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Threading.Tasks;
 using Newtonsoft.Json;
-using Toggl.Phoebe._Data;
 using Toggl.Phoebe._Data.Json;
 using Toggl.Phoebe._Data.Models;
 using Toggl.Phoebe._Helpers;
 using Toggl.Phoebe._Reactive;
-using Toggl.Phoebe.Logging;
-using XPlatUtils;
 
 namespace Toggl.Phoebe._Data
 {
@@ -37,7 +33,26 @@ namespace Toggl.Phoebe._Data
             }
         }
 
-        public sealed class ReceivedFromServer : DataMsg
+        public sealed class ReceivedFromDownload : DataMsg
+        {
+            public Either<IEnumerable<CommonData>, Exception> Data
+            {
+                get { return RawData.CastLeft<IEnumerable<CommonData>> (); }
+                set { RawData = value.CastLeft<object> (); }
+            }
+
+            public ReceivedFromDownload (Exception ex)
+            {
+                Data = Either<IEnumerable<CommonData>, Exception>.Right (ex);
+            }
+
+            public ReceivedFromDownload (IEnumerable<CommonData> data)
+            {
+                Data = Either<IEnumerable<CommonData>, Exception>.Left (data);
+            }
+        }
+
+        public sealed class ReceivedFromSync : DataMsg
         {
             public Tuple<UserData, DateTime> FullSyncInfo { get; private set; }
 
@@ -47,20 +62,16 @@ namespace Toggl.Phoebe._Data
                 set { RawData = value.CastLeft<object> (); }
             }
 
-            public ReceivedFromServer (Exception ex)
+            public ReceivedFromSync (Exception ex)
             {
                 Data = Either<IEnumerable<CommonData>, Exception>.Right (ex);
             }
 
-            public ReceivedFromServer (IEnumerable<CommonData> data, Tuple<UserData, DateTime> fullSyncInfo = null)
+            public ReceivedFromSync (IEnumerable<CommonData> data, Tuple<UserData, DateTime> fullSyncInfo = null)
             {
                 FullSyncInfo = fullSyncInfo;
                 Data = Either<IEnumerable<CommonData>, Exception>.Left (data);
             }
-        }
-
-        public sealed class TimeEntriesSync : DataMsg
-        {
         }
 
         public sealed class ResetState : DataMsg
@@ -69,16 +80,10 @@ namespace Toggl.Phoebe._Data
 
         public sealed class TimeEntriesLoad : DataMsg
         {
-            public Either<bool, Exception> Data
-            {
-                get { return RawData.CastLeft<bool> (); }
-                set { RawData = value.CastLeft<object> (); }
-            }
+        }
 
-            public TimeEntriesLoad (bool fullSync = false)
-            {
-                Data = Either<bool, Exception>.Left (fullSync);
-            }
+        public sealed class FullSync : DataMsg
+        {
         }
 
         public sealed class TimeEntryStop : DataMsg
@@ -211,15 +216,15 @@ namespace Toggl.Phoebe._Data
 
         public sealed class ProjectDataPut : DataMsg
         {
-            public Either<Tuple<IProjectData, IProjectUserData>, Exception> Data
+            public Either<ProjectData, Exception> Data
             {
-                get { return RawData.CastLeft<Tuple<IProjectData, IProjectUserData>> (); }
+                get { return RawData.CastLeft<ProjectData> (); }
                 set { RawData = value.CastLeft<object> (); }
             }
 
-            public ProjectDataPut (IProjectData project, IProjectUserData projectUser)
+            public ProjectDataPut (ProjectData project)
             {
-                Data = Either<Tuple<IProjectData, IProjectUserData>, Exception>.Left (Tuple.Create (project, projectUser));
+                Data = Either<ProjectData, Exception>.Left (project);
             }
         }
 
@@ -292,13 +297,12 @@ namespace Toggl.Phoebe._Data
     {
         protected ServerRequest () {}
 
+        public sealed class FullSync : ServerRequest
+        {
+        }
+
         public sealed class DownloadEntries : ServerRequest
         {
-            public readonly bool FullSync;
-            public DownloadEntries (bool fullSync)
-            {
-                FullSync = fullSync;
-            }
         }
 
         public sealed class Authenticate : ServerRequest

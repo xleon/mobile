@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Linq.Expressions;
 using SQLite.Net;
 using SQLite.Net.Interop;
-using Toggl.Phoebe._Data;
 using Toggl.Phoebe._Data.Models;
 
 namespace Toggl.Phoebe._Data
@@ -12,13 +10,11 @@ namespace Toggl.Phoebe._Data
     public class SyncSqliteDataStore : ISyncDataStore
     {
         readonly SQLiteConnectionWithLock cnn;
-        readonly ISQLitePlatform platformInfo;
 
         public SyncSqliteDataStore (string dbPath, ISQLitePlatform platformInfo)
         {
             var cnnString = new SQLiteConnectionString (dbPath, true);
             this.cnn = new SQLiteConnectionWithLock (platformInfo, cnnString);
-            this.platformInfo = platformInfo;
 
             CreateTables();
             CleanOldDraftEntry ();
@@ -36,12 +32,12 @@ namespace Toggl.Phoebe._Data
         {
             // TODO: temporal method to clear old draft entries from DB.
             // It should be removed in next versions.
-            cnn.Table <TimeEntryData> ().Delete (t => t.State == TimeEntryState.New);
+            cnn.Table<TimeEntryData>().Delete (t => t.State == TimeEntryState.New);
         }
 
-        internal static List<Type> DiscoverDataModels ()
+        internal static List<Type> DiscoverDataModels()
         {
-            return new List<Type> () {
+            return new List<Type>() {
                 typeof (UserData),
                        typeof (WorkspaceData),
                        typeof (WorkspaceUserData),
@@ -54,9 +50,9 @@ namespace Toggl.Phoebe._Data
             };
         }
 
-        public TableQuery<T> Table<T> () where T : CommonData, new()
+        public TableQuery<T> Table<T>() where T : CommonData, new()
         {
-            return cnn.Table<T> ();
+            return cnn.Table<T>();
         }
 
         public IReadOnlyList<ICommonData> Update (Action<ISyncDataStoreContext> worker)
@@ -74,7 +70,7 @@ namespace Toggl.Phoebe._Data
 
         public void WipeTables ()
         {
-            var dataObjects = DiscoverDataModels ();
+            var dataObjects = DiscoverDataModels();
             foreach (var t in dataObjects) {
                 var map = cnn.GetMapping (t);
                 var query = string.Format ("DELETE FROM \"{0}\"", map.TableName);
@@ -120,10 +116,10 @@ namespace Toggl.Phoebe._Data
             CreateQueueTable (queueId);
 
             var cmd = cnn.CreateCommand (string.Format (QueueSelectFirstSql, queueId));
-            var record = cmd.ExecuteQuery<QueueItem> ().SingleOrDefault ();
+            var record = cmd.ExecuteQuery<QueueItem>().SingleOrDefault();
             if (record != null) {
                 cmd = cnn.CreateCommand (string.Format (QueueDeleteSql, queueId), record.RowId);
-                var res = cmd.ExecuteNonQuery ();
+                var res = cmd.ExecuteNonQuery();
                 if (res != 1) {
                     return false;
                 } else {
@@ -140,7 +136,7 @@ namespace Toggl.Phoebe._Data
             CreateQueueTable (queueId);
 
             var cmd = cnn.CreateCommand (string.Format (QueueSelectFirstSql, queueId));
-            var record = cmd.ExecuteQuery<QueueItem> ().SingleOrDefault ();
+            var record = cmd.ExecuteQuery<QueueItem>().SingleOrDefault();
             if (record != null) {
                 json = record.Data;
                 return true;
@@ -159,7 +155,7 @@ namespace Toggl.Phoebe._Data
             public SyncSqliteDataStoreContext (SQLiteConnectionWithLock conn)
             {
                 this.conn = conn;
-                this.updated = new List<ICommonData> ();
+                this.updated = new List<ICommonData>();
             }
 
             public SQLiteConnection Connection
@@ -188,6 +184,8 @@ namespace Toggl.Phoebe._Data
                 }
             }
 
+            // TODO: RX Find an elegant way to
+            // replace this method.
             public ICommonData GetByColumn (Type type, string colName, object colValue)
             {
                 IEnumerable<ICommonData> res;
@@ -195,28 +193,28 @@ namespace Toggl.Phoebe._Data
                 var query = $"SELECT * FROM [{map.TableName}] WHERE {colName}=?";
 
                 if (type == typeof (ClientData)) {
-                    res = conn.Query<ClientData> (query, colValue).Cast<ICommonData> ();
+                    res = conn.Query<ClientData> (query, colValue).Cast<ICommonData>();
                 } else if (type == typeof (ProjectData)) {
-                    res = conn.Query<ProjectData> (query, colValue).Cast<ICommonData> ();
+                    res = conn.Query<ProjectData> (query, colValue).Cast<ICommonData>();
                 } else if (type == typeof (TaskData)) {
-                    res = conn.Query<TaskData> (query, colValue).Cast<ICommonData> ();
+                    res = conn.Query<TaskData> (query, colValue).Cast<ICommonData>();
                 } else if (type == typeof (TimeEntryData)) {
-                    res = conn.Query<TimeEntryData> (query, colValue).Cast<ICommonData> ();
+                    res = conn.Query<TimeEntryData> (query, colValue).Cast<ICommonData>();
                 } else if (type == typeof (WorkspaceData)) {
-                    res = conn.Query<WorkspaceData> (query, colValue).Cast<ICommonData> ();
+                    res = conn.Query<WorkspaceData> (query, colValue).Cast<ICommonData>();
                 } else if (type == typeof (UserData)) {
-                    res = conn.Query<UserData> (query, colValue).Cast<ICommonData> ();
+                    res = conn.Query<UserData> (query, colValue).Cast<ICommonData>();
                 } else if (type == typeof (TagData)) {
-                    res = conn.Query<TagData> (query, colValue).Cast<ICommonData> ();
+                    res = conn.Query<TagData> (query, colValue).Cast<ICommonData>();
                 } else if (type == typeof (WorkspaceUserData)) {
-                    res = conn.Query<WorkspaceUserData> (query, colValue).Cast<ICommonData> ();
+                    res = conn.Query<WorkspaceUserData> (query, colValue).Cast<ICommonData>();
                 } else if (type == typeof (ProjectUserData)) {
-                    res = conn.Query<ProjectUserData> (query, colValue).Cast<ICommonData> ();
+                    res = conn.Query<ProjectUserData> (query, colValue).Cast<ICommonData>();
                 } else {
                     throw new NotSupportedException (string.Format ("Cannot find table for {0}", type.Name));
                 }
 
-                return res.SingleOrDefault ();
+                return res.SingleOrDefault();
             }
         }
     }

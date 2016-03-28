@@ -100,6 +100,9 @@ namespace Toggl.Phoebe._Helpers
             return duration;
         }
 
+        /// <summary>
+        /// Change duration of a time entry.
+        /// </summary>
         public static void SetDuration (this TimeEntryData data, TimeSpan value)
         {
             var now = Time.UtcNow;
@@ -122,6 +125,64 @@ namespace Toggl.Phoebe._Helpers
 
             data.StartTime = data.StartTime.Truncate (TimeSpan.TicksPerSecond);
             data.StopTime = data.StopTime.Truncate (TimeSpan.TicksPerSecond);
+        }
+
+        /// <summary>
+        /// Change StartTime to a TimeEntryData
+        /// </summary>
+        public static TimeEntryData ChangeStartTime (this TimeEntryData data, DateTime newValue)
+        {
+            newValue = newValue.ToUtc ().Truncate (TimeSpan.TicksPerSecond);
+            var duration = data.GetDuration ();
+            data.StartTime = newValue;
+
+            if (data.State != TimeEntryState.Running) {
+                if (data.StopTime.HasValue) {
+                    data.StopTime = data.StartTime + duration;
+                } else {
+                    var now = Time.UtcNow;
+
+                    data.StopTime = data.StartTime.Date
+                                    .AddHours (now.Hour)
+                                    .AddMinutes (now.Minute)
+                                    .AddSeconds (data.StartTime.Second);
+
+                    if (data.StopTime < data.StartTime) {
+                        data.StopTime = data.StartTime + duration;
+                    }
+                }
+
+                data.StartTime = data.StartTime.Truncate (TimeSpan.TicksPerSecond);
+                data.StopTime = data.StopTime.Truncate (TimeSpan.TicksPerSecond);
+            }
+            return data;
+        }
+
+        public static bool PublicInstancePropertiesEqual<T> (this T self, T to, params string[] ignore) where T : ICommonData
+        {
+            Type type = typeof (T);
+            var ignoreList = new List<string> (ignore);
+            foreach (System.Reflection.PropertyInfo pi in type.GetProperties (System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)) {
+                if (!ignoreList.Contains (pi.Name)) {
+                    object selfValue = type.GetProperty (pi.Name).GetValue (self, null);
+                    object toValue = type.GetProperty (pi.Name).GetValue (to, null);
+
+                    if (selfValue != toValue && (selfValue == null || !selfValue.Equals (toValue))) {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+
+        /// <summary>
+        /// Change StopTime to a TimeEntryData
+        /// </summary>
+        public static TimeEntryData ChangeStoptime (this TimeEntryData data, DateTime? newValue)
+        {
+            newValue = newValue.ToUtc ().Truncate (TimeSpan.TicksPerSecond);
+            data.StopTime = newValue;
+            return data;
         }
     }
 }

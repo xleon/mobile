@@ -10,44 +10,39 @@ using Toggl.Phoebe._Data.Models;
 using Toggl.Phoebe._Helpers;
 using Toggl.Phoebe._Reactive;
 using XPlatUtils;
+using Toggl.Phoebe._Data;
 
 namespace Toggl.Phoebe._ViewModels
 {
     [ImplementPropertyChanged]
     public class ProjectListVM : ViewModelBase, IDisposable
     {
+        private IDisposable searchObservable;
+
         public ProjectListVM (AppState appState, Guid workspaceId)
         {
-            CurrentWorkspaceId = workspaceId;
             ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Select Project";
 
-            // TODO: Change settings for a better library like James Montemagno version
-            // and define default values to avoid this code.
-            // TODO TODO TODO: Danger! Mutating a property from a service
-            var settingsStore = ServiceContainer.Resolve<Data.ISettingsStore> ();
-            if (string.IsNullOrEmpty (settingsStore.SortProjectsBy)) {
-                settingsStore.SortProjectsBy = ProjectsCollectionVM.SortProjectsBy.Clients.ToString ();
-            }
-            var savedSort = Enum.Parse (typeof (ProjectsCollectionVM.SortProjectsBy), settingsStore.SortProjectsBy);
-
-            ProjectList = new ProjectsCollectionVM (
-                appState, (ProjectsCollectionVM.SortProjectsBy)savedSort, workspaceId);
+            CurrentWorkspaceId = workspaceId;
+            var savedSort = Enum.Parse (typeof (ProjectsCollectionVM.SortProjectsBy), appState.Settings.ProjectSort);
+            ProjectList = new ProjectsCollectionVM (appState, (ProjectsCollectionVM.SortProjectsBy)savedSort, workspaceId);
 
             WorkspaceList = appState.Workspaces.Values.OrderBy (r => r.Name).ToList ();
             CurrentWorkspaceIndex = WorkspaceList.IndexOf (p => p.Id == workspaceId);
 
             // Search stream
-            Observable.FromEventPattern<string> (ev => onSearch += ev, ev => onSearch -= ev)
-            .Throttle (TimeSpan.FromMilliseconds (300))
-            .DistinctUntilChanged ()
-            .Subscribe (
-                p => ServiceContainer.Resolve<IPlatformUtils> ().DispatchOnUIThread (
+            searchObservable = Observable.FromEventPattern<string> (ev => onSearch += ev, ev => onSearch -= ev)
+                               .Throttle (TimeSpan.FromMilliseconds (300))
+                               .DistinctUntilChanged ()
+                               .Subscribe (
+                                   p => ServiceContainer.Resolve<IPlatformUtils> ().DispatchOnUIThread (
             () => { ProjectList.ProjectNameFilter = p.EventArgs; }),
             ex => ServiceContainer.Resolve<ILogger> ().Error ("Search", ex, null));
         }
 
         public void Dispose ()
         {
+            searchObservable.Dispose ();
             ProjectList.Dispose ();
         }
 
@@ -72,8 +67,7 @@ namespace Toggl.Phoebe._ViewModels
         {
             // TODO RX: TODO TODO TODO: Danger! Mutating a property from a service
             ProjectList.SortBy = sortBy;
-            var settingsStore = ServiceContainer.Resolve<Data.ISettingsStore> ();
-            settingsStore.SortProjectsBy = sortBy.ToString ();
+            RxChain.Send (new DataMsg.UpdateSetting (nameof (SettingsState.ProjectSort), sortBy.ToString ()));
         }
 
         public void ChangeWorkspaceByIndex (int newIndex)

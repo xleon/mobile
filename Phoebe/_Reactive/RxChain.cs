@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Reactive.Linq;
-using Toggl.Phoebe._Data;
-using Toggl.Phoebe._Helpers;
+﻿using Toggl.Phoebe._Data;
 
 namespace Toggl.Phoebe._Reactive
 {

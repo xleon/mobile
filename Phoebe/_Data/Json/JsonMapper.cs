@@ -30,6 +30,7 @@ namespace Toggl.Phoebe._Data.Json
                 .ForMember (dest => dest.ModifiedAt, opt => opt.MapFrom (src => src.ModifiedAt.ToUtc ()));
 
                 config.CreateMap<ProjectJson, ProjectData> ().ReverseMap ();
+                config.CreateMap<ProjectUserJson, ProjectUserData> ().ReverseMap ();
                 config.CreateMap<ClientJson, ClientData> ();
                 config.CreateMap<ClientData, ClientJson> ();
                 config.CreateMap<TagJson, TagData> ().ReverseMap ();

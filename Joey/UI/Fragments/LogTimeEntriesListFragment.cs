@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using Android.Content;
 using Android.OS;
+using Android.Support.Design.Widget;
 using Android.Support.V4.App;
 using Android.Support.V4.Widget;
 using Android.Support.V7.Widget;
@@ -21,7 +22,6 @@ using Toggl.Phoebe._Data.Models;
 using Toggl.Phoebe._Reactive;
 using Toggl.Phoebe._ViewModels;
 using Toggl.Phoebe._ViewModels.Timer;
-using XPlatUtils;
 
 namespace Toggl.Joey.UI.Fragments
 {
@@ -31,6 +31,7 @@ namespace Toggl.Joey.UI.Fragments
         SwipeRefreshLayout.IOnRefreshListener
     {
 
+        private CoordinatorLayout coordinatorLayout;
         private RecyclerView recyclerView;
         private SwipeRefreshLayout swipeLayout;
         private View emptyMessageView;
@@ -46,7 +47,7 @@ namespace Toggl.Joey.UI.Fragments
         private ItemTouchListener itemTouchListener;
 
         // binding references
-        private Binding<bool, bool> newMenuBinding;
+        private Binding<bool, bool> newMenuBinding, isSyncingBinding;
         private Binding<int, int> hasItemsBinding;
         private Binding<LogTimeEntriesVM.LoadInfoType, LogTimeEntriesVM.LoadInfoType> loadInfoBinding;
         private Binding<ObservableCollection<IHolder>, ObservableCollection<IHolder>> collectionBinding;
@@ -67,6 +68,7 @@ namespace Toggl.Joey.UI.Fragments
             var view = inflater.Inflate (Resource.Layout.LogTimeEntriesListFragment, container, false);
             view.FindViewById<TextView> (Resource.Id.EmptyTextTextView).SetFont (Font.RobotoLight);
 
+            coordinatorLayout = view.FindViewById<CoordinatorLayout> (Resource.Id.logCoordinatorLayout);
             experimentEmptyView = view.FindViewById<View> (Resource.Id.ExperimentEmptyMessageView);
             emptyMessageView = view.FindViewById<View> (Resource.Id.EmptyMessageView);
             welcomeMessage = view.FindViewById<TextView> (Resource.Id.WelcomeTextView);
@@ -94,8 +96,9 @@ namespace Toggl.Joey.UI.Fragments
                 logAdapter = new LogTimeEntriesAdapter (recyclerView, ViewModel);
                 recyclerView.SetAdapter (logAdapter);
             });
+            isSyncingBinding = this.SetBinding (()=> ViewModel.IsFullSyncing).WhenSourceChanges (SetSyncState);
             hasItemsBinding = this.SetBinding (()=> ViewModel.Collection.Count).WhenSourceChanges (SetCollectionState);
-            //loadInfoBinding = this.SetBinding (()=> ViewModel.LoadInfo).WhenSourceChanges (SetFooterState);
+            loadInfoBinding = this.SetBinding (()=> ViewModel.LoadInfo).WhenSourceChanges (SetFooterState);
             fabBinding = this.SetBinding (() => ViewModel.IsEntryRunning, () => StartStopBtn.ButtonAction)
                          .ConvertSourceToTarget (isRunning => isRunning ? FABButtonState.Stop : FABButtonState.Start);
 
@@ -205,7 +208,7 @@ namespace Toggl.Joey.UI.Fragments
         #region Sync
         public void OnRefresh ()
         {
-            ViewModel.LoadMore (fullSync: true);
+            ViewModel.TriggerFullSync ();
         }
 
         private void OnActiveEntryChanged ()
@@ -220,26 +223,17 @@ namespace Toggl.Joey.UI.Fragments
             }
         }
 
-        private void OnSyncFinished ()
+        private void SetSyncState ()
         {
-            // TODO RX: Waiting for implement
             // Full sync method.
             if (!swipeLayout.Refreshing) {
                 return;
             }
-            swipeLayout.Refreshing = false;
-            /*
-            if (msg.HadErrors) {
+            swipeLayout.Refreshing = ViewModel.IsFullSyncing;
+            if (ViewModel.HasSyncErrors) {
                 int msgId = Resource.String.LastSyncHadErrors;
-
-                if (msg.FatalError.IsNetworkFailure ()) {
-                    msgId = Resource.String.LastSyncNoConnection;
-                } else if (msg.FatalError is TaskCanceledException) {
-                    msgId = Resource.String.LastSyncFatalError;
-                }
                 Snackbar.Make (coordinatorLayout, Resources.GetString (msgId), Snackbar.LengthLong).Show ();
             }
-            */
         }
 
         private void SetFooterState ()
@@ -261,22 +255,21 @@ namespace Toggl.Joey.UI.Fragments
             }
 
             View emptyView = emptyMessageView;
-            var isWelcome = false; //ServiceContainer.Resolve<Phoebe.Data.ISettingsStore> ().ShowWelcome;
+            var isWelcome = ViewModel.IsWelcomeMessageShown ();
             var hasItems = ViewModel.Collection.Count > 0;
+            var isInExperiment = ViewModel.IsInExperiment ();
 
             // TODO RX: OBM Experiments
-            //var isInExperiment = OBMExperimentManager.IncludedInExperiment ();
-            //if (isWelcome && isInExperiment) {
-            //    emptyView = experimentEmptyView;
-            //} else {
-            // always keeps this view hidden if it is not needed.
-            experimentEmptyView.Visibility = ViewStates.Gone;
-            //}
+            if (isWelcome && isInExperiment) {
+                emptyView = experimentEmptyView;
+            } else {
+                // always keeps this view hidden if it is not needed.
+                experimentEmptyView.Visibility = ViewStates.Gone;
+            }
 
             // According to settings, show welcome message or no.
             welcomeMessage.Visibility = isWelcome ? ViewStates.Visible : ViewStates.Gone;
             noItemsMessage.Visibility = isWelcome ? ViewStates.Gone : ViewStates.Visible;
-
             emptyView.Visibility = hasItems ? ViewStates.Gone : ViewStates.Visible;
             recyclerView.Visibility = hasItems ? ViewStates.Visible : ViewStates.Gone;
         }

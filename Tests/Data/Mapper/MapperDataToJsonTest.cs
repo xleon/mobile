@@ -113,6 +113,29 @@ namespace Toggl.Phoebe.Tests.Data.Mapper
             Assert.That (projectJson.WorkspaceRemoteId, Is.EqualTo (projectData.WorkspaceRemoteId));
         }
 
+
+        [Test]
+        public void TestProjectUserJsonMap()
+        {
+            var projectUserData = new ProjectUserData {
+                RemoteId = 123,
+                HourlyRate = 1,
+                ProjectId = Guid.NewGuid (),
+                ProjectRemoteId = 234,
+                IsManager = true,
+                UserId = Guid.NewGuid (),
+                UserRemoteId = 456
+            };
+
+            var projectUserJson = mapper.Map<ProjectUserJson> (projectUserData);
+
+            Assert.That (projectUserJson.RemoteId, Is.EqualTo (projectUserData.RemoteId));
+            Assert.That (projectUserJson.HourlyRate, Is.EqualTo (projectUserData.HourlyRate));
+            Assert.That (projectUserJson.ProjectRemoteId, Is.EqualTo (projectUserData.ProjectRemoteId));
+            Assert.That (projectUserJson.IsManager, Is.EqualTo (projectUserData.IsManager));
+            Assert.That (projectUserJson.UserRemoteId, Is.EqualTo (projectUserData.UserRemoteId));
+        }
+
         [Test]
         public void TestTagJsonMap()
         {

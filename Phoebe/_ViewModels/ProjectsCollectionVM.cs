@@ -35,11 +35,10 @@ namespace Toggl.Phoebe._ViewModels
                     .Where (r => r.IsActive)
                     .OrderBy (r => r.Name).ToList ();
 
-            projects = appState.GetUserAccessibleProjects (userData.Id).Select (
-                           p => new SuperProjectData (
-                p,
-                clients.FirstOrDefault (c => c.Id == p.ClientId),
-                tasks.Count (t => t.ProjectId == p.Id))).ToList ();
+            projects = appState.Projects.Values.Where (p => p.IsActive).Select (
+                           p => new SuperProjectData (p,
+                                   clients.FirstOrDefault (c => c.Id == p.ClientId),
+                                   tasks.Count (t => t.ProjectId == p.Id))).ToList ();
 
             // Create collection
             CreateSortedCollection (projects);
@@ -102,7 +101,7 @@ namespace Toggl.Phoebe._ViewModels
                 // Add section without client
                 data.Add (new ClientData ());
                 data.Add (GetEmptyProject ());
-                enumerable.Where (p => p.ClientId == null && p.WorkspaceId == workspaceId).ForEach (data.Add);
+                enumerable.Where (p => p.ClientId == Guid.Empty && p.WorkspaceId == workspaceId).ForEach (data.Add);
 
                 // Add normal sections
                 var sectionHeaders = clients.Where (p => p.WorkspaceId == workspaceId);
@@ -156,7 +155,7 @@ namespace Toggl.Phoebe._ViewModels
             {
                 TaskNumber = taskNumber;
                 IsEmpty = isEmpty;
-                ClientName = client != null ? client.Name : "";
+                ClientName = client != null ? client.Name : string.Empty;
             }
         }
 

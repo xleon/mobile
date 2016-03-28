@@ -433,5 +433,32 @@ namespace Toggl.Phoebe._Reactive
                 RxChain.Send (new DataMsg.ReceivedFromDownload (exc));
             }
         }
+
+        CommonData BuildRemoteRelationships (AppState state, CommonData data)
+        {
+            if (data is ProjectData) {
+                var d = (ProjectData)data;
+                if (d.ClientId != Guid.Empty && d.ClientRemoteId == null) {
+                    d.ClientRemoteId = state.Clients [d.ClientId].RemoteId;
+                }
+            }
+
+            if (data is TimeEntryData) {
+                var d = (TimeEntryData)data;
+                if (d.ProjectId != Guid.Empty && d.ProjectRemoteId == null) {
+                    d.ProjectRemoteId = state.Projects [d.ProjectId].RemoteId;
+                }
+                if (d.TaskId != Guid.Empty && d.TaskRemoteId == null) {
+                    d.TaskRemoteId = state.Tasks [d.TaskId].RemoteId;
+                }
+            }
+
+            if (data is TagData) {
+
+            }
+
+
+            return data;
+        }
     }
 }

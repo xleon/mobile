@@ -161,8 +161,7 @@ namespace Toggl.Phoebe._Reactive
             var taskData = teData.TaskId != Guid.Empty ? Tasks[teData.TaskId] : new TaskData ();
             var color = (projectData.Id != Guid.Empty) ? projectData.Color : -1;
             var tagsData =
-                teData.Tags.Select (
-                    x => Tags.Values.SingleOrDefault (y => y.WorkspaceId == teData.WorkspaceId && y.Name == x))
+                teData.TagIds.Select (x => Tags.Values.SingleOrDefault (y => y.Id == x))
                 // TODO: Throw exception if tag was not found?
                 .Where (x => x != null)
                 .ToList ();
@@ -205,13 +204,13 @@ namespace Toggl.Phoebe._Reactive
         {
             var userData = new UserData ();
             var settings = SettingsState.Init ();
-            var projects = new Dictionary<Guid, ProjectData> ();
-            var projectUsers = new Dictionary<Guid, ProjectUserData> ();
-            var workspaces = new Dictionary<Guid, WorkspaceData> ();
-            var workspaceUserData = new Dictionary<Guid, WorkspaceUserData> ();
-            var clients = new Dictionary<Guid, ClientData> ();
-            var tasks = new Dictionary<Guid, TaskData> ();
-            var tags = new Dictionary<Guid, TagData> ();
+            var projects = new Dictionary<Guid, IProjectData> ();
+            var projectUsers = new Dictionary<Guid, IProjectUserData> ();
+            var workspaces = new Dictionary<Guid, IWorkspaceData> ();
+            var workspaceUserData = new Dictionary<Guid, IWorkspaceUserData> ();
+            var clients = new Dictionary<Guid, IClientData> ();
+            var tasks = new Dictionary<Guid, ITaskData> ();
+            var tags = new Dictionary<Guid, ITagData> ();
 
             try {
                 if (settings.UserId != Guid.Empty) {

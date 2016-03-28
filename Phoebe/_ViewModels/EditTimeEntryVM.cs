@@ -22,7 +22,7 @@ namespace Toggl.Phoebe._ViewModels
         private RichTimeEntry previousData;
         private System.Timers.Timer durationTimer;
 
-        private void Init (AppState state, ITimeEntryData timeData, List<string> tagList)
+        private void Init (AppState state, ITimeEntryData timeData, List<Guid> tagList)
         {
             durationTimer = new System.Timers.Timer ();
             durationTimer.Elapsed += DurationTimerCallback;
@@ -32,7 +32,7 @@ namespace Toggl.Phoebe._ViewModels
             richData = new RichTimeEntry (timeData, state);
 
             UpdateView (x => {
-                x.Tags = tagList;
+                x.TagIds = tagList;
                 if (IsManual) {
                     x.StartTime = Time.UtcNow.AddMinutes (-5);
                     x.StopTime = Time.UtcNow;
@@ -43,7 +43,7 @@ namespace Toggl.Phoebe._ViewModels
             // Save previous state.
             previousData = IsManual
                            // Hack to force tag saving even if there're no other changes
-                           ? new RichTimeEntry (richData.Data.With (x => x.Tags = new List<string> ()), state)
+                           ? new RichTimeEntry (richData.Data.With (x => x.TagIds = new List<Guid> ()), state)
                            : new RichTimeEntry (richData.Data, richData.Info);
 
             subscriptionState = StoreManager
@@ -58,21 +58,21 @@ namespace Toggl.Phoebe._ViewModels
         public EditTimeEntryVM (AppState appState, Guid timeEntryId)
         {
             ITimeEntryData data;
-            List<string> tagList;
+            List<Guid> tagList;
 
             if (timeEntryId == Guid.Empty) {
                 data = appState.GetTimeEntryDraft ();
-                tagList = GetDefaultTagList (appState, data).Select (x => x.Name).ToList ();
+                tagList = GetDefaultTagList (appState, data).Select (x => x.Id).ToList ();
             } else {
                 var richTe = appState.TimeEntries[timeEntryId];
                 data = richTe.Data;
-                tagList = new List<string> (richTe.Data.Tags);
+                tagList = new List<Guid> (richTe.Data.TagIds);
             }
 
             Init (appState, data, tagList);
         }
 
-        public EditTimeEntryVM (AppState appState, ITimeEntryData timeEntryData, List<string> tagList)
+        public EditTimeEntryVM (AppState appState, ITimeEntryData timeEntryData, List<Guid> tagList)
         {
             Init (appState, timeEntryData, tagList);
         }
@@ -187,9 +187,9 @@ namespace Toggl.Phoebe._ViewModels
             ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Change Stop Time";
         }
 
-        public void ChangeTagList (IEnumerable<string> newTags)
+        public void ChangeTagList (IEnumerable<Guid> newTags)
         {
-            UpdateView (x => x.Tags = newTags.ToList (), nameof (TagList));
+            UpdateView (x => x.TagIds = newTags.ToList (), nameof (TagList));
         }
 
         public void ChangeDescription (string description)
@@ -266,8 +266,8 @@ namespace Toggl.Phoebe._ViewModels
                         richData.Data.With (x => {
                             x.WorkspaceId = workspace.Id;
                             x.IsBillable = workspace.IsPremium && x.IsBillable;
-                            x.Tags = UpdateTagsWithWorkspace (appState, x.Id, workspace.Id, TagList)
-                                     .Select (t => t.Name).ToList ();
+                            x.TagIds = UpdateTagsWithWorkspace (appState, x.Id, workspace.Id, TagList)
+                                .Select (t => t.Id).ToList ();
                         }),
                         appState
                     );

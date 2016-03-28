@@ -76,10 +76,28 @@ namespace Toggl.Phoebe._Reactive
             .Subscribe ();
         }
 
-        void log (Exception ex, string msg = "Failed to send data to server")
+        void logError (Exception ex, string msg = "Failed to sync")
         {
             var logger = ServiceContainer.Resolve<ILogger> ();
             logger.Error (Tag, ex, msg);
+        }
+
+        void logInfo (string msg, Exception exc = null)
+        {
+            var logger = ServiceContainer.Resolve<ILogger> ();
+            if (exc == null)
+                logger.Info (Tag, msg);
+            else
+                logger.Info (Tag, exc, msg);
+        }
+
+        void logWarning (string msg, Exception exc = null)
+        {
+            var logger = ServiceContainer.Resolve<ILogger> ();
+            if (exc == null)
+                logger.Warning (Tag, msg);
+            else
+                logger.Warning (Tag, exc, msg);
         }
 
         async Task EnqueueOrSend (DataSyncMsg<AppState> syncMsg)
@@ -112,7 +130,7 @@ namespace Toggl.Phoebe._Reactive
                     try {
                         await SendMessage (authToken, remoteObjects, msg.Id, exported);
                     } catch (Exception ex) {
-                        log (ex);
+                        logError (ex);
                         Enqueue (msg.Id, exported, enqueuedItems);
                         queueEmpty = false;
                     }
@@ -153,7 +171,7 @@ namespace Toggl.Phoebe._Reactive
                         } while (dataStore.TryPeek (QueueId, out json));
                         return true;
                     } catch (Exception ex) {
-                        log (ex);
+                        logError (ex);
                         return false;
                     }
                 } else {
@@ -173,7 +191,7 @@ namespace Toggl.Phoebe._Reactive
                 enqueuedItems.Add (jsonMsg);
             } catch (Exception ex) {
                 // TODO: Retry?
-                log (ex, "Failed to queue message");
+                logError (ex, "Failed to queue message");
             }
         }
 
@@ -210,28 +228,19 @@ namespace Toggl.Phoebe._Reactive
 
         async Task AuthenticateAsync (string username, string password)
         {
-            var log = ServiceContainer.Resolve<ILogger> ();
-            var client = ServiceContainer.Resolve<ITogglClient> ();
-
-            log.Info (Tag, "Authenticating with email ({0}).", username);
+            logInfo (string.Format ("Authenticating with email ({0}).", username));
             await AuthenticateAsync (() => client.GetUser (username, password), Net.AuthChangeReason.Login);
         }
 
         async Task AuthenticateWithGoogleAsync (string accessToken)
         {
-            var log = ServiceContainer.Resolve<ILogger> ();
-            var client = ServiceContainer.Resolve<ITogglClient> ();
-
-            log.Info (Tag, "Authenticating with Google access token.");
+            logInfo ("Authenticating with Google access token.");
             await AuthenticateAsync (() => client.GetUser (accessToken), Net.AuthChangeReason.LoginGoogle);
         }
 
         async Task SignupAsync (string email, string password)
         {
-            var log = ServiceContainer.Resolve<ILogger> ();
-            var client = ServiceContainer.Resolve<ITogglClient> ();
-
-            log.Info (Tag, "Signing up with email ({0}).", email);
+            logInfo (string.Format ("Signing up with email ({0}).", email));
             await AuthenticateAsync (() => client.Create (string.Empty, new UserJson {
                 Email = email,
                 Password = password,
@@ -241,10 +250,7 @@ namespace Toggl.Phoebe._Reactive
 
         async Task SignupWithGoogleAsync (string accessToken)
         {
-            var log = ServiceContainer.Resolve<ILogger> ();
-            var client = ServiceContainer.Resolve<ITogglClient> ();
-
-            log.Info (Tag, "Signing up with email Google access token.");
+            logInfo ("Signing up with email Google access token.");
             await AuthenticateAsync (() => client.Create (string.Empty, new UserJson () {
                 GoogleAccessToken = accessToken,
                 Timezone = Time.TimeZoneId,
@@ -268,12 +274,11 @@ namespace Toggl.Phoebe._Reactive
                 if (reqEx != null && (reqEx.IsForbidden || reqEx.IsValidationError)) {
                     authResult = Net.AuthResult.InvalidCredentials;
                 } else {
-                    var log = ServiceContainer.Resolve<ILogger> ();
                     if (ex.IsNetworkFailure () || ex is TaskCanceledException) {
-                        log.Info (Tag, ex, "Failed authenticate user. Network error.");
+                        logInfo ("Failed authenticate user. Network error.", ex);
                         authResult = Net.AuthResult.NetworkError;
                     } else {
-                        log.Warning (Tag, ex, "Failed to authenticate user. Unknown error.");
+                        logWarning ("Failed to authenticate user. Unknown error.", ex);
                         authResult = Net.AuthResult.SystemError;
                     }
                 }
@@ -305,20 +310,13 @@ namespace Toggl.Phoebe._Reactive
             }
 
             try {
-                IList<TimeEntryJson> jsonEntries = null;
-                var newWorkspaces = new List<WorkspaceJson> ();
-                var newProjects = new List<ProjectJson> ();
-                var newClients = new List<ClientJson> ();
-                var newTasks = new List<TaskJson> ();
-                var newTags = new List<TagJson> ();
-
                 var changes = await client.GetChanges (authToken, sinceDate);
-                jsonEntries = changes.TimeEntries.ToList ();
-                newWorkspaces = changes.Workspaces.ToList ();
-                newProjects = changes.Projects.ToList ();
-                newClients = changes.Clients.ToList ();
-                newTasks = changes.Tasks.ToList ();
-                newTags = changes.Tags.ToList ();
+                var jsonEntries = changes.TimeEntries.ToList ();
+                var newWorkspaces = changes.Workspaces.ToList ();
+                var newProjects = changes.Projects.ToList ();
+                var newClients = changes.Clients.ToList ();
+                var newTasks = changes.Tasks.ToList ();
+                var newTags = changes.Tags.ToList ();
                 var fullSyncInfo = Tuple.Create (mapper.Map<UserData> (changes.User), changes.Timestamp);
 
                 RxChain.Send (new DataMsg.ReceivedFromSync (
@@ -327,17 +325,15 @@ namespace Toggl.Phoebe._Reactive
                                   .Concat (newClients.Select (mapper.Map<ClientData>).Cast<CommonData> ())
                                   .Concat (newProjects.Select (mapper.Map<ProjectData>).Cast<CommonData> ())
                                   .Concat (newTasks.Select (mapper.Map<TaskData>).Cast<CommonData> ())
-                                  .Concat (jsonEntries.Select (mapper.Map<TimeEntryData>).Cast<CommonData> ()).ToList (),
+                                  .Concat (jsonEntries.Select (x => MapEntryWithTags (x, state))).ToList (),
                                   fullSyncInfo));
             } catch (Exception exc) {
-                var tag = this.GetType ().Name;
-                var logger = ServiceContainer.Resolve<ILogger> ();
                 string errorMsg = string.Format ("Failed to sync data since {0}", state.FullSyncResult.SyncLastRun);
 
                 if (exc.IsNetworkFailure () || exc is TaskCanceledException) {
-                    logger.Info (tag, exc, errorMsg);
+                    logInfo (errorMsg, exc);
                 } else {
-                    logger.Warning (tag, exc, errorMsg);
+                    logWarning (errorMsg, exc);
                 }
 
                 RxChain.Send (new DataMsg.ReceivedFromSync (exc));
@@ -352,15 +348,14 @@ namespace Toggl.Phoebe._Reactive
             const int endDate = Literals.TimeEntryLoadDays;
 
             try {
-                IList<TimeEntryJson> jsonEntries = null;
+				// Download new Entries
+				var jsonEntries = await client.ListTimeEntries (authToken, startDate, endDate);
+				
                 var newWorkspaces = new List<WorkspaceJson> ();
                 var newProjects = new List<ProjectJson> ();
                 var newClients = new List<ClientJson> ();
                 var newTasks = new List<TaskJson> ();
                 var newTags = new List<TagData> ();
-
-                // Download new Entries
-                jsonEntries = await client.ListTimeEntries (authToken, startDate, endDate);
 
                 // Check the state contains all related objects
                 foreach (var entry in jsonEntries) {
@@ -398,40 +393,52 @@ namespace Toggl.Phoebe._Reactive
                             newTasks.Add (await client.Get<TaskJson> (authToken, entry.TaskRemoteId.Value));
                         }
                     }
-
-                    // TODO RX: How to get the tag without a remote id?
-                    // TODO: Getting some null reference errors in this code
-                    //foreach (var tag in entry.Tags) {
-                    //    if (state.Tags.Values.All (x => x.WorkspaceRemoteId != entry.WorkspaceRemoteId || x.Name != tag) &&
-                    //            newTags.All (x => x.WorkspaceRemoteId != entry.WorkspaceRemoteId || x.Name != tag)) {
-                    //         newTags.Add (await client.Get<TagJson> (authToken, tagRemoteId));
-                    //    }
-                    //}
                 }
 
+                // ATTENTION: Order is important, containers must come first
+                // E.g. projects come after client, because projects contain a reference to ClientId
                 RxChain.Send (new DataMsg.ReceivedFromDownload (
                                   newWorkspaces.Select (mapper.Map<WorkspaceData>).Cast<CommonData> ()
                                   .Concat (newTags.Select (mapper.Map<TagData>).Cast<CommonData> ())
                                   .Concat (newClients.Select (mapper.Map<ClientData>).Cast<CommonData> ())
                                   .Concat (newProjects.Select (mapper.Map<ProjectData>).Cast<CommonData> ())
                                   .Concat (newTasks.Select (mapper.Map<TaskData>).Cast<CommonData> ())
-                                  .Concat (jsonEntries.Select (mapper.Map<TimeEntryData>).Cast<CommonData> ()).ToList ()));
+                                  .Concat (jsonEntries.Select (x => MapEntryWithTags (x, state)))
+                                  .ToList ()));
 
             } catch (Exception exc) {
-                var tag = this.GetType ().Name;
-                var logger = ServiceContainer.Resolve<ILogger> ();
                 string errorMsg = string.Format (
                                       "Failed to fetch time entries {1} days up to {0}",
                                       startDate, endDate);
 
                 if (exc.IsNetworkFailure () || exc is TaskCanceledException) {
-                    logger.Info (tag, exc, errorMsg);
+                    logInfo (errorMsg, exc);
                 } else {
-                    logger.Warning (tag, exc, errorMsg);
+                    logWarning (errorMsg, exc);
                 }
 
                 RxChain.Send (new DataMsg.ReceivedFromDownload (exc));
             }
+        }
+
+        CommonData MapEntryWithTags (TimeEntryJson jsonEntry, AppState state)
+        {
+            var tagIds = new List<Guid> ();
+            foreach (var tag in jsonEntry.Tags) {
+                var tagData = state.Tags.Values.SingleOrDefault (
+                    x => x.WorkspaceRemoteId == jsonEntry.WorkspaceRemoteId && x.Name == tag);
+                if (tagData != null) {
+                    tagIds.Add (tagData.Id);
+                }
+                else {
+                    // TODO RX: How to retrieve the tag from server without RemoteId?
+                    //newTags.Add (await client.Get<TagJson> (authToken, tagRemoteId));
+                }
+            }
+
+            var te = mapper.Map<TimeEntryData> (jsonEntry);
+            te.TagIds = tagIds;
+            return te;
         }
 
         CommonData BuildRemoteRelationships (AppState state, CommonData data)

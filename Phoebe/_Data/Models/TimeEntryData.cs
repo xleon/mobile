@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Collections.Generic;
 using SQLite.Net.Attributes;
 using Newtonsoft.Json;
@@ -27,7 +28,7 @@ namespace Toggl.Phoebe._Data.Models
         Guid WorkspaceId { get; }
         Guid ProjectId { get; }
         Guid TaskId { get; }
-        IReadOnlyList<string> Tags { get; }
+        IReadOnlyList<Guid> TagIds { get; }
         ITimeEntryData With (Action<TimeEntryData> transform);
     }
 
@@ -37,6 +38,7 @@ namespace Toggl.Phoebe._Data.Models
         public TimeEntryData ()
         {
             State = TimeEntryState.New;
+            TagIds = new List<Guid> ();
         }
 
         protected TimeEntryData (ITimeEntryData other) : base (other)
@@ -55,6 +57,7 @@ namespace Toggl.Phoebe._Data.Models
             WorkspaceRemoteId = other.WorkspaceRemoteId;
             ProjectRemoteId = other.ProjectRemoteId;
             TaskRemoteId = other.TaskRemoteId;
+            TagIds = new List<Guid> (other.TagIds);
         }
 
 		public override object Clone ()
@@ -96,18 +99,20 @@ namespace Toggl.Phoebe._Data.Models
         public Guid TaskId { get; set; }
 
         [Ignore]
-        public List<string> Tags { get; set; }
+        public List<Guid> TagIds { get; set; }
 
-        IReadOnlyList<string> ITimeEntryData.Tags => Tags ?? new List<string> ();
+        IReadOnlyList<Guid> ITimeEntryData.TagIds => TagIds ?? new List<Guid> ();
 
         [JsonIgnore]
-        public string RawTags
+        public string RawTagIds
         {
             get {
-				return JsonConvert.SerializeObject (Tags);
+                return string.Join (";", TagIds.Select (x => x.ToString ()));
             }
             set {
-				Tags = JsonConvert.DeserializeObject<List<string>> (value ?? "[]");
+                TagIds = value.Split (new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries)
+                              .Select (Guid.Parse)
+                              .ToList ();
             }
         }
 

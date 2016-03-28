@@ -35,7 +35,7 @@ namespace Toggl.Phoebe._Data.Json
         public long Duration { get; set; }
 
         [JsonProperty ("tags")]
-        public List<string> Tags { get; set; }
+        public List<string> Tags { get; set; } = new List<string> ();
 
         [JsonProperty ("uid")]
         public long UserRemoteId { get; set; }

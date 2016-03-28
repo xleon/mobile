@@ -167,7 +167,7 @@ namespace Toggl.Joey.UI.Fragments
         public void OnProjectCreated (Guid projectId)
         {
             updateProjectHandler.OnProjectSelected (projectId, Guid.Empty);
-            Activity.OnBackPressed ();
+            FragmentManager.PopBackStack ();
         }
 
         private void OnItemSelected (CommonData m)
@@ -186,7 +186,7 @@ namespace Toggl.Joey.UI.Fragments
                 taskId = task.Id;
             }
             updateProjectHandler.OnProjectSelected (projectId, taskId);
-            Activity.OnBackPressed ();
+            FragmentManager.PopBackStack ();
         }
 
         public override void OnDestroyView ()

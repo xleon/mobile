@@ -267,8 +267,10 @@ namespace Toggl.Joey.UI.Activities
                 pageStack.RemoveAt (pageStack.Count - 1);
                 var pageId = pageStack.Count > 0 ? pageStack [pageStack.Count - 1] : DrawerListAdapter.TimerPageId;
                 OpenPage (pageId);
-            } else if (FragmentManager.BackStackEntryCount > 1 && ! (currentFragment is LogTimeEntriesListFragment)) {
-                base.OnBackPressed ();
+            } else if (FragmentManager.BackStackEntryCount > 1) {
+                if (! (currentFragment is LogTimeEntriesListFragment)) {
+                    base.OnBackPressed ();
+                }
             }
         }
 

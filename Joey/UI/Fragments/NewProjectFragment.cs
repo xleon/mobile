@@ -173,7 +173,7 @@ namespace Toggl.Joey.UI.Fragments
         {
             if (item.ItemId == Resource.Id.saveItem) {
                 SaveButtonHandler (this, null);
-                Activity.OnBackPressed ();
+                FragmentManager.PopBackStack ();
             }
             return base.OnOptionsItemSelected (item);
         }

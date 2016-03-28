@@ -46,7 +46,6 @@ namespace Toggl.Joey.UI.Activities
         private readonly Lazy<FeedbackFragment> feedbackFragment = new Lazy<FeedbackFragment> ();
         private readonly Lazy<RegisterUserFragment> registerUserFragment = new Lazy<RegisterUserFragment> ();
         private readonly List<int> pageStack = new List<int> ();
-        private readonly Handler handler = new Handler ();
         private AuthManager authManager;
         private DrawerListAdapter drawerAdapter;
         private ToolbarModes toolbarMode;
@@ -152,11 +151,13 @@ namespace Toggl.Joey.UI.Activities
         {
             switch (toolbarMode) {
             case MainDrawerActivity.ToolbarModes.Timer:
-                SupportActionBar.SetDisplayShowTitleEnabled (false);
+                SetSupportActionBar (MainToolbar);
                 MainToolbar.Visibility = ViewStates.Visible;
+                SupportActionBar.SetDisplayShowTitleEnabled (false);
                 Timer.Hide = false;
                 break;
             case MainDrawerActivity.ToolbarModes.Normal:
+                SetSupportActionBar (MainToolbar);
                 MainToolbar.Visibility = ViewStates.Visible;
                 Timer.Hide = true;
                 SupportActionBar.SetDisplayShowTitleEnabled (true);
@@ -301,9 +302,9 @@ namespace Toggl.Joey.UI.Activities
 
             // Configure timer component for selected page:
             if (e.Id != DrawerListAdapter.TimerPageId) {
-                ToolbarMode = MainDrawerActivity.ToolbarModes.Normal;
+                ToolbarMode = ToolbarModes.Normal;
             } else {
-                ToolbarMode = MainDrawerActivity.ToolbarModes.Timer;
+                ToolbarMode = ToolbarModes.Timer;
             }
 
             if (e.Id == DrawerListAdapter.TimerPageId) {

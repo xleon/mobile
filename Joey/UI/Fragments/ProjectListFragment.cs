@@ -5,6 +5,7 @@ using Android.Content;
 using Android.OS;
 using Android.Support.Design.Widget;
 using Android.Support.V7.Widget;
+using Android.Transitions;
 using Android.Views;
 using Android.Widget;
 using Toggl.Joey.UI.Activities;
@@ -18,7 +19,6 @@ using Activity = Android.Support.V7.App.AppCompatActivity;
 using Fragment = Android.Support.V4.App.Fragment;
 using SearchView = Android.Support.V7.Widget.SearchView;
 using Toolbar = Android.Support.V7.Widget.Toolbar;
-using Android.Transitions;
 
 namespace Toggl.Joey.UI.Fragments
 {

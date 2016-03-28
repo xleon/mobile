@@ -10,6 +10,7 @@ using Android.Support.V4.App;
 using Android.Support.V4.Widget;
 using Android.Support.V7.Widget;
 using Android.Support.V7.Widget.Helper;
+using Android.Transitions;
 using Android.Views;
 using Android.Widget;
 using GalaSoft.MvvmLight.Helpers;
@@ -25,7 +26,6 @@ using Toggl.Phoebe.Data.Utils;
 using Toggl.Phoebe.Data.ViewModels;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
-using Android.Transitions;
 
 namespace Toggl.Joey.UI.Fragments
 {

@@ -261,11 +261,12 @@ namespace Toggl.Joey.UI.Activities
 
         public override void OnBackPressed ()
         {
+            var currentFragment = FragmentManager.FindFragmentById (Resource.Id.ContentFrameLayout);
             if (pageStack.Count > 0) {
                 pageStack.RemoveAt (pageStack.Count - 1);
                 var pageId = pageStack.Count > 0 ? pageStack [pageStack.Count - 1] : DrawerListAdapter.TimerPageId;
                 OpenPage (pageId);
-            } else {
+            } else if (FragmentManager.BackStackEntryCount > 1 && ! (currentFragment is LogTimeEntriesListFragment)) {
                 base.OnBackPressed ();
             }
         }

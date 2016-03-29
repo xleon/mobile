@@ -200,19 +200,16 @@ namespace Toggl.Joey.UI.Fragments
             // If project list needs to be opened?
             var settingsStore = ServiceContainer.Resolve<SettingsStore> ();
             if (settingsStore.ChooseProjectForNew && LogTimeEntriesListFragment.NewTimeEntry) {
-                LogTimeEntriesListFragment.NewTimeEntry = false;
                 OpenProjectListActivity ();
+            } else if (LogTimeEntriesListFragment.NewTimeEntry) {
+                DescriptionField.RequestFocus ();
+                ((EditTimeEntryActivity)Activity).ShowSoftKeyboard (DescriptionField.TextField, false);
+                LogTimeEntriesListFragment.NewTimeEntry = false;
             }
 
             // Finally set content visible.
             editTimeEntryContent.Visibility = ViewStates.Visible;
             editTimeEntryProgressBar.Visibility = ViewStates.Gone;
-
-            if (LogTimeEntriesListFragment.NewTimeEntry) {
-                DescriptionField.RequestFocus ();
-                ((EditTimeEntryActivity)Activity).ShowSoftKeyboard (DescriptionField.TextField, false);
-                LogTimeEntriesListFragment.NewTimeEntry = false;
-            }
         }
 
         public override void OnDestroyView ()
@@ -251,6 +248,12 @@ namespace Toggl.Joey.UI.Fragments
 
                 await Util.AwaitPredicate (() => ViewModel != null);
                 ViewModel.SetProjectAndTask (projectId, taskId);
+
+                if (LogTimeEntriesListFragment.NewTimeEntry) {
+                    DescriptionField.RequestFocus ();
+                    ((EditTimeEntryActivity)Activity).ShowSoftKeyboard (DescriptionField.TextField, false);
+                    LogTimeEntriesListFragment.NewTimeEntry = false;
+                }
             }
         }
 

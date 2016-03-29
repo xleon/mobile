@@ -115,17 +115,7 @@ namespace Toggl.Phoebe._Reactive
             // Deal with messages
             foreach (var msg in syncMsg.SyncData) {
 
-
-                if (msg is TimeEntryData) {
-                    var d = (TimeEntryData)msg;
-                    if (d.ProjectRemoteId == null) {
-                        Console.WriteLine ("vacaaar! : "  + StoreManager.Singleton.AppState.Projects [d.ProjectId].RemoteId);
-                        ((TimeEntryData)msg).ProjectRemoteId = StoreManager.Singleton.AppState.Projects [d.ProjectId].RemoteId;
-                    }
-                }
-
                 var exported = mapper.MapToJson (msg);
-
                 if (queueEmpty && isConnected) {
                     try {
                         await SendMessage (authToken, remoteObjects, msg.Id, exported);
@@ -158,6 +148,11 @@ namespace Toggl.Phoebe._Reactive
 
         async Task<bool> tryEmptyQueue (string authToken, List<CommonData> remoteObjects, bool isConnected)
         {
+            if (string.IsNullOrEmpty (authToken) && dataStore.GetQueueSize (QueueId) > 0) {
+                dataStore.ResetQueue (QueueId);
+                return true;
+            }
+
             string json = null;
             if (dataStore.TryPeek (QueueId, out json)) {
                 if (isConnected) {
@@ -202,24 +197,20 @@ namespace Toggl.Phoebe._Reactive
                     CommonJson response;
                     if (json.RemoteId != null) {
                         response = await client.Update (authToken, json);
-                    }
-                    else {
+                    } else {
                         response = await client.Create (authToken, json);
                     }
                     var resData = mapper.Map (response);
                     resData.Id = localId;
                     remoteObjects.Add (resData);
-                }
-                else {
+                } else {
                     if (json.RemoteId != null) {
                         await client.Delete (authToken, json);
-                    }
-                    else {
+                    } else {
                         // TODO: Make sure the item has not been assigned a remoteId while waiting in the queue?
                     }
                 }
-            }
-            catch {
+            } catch {
                 // TODO RX: Check the rejection reason: if an item is being specifically rejected,
                 // discard it so it doesn't block the syncing of other items
                 throw;

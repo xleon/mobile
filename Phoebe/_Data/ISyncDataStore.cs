@@ -15,6 +15,7 @@ namespace Toggl.Phoebe._Data
         bool TryEnqueue (string queueId, string json);
         bool TryDequeue (string queueId, out string json);
         bool TryPeek (string queueId, out string json);
+        int ResetQueue (string queueId);
     }
 
     public interface ISyncDataStoreContext

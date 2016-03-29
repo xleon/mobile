@@ -6,7 +6,7 @@ namespace Toggl.Phoebe._Data.Models
     public interface IProjectData : ICommonData
     {
         string Name { get; }
-		int Color { get; }
+        int Color { get; }
         bool IsActive { get; }
         bool IsBillable { get; }
         bool IsPrivate { get; }

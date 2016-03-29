@@ -60,11 +60,11 @@ namespace Toggl.Phoebe._Data.Models
             TagIds = new List<Guid> (other.TagIds);
         }
 
-		public override object Clone ()
-		{
-			return new TimeEntryData (this);
-		}
-  
+        public override object Clone ()
+        {
+            return new TimeEntryData (this);
+        }
+
         public ITimeEntryData With (Action<TimeEntryData> transform)
         {
             return base.With (transform);

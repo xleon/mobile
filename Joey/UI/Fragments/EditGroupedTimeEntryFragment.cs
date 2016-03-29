@@ -1,13 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Android.App;
 using Android.Content;
 using Android.Graphics;
 using Android.OS;
-using Android.Support.V4.App;
-using Android.Support.V7.Widget;
 using Android.Views;
 using Android.Widget;
 using GalaSoft.MvvmLight.Helpers;
@@ -15,13 +11,10 @@ using Toggl.Joey.UI.Activities;
 using Toggl.Joey.UI.Utils;
 using Toggl.Joey.UI.Views;
 using Toggl.Phoebe;
-using Toggl.Phoebe.Data.DataObjects;
-using Toggl.Phoebe.Data.Models;
+using Toggl.Phoebe._Data.Models;
 using ActionBar = Android.Support.V7.App.ActionBar;
 using Activity = Android.Support.V7.App.AppCompatActivity;
 using Fragment = Android.Support.V4.App.Fragment;
-using MeasureSpec = Android.Views.View.MeasureSpec;
-using Toggl.Phoebe._Helpers;
 
 namespace Toggl.Joey.UI.Fragments
 {
@@ -199,7 +192,7 @@ namespace Toggl.Joey.UI.Fragments
 
             // Set color.
             Color color;
-            string [] colours = ProjectModel.HexColors;
+            string [] colours = ProjectData.HexColors;
             //color = ViewModel.ProjectColor > 0 ? Color.ParseColor (colours [ViewModel.ProjectColor % colours.Length]) : Color.Transparent;
             //colorView.SetBackgroundColor (color);
 

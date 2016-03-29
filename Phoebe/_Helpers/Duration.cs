@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Toggl.Phoebe.Data
+namespace Toggl.Phoebe._Helpers
 {
     public struct Duration {
         private readonly int encoded;

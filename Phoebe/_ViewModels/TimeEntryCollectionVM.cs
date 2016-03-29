@@ -13,7 +13,7 @@ using XPlatUtils;
 
 namespace Toggl.Phoebe._ViewModels
 {
-    public class TimeEntryCollectionVM : Data.Utils.ObservableRangeCollection<IHolder>, IDisposable
+    public class TimeEntryCollectionVM : ObservableRangeCollection<IHolder>, IDisposable
     {
         IDisposable disposable;
         ITimeEntryHolder lastRemovedItem;

@@ -3,12 +3,12 @@ using System.Text;
 using System.Threading.Tasks;
 using GalaSoft.MvvmLight;
 using PropertyChanged;
+using Toggl.Phoebe._Data;
 using Toggl.Phoebe._Data.Json;
 using Toggl.Phoebe._Data.Models;
 using Toggl.Phoebe._Net;
 using Toggl.Phoebe._Reactive;
 using Toggl.Phoebe.Analytics;
-using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Logging;
 using XPlatUtils;
 
@@ -52,7 +52,7 @@ namespace Toggl.Phoebe._ViewModels
 
             AppendMood (currentMod, sb);
             AppendTimeInfo (sb);
-            await AppendTimeEntryStats (sb).ConfigureAwait (false);
+            AppendTimeEntryStats (sb);
 
             var client = ServiceContainer.Resolve<ITogglClient> ();
             var logStore = ServiceContainer.Resolve<LogStore> ();
@@ -92,16 +92,14 @@ namespace Toggl.Phoebe._ViewModels
             sb.AppendLine();
         }
 
-        private async Task AppendTimeEntryStats (StringBuilder sb)
+        private void AppendTimeEntryStats (StringBuilder sb)
         {
             var userId = state.User.Id;
-            var dataStore = ServiceContainer.Resolve<IDataStore> ();
-            var total = await dataStore.Table<TimeEntryData> ()
-                        .Where (r => r.UserId == userId)
-                        .CountAsync().ConfigureAwait (false);
-            var dirty = await dataStore.Table<TimeEntryData> ()
-                        .Where (r => r.UserId == userId && r.SyncPending == true)
-                        .CountAsync().ConfigureAwait (false);
+            var dataStore = ServiceContainer.Resolve<ISyncDataStore> ();
+            var total = dataStore.Table<TimeEntryData> ()
+                        .Where (r => r.UserId == userId);
+            var dirty = dataStore.Table<TimeEntryData> ()
+                        .Where (r => r.UserId == userId && r.SyncPending == true);
             sb.AppendLine ("Time entries:");
             sb.AppendFormat (" - {0} total", total);
             sb.AppendLine ();

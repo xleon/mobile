@@ -3,10 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Android.Content;
+using Toggl.Phoebe._Data.Models;
 using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data;
-using Toggl.Phoebe.Data.DataObjects;
-using Toggl.Phoebe.Data.Models;
 using XPlatUtils;
 
 namespace Toggl.Joey.Wear
@@ -34,13 +33,14 @@ namespace Toggl.Joey.Wear
 
         public static async Task ContinueTimeEntry (Guid timeEntryId)
         {
-            var entryModel = new TimeEntryModel (timeEntryId);
-            await TimeEntryModel.StartAsync (entryModel.Data);
+            //var entryModel = new TimeEntryModel (timeEntryId);
+            //await TimeEntryModel.StartAsync (entryModel.Data);
             ServiceContainer.Resolve<ITracker> ().SendTimerStartEvent (TimerStartSource.WatchContinue);
         }
 
         public static async Task<List<SimpleTimeEntryData>> GetTimeEntryData ()
         {
+            /*
             var store = ServiceContainer.Resolve<IDataStore> ();
             var userId = Guid.Empty; //ServiceContainer.Resolve<AuthManager> ().GetUserId ();
 
@@ -80,7 +80,8 @@ namespace Toggl.Joey.Wear
                     StopTime = entry.StopTime ?? DateTime.MinValue
                 });
             }
-            return simpleEntries;
+            */
+            return new List<SimpleTimeEntryData>();
         }
     }
 }

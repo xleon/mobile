@@ -1,10 +1,7 @@
 using System;
-using System.Linq;
 using Android.App;
 using Android.Content;
 using Toggl.Phoebe;
-using Toggl.Phoebe.Data;
-using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Logging;
 using XPlatUtils;
 

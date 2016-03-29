@@ -1,14 +1,9 @@
 ﻿using System;
-using System.Linq;
 using System.Threading.Tasks;
 using Android.App;
 using Android.Content;
 using Android.Support.V4.Content;
 using Toggl.Phoebe.Analytics;
-using Toggl.Phoebe.Data;
-using Toggl.Phoebe.Data.DataObjects;
-using Toggl.Phoebe.Data.Models;
-using Toggl.Phoebe._Net;
 using XPlatUtils;
 
 namespace Toggl.Joey

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Toggl.Phoebe.Data.DataObjects;
+using Toggl.Phoebe._Data.Models;
 using XPlatUtils;
 
 namespace Toggl.Phoebe.Data.Views
@@ -22,7 +22,9 @@ namespace Toggl.Phoebe.Data.Views
             }
             IsLoading = true;
 
+            // TODO Rx re-create this class wbith the new architecture.
             try {
+                /*
                 userData = new UserData (); //ServiceContainer.Resolve<AuthManager> ().User;
                 var store = ServiceContainer.Resolve<IDataStore> ();
                 queryStartDate = Time.UtcNow - TimeSpan.FromDays (9);
@@ -51,14 +53,16 @@ namespace Toggl.Phoebe.Data.Views
 
                 hasRunning = runningEntry.Count > 0;
                 activeTimeEntry = hasRunning ? await ConvertToListEntryData (runningEntry[0]) : null;
-
+                */
             } finally {
                 IsLoading = false;
             }
+
         }
 
         private async Task<ListEntryData> ConvertToListEntryData (TimeEntryData entry)
         {
+            /*
             var project = await FetchProjectData (entry.ProjectId ?? Guid.Empty);
             var entryData = new ListEntryData();
             entryData.Id = entry.Id;
@@ -70,6 +74,8 @@ namespace Toggl.Phoebe.Data.Views
             entryData.State = entry.State;
 
             return entryData;
+            */
+            return null;
         }
 
         public List<ListEntryData> Data
@@ -97,11 +103,15 @@ namespace Toggl.Phoebe.Data.Views
 
         private async Task<ProjectData> FetchProjectData (Guid projectId)
         {
+            // TODO Rx use state
+            return null;
+            /*
             var store = ServiceContainer.Resolve<IDataStore> ();
             var project = await store.Table<ProjectData> ()
                           .Where (r => r.Id == projectId).ToListAsync();
 
             return projectId == Guid.Empty ? new ProjectData() : project[0];
+            */
         }
 
         private TimeSpan GetDuration (DateTime startTime, DateTime stopTime)

@@ -1,6 +1,5 @@
 ﻿using System;
 using Toggl.Phoebe._Helpers;
-using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Logging;
 using Toggl.Phoebe._Net;
 using XPlatUtils;
@@ -13,8 +12,6 @@ namespace Toggl.Phoebe
         {
             ServiceContainer.Register<MessageBus> ();
             ServiceContainer.Register<UpgradeManger> ();
-            ServiceContainer.Register<DataCache> ();
-            ServiceContainer.Register<ForeignRelationManager> ();
             ServiceContainer.Register<IPushClient> (() => new PushRestClient (Build.ApiUrl));
             ServiceContainer.Register (CreateSyncDataStore);
             ServiceContainer.Register<LogStore> ();

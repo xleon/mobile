@@ -36,14 +36,15 @@ namespace Toggl.Phoebe
 
         private async Task UpgradeAlways ()
         {
-            var settingsStore = ServiceContainer.Resolve<ISettingsStore> ();
-            var dataStore = ServiceContainer.Resolve<IDataStore> ();
+            // TODO RX find a replacement for this method.
+            //var settingsStore = ServiceContainer.Resolve<ISettingsStore> ();
+            //var dataStore = ServiceContainer.Resolve<IDataStore> ();
 
             // Mark all non-dirty remote items as never having been modified:
-            await dataStore.ResetAllModificationTimes ();
+            //await dataStore.ResetAllModificationTimes ();
 
             // Reset sync last run
-            settingsStore.SyncLastRun = null;
+            //settingsStore.SyncLastRun = null;
         }
 
         private void ChooseExperiment (bool isFreshInstall)

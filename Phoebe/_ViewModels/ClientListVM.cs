@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using Toggl.Phoebe._Data.Models;
+using Toggl.Phoebe._Helpers;
 using Toggl.Phoebe._Reactive;
 using Toggl.Phoebe.Analytics;
-using Toggl.Phoebe.Data.Utils;
 using XPlatUtils;
 
 namespace Toggl.Phoebe._ViewModels

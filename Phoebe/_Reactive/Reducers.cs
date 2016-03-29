@@ -317,7 +317,7 @@ namespace Toggl.Phoebe._Reactive
                 }
 
                 newEntry.ModifiedAt = Time.UtcNow;
-                newEntry.SyncPending = true;
+                newEntry.SyncState = SyncState.CreatePending;
                 newEntry.RemoteId = null;
                 newEntry.Id = Guid.NewGuid ();
                 newEntry.State = TimeEntryState.Running;

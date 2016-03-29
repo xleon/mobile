@@ -27,7 +27,7 @@ namespace Toggl.Phoebe._ViewModels
                 WorkspaceRemoteId = workspace.RemoteId.HasValue ? workspace.RemoteId.Value : 0,
                 IsActive = true,
                 IsPrivate = true,
-                SyncPending = true
+                SyncState = SyncState.CreatePending
             };
             ServiceContainer.Resolve<ITracker> ().CurrentScreen = "New Project";
         }

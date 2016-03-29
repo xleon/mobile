@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
+using System.Reflection;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Toggl.Phoebe.Logging;
@@ -17,6 +18,40 @@ namespace Toggl.Phoebe._Reactive
 {
     public class SyncManager
     {
+        public class QueueItem
+        {
+            static readonly IDictionary<string, Type> typeCache = new Dictionary<string, Type> ();
+
+            public string TypeName { get; set; }
+            public string RawData { get; set; }
+
+            [JsonIgnore]
+            public ICommonData Data
+            {
+                get {
+                    Type type;
+                    if (!typeCache.TryGetValue (TypeName, out type)) {
+                        type = Assembly.GetExecutingAssembly ().GetType (TypeName);
+                        typeCache.Add (TypeName, type);
+                    }
+                    return (ICommonData)JsonConvert.DeserializeObject (RawData, type);
+                }
+                set {
+                    RawData = JsonConvert.SerializeObject (value);
+                }
+            }
+
+            public QueueItem ()
+            {
+            }
+
+            public QueueItem (ICommonData data)
+            {
+                Data = data;
+                TypeName = data.GetType ().FullName;
+            }
+        }
+
         public const string QueueId = "SYNC_OUT";
         public static SyncManager Singleton { get; private set; }
 
@@ -102,30 +137,27 @@ namespace Toggl.Phoebe._Reactive
 
         async Task EnqueueOrSend (DataSyncMsg<AppState> syncMsg)
         {
-            var authToken = syncMsg.State.User.ApiToken;
             var remoteObjects = new List<CommonData> ();
-            var enqueuedItems = new List<DataJsonMsg> ();
+            var enqueuedItems = new List<QueueItem> ();
             var isConnected = syncMsg.SyncTest != null
                               ? syncMsg.SyncTest.IsConnectionAvailable
                               : networkPresence.IsNetworkPresent;
 
             // Try to empty queue first
-            bool queueEmpty = await tryEmptyQueue (authToken, remoteObjects, isConnected);
+            bool queueEmpty = await TryEmptyQueue (remoteObjects, syncMsg.State, isConnected);
 
             // Deal with messages
-            foreach (var msg in syncMsg.SyncData) {
-
-                var exported = mapper.MapToJson (msg);
+            foreach (var data in syncMsg.SyncData) {
                 if (queueEmpty && isConnected) {
                     try {
-                        await SendMessage (authToken, remoteObjects, msg.Id, exported);
+                        await SendData (data, remoteObjects, syncMsg.State);
                     } catch (Exception ex) {
                         logError (ex);
-                        Enqueue (msg.Id, exported, enqueuedItems);
+                        Enqueue (data, enqueuedItems);
                         queueEmpty = false;
                     }
                 } else {
-                    Enqueue (msg.Id, exported, enqueuedItems);
+                    Enqueue (data, enqueuedItems);
                     queueEmpty = false;
                 }
             }
@@ -146,8 +178,9 @@ namespace Toggl.Phoebe._Reactive
             }
         }
 
-        async Task<bool> tryEmptyQueue (string authToken, List<CommonData> remoteObjects, bool isConnected)
+        async Task<bool> TryEmptyQueue (List<CommonData> remoteObjects, AppState state, bool isConnected)
         {
+            var authToken = state.User.ApiToken;
             if (string.IsNullOrEmpty (authToken) && dataStore.GetQueueSize (QueueId) > 0) {
                 dataStore.ResetQueue (QueueId);
                 return true;
@@ -158,8 +191,8 @@ namespace Toggl.Phoebe._Reactive
                 if (isConnected) {
                     try {
                         do {
-                            var jsonMsg = JsonConvert.DeserializeObject<DataJsonMsg> (json);
-                            await SendMessage (authToken, remoteObjects, jsonMsg.LocalId, jsonMsg.Data);
+                            var queueItem = JsonConvert.DeserializeObject<QueueItem> (json);
+                            await SendData (queueItem.Data, remoteObjects, state);
 
                             // If we sent the message successfully, remove it from the queue
                             dataStore.TryDequeue (QueueId, out json);
@@ -177,38 +210,50 @@ namespace Toggl.Phoebe._Reactive
             }
         }
 
-        void Enqueue (Guid localId, CommonJson json, List<DataJsonMsg> enqueuedItems)
+        void Enqueue (ICommonData data, List<QueueItem> enqueuedItems)
         {
             try {
-                var jsonMsg = new DataJsonMsg (localId, json);
-                var serialized = JsonConvert.SerializeObject (jsonMsg);
+                var queueItem = new QueueItem (data);
+                var serialized = JsonConvert.SerializeObject (queueItem);
                 dataStore.TryEnqueue (QueueId, serialized);
-                enqueuedItems.Add (jsonMsg);
+                enqueuedItems.Add (queueItem);
             } catch (Exception ex) {
                 // TODO: Retry?
                 logError (ex, "Failed to queue message");
             }
         }
 
-        async Task SendMessage (string authToken, List<CommonData> remoteObjects, Guid localId, CommonJson json)
+        async Task SendData (ICommonData data, List<CommonData> remoteObjects, AppState state)
         {
+            Func<ICommonData, CommonJson> ensureRemoteId = d => {
+                var json = mapper.MapToJson (d);
+                if (json.RemoteId == null) {
+                    json.RemoteId = GetRemoteId (d.Id, remoteObjects, state, d.GetType ());
+                }
+                return json;
+            };
+
             try {
-                if (json.DeletedAt == null) {
-                    CommonJson response;
-                    if (json.RemoteId != null) {
-                        response = await client.Update (authToken, json);
-                    } else {
-                        response = await client.Create (authToken, json);
+                var authToken = state.User.ApiToken;
+                data = BuildRemoteRelationships (data, remoteObjects, state);
+                if (data.DeletedAt == null) {
+                    CommonJson response = null;
+                    switch (data.SyncState) {
+                        case SyncState.CreatePending:
+                            response = await client.Create (authToken, mapper.MapToJson (data));
+                            break;
+                        case SyncState.UpdatePending:
+                            response = await client.Update (authToken, ensureRemoteId (data));
+                            break;
+                        default:
+                            // TODO RX: Throw exception?
+                            break;
                     }
                     var resData = mapper.Map (response);
-                    resData.Id = localId;
+                    resData.Id = data.Id;
                     remoteObjects.Add (resData);
                 } else {
-                    if (json.RemoteId != null) {
-                        await client.Delete (authToken, json);
-                    } else {
-                        // TODO: Make sure the item has not been assigned a remoteId while waiting in the queue?
-                    }
+                    await client.Delete (authToken, ensureRemoteId (data));
                 }
             } catch {
                 // TODO RX: Check the rejection reason: if an item is being specifically rejected,
@@ -432,111 +477,135 @@ namespace Toggl.Phoebe._Reactive
             return te;
         }
 
-        long? getRemoteId (Guid localId, List<CommonData> remoteObjects, ICommonData stateObject)
-        {
-            if (stateObject.RemoteId != null) {
-                return stateObject.RemoteId;
-            }
-            else {
-                var d = remoteObjects.SingleOrDefault (x => x.Id == localId);
-                return d != null ? d.RemoteId : null;
-            }
-        }
-
-        bool BuildRemoteRelationships (ref ICommonData data, List<CommonData> remoteObjects, AppState state)
+        ICommonData BuildRemoteRelationships (ICommonData data, List<CommonData> remoteObjects, AppState state)
         {
             if (data is TimeEntryData) {
-                var te = (TimeEntryData)data;
-				if (te.UserRemoteId == 0) {
-					if (state.User.RemoteId != null)
-						te.UserRemoteId = state.User.RemoteId.Value;
-					else
-						return false;
-				}
+                var te = (TimeEntryData)data.Clone ();
+                if (te.UserRemoteId == 0) {
+                    te.UserRemoteId = GetRemoteId<UserData> (te.UserId, remoteObjects, state);
+                }
                 if (te.WorkspaceRemoteId == 0) {
-                    var rid = getRemoteId (te.WorkspaceId, remoteObjects, state.Workspaces[te.WorkspaceId]);
-                    if (rid != null)
-                        te.WorkspaceRemoteId = rid.Value;
-                    else
-                        return false;
+                    te.WorkspaceRemoteId = GetRemoteId<WorkspaceData> (te.WorkspaceId, remoteObjects, state);
                 }
-                if (te.ProjectId != Guid.Empty && te.ProjectRemoteId == null) {
-                    var rid = getRemoteId (te.ProjectId, remoteObjects, state.Projects[te.ProjectId]);
-                    if (rid != null)
-                        te.ProjectRemoteId = rid;
-                    else
-                        return false;
+                if (te.ProjectId != Guid.Empty && !te.ProjectRemoteId.HasValue) {
+                    te.ProjectRemoteId = GetRemoteId<ProjectData> (te.ProjectId, remoteObjects, state);
                 }
-                if (te.TaskId != Guid.Empty && te.TaskRemoteId == null) {
-                    var rid = getRemoteId (te.TaskId, remoteObjects, state.Tasks[te.TaskId]);
-                    if (rid != null)
-                        te.TaskRemoteId = rid;
-                    else
-                        return false;
+                if (te.TaskId != Guid.Empty && !te.TaskRemoteId.HasValue) {
+                    te.TaskRemoteId = GetRemoteId<TaskData> (te.TaskId, remoteObjects, state);
                 }
+                return te;
             }
-            else if (data is ProjectData) {
-                var pr = (ProjectData)data;
+            if (data is ProjectData) {
+                var pr = (ProjectData)data.Clone ();
                 if (pr.WorkspaceRemoteId == 0) {
-                    var rid = getRemoteId (pr.WorkspaceId, remoteObjects, state.Workspaces[pr.WorkspaceId]);
-                    if (rid != null)
-                        pr.WorkspaceRemoteId = rid.Value;
-                    else
-                        return false;
+                    pr.WorkspaceRemoteId = GetRemoteId<ProjectData> (pr.WorkspaceId, remoteObjects, state);
                 }
-                if (pr.ClientId != Guid.Empty && pr.ClientRemoteId == null) {
-                    var rid = getRemoteId (pr.ClientId, remoteObjects, state.Clients[pr.ClientId]);
-                    if (rid != null)
-                        pr.ClientRemoteId = rid;
-                    else
-                        return false;
+                if (pr.ClientId != Guid.Empty && !pr.ClientRemoteId.HasValue) {
+                    pr.ClientRemoteId = GetRemoteId<ClientData> (pr.ClientId, remoteObjects, state);
                 }
+                return pr;
             }
-            else if (data is ClientData) {
-                var cl = (ClientData)data;
+            if (data is ClientData) {
+                var cl = (ClientData)data.Clone ();
                 if (cl.WorkspaceRemoteId == 0) {
-                    var rid = getRemoteId (cl.WorkspaceId, remoteObjects, state.Workspaces[cl.WorkspaceId]);
-                    if (rid != null)
-                        cl.WorkspaceRemoteId = rid.Value;
-                    else
-                        return false;
+                    cl.WorkspaceRemoteId = GetRemoteId<WorkspaceData> (cl.WorkspaceId, remoteObjects, state);
                 }
+                return cl;
             }
-            else if (data is TaskData) {
-                var ts = (TaskData)data;
+            if (data is TaskData) {
+                var ts = (TaskData)data.Clone ();
                 if (ts.WorkspaceRemoteId == 0) {
-                    var rid = getRemoteId (ts.WorkspaceId, remoteObjects, state.Workspaces[ts.WorkspaceId]);
-                    if (rid != null)
-                        ts.WorkspaceRemoteId = rid.Value;
-                    else
-                        return false;
+                    ts.WorkspaceRemoteId = GetRemoteId<TaskData> (ts.WorkspaceId, remoteObjects, state);
                 }
                 if (ts.ProjectRemoteId == 0) {
-                    var rid = getRemoteId (ts.ProjectId, remoteObjects, state.Projects[ts.ProjectId]);
-                    if (rid != null)
-                        ts.ProjectRemoteId = rid.Value;
-                    else
-                        return false;
+                    ts.ProjectRemoteId = GetRemoteId<ProjectData> (ts.ProjectId, remoteObjects, state);
                 }
+                return ts;
             }
-            else if (data is TagData) {
-                var t = (TagData)data;
+            if (data is TagData) {
+                var t = (TagData)data.Clone ();
                 if (t.WorkspaceRemoteId == 0) {
-                    var rid = getRemoteId (t.WorkspaceId, remoteObjects, state.Workspaces[t.WorkspaceId]);
-                    if (rid != null)
-                        t.WorkspaceRemoteId = rid.Value;
-                    else
-                        return false;
+                    t.WorkspaceRemoteId = GetRemoteId<TagData> (t.WorkspaceId, remoteObjects, state);
                 }
+                return t;
             }
-            else if (data is UserData) {
-                //var u = (UserData)data;
-                // TODO RX: How to get DefaultWorkspaceRemoteId
+			if (data is WorkspaceData) {
+				return data;
+			}
+            if (data is UserData) {
+                // TODO RX: How to get DefaultWorkspaceRemoteId?
+                return data;
             }
-            else {
-                // TODO RX: Throw exception? Return false?
+            if (data is ProjectUserData) {
+                var pr = (ProjectUserData)data.Clone ();
+                if (pr.ProjectRemoteId == 0) {
+                    pr.ProjectRemoteId = GetRemoteId<ProjectData> (pr.ProjectId, remoteObjects, state);
+                }
+                if (pr.UserRemoteId == 0) {
+                    pr.UserRemoteId = GetRemoteId<UserData> (pr.UserId, remoteObjects, state);
+                }
+                return pr;
             }
-            return true;
+            if (data is WorkspaceUserData) {
+                var ws = (WorkspaceUserData)data.Clone ();
+                if (ws.WorkspaceRemoteId == 0) {
+                    ws.WorkspaceRemoteId = GetRemoteId<ProjectData> (ws.WorkspaceId, remoteObjects, state);
+                }
+                if (ws.UserRemoteId == 0) {
+                    ws.UserRemoteId = GetRemoteId<UserData> (ws.UserId, remoteObjects, state);
+                }
+                return ws;
+            }
+            throw new Exception ("Unrecognized data type");
+        }
+
+        long GetRemoteId<T> (Guid localId, List<CommonData> remoteObjects, AppState state)
+        {
+            return GetRemoteId (localId, remoteObjects, state, typeof(T));
+        }
+
+        long GetRemoteId (Guid localId, List<CommonData> remoteObjects, AppState state, Type typ)
+        {
+            long? res = null;
+            // Check first if we already received the RemoteId in the previous messages
+            var d = remoteObjects.SingleOrDefault (x => x.Id == localId);
+            if (d != null) {
+                res = d.RemoteId;
+            }
+            else if (typ == typeof (WorkspaceData)) {
+                res = state.Workspaces[localId].RemoteId;
+            }
+            else if (typ == typeof (ClientData)) {
+                res = state.Clients[localId].RemoteId;
+            }
+            else if (typ == typeof (ProjectData)) {
+                res = state.Projects[localId].RemoteId;
+            }
+            else if (typ == typeof (TaskData)) {
+                res = state.Tasks[localId].RemoteId;
+            }
+            else if (typ == typeof (TagData)) {
+                res = state.Tags[localId].RemoteId;
+            }
+            else if (typ == typeof (TimeEntryData)) {
+                res = state.TimeEntries[localId].Data.RemoteId;
+            }
+            else if (typ == typeof (UserData)) {
+                res = state.User.RemoteId;
+            }
+            else if (typ == typeof (WorkspaceUserData)) {
+                res = state.WorkspaceUsers[localId].RemoteId;
+            }
+            else if (typ == typeof (ProjectUserData)) {
+                res = state.ProjectUsers[localId].RemoteId;
+            }
+
+            if (!res.HasValue) {
+                // Stop sending messages and wait for state update
+                // TODO RX: Keep a cache to check if the same error is repeating many times?
+                throw new Exception ("RemoteId missing");
+            }
+            return res.Value;
         }
     }
 }

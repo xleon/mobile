@@ -404,14 +404,13 @@ namespace Toggl.Joey.UI.Adapters
                 var entryData = datasource.Entry.Data;
                 var ctx = ServiceContainer.Resolve<Context> ();
 
-                // TODO RX: IsDirty has no meaning in the new architecture
-                if (entryData.RemoteId.HasValue && !entryData.SyncPending) {
+                if (entryData.RemoteId.HasValue && entryData.SyncState == SyncState.Synced) {
                     NotSyncedView.Visibility = ViewStates.Gone;
                 } else {
                     NotSyncedView.Visibility = ViewStates.Visible;
                 }
                 var notSyncedShape = NotSyncedView.Background as GradientDrawable;
-                if (entryData.SyncPending && entryData.RemoteId.HasValue) {
+                if (entryData.RemoteId.HasValue) {
                     notSyncedShape.SetColor (ctx.Resources.GetColor (Resource.Color.light_gray));
                 } else {
                     notSyncedShape.SetColor (ctx.Resources.GetColor (Resource.Color.material_red));

@@ -3,12 +3,19 @@ using SQLite.Net.Attributes;
 
 namespace Toggl.Phoebe._Data.Models
 {
+    public enum SyncState
+    {
+		Synced,
+        CreatePending,
+        UpdatePending,
+    }
+
     public interface ICommonData : IComparable<ICommonData>, ICloneable
     {
         Guid Id { get; }
         DateTime ModifiedAt { get; }
         DateTime? DeletedAt { get; }
-        bool SyncPending { get; }
+        SyncState SyncState { get; }
         long? RemoteId { get; }
     }
 
@@ -20,7 +27,7 @@ namespace Toggl.Phoebe._Data.Models
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Toggl.Phoebe.Data.DataObjects.CommonData"/> class copying
+        /// Initializes a new instance of the <see cref="Data.DataObjects.CommonData"/> class copying
         /// the data from the other object.
         /// </summary>
         /// <param name="other">Instance to copy data from.</param>
@@ -29,7 +36,7 @@ namespace Toggl.Phoebe._Data.Models
             Id = other.Id;
             ModifiedAt = other.ModifiedAt;
             DeletedAt = other.DeletedAt;
-            SyncPending = other.SyncPending;
+            SyncState = other.SyncState;
             RemoteId = other.RemoteId;
         }
 
@@ -40,7 +47,7 @@ namespace Toggl.Phoebe._Data.Models
         {
             var newItem = (T)Clone ();
             newItem.ModifiedAt = Time.UtcNow;
-            newItem.SyncPending = true;
+            newItem.SyncState = SyncState.UpdatePending;
             transform (newItem);
             return newItem;
         }
@@ -52,19 +59,19 @@ namespace Toggl.Phoebe._Data.Models
         public int CompareTo (ICommonData other)
         {
             if (other == null) {
-                throw new ArgumentNullException ("arguments cannot be null");
+                throw new ArgumentNullException (nameof (other));
             }
 
-            if (this.DeletedAt != null || other.DeletedAt != null) {
+            if (DeletedAt != null || other.DeletedAt != null) {
                 if (other.DeletedAt == null) {
                     return 1;
-                } else if (this.DeletedAt == null) {
+                } else if (DeletedAt == null) {
                     return -1;
                 } else {
-                    return this.DeletedAt.Value.CompareTo (other.DeletedAt);
+                    return DeletedAt.Value.CompareTo (other.DeletedAt);
                 }
             } else {
-                return this.ModifiedAt.CompareTo (other.ModifiedAt);
+                return ModifiedAt.CompareTo (other.ModifiedAt);
             }
         }
 
@@ -75,7 +82,7 @@ namespace Toggl.Phoebe._Data.Models
 
         public DateTime? DeletedAt { get; set; }
 
-        public bool SyncPending { get; set; }
+        public SyncState SyncState { get; set; }
 
         [Unique]
         public long? RemoteId { get; set; }

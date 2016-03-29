@@ -19,7 +19,7 @@ namespace Toggl.Phoebe._ViewModels
             var workspace = appState.Workspaces[workspaceId];
             this.appState = appState;
             model = new ClientData {
-                SyncPending = true,
+                SyncState = SyncState.CreatePending,
                 Id = Guid.NewGuid (),
                 WorkspaceId = workspaceId,
                 WorkspaceRemoteId = workspace.RemoteId.HasValue ? workspace.RemoteId.Value : 0

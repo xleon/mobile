@@ -380,47 +380,12 @@ namespace Toggl.Phoebe._Data
         }
     }
 
-    public class DataJsonMsg
-    {
-        static readonly IDictionary<string, Type> typeCache = new Dictionary<string, Type> ();
-
-        public Guid LocalId { get; set; }
-        public string TypeName { get; set; }
-        public string RawData { get; set; }
-
-        [JsonIgnore]
-        public CommonJson Data
-        {
-            get {
-                Type type;
-                if (!typeCache.TryGetValue (TypeName, out type)) {
-                    type = Assembly.GetExecutingAssembly ().GetType (TypeName);
-                    typeCache.Add (TypeName, type);
-                }
-                return (CommonJson)JsonConvert.DeserializeObject (RawData, type);
-            } set {
-                RawData = JsonConvert.SerializeObject (value);
-            }
-        }
-
-        public DataJsonMsg ()
-        {
-        }
-
-        public DataJsonMsg (Guid localId, CommonJson json)
-        {
-            LocalId = localId;
-            Data = json;
-            TypeName = json.GetType ().FullName;
-        }
-    }
-
     public class SyncTestOptions
     {
         public bool IsConnectionAvailable { get; private set; }
-        public Action<AppState, List<CommonData>, List<DataJsonMsg>> Continuation { get; private set; }
+        public Action<AppState, List<CommonData>, List<SyncManager.QueueItem>> Continuation { get; private set; }
 
-        public SyncTestOptions (bool isCnnAvailable, Action<AppState, List<CommonData>, List<DataJsonMsg>> continuation)
+        public SyncTestOptions (bool isCnnAvailable, Action<AppState, List<CommonData>, List<SyncManager.QueueItem>> continuation)
         {
             IsConnectionAvailable = isCnnAvailable;
             Continuation = continuation;

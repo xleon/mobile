@@ -14,9 +14,7 @@ using Android.Views;
 using Android.Widget;
 using Toggl.Joey.UI.Utils;
 using Toggl.Joey.UI.Views;
-using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Logging;
-using Toggl.Phoebe.Net;
 using XPlatUtils;
 using DialogFragment = Android.Support.V4.App.DialogFragment;
 using Toggl.Phoebe._ViewModels;
@@ -25,6 +23,8 @@ using Android.Gms.Common.Apis;
 using Android.Gms.Auth.Api.SignIn;
 using Android.Gms.Auth.Api;
 using Android.Support.V4.App;
+using Toggl.Phoebe._Net;
+using Toggl.Phoebe._Helpers;
 
 namespace Toggl.Joey.UI.Activities
 {
@@ -257,8 +257,8 @@ namespace Toggl.Joey.UI.Activities
             // Small UI trick to permit OBM testers
             // interact with the staging API
             if (EmailEditText.Text == "staging") {
-                var isStaging = !ServiceContainer.Resolve<ISettingsStore> ().IsStagingMode;
-                ServiceContainer.Resolve<ISettingsStore> ().IsStagingMode = isStaging;
+                var isStaging = !Settings.IsStaging;
+                Settings.IsStaging = isStaging;
                 var msg = !isStaging ? "You're in Normal Mode" : "You're in Staging Mode";
                 new AlertDialog.Builder (this)
                 .SetTitle ("Staging Mode")

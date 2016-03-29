@@ -1,9 +1,7 @@
 ﻿using System;
 using Toggl.Phoebe._Helpers;
-using Toggl.Phoebe._Reactive;
-using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Logging;
-using Toggl.Phoebe.Net;
+using Toggl.Phoebe._Net;
 using XPlatUtils;
 
 namespace Toggl.Phoebe
@@ -14,18 +12,14 @@ namespace Toggl.Phoebe
         {
             ServiceContainer.Register<MessageBus> ();
             ServiceContainer.Register<UpgradeManger> ();
-            ServiceContainer.Register<DataCache> ();
-            ServiceContainer.Register<ForeignRelationManager> ();
-            ServiceContainer.Register<ISyncManager> (() => new Net.SyncManager());
             ServiceContainer.Register<IPushClient> (() => new PushRestClient (Build.ApiUrl));
-            ServiceContainer.Register<_Data.ISyncDataStore> (CreateSyncDataStore);
+            ServiceContainer.Register (CreateSyncDataStore);
             ServiceContainer.Register<LogStore> ();
             ServiceContainer.Register<TimeCorrectionManager> ();
-            ServiceContainer.Register<_Net.IReportsClient> (() => new _Net.ReportsRestClient (Build.ReportsApiUrl));
-            ServiceContainer.Register<LoggerUserManager> ();
+            ServiceContainer.Register<IReportsClient> (() => new ReportsRestClient (Build.ReportsApiUrl));
 
             var restApiUrl = Settings.IsStaging ? Build.StagingUrl : Build.ApiUrl;
-            ServiceContainer.Register<_Net.ITogglClient> (() => new _Net.TogglRestClient (restApiUrl));
+            ServiceContainer.Register<ITogglClient> (() => new TogglRestClient (restApiUrl));
         }
 
         private static _Data.ISyncDataStore CreateSyncDataStore ()

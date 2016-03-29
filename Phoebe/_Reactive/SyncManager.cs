@@ -66,7 +66,7 @@ namespace Toggl.Phoebe._Reactive
 
         readonly string Tag = typeof (SyncManager).Name;
         readonly JsonMapper mapper;
-        readonly Net.INetworkPresence networkPresence;
+        readonly INetworkPresence networkPresence;
         readonly ISyncDataStore dataStore;
         readonly ITogglClient client;
         readonly Subject<Tuple<ServerRequest, AppState>> requestManager = new Subject<Tuple<ServerRequest, AppState>> ();
@@ -75,7 +75,7 @@ namespace Toggl.Phoebe._Reactive
         SyncManager ()
         {
             mapper = new JsonMapper ();
-            networkPresence = ServiceContainer.Resolve<Net.INetworkPresence> ();
+            networkPresence = ServiceContainer.Resolve<INetworkPresence> ();
             dataStore = ServiceContainer.Resolve<ISyncDataStore> ();
             client = ServiceContainer.Resolve<ITogglClient> ();
 
@@ -266,13 +266,13 @@ namespace Toggl.Phoebe._Reactive
         async Task AuthenticateAsync (string username, string password)
         {
             logInfo (string.Format ("Authenticating with email ({0}).", username));
-            await AuthenticateAsync (() => client.GetUser (username, password), Net.AuthChangeReason.Login);
+            await AuthenticateAsync (() => client.GetUser (username, password), AuthChangeReason.Login);
         }
 
         async Task AuthenticateWithGoogleAsync (string accessToken)
         {
             logInfo ("Authenticating with Google access token.");
-            await AuthenticateAsync (() => client.GetUser (accessToken), Net.AuthChangeReason.LoginGoogle);
+            await AuthenticateAsync (() => client.GetUser (accessToken), AuthChangeReason.LoginGoogle);
         }
 
         async Task SignupAsync (string email, string password)
@@ -282,7 +282,7 @@ namespace Toggl.Phoebe._Reactive
                 Email = email,
                 Password = password,
                 Timezone = Time.TimeZoneId,
-            }), Net.AuthChangeReason.Signup); //, AccountCredentials.Password);
+            }), AuthChangeReason.Signup); //, AccountCredentials.Password);
         }
 
         async Task SignupWithGoogleAsync (string accessToken)
@@ -291,32 +291,32 @@ namespace Toggl.Phoebe._Reactive
             await AuthenticateAsync (() => client.Create (string.Empty, new UserJson () {
                 GoogleAccessToken = accessToken,
                 Timezone = Time.TimeZoneId,
-            }), Net.AuthChangeReason.SignupGoogle); //, AccountCredentials.Google);
+            }), AuthChangeReason.SignupGoogle); //, AccountCredentials.Google);
         }
 
         async Task AuthenticateAsync (
-            Func<Task<UserJson>> getUser, Net.AuthChangeReason reason) //, AccountCredentials credentialsType)
+            Func<Task<UserJson>> getUser, AuthChangeReason reason) //, AccountCredentials credentialsType)
         {
             UserJson userJson = null;
-            var authResult = Net.AuthResult.Success;
+            var authResult = AuthResult.Success;
             try {
                 userJson = await getUser ();
                 if (userJson == null) {
-                    authResult = (reason == Net.AuthChangeReason.LoginGoogle) ? Net.AuthResult.NoGoogleAccount : Net.AuthResult.InvalidCredentials;
+                    authResult = (reason == AuthChangeReason.LoginGoogle) ? AuthResult.NoGoogleAccount : AuthResult.InvalidCredentials;
                 } else if (userJson.DefaultWorkspaceRemoteId == 0) {
-                    authResult = Net.AuthResult.NoDefaultWorkspace;
+                    authResult = AuthResult.NoDefaultWorkspace;
                 }
             } catch (Exception ex) {
                 var reqEx = ex as UnsuccessfulRequestException;
                 if (reqEx != null && (reqEx.IsForbidden || reqEx.IsValidationError)) {
-                    authResult = Net.AuthResult.InvalidCredentials;
+                    authResult = AuthResult.InvalidCredentials;
                 } else {
                     if (ex.IsNetworkFailure () || ex is TaskCanceledException) {
                         logInfo ("Failed authenticate user. Network error.", ex);
-                        authResult = Net.AuthResult.NetworkError;
+                        authResult = AuthResult.NetworkError;
                     } else {
                         logWarning ("Failed to authenticate user. Unknown error.", ex);
-                        authResult = Net.AuthResult.SystemError;
+                        authResult = AuthResult.SystemError;
                     }
                 }
             }
@@ -324,10 +324,10 @@ namespace Toggl.Phoebe._Reactive
             // TODO RX: Ping analytics service
             //var tracker = ServiceContainer.Resolve<ITracker> ();
             //switch (reason) {
-            //    case Net.AuthChangeReason.Login:
+            //    case AuthChangeReason.Login:
             //        tracker.SendAccountLoginEvent (credentialsType);
             //    break;
-            //    case Net.AuthChangeReason.Signup:
+            //    case AuthChangeReason.Signup:
             //        tracker.SendAccountCreateEvent (credentialsType);
             //    break;
             //}

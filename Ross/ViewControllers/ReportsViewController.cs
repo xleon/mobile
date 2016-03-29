@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
 using CoreGraphics;
+using Toggl.Phoebe._Reports;
 using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data;
-using Toggl.Phoebe.Data.Reports;
 using Toggl.Ross.Theme;
 using Toggl.Ross.Views;
 using UIKit;

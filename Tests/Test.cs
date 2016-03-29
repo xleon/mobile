@@ -2,8 +2,8 @@ using System.IO;
 using System.Threading;
 using NUnit.Framework;
 using SQLite.Net.Platform.Generic;
+using Toggl.Phoebe._Net;
 using Toggl.Phoebe.Logging;
-using Toggl.Phoebe.Net;
 using XPlatUtils;
 
 namespace Toggl.Phoebe.Tests

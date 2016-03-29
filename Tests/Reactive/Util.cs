@@ -32,7 +32,7 @@ namespace Toggl.Phoebe.Tests.Reactive
         }
     }
 
-    public class NetWorkPresenceMock : Net.INetworkPresence
+    public class NetWorkPresenceMock : INetworkPresence
     {
         public bool IsNetworkPresent { get { return false; } }
 
@@ -256,7 +256,7 @@ namespace Toggl.Phoebe.Tests.Reactive
         }
     }
 
-    public class NetworkSwitcher : Net.INetworkPresence
+    public class NetworkSwitcher : INetworkPresence
     {
         private bool isConnected;
 

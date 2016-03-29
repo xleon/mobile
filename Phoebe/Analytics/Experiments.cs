@@ -1,5 +1,3 @@
-using System;
-
 namespace Toggl.Phoebe.Analytics
 {
     public static class Experiments

@@ -1,9 +1,5 @@
-using System;
 using Toggl.Phoebe.Analytics;
-using Toggl.Phoebe.Data;
-using Toggl.Phoebe.Logging;
 using XPlatUtils;
-using System.Threading.Tasks;
 
 namespace Toggl.Phoebe
 {
@@ -11,9 +7,11 @@ namespace Toggl.Phoebe
     {
         private const string Tag = "UpgradeManager";
 
-        public async Task TryUpgrade ()
+        public void TryUpgrade ()
         {
-            var settingsStore = ServiceContainer.Resolve<ISettingsStore> ();
+            // TODO Rx find a replacement or check how to improve it.
+            //var settingsStore = ServiceContainer.Resolve<ISettingsStore> ();
+            /*
             var platformInfo = ServiceContainer.Resolve<IPlatformUtils> ();
             var log = ServiceContainer.Resolve<ILogger> ();
 
@@ -28,22 +26,24 @@ namespace Toggl.Phoebe
 
             log.Info (Tag, "App has been upgraded from '{0}' to '{1}'", oldVersion, newVersion);
 
-            await UpgradeAlways ();
+            UpgradeAlways ();
             ChooseExperiment (isFreshInstall);
 
-            settingsStore.LastAppVersion = newVersion;
+            //settingsStore.LastAppVersion = newVersion;
+            */
         }
 
-        private async Task UpgradeAlways ()
+        private void UpgradeAlways ()
         {
-            var settingsStore = ServiceContainer.Resolve<ISettingsStore> ();
-            var dataStore = ServiceContainer.Resolve<IDataStore> ();
+            // TODO RX find a replacement for this method.
+            //var settingsStore = ServiceContainer.Resolve<ISettingsStore> ();
+            //var dataStore = ServiceContainer.Resolve<IDataStore> ();
 
             // Mark all non-dirty remote items as never having been modified:
-            await dataStore.ResetAllModificationTimes ();
+            //await dataStore.ResetAllModificationTimes ();
 
             // Reset sync last run
-            settingsStore.SyncLastRun = null;
+            //settingsStore.SyncLastRun = null;
         }
 
         private void ChooseExperiment (bool isFreshInstall)

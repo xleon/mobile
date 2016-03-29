@@ -6,6 +6,7 @@ using Toggl.Phoebe._Data;
 using Toggl.Phoebe._Data.Json;
 using Toggl.Phoebe._Data.Models;
 using Toggl.Phoebe._Net;
+using Toggl.Phoebe._Reactive;
 using Toggl.Phoebe.Logging;
 using XPlatUtils;
 
@@ -269,15 +270,12 @@ namespace Toggl.Phoebe._Reports
 
         public static ZoomLevel GetLastZoomViewed()
         {
-            var settings = ServiceContainer.Resolve<Data.ISettingsStore> ();
-            var value = settings.LastReportZoomViewed ?? (int)ZoomLevel.Week;
-            return (ZoomLevel)value;
+            return (ZoomLevel)StoreManager.Singleton.AppState.Settings.LastReportZoom;
         }
 
         public static void SaveReportsState (ZoomLevel zoomLevel)
         {
-            var settings = ServiceContainer.Resolve<Data.ISettingsStore> ();
-            settings.LastReportZoomViewed = (int)zoomLevel;
+            RxChain.Send (new DataMsg.UpdateSetting (nameof (SettingsState.LastReportZoom), (int)zoomLevel));
         }
 
         private string LabelForDate (DateTime date)

@@ -7,17 +7,14 @@ using Mindscape.Raygun4Net;
 using SQLite.Net.Interop;
 using SQLite.Net.Platform.XamarinAndroid;
 using Toggl.Joey.Analytics;
-using Toggl.Joey.Data;
 using Toggl.Joey.Logging;
 using Toggl.Joey.Net;
 using Toggl.Joey.UI.Activities;
-using Toggl.Joey.Widget;
 using Toggl.Phoebe;
+using Toggl.Phoebe._Net;
 using Toggl.Phoebe._Reactive;
 using Toggl.Phoebe.Analytics;
-using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Logging;
-using Toggl.Phoebe.Net;
 using XPlatUtils;
 
 namespace Toggl.Joey
@@ -67,9 +64,6 @@ namespace Toggl.Joey
             // Register Joey components:
             ServiceContainer.Register<ILogger> (() => new Logger ());
             ServiceContainer.Register<Context> (this);
-            ServiceContainer.Register<ExperimentManager> (() => new ExperimentManager (
-                typeof (Toggl.Phoebe.Analytics.Experiments),
-                typeof (Toggl.Joey.Analytics.Experiments)));
             ServiceContainer.Register<SyncMonitor> ();
             ServiceContainer.Register<GcmRegistrationManager> ();
             ServiceContainer.Register<AndroidNotificationManager> ();
@@ -85,7 +79,6 @@ namespace Toggl.Joey
         {
             //ServiceContainer.Resolve<UpgradeManger> ().TryUpgrade ();
             ServiceContainer.Resolve<ILoggerClient> ();
-            ServiceContainer.Resolve<LoggerUserManager> ();
         }
 
         public void InitializeComponents ()

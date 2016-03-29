@@ -3,6 +3,13 @@ using SQLite.Net.Attributes;
 
 namespace Toggl.Phoebe._Data.Models
 {
+    [Flags]
+    public enum AccessLevel {
+        Regular = 1 << 0,
+        Admin = 1 << 1,
+        Any = Regular | Admin,
+    }
+
     public interface IWorkspaceData : ICommonData
     {
         string Name { get; }

@@ -2,8 +2,9 @@
 using Android.Content;
 using Android.Content.PM;
 using Android.Net;
-using Toggl.Phoebe.Net;
-using XPlatUtils;
+using Toggl.Phoebe._Data;
+using Toggl.Phoebe._Reactive;
+using Toggl.Phoebe._Net;
 
 namespace Toggl.Joey.Net
 {
@@ -66,7 +67,7 @@ namespace Toggl.Joey.Net
                 if (intent.Extras != null) {
                     var info = intent.Extras.Get (ConnectivityManager.ExtraNetworkInfo) as NetworkInfo;
                     if (info != null && IsNetworkConnected (info)) {
-                        ServiceContainer.Resolve<ISyncManager> ().Run ();
+                        RxChain.Send (new DataMsg.FullSync ());
                     }
                 }
             }

@@ -6,10 +6,10 @@ using Android.Content;
 using Android.OS;
 using Android.Views;
 using Android.Widget;
-using Toggl.Joey.Data;
 using Toggl.Joey.UI.Activities;
 using Toggl.Joey.UI.Utils;
 using Toggl.Phoebe;
+using Toggl.Phoebe._Data;
 using Toggl.Phoebe._Data.Models;
 using Toggl.Phoebe._Reactive;
 using Toggl.Phoebe._Reports;
@@ -139,10 +139,9 @@ namespace Toggl.Joey.UI.Fragments
             ResetAdapter ();
             UpdatePeriod ();
 
-            var settings = ServiceContainer.Resolve<SettingsStore> ();
-            if (settings.ReportsCurrentItem.HasValue) {
-                viewPager.CurrentItem = settings.ReportsCurrentItem.Value;
-            }
+            // TODO Rx Settings.
+            // find a correct way
+            viewPager.CurrentItem = StoreManager.Singleton.AppState.Settings.ReportsCurrentItem;
 
             return view;
         }
@@ -157,15 +156,16 @@ namespace Toggl.Joey.UI.Fragments
 
         public override void OnPause()
         {
-            var settings = ServiceContainer.Resolve<SettingsStore> ();
-            settings.ReportsCurrentItem = viewPager.CurrentItem;
+            // TODO Rx Settings.
+            // find a correct way
+            // Set ReportsCurrentItem setting to current item.
+            RxChain.Send (new DataMsg.UpdateSetting (nameof (SettingsState.ReportsCurrentItem), viewPager.CurrentItem));
             base.OnPause();
         }
 
         public override void OnStart ()
         {
             base.OnStart ();
-
             TrackScreenView ();
         }
 

@@ -1,17 +1,17 @@
 ﻿using System;
-using Toggl.Phoebe;
-using Toggl.Phoebe.Net;
 using XPlatUtils;
 using Android.Content;
 
 namespace Toggl.Joey.Net
 {
+    // TODO RX restore services correctly.
     public sealed class SyncMonitor : IDisposable
     {
-        private Subscription<SyncStartedMessage> subscriptionSyncStarted;
+        //private Subscription<SyncStartedMessage> subscriptionSyncStarted;
 
         public SyncMonitor ()
         {
+            /*
             var bus = ServiceContainer.Resolve<MessageBus> ();
             subscriptionSyncStarted = bus.Subscribe<SyncStartedMessage> (OnSyncStarted);
 
@@ -19,15 +19,18 @@ namespace Toggl.Joey.Net
             if (syncManager.IsRunning) {
                 StartSyncService ();
             }
+            */
         }
 
         public void Dispose ()
         {
+            /*
             if (subscriptionSyncStarted != null) {
                 var bus = ServiceContainer.Resolve<MessageBus> ();
                 bus.Unsubscribe (subscriptionSyncStarted);
                 subscriptionSyncStarted = null;
             }
+            */
             GC.SuppressFinalize (this);
         }
 
@@ -38,9 +41,11 @@ namespace Toggl.Joey.Net
             ctx.StartService (intent);
         }
 
+        /*
         private void OnSyncStarted (SyncStartedMessage msg)
         {
             StartSyncService ();
         }
+        */
     }
 }

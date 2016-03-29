@@ -1,13 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Android.App;
 using Android.Content;
 using Android.Graphics;
 using Android.OS;
-using Android.Support.V4.App;
-using Android.Support.V7.Widget;
 using Android.Views;
 using Android.Widget;
 using GalaSoft.MvvmLight.Helpers;
@@ -15,14 +11,10 @@ using Toggl.Joey.UI.Activities;
 using Toggl.Joey.UI.Utils;
 using Toggl.Joey.UI.Views;
 using Toggl.Phoebe;
-using Toggl.Phoebe.Data.DataObjects;
-using Toggl.Phoebe.Data.Models;
-using Toggl.Phoebe.Data.ViewModels;
+using Toggl.Phoebe._Data.Models;
 using ActionBar = Android.Support.V7.App.ActionBar;
 using Activity = Android.Support.V7.App.AppCompatActivity;
 using Fragment = Android.Support.V4.App.Fragment;
-using MeasureSpec = Android.Views.View.MeasureSpec;
-using Toggl.Phoebe._Helpers;
 
 namespace Toggl.Joey.UI.Fragments
 {
@@ -36,7 +28,7 @@ namespace Toggl.Joey.UI.Fragments
         private Binding<DateTime, string> startTimeBinding, stopTimeBinding;
         private Binding<bool, bool> isRunningBinding;
 
-        public EditTimeEntryGroupViewModel ViewModel { get; private set; }
+        //public EditTimeEntryGroupViewModel ViewModel { get; private set; }
         public TextView DurationTextView { get; private set; }
         public EditText StartTimeEditText { get; private set; }
         public EditText StopTimeEditText { get; private set; }
@@ -111,9 +103,10 @@ namespace Toggl.Joey.UI.Fragments
             return view;
         }
 
-        public async override void OnViewCreated (View view, Bundle savedInstanceState)
+        public override void OnViewCreated (View view, Bundle savedInstanceState)
         {
             base.OnViewCreated (view, savedInstanceState);
+            /*
             ViewModel = await EditTimeEntryGroupViewModel.Init (TimeEntryIds.ToList ());
 
             ProjectField.TextField.Click += OnProjectEditTextClick;
@@ -132,11 +125,12 @@ namespace Toggl.Joey.UI.Fragments
             // Set adapter using Mvvm light utils.
             timeEntriesListView.Adapter = ViewModel.TimeEntryCollection.GetAdapter (GetTimeEntryView);
             timeEntriesListView.ItemClick += (sender, e) => HandleTimeEntryClick (ViewModel.TimeEntryCollection [e.Position]);
+            */
         }
 
         public override void OnDestroyView ()
         {
-            ViewModel.Dispose ();
+            //ViewModel.Dispose ();
             base.OnDestroyView ();
         }
 
@@ -144,7 +138,7 @@ namespace Toggl.Joey.UI.Fragments
         {
             // Save Time entry state every time
             // the fragment is paused.
-            Task.Run (async () => await ViewModel.SaveModel ());
+            //Task.Run (async () => await ViewModel.SaveModel ());
             base.OnPause ();
         }
 
@@ -165,26 +159,26 @@ namespace Toggl.Joey.UI.Fragments
         public void OnChangeDuration (TimeSpan newDuration)
         {
             if (editedTimeEntry != null) {
-                ViewModel.ChangeTimeEntryDuration (newDuration, editedTimeEntry);
+                //ViewModel.ChangeTimeEntryDuration (newDuration, editedTimeEntry);
             }
         }
 
         private void OnProjectEditTextClick (object sender, EventArgs e)
         {
-            var intent = new Intent (Activity, typeof (ProjectListActivity));
-            intent.PutExtra (BaseActivity.IntentWorkspaceIdArgument, ViewModel.WorkspaceId.ToString ());
-            StartActivityForResult (intent, 0);
+            //var intent = new Intent (Activity, typeof (ProjectListActivity));
+            //intent.PutExtra (BaseActivity.IntentWorkspaceIdArgument, ViewModel.WorkspaceId.ToString ());
+            //StartActivityForResult (intent, 0);
         }
 
-        public override async void OnActivityResult (int requestCode, int resultCode, Intent data)
+        public override void OnActivityResult (int requestCode, int resultCode, Intent data)
         {
             base.OnActivityResult (requestCode, resultCode, data);
             if (resultCode == (int)Result.Ok) {
                 var taskId = GetGuidFromIntent (data, BaseActivity.IntentTaskIdArgument);
                 var projectId = GetGuidFromIntent (data, BaseActivity.IntentProjectIdArgument);
 
-                await Util.AwaitPredicate (() => ViewModel != null);
-                await ViewModel.SetProjectAndTask (projectId, taskId);
+                //await Util.AwaitPredicate (() => ViewModel != null);
+                //await ViewModel.SetProjectAndTask (projectId, taskId);
             }
         }
 
@@ -198,9 +192,9 @@ namespace Toggl.Joey.UI.Fragments
 
             // Set color.
             Color color;
-            string [] colours = ProjectModel.HexColors;
-            color = ViewModel.ProjectColor > 0 ? Color.ParseColor (colours [ViewModel.ProjectColor % colours.Length]) : Color.Transparent;
-            colorView.SetBackgroundColor (color);
+            string [] colours = ProjectData.HexColors;
+            //color = ViewModel.ProjectColor > 0 ? Color.ParseColor (colours [ViewModel.ProjectColor % colours.Length]) : Color.Transparent;
+            //colorView.SetBackgroundColor (color);
 
             // Set rest of data.
             var stopTime = timeEntryData.StopTime.HasValue ? " – " + timeEntryData.StopTime.Value.ToLocalTime().ToShortTimeString () : "";

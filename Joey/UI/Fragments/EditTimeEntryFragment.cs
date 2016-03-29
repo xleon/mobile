@@ -211,6 +211,7 @@ namespace Toggl.Joey.UI.Fragments
             if (LogTimeEntriesListFragment.NewTimeEntry) {
                 DescriptionField.RequestFocus ();
                 ((EditTimeEntryActivity)Activity).ShowSoftKeyboard (DescriptionField.TextField, false);
+                LogTimeEntriesListFragment.NewTimeEntry = false;
             }
         }
 

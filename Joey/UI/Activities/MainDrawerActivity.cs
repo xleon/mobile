@@ -45,7 +45,6 @@ namespace Toggl.Joey.UI.Activities
         private readonly Lazy<FeedbackFragment> feedbackFragment = new Lazy<FeedbackFragment> ();
         private readonly Lazy<RegisterUserFragment> registerUserFragment = new Lazy<RegisterUserFragment> ();
         private readonly List<int> pageStack = new List<int> ();
-        private readonly Handler handler = new Handler ();
         private AuthManager authManager;
         private DrawerListAdapter drawerAdapter;
         private ToolbarModes toolbarMode;

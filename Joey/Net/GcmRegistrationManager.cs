@@ -3,7 +3,6 @@ using System.Threading.Tasks;
 using Android.Content;
 using Android.Gms.Common;
 using Android.Gms.Gcm;
-using Toggl.Joey.Data;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Logging;
 using Toggl.Phoebe._Net;
@@ -53,6 +52,7 @@ namespace Toggl.Joey.Net
         private string RegistrationId
         {
             get {
+                /*
                 var settingsStore = ServiceContainer.Resolve<SettingsStore> ();
                 var id = settingsStore.GcmRegistrationId;
 
@@ -62,9 +62,11 @@ namespace Toggl.Joey.Net
                         RegistrationId = id = null;
                     }
                 }
+                */
 
-                return id;
+                return string.Empty;
             } set {
+                /*
                 var settingsStore = ServiceContainer.Resolve<SettingsStore> ();
                 if (value == null) {
                     settingsStore.GcmRegistrationId = null;
@@ -73,6 +75,8 @@ namespace Toggl.Joey.Net
                     settingsStore.GcmRegistrationId = value;
                     settingsStore.GcmAppVersion = AppVersion;
                 }
+                */
+                Console.WriteLine (value);
             }
         }
 

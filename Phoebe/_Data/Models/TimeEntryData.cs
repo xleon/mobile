@@ -131,7 +131,7 @@ namespace Toggl.Phoebe._Data.Models
                     formattedString = duration.ToString (@"hh\:mm\:ss");
                 }
             } else if (user.DurationFormat == DurationFormat.Decimal) {
-                formattedString = String.Format ("{0:0.00} h", duration.TotalHours);
+                formattedString = string.Format ("{0:0.00} h", duration.TotalHours);
             }
             return formattedString;
         }

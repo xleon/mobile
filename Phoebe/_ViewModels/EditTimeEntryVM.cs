@@ -289,7 +289,7 @@ namespace Toggl.Phoebe._ViewModels
 
         private static List<ITagData> GetDefaultTagList (AppState appState, ITimeEntryData data)
         {
-            if (!ServiceContainer.Resolve<Data.ISettingsStore> ().UseDefaultTag) {
+            if (!appState.Settings.UseDefaultTag) {
                 return new List<ITagData> ();
             }
 

@@ -1,11 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using Android.Content;
-using Toggl.Phoebe._Data.Models;
 using Toggl.Phoebe.Analytics;
-using Toggl.Phoebe.Data;
 using XPlatUtils;
 
 namespace Toggl.Joey.Wear

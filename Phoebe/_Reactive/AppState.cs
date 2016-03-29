@@ -386,7 +386,7 @@ namespace Toggl.Phoebe._Reactive
         private static readonly DateTime SyncLastRunDefault = DateTime.MinValue;
         private static readonly bool UseDefaultTagDefault = true;
         private static readonly string LastAppVersionDefault = string.Empty;
-        private static readonly int LastReportZoomDefault = 0;
+        private static readonly int LastReportZoomDefault = (int)ZoomLevel.Week;
         private static readonly bool GroupedEntriesDefault = false;
         private static readonly bool ChooseProjectForNewDefault = false;
         private static readonly int ReportsCurrentItemDefault = 0;

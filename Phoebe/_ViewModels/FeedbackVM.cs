@@ -85,26 +85,28 @@ namespace Toggl.Phoebe._ViewModels
 
         private void AppendTimeInfo (StringBuilder sb)
         {
-            var timeManager = ServiceContainer.Resolve<TimeCorrectionManager> ();
+            var timeManager = ServiceContainer.Resolve<TimeCorrectionManager>();
             sb.AppendFormat ("Time correction: {0}", timeManager.Correction);
-            sb.AppendLine ();
+            sb.AppendLine();
             sb.AppendFormat ("Time zone: {0}", Time.TimeZoneId);
             sb.AppendLine();
         }
 
         private void AppendTimeEntryStats (StringBuilder sb)
         {
-            var userId = state.User.Id;
             var dataStore = ServiceContainer.Resolve<ISyncDataStore> ();
-            var total = dataStore.Table<TimeEntryData> ()
-                        .Where (r => r.UserId == userId);
-            var dirty = dataStore.Table<TimeEntryData> ()
-                        .Where (r => r.UserId == userId && r.SyncPending == true);
+            var total = dataStore.Table<TimeEntryData> ().Count ();
+            var createPending = dataStore.Table<TimeEntryData> ().Count (r => r.SyncState == SyncState.CreatePending);
+            var updatePending = dataStore.Table<TimeEntryData> ().Count (r => r.SyncState == SyncState.UpdatePending);
+            var synced = dataStore.Table<TimeEntryData> ().Count (r => r.SyncState == SyncState.Synced);
             sb.AppendLine ("Time entries:");
-            sb.AppendFormat (" - {0} total", total);
+            sb.AppendFormat (" - {0} Total", total);
             sb.AppendLine ();
-            sb.AppendFormat (" - {0} not synced", dirty);
+            sb.AppendFormat (" - {0} Create Pending", createPending);
             sb.AppendLine ();
+            sb.AppendFormat (" - {0} Update Pending", updatePending);
+            sb.AppendLine();
+            sb.AppendFormat (" - {0} Synced", synced);
             sb.AppendLine();
             sb.AppendLine();
         }

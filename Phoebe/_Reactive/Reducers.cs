@@ -394,6 +394,10 @@ namespace Toggl.Phoebe._Reactive
                 newSettings = newSettings.With (showWelcome: (bool)info.Item2);
             } else if (info.Item1 == nameof (SettingsState.ProjectSort)) {
                 newSettings = newSettings.With (projectSort: (string)info.Item2);
+            } else if (info.Item1 == nameof (SettingsState.ReportsCurrentItem)) {
+                newSettings = newSettings.With (reportsCurrentItem: (int)info.Item2);
+            } else if (info.Item1 == nameof (SettingsState.LastReportZoom)) {
+                newSettings = newSettings.With (lastReportZoom: (int)info.Item2);
             }
 
             return DataSyncMsg.Create (

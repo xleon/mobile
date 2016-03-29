@@ -27,7 +27,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)_Reactive\RxChain.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)_Reactive\StoreManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)_Reactive\SyncManager.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)_Old\AccessLevel.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)_Old\DateTimeExtensions.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)_Old\DefaultTimeProvider.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)_Old\ExceptionExtensions.cs" />
@@ -35,16 +34,13 @@
     <Compile Include="$(MSBuildThisFileDirectory)_Old\ITimeProvider.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)_Old\Message.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)_Old\MessageBus.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)_Old\ModelViewManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)_Old\OBMExperimentManager.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)_Old\ObservableObject.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)_Old\Platform.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)_Old\RoundingMode.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)_Old\Services.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)_Old\Subscription.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)_Old\Time.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)_Old\TimeCorrectionManager.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)_Old\TrackingMode.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)_Old\UpgradeManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)_Net\ITogglClient.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)_Net\TogglHttpResponseMessage.cs" />
@@ -101,12 +97,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)Analytics\SettingName.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Analytics\TimerStartSource.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Analytics\TimerStopSource.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Data\Diff.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Data\ISettingsStore.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Data\ReportTypes.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Data\SettingChangedMessage.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Data\ValidationException.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Data\Views\WidgetDataView.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Logging\BaseLogger.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Logging\ILogger.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Logging\ILoggerClient.cs" />
@@ -115,7 +105,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)Logging\LogStore.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Build.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)IPlatformUtils.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)ServiceContainer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)_ViewModels\LoginVM.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)_ViewModels\ClientListVM.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)_Net\ReportsRestClient.cs" />
@@ -130,12 +119,9 @@
     <Compile Include="$(MSBuildThisFileDirectory)_Net\INetworkPresence.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)_Helpers\ObservableRangeCollection.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)_Helpers\Duration.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)_Helpers\ServiceContainer.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="$(MSBuildThisFileDirectory)Contrib\XPlatUtils\" />
     <Folder Include="$(MSBuildThisFileDirectory)_Reports\" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="$(MSBuildThisFileDirectory)Data\.DS_Store" />
   </ItemGroup>
 </Project>

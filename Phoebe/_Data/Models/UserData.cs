@@ -3,6 +3,11 @@ using SQLite.Net.Attributes;
 
 namespace Toggl.Phoebe._Data.Models
 {
+    public enum TrackingMode {
+        Continue,
+        StartNew
+    }
+
     public interface IUserData : ICommonData
     {
         string Name { get; }

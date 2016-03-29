@@ -3,7 +3,6 @@ using System.Linq;
 using System.Collections.Generic;
 using System.Reflection;
 using XPlatUtils;
-using Toggl.Phoebe.Data;
 
 namespace Toggl.Phoebe.Analytics
 {
@@ -17,11 +16,16 @@ namespace Toggl.Phoebe.Analytics
         {
             experiments = new List<Experiment> (FindExperiments (experimentRegistries));
 
+            // TODO Rx review experiment code.
             // Restore currentExperiment
+            /*
             var id = ServiceContainer.Resolve<ISettingsStore> ().ExperimentId;
+            var id = StoreManager.Singleton.AppState.Settings.Ex
             if (id != null) {
                 currentExperiment = experiments.FirstOrDefault (e => e.Id == id);
             }
+            */
+            currentExperiment = experiments.FirstOrDefault ();
         }
 
         public Experiment CurrentExperiment
@@ -33,7 +37,7 @@ namespace Toggl.Phoebe.Analytics
                 }
 
                 var id = value != null ? value.Id : null;
-                ServiceContainer.Resolve<ISettingsStore> ().ExperimentId = id;
+                // ServiceContainer.Resolve<ISettingsStore> ().ExperimentId = id;
                 currentExperiment = value;
 
                 if (value.SetUp != null) {

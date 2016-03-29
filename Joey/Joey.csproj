@@ -169,7 +169,6 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="UI\Activities\LoginActivity.cs" />
     <Compile Include="AndroidApp.cs" />
-    <Compile Include="Data\SettingsStore.cs" />
     <Compile Include="UI\Activities\BaseActivity.cs" />
     <Compile Include="Net\GcmBroadcastReceiver.cs" />
     <Compile Include="Net\GcmService.cs" />
@@ -191,7 +190,6 @@
     <Compile Include="Net\SyncMonitor.cs" />
     <Compile Include="UI\Fragments\BaseDialogFragment.cs" />
     <Compile Include="UI\Text\FontSpan.cs" />
-    <Compile Include="UI\Adapters\SettingsAdapter.cs" />
     <Compile Include="UI\Fragments\SettingsListFragment.cs" />
     <Compile Include="UI\Fragments\ForcedUpgradeDialogFragment.cs" />
     <Compile Include="UI\Activities\EditTimeEntryActivity.cs" />
@@ -206,7 +204,6 @@
     <Compile Include="UI\Fragments\ReportsPagerFragment.cs" />
     <Compile Include="UI\Fragments\ReportsFragment.cs" />
     <Compile Include="Analytics\Tracker.cs" />
-    <Compile Include="Analytics\Experiments.cs" />
     <Compile Include="Logging\Logger.cs" />
     <Compile Include="UI\Fragments\CreateTagDialogFragment.cs" />
     <Compile Include="UI\Views\SnappyLayout.cs" />

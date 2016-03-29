@@ -37,7 +37,7 @@ namespace Toggl.Phoebe.Tests.Data.Mapper
             Assert.That (commonData.RemoteId, Is.EqualTo (commonJson.RemoteId));
             Assert.That (commonData.ModifiedAt, Is.EqualTo (commonJson.ModifiedAt.ToUtc()));
             Assert.That (commonData.DeletedAt, Is.Null);
-            Assert.That (commonData.SyncPending, Is.False);
+            Assert.That (commonData.SyncState, Is.EqualTo (SyncState.Synced));
             Assert.That (commonData.Id, Is.EqualTo (Guid.Empty));
 
             commonJson.DeletedAt = DateTime.Now;
@@ -63,7 +63,7 @@ namespace Toggl.Phoebe.Tests.Data.Mapper
             Assert.That (clientData.RemoteId, Is.EqualTo (clientJson.RemoteId));
             Assert.That (clientData.ModifiedAt, Is.EqualTo (clientJson.ModifiedAt.ToUtc()));
             Assert.That (clientData.DeletedAt, Is.Null);
-            Assert.That (clientData.SyncPending, Is.False);
+            Assert.That (clientData.SyncState, Is.EqualTo (SyncState.Synced));
             Assert.That (clientData.Id, Is.EqualTo (Guid.Empty));
 
             clientJson.DeletedAt = DateTime.Now;
@@ -311,7 +311,6 @@ namespace Toggl.Phoebe.Tests.Data.Mapper
         [Test]
         public void TestTimeEntryDataMap()
         {
-            var tags = new System.Collections.Generic.List<string> {"tag1", "tag2", "tag3"};
             var duration = TimeSpan.FromMinutes (3);
             var startTime = new DateTime (DateTime.Now.Ticks);
             var stopTime = startTime + duration;
@@ -328,7 +327,6 @@ namespace Toggl.Phoebe.Tests.Data.Mapper
                 DurationOnly = true,
                 StartTime = startTime,
                 StopTime = stopTime,
-                Tags = tags,
                 TaskRemoteId = null,
                 UserRemoteId = 333,
                 WorkspaceRemoteId = 222
@@ -344,7 +342,6 @@ namespace Toggl.Phoebe.Tests.Data.Mapper
             Assert.That (teData.StartTime, Is.EqualTo (teJson.StartTime.ToUtc ()));
             Assert.That (teData.StopTime, Is.EqualTo (teJson.StopTime.ToUtc ()));
             Assert.That (teData.State, Is.EqualTo (TimeEntryState.Finished));
-            Assert.That (teData.Tags, Is.EqualTo (tags));
             Assert.That (teData.TaskId, Is.EqualTo (Guid.Empty));
             Assert.That (teData.TaskRemoteId, Is.EqualTo (teJson.TaskRemoteId));
             Assert.That (teData.UserId, Is.EqualTo (Guid.Empty));

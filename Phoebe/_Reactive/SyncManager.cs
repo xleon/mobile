@@ -35,8 +35,7 @@ namespace Toggl.Phoebe._Reactive
                         typeCache.Add (TypeName, type);
                     }
                     return (ICommonData)JsonConvert.DeserializeObject (RawData, type);
-                }
-                set {
+                } set {
                     RawData = JsonConvert.SerializeObject (value);
                 }
             }
@@ -120,19 +119,21 @@ namespace Toggl.Phoebe._Reactive
         void logInfo (string msg, Exception exc = null)
         {
             var logger = ServiceContainer.Resolve<ILogger> ();
-            if (exc == null)
+            if (exc == null) {
                 logger.Info (Tag, msg);
-            else
+            } else {
                 logger.Info (Tag, exc, msg);
+            }
         }
 
         void logWarning (string msg, Exception exc = null)
         {
             var logger = ServiceContainer.Resolve<ILogger> ();
-            if (exc == null)
+            if (exc == null) {
                 logger.Warning (Tag, msg);
-            else
+            } else {
                 logger.Warning (Tag, exc, msg);
+            }
         }
 
         async Task EnqueueOrSend (DataSyncMsg<AppState> syncMsg)
@@ -239,15 +240,15 @@ namespace Toggl.Phoebe._Reactive
                 if (data.DeletedAt == null) {
                     CommonJson response = null;
                     switch (data.SyncState) {
-                        case SyncState.CreatePending:
-                            response = await client.Create (authToken, mapper.MapToJson (data));
-                            break;
-                        case SyncState.UpdatePending:
-                            response = await client.Update (authToken, ensureRemoteId (data));
-                            break;
-                        default:
-                            // TODO RX: Throw exception?
-                            break;
+                    case SyncState.CreatePending:
+                        response = await client.Create (authToken, mapper.MapToJson (data));
+                        break;
+                    case SyncState.UpdatePending:
+                        response = await client.Update (authToken, ensureRemoteId (data));
+                        break;
+                    default:
+                        // TODO RX: Throw exception?
+                        break;
                     }
                     var resData = mapper.Map (response);
                     resData.Id = data.Id;
@@ -384,9 +385,9 @@ namespace Toggl.Phoebe._Reactive
             const int endDate = Literals.TimeEntryLoadDays;
 
             try {
-				// Download new Entries
-				var jsonEntries = await client.ListTimeEntries (authToken, startDate, endDate);
-				
+                // Download new Entries
+                var jsonEntries = await client.ListTimeEntries (authToken, startDate, endDate);
+
                 var newWorkspaces = new List<WorkspaceJson> ();
                 var newProjects = new List<ProjectJson> ();
                 var newClients = new List<ClientJson> ();
@@ -462,11 +463,10 @@ namespace Toggl.Phoebe._Reactive
             var tagIds = new List<Guid> ();
             foreach (var tag in jsonEntry.Tags) {
                 var tagData = state.Tags.Values.SingleOrDefault (
-                    x => x.WorkspaceRemoteId == jsonEntry.WorkspaceRemoteId && x.Name == tag);
+                                  x => x.WorkspaceRemoteId == jsonEntry.WorkspaceRemoteId && x.Name == tag);
                 if (tagData != null) {
                     tagIds.Add (tagData.Id);
-                }
-                else {
+                } else {
                     // TODO RX: How to retrieve the tag from server without RemoteId?
                     //newTags.Add (await client.Get<TagJson> (authToken, tagRemoteId));
                 }
@@ -529,9 +529,9 @@ namespace Toggl.Phoebe._Reactive
                 }
                 return t;
             }
-			if (data is WorkspaceData) {
-				return data;
-			}
+            if (data is WorkspaceData) {
+                return data;
+            }
             if (data is UserData) {
                 // TODO RX: How to get DefaultWorkspaceRemoteId?
                 return data;
@@ -561,7 +561,7 @@ namespace Toggl.Phoebe._Reactive
 
         long GetRemoteId<T> (Guid localId, List<CommonData> remoteObjects, AppState state)
         {
-            return GetRemoteId (localId, remoteObjects, state, typeof(T));
+            return GetRemoteId (localId, remoteObjects, state, typeof (T));
         }
 
         long GetRemoteId (Guid localId, List<CommonData> remoteObjects, AppState state, Type typ)
@@ -571,32 +571,23 @@ namespace Toggl.Phoebe._Reactive
             var d = remoteObjects.SingleOrDefault (x => x.Id == localId);
             if (d != null) {
                 res = d.RemoteId;
-            }
-            else if (typ == typeof (WorkspaceData)) {
+            } else if (typ == typeof (WorkspaceData)) {
                 res = state.Workspaces[localId].RemoteId;
-            }
-            else if (typ == typeof (ClientData)) {
+            } else if (typ == typeof (ClientData)) {
                 res = state.Clients[localId].RemoteId;
-            }
-            else if (typ == typeof (ProjectData)) {
+            } else if (typ == typeof (ProjectData)) {
                 res = state.Projects[localId].RemoteId;
-            }
-            else if (typ == typeof (TaskData)) {
+            } else if (typ == typeof (TaskData)) {
                 res = state.Tasks[localId].RemoteId;
-            }
-            else if (typ == typeof (TagData)) {
+            } else if (typ == typeof (TagData)) {
                 res = state.Tags[localId].RemoteId;
-            }
-            else if (typ == typeof (TimeEntryData)) {
+            } else if (typ == typeof (TimeEntryData)) {
                 res = state.TimeEntries[localId].Data.RemoteId;
-            }
-            else if (typ == typeof (UserData)) {
+            } else if (typ == typeof (UserData)) {
                 res = state.User.RemoteId;
-            }
-            else if (typ == typeof (WorkspaceUserData)) {
+            } else if (typ == typeof (WorkspaceUserData)) {
                 res = state.WorkspaceUsers[localId].RemoteId;
-            }
-            else if (typ == typeof (ProjectUserData)) {
+            } else if (typ == typeof (ProjectUserData)) {
                 res = state.ProjectUsers[localId].RemoteId;
             }
 

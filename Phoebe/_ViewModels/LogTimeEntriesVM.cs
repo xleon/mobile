@@ -148,7 +148,9 @@ namespace Toggl.Phoebe._ViewModels
         {
             // TODO: Add analytic event
             var te = Collection.ElementAt (index) as ITimeEntryHolder;
-            RxChain.Send (new DataMsg.TimeEntryDelete (te.Entry.Data));
+
+            // TODO RX: Call here TimeEntryCollectionVM.RemoveEntryWithUndo?
+            //RxChain.Send (new DataMsg.TimeEntriesRemovePermanently (te.Entry.Data));
         }
 
         #region Extra

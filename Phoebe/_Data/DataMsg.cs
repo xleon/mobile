@@ -130,20 +130,6 @@ namespace Toggl.Phoebe._Data
             }
         }
 
-        public sealed class TimeEntryDelete : DataMsg
-        {
-            public Either<ITimeEntryData, Exception> Data
-            {
-                get { return RawData.CastLeft<ITimeEntryData> (); }
-                set { RawData = value.CastLeft<object> (); }
-            }
-
-            public TimeEntryDelete (ITimeEntryData data)
-            {
-                Data = Either<ITimeEntryData, Exception>.Left (data);
-            }
-        }
-
         public sealed class TimeEntriesRemoveWithUndo : DataMsg
         {
             public Either<IEnumerable<ITimeEntryData>, Exception> Data
@@ -152,17 +138,28 @@ namespace Toggl.Phoebe._Data
                 set { RawData = value.CastLeft<object> (); }
             }
 
+            public TimeEntriesRemoveWithUndo (ITimeEntryData data)
+            : this (new ITimeEntryData[] { data })
+            {
+            }
+
             public TimeEntriesRemoveWithUndo (IEnumerable<ITimeEntryData> data)
             {
                 Data = Either<IEnumerable<ITimeEntryData>, Exception>.Left (data);
             }
         }
+
         public sealed class TimeEntriesRestoreFromUndo : DataMsg
         {
             public Either<IEnumerable<ITimeEntryData>, Exception> Data
             {
                 get { return RawData.CastLeft<IEnumerable<ITimeEntryData>> (); }
                 set { RawData = value.CastLeft<object> (); }
+            }
+
+            public TimeEntriesRestoreFromUndo (ITimeEntryData data)
+            : this (new ITimeEntryData[] { data })
+            {
             }
 
             public TimeEntriesRestoreFromUndo (IEnumerable<ITimeEntryData> data)
@@ -177,6 +174,11 @@ namespace Toggl.Phoebe._Data
             {
                 get { return RawData.CastLeft<IEnumerable<ITimeEntryData>> (); }
                 set { RawData = value.CastLeft<object> (); }
+            }
+
+            public TimeEntriesRemovePermanently (ITimeEntryData data)
+            : this (new ITimeEntryData[] { data })
+            {
             }
 
             public TimeEntriesRemovePermanently (IEnumerable<ITimeEntryData> data)

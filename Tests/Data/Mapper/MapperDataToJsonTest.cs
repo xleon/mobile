@@ -94,7 +94,7 @@ namespace Toggl.Phoebe.Tests.Data.Mapper
                 Color = 3,
                 IsActive = true,
                 IsBillable = true,
-                SyncPending = true,
+                SyncState = SyncState.CreatePending,
                 IsPrivate = true,
                 IsTemplate = true,
                 UseTasksEstimate = true
@@ -279,7 +279,7 @@ namespace Toggl.Phoebe.Tests.Data.Mapper
         [Test]
         public void TestTimeEntryJsonMap()
         {
-            var tags = new System.Collections.Generic.List<string> {"tag1", "tag2", "tag3"};
+            var tags = new System.Collections.Generic.List<Guid> ();
             var duration = TimeSpan.FromMinutes (3);
             var startTime = new DateTime (DateTime.Now.Ticks);
             var stopTime = startTime + duration;
@@ -292,7 +292,7 @@ namespace Toggl.Phoebe.Tests.Data.Mapper
                 DurationOnly = true,
                 StartTime = startTime,
                 StopTime = stopTime,
-                Tags = tags,
+                TagIds = tags,
                 TaskRemoteId = null,
                 UserRemoteId = 333,
                 WorkspaceRemoteId = 222,

@@ -3,9 +3,8 @@ using SQLite.Net.Attributes;
 
 namespace Toggl.Phoebe._Data.Models
 {
-    public enum SyncState
-    {
-		Synced,
+    public enum SyncState {
+        Synced,
         CreatePending,
         UpdatePending,
     }

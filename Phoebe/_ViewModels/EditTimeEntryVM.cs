@@ -214,9 +214,10 @@ namespace Toggl.Phoebe._ViewModels
             }
         }
 
+        // TODO RX: Is this method necessary?
         public void Delete ()
         {
-            RxChain.Send (new DataMsg.TimeEntryDelete (richData.Data));
+            RxChain.Send (new DataMsg.TimeEntriesRemovePermanently (richData.Data));
         }
 
         public void SaveManual ()
@@ -263,13 +264,13 @@ namespace Toggl.Phoebe._ViewModels
                     var workspace = appState.Workspaces[richData.Info.ProjectData.WorkspaceId];
 
                     richData = new RichTimeEntry (
-                        richData.Data.With (x => {
-                            x.WorkspaceId = workspace.Id;
-                            x.IsBillable = workspace.IsPremium && x.IsBillable;
-                            x.TagIds = UpdateTagsWithWorkspace (appState, x.Id, workspace.Id, TagList)
-                                .Select (t => t.Id).ToList ();
-                        }),
-                        appState
+                    richData.Data.With (x => {
+                        x.WorkspaceId = workspace.Id;
+                        x.IsBillable = workspace.IsPremium && x.IsBillable;
+                        x.TagIds = UpdateTagsWithWorkspace (appState, x.Id, workspace.Id, TagList)
+                                   .Select (t => t.Id).ToList ();
+                    }),
+                    appState
                     );
                 }
             }

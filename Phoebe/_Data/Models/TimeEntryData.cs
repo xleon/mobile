@@ -108,11 +108,10 @@ namespace Toggl.Phoebe._Data.Models
         {
             get {
                 return string.Join (";", TagIds.Select (x => x.ToString ()));
-            }
-            set {
+            } set {
                 TagIds = value.Split (new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries)
-                              .Select (Guid.Parse)
-                              .ToList ();
+                         .Select (Guid.Parse)
+                         .ToList ();
             }
         }
 

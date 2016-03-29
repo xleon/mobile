@@ -48,7 +48,7 @@ namespace Toggl.Phoebe.Tests.Reactive
 
             viewModel.SaveTag (name, new SyncTestOptions (false, (state, sent, queued) => {
                 try {
-                    TagData tag = null;
+                    ITagData tag = null;
                     Assert.That (tag = state.Tags.Values.SingleOrDefault (
                                            x => x.WorkspaceId == Util.WorkspaceId && x.Name == name), Is.Not.Null);
 

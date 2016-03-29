@@ -48,7 +48,7 @@ namespace Toggl.Phoebe.Tests.Reactive
 
             viewModel.SaveClient (name, new SyncTestOptions (false, (state, sent, queued) => {
                 try {
-                    ClientData client = null;
+                    IClientData client = null;
                     Assert.That (client = state.Clients.Values.SingleOrDefault (
                                               x => x.WorkspaceId == Util.WorkspaceId && x.Name == name), Is.Not.Null);
 

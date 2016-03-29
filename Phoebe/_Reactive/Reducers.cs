@@ -78,7 +78,9 @@ namespace Toggl.Phoebe._Reactive
                    .Add (typeof (DataMsg.FullSync), FullSync)
                    .Add (typeof (DataMsg.TimeEntriesLoad), TimeEntriesLoad)
                    .Add (typeof (DataMsg.TimeEntryPut), TimeEntryPut)
-                   .Add (typeof (DataMsg.TimeEntryDelete), TimeEntryDelete)
+                   .Add (typeof (DataMsg.TimeEntriesRemoveWithUndo), TimeEntryRemoveWithUndo)
+                   .Add (typeof (DataMsg.TimeEntriesRestoreFromUndo), TimeEntryRestoreFromUndo)
+                   .Add (typeof (DataMsg.TimeEntriesRemovePermanently), TimeEntryRemovePermanently)
                    .Add (typeof (DataMsg.TimeEntryContinue), TimeEntryContinue)
                    .Add (typeof (DataMsg.TimeEntryStop), TimeEntryStop)
                    .Add (typeof (DataMsg.TagsPut), TagsPut)
@@ -206,15 +208,34 @@ namespace Toggl.Phoebe._Reactive
                        updated);
         }
 
-        static DataSyncMsg<AppState> TimeEntryDelete (AppState state, DataMsg msg)
+        static DataSyncMsg<AppState> TimeEntryRemoveWithUndo (AppState state, DataMsg msg)
         {
-            var entryData = (msg as DataMsg.TimeEntryDelete).Data.ForceLeft ();
+            // Remove the TEs from AppState but not the db
+            var entriesData = (msg as DataMsg.TimeEntriesRemoveWithUndo).Data.ForceLeft ();
+            var updated = entriesData.Select (entryData => entryData.With (x => x.DeletedAt = Time.UtcNow)).ToList ();
+            return DataSyncMsg.Create (state.With (timeEntries: state.UpdateTimeEntries (updated)));
+        }
+
+        static DataSyncMsg<AppState> TimeEntryRestoreFromUndo (AppState state, DataMsg msg)
+        {
+            // The TEs weren't deleted from the db, just put them back in AppState
+            var entriesData = (msg as DataMsg.TimeEntriesRestoreFromUndo).Data.ForceLeft ();
+            var updated = entriesData.Select (entryData => entryData.With (x => x.DeletedAt = null)).ToList ();
+            return DataSyncMsg.Create (state.With (timeEntries: state.UpdateTimeEntries (updated)));
+        }
+
+        static DataSyncMsg<AppState> TimeEntryRemovePermanently (AppState state, DataMsg msg)
+        {
+            // The TEs should have been already removed from AppState but try to remove them again just in case
+            var entriesData = (msg as DataMsg.TimeEntriesRemovePermanently).Data.ForceLeft ();
             var dataStore = ServiceContainer.Resolve <ISyncDataStore> ();
 
-            var updated = dataStore.Update (ctx => ctx.Delete (
-                                                entryData.With (x => x.DeletedAt = Time.UtcNow)));
+            var updated = dataStore.Update (ctx => {
+                foreach (var entryData in entriesData) {
+                    ctx.Delete (entryData.With (x => x.DeletedAt = Time.UtcNow));
+                }
+            });
 
-            // TODO: Check updated.Count == 1?
             return DataSyncMsg.Create (
                        state.With (timeEntries: state.UpdateTimeEntries (updated)),
                        updated);

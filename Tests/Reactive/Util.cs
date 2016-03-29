@@ -213,7 +213,7 @@ namespace Toggl.Phoebe.Tests.Reactive
         public static readonly Guid WorkspaceId = Guid.NewGuid ();
 
         public static TimeEntryData CreateTimeEntryData (
-            DateTime startTime, long userRemoteId = 0, long workspaceRemoteId = 0)
+            DateTime startTime, long userRemoteId = 1, long workspaceRemoteId = 1)
         {
             var id = Guid.NewGuid ();
             return new TimeEntryData {
@@ -223,13 +223,14 @@ namespace Toggl.Phoebe.Tests.Reactive
                 DurationOnly = true,
                 StartTime = startTime,
                 StopTime = startTime.AddMinutes (1),
-                Tags = new List<string> (),
+                TagIds = new List<Guid> (),
                 TaskRemoteId = null,
                 UserRemoteId = userRemoteId,
                 WorkspaceRemoteId = workspaceRemoteId,
                 UserId = UserId,
                 WorkspaceId = WorkspaceId,
                 State = TimeEntryState.Finished,
+                SyncState = SyncState.CreatePending
             };
         }
 

@@ -5,7 +5,7 @@ using Toggl.Phoebe._Data;
 using Toggl.Phoebe._Data.Models;
 using Toggl.Phoebe._Helpers;
 using XPlatUtils;
-using Toggl.Phoebe.Net;
+using Toggl.Phoebe._Net;
 
 namespace Toggl.Phoebe._Reactive
 {

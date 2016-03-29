@@ -1,8 +1,4 @@
 ﻿using System;
-using Toggl.Phoebe.Data;
-using Toggl.Phoebe.Data.DataObjects;
-using Toggl.Phoebe.Net;
-using XPlatUtils;
 
 namespace Toggl.Phoebe.Analytics
 {

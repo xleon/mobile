@@ -10,6 +10,8 @@ namespace Toggl.Phoebe.Logging
     {
         #region ILoggerClient implementation
 
+        // TODO RX Set or find a way to set the user everytime it is needed.
+        // reading from the state maybe.
         public void SetUser (string id, string email = null, string name = null)
         {
             #if (!DEBUG)

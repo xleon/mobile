@@ -1,7 +1,7 @@
 using System;
 using System.Threading.Tasks;
 
-namespace Toggl.Phoebe.Net
+namespace Toggl.Phoebe._Net
 {
     public interface IPushClient
     {

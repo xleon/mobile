@@ -6,13 +6,14 @@ using Toggl.Phoebe._Data.Models;
 using Toggl.Phoebe._Helpers;
 using Toggl.Phoebe.Logging;
 using XPlatUtils;
+using Toggl.Phoebe._Net;
 
 namespace Toggl.Phoebe._Reactive
 {
     public class AppState
     {
         public SettingsState Settings { get; private set; }
-        public Net.AuthResult AuthResult { get; private set; }
+        public AuthResult AuthResult { get; private set; }
         public DownloadResult DownloadResult { get; private set; }
         public FullSyncResult FullSyncResult { get; private set; }
 
@@ -43,7 +44,7 @@ namespace Toggl.Phoebe._Reactive
 
         AppState (
             SettingsState settings,
-            Net.AuthResult authResult,
+            AuthResult authResult,
             DownloadResult downloadResult,
             FullSyncResult fullSyncResult,
             UserData user,
@@ -73,7 +74,7 @@ namespace Toggl.Phoebe._Reactive
 
         public AppState With (
             SettingsState settings = null,
-            Net.AuthResult? authResult = null,
+            AuthResult? authResult = null,
             DownloadResult downloadResult = null,
             FullSyncResult fullSyncResult = null,
             UserData user = null,
@@ -232,7 +233,7 @@ namespace Toggl.Phoebe._Reactive
 
             return new AppState (
                        settings: settings,
-                       authResult: Net.AuthResult.None,
+                       authResult: AuthResult.None,
                        downloadResult: DownloadResult.Empty,
                        fullSyncResult:FullSyncResult.Empty,
                        user: userData,

@@ -2,9 +2,6 @@
 using Android.App;
 using Android.Content;
 using Android.OS;
-using Toggl.Phoebe;
-using Toggl.Phoebe.Net;
-using XPlatUtils;
 
 namespace Toggl.Joey.Net
 {

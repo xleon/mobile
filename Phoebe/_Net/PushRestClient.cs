@@ -5,8 +5,13 @@ using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 
-namespace Toggl.Phoebe.Net
+namespace Toggl.Phoebe._Net
 {
+    public enum PushService {
+        GCM,
+        APNS
+    }
+
     public class PushRestClient : IPushClient
     {
         private readonly Uri v8Url;
@@ -53,7 +58,7 @@ namespace Toggl.Phoebe.Net
         private void AddAuthToken (string authToken, HttpRequestMessage req)
         {
             req.Headers.Authorization = new AuthenticationHeaderValue ("Basic",
-                    Convert.ToBase64String (ASCIIEncoding.ASCII.GetBytes (
+                    Convert.ToBase64String (Encoding.ASCII.GetBytes (
                                                 string.Format ("{0}:api_token", authToken))));
         }
 

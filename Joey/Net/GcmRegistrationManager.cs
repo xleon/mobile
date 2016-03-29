@@ -6,7 +6,7 @@ using Android.Gms.Gcm;
 using Toggl.Joey.Data;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Logging;
-using Toggl.Phoebe.Net;
+using Toggl.Phoebe._Net;
 using XPlatUtils;
 
 namespace Toggl.Joey.Net

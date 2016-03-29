@@ -1,6 +1,4 @@
 ﻿using System;
-using Toggl.Phoebe;
-using Toggl.Phoebe.Net;
 using XPlatUtils;
 using Android.Content;
 

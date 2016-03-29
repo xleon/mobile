@@ -16,7 +16,6 @@ using Toggl.Joey.UI.Utils;
 using Toggl.Joey.UI.Views;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Logging;
-using Toggl.Phoebe.Net;
 using XPlatUtils;
 using DialogFragment = Android.Support.V4.App.DialogFragment;
 using Toggl.Phoebe._ViewModels;
@@ -25,6 +24,7 @@ using Android.Gms.Common.Apis;
 using Android.Gms.Auth.Api.SignIn;
 using Android.Gms.Auth.Api;
 using Android.Support.V4.App;
+using Toggl.Phoebe._Net;
 
 namespace Toggl.Joey.UI.Activities
 {

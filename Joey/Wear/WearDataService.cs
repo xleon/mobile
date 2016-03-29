@@ -11,10 +11,7 @@ using Android.Util;
 using Java.Interop;
 using Java.Util.Concurrent;
 using Toggl.Joey.UI.Activities;
-using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
-using Toggl.Phoebe.Net;
-using XPlatUtils;
 
 namespace Toggl.Joey.Wear
 {

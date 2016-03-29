@@ -6,7 +6,6 @@ using SQLite.Net;
 using SQLite.Net.Async;
 using SQLite.Net.Interop;
 using Toggl.Phoebe.Data.DataObjects;
-using Toggl.Phoebe.Net;
 using XPlatUtils;
 
 namespace Toggl.Phoebe.Data
@@ -364,7 +363,7 @@ namespace Toggl.Phoebe.Data
                 var record = cmd.ExecuteQuery<QueueItem> ().SingleOrDefault ();
                 if (record != null) {
                     cmd = conn.CreateCommand (QueueDeleteSql, record.RowId);
-                    var res = cmd.ExecuteNonQuery ();
+                    var res = cmd.ExecuteNonQuery();
                     if (res != 1) {
                         return false;
                     } else {
@@ -379,7 +378,7 @@ namespace Toggl.Phoebe.Data
             public bool TryPeekQueue (out string json)
             {
                 var cmd = conn.CreateCommand (QueueSelectFirstSql);
-                var record = cmd.ExecuteQuery<QueueItem> ().SingleOrDefault ();
+                var record = cmd.ExecuteQuery<QueueItem>().SingleOrDefault();
                 if (record != null) {
                     json = record.Data;
                     return true;

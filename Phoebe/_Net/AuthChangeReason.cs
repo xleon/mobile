@@ -1,5 +1,5 @@
 
-namespace Toggl.Phoebe.Net
+namespace Toggl.Phoebe._Net
 {
     public enum AuthChangeReason {
         Logout,

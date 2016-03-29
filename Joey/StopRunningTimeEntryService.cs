@@ -8,7 +8,7 @@ using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
-using Toggl.Phoebe.Net;
+using Toggl.Phoebe._Net;
 using XPlatUtils;
 
 namespace Toggl.Joey

@@ -6,6 +6,7 @@ using Newtonsoft.Json;
 using Toggl.Phoebe._Data.Json;
 using Toggl.Phoebe._Data.Models;
 using Toggl.Phoebe._Helpers;
+using Toggl.Phoebe._Net;
 using Toggl.Phoebe._Reactive;
 
 namespace Toggl.Phoebe._Data
@@ -248,9 +249,9 @@ namespace Toggl.Phoebe._Data
         {
             public class AuthException : Exception
             {
-                public Net.AuthResult AuthResult { get; private set; }
-                public AuthException (Net.AuthResult authResult)
-                : base (Enum.GetName (typeof (Net.AuthResult), authResult))
+                public AuthResult AuthResult { get; private set; }
+                public AuthException (AuthResult authResult)
+                : base (Enum.GetName (typeof (AuthResult), authResult))
                 {
                     AuthResult = authResult;
                 }
@@ -262,9 +263,9 @@ namespace Toggl.Phoebe._Data
                 set { RawData = value.Cast<object, Exception> (); }
             }
 
-            public UserDataPut (Net.AuthResult authResult, IUserData data = null)
+            public UserDataPut (AuthResult authResult, IUserData data = null)
             {
-                if (authResult == Net.AuthResult.Success && data != null) {
+                if (authResult == AuthResult.Success && data != null) {
                     Data = Either<IUserData, AuthException>.Left (data);
                 } else {
                     Data = Either<IUserData, AuthException>.Right (new AuthException (authResult));

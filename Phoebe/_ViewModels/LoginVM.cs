@@ -7,7 +7,7 @@ using Toggl.Phoebe._Data;
 using Toggl.Phoebe._Helpers;
 using Toggl.Phoebe._Reactive;
 using Toggl.Phoebe.Analytics;
-using Toggl.Phoebe.Net;
+using Toggl.Phoebe._Net;
 using XPlatUtils;
 
 namespace Toggl.Phoebe._ViewModels

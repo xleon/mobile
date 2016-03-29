@@ -13,11 +13,11 @@ using Toggl.Joey.Net;
 using Toggl.Joey.UI.Activities;
 using Toggl.Joey.Widget;
 using Toggl.Phoebe;
+using Toggl.Phoebe._Net;
 using Toggl.Phoebe._Reactive;
 using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Logging;
-using Toggl.Phoebe.Net;
 using XPlatUtils;
 
 namespace Toggl.Joey
@@ -85,7 +85,6 @@ namespace Toggl.Joey
         {
             //ServiceContainer.Resolve<UpgradeManger> ().TryUpgrade ();
             ServiceContainer.Resolve<ILoggerClient> ();
-            ServiceContainer.Resolve<LoggerUserManager> ();
         }
 
         public void InitializeComponents ()

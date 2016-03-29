@@ -249,7 +249,7 @@ namespace Toggl.Joey.UI.Fragments
 
             FragmentManager.BeginTransaction ()
             .Replace (Resource.Id.ContentFrameLayout, projectListFragment)
-            .AddToBackStack (projectListFragment.Tag)
+            .AddToBackStack (ProjectListFragment.Tag)
             .Commit ();
         }
 

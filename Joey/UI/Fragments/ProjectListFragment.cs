@@ -28,6 +28,7 @@ namespace Toggl.Joey.UI.Fragments
         SearchView.IOnQueryTextListener,
         IOnProjectCreatedHandler
     {
+        public static readonly string Tag = "ProjectListFragment";
         private static readonly string WorkspaceIdArgument = "workspace_id_param";
         private static readonly int ProjectCreatedRequestCode = 1;
 
@@ -167,7 +168,7 @@ namespace Toggl.Joey.UI.Fragments
         public void OnProjectCreated (Guid projectId)
         {
             updateProjectHandler.OnProjectSelected (projectId, Guid.Empty);
-            FragmentManager.PopBackStack ();
+            FragmentManager.PopBackStack (ProjectListFragment.Tag, Android.Support.V4.App.FragmentManager.PopBackStackInclusive);
         }
 
         private void OnItemSelected (CommonData m)

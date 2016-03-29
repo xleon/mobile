@@ -306,8 +306,12 @@ namespace Toggl.Joey.UI.Fragments
         #region IRecyclerViewOnItemClickListener implementation
         public void OnItemClick (RecyclerView parent, View clickedView, int position)
         {
+            NewTimeEntry = false;
+
             IList<string> guids = ((ITimeEntryHolder)ViewModel.Collection.ElementAt (position)).Guids;
+
             var editFragment = EditTimeEntryFragment.NewInstance (guids[0]);
+            var transaction = FragmentManager.BeginTransaction ();
 
             if (Android.OS.Build.VERSION.SdkInt >= Android.OS.BuildVersionCodes.Lollipop) {
                 var inflater = TransitionInflater.From (Activity);
@@ -323,18 +327,15 @@ namespace Toggl.Joey.UI.Fragments
                 editFragment.SharedElementReturnTransition = logEditTransition;
                 editFragment.EnterTransition = inflater.InflateTransition (Android.Resource.Transition.Fade);
                 editFragment.ReturnTransition = inflater.InflateTransition (Android.Resource.Transition.Fade);
+
+                var cView = parent.GetChildViewHolder (clickedView) as LogTimeEntriesAdapter.TimeEntryListItemHolder;
+                var bundle = new Bundle ();
+                bundle.PutString (EditTimeEntryFragment.TransitionNameBodyArgument, cView.BackgroundLayout.TransitionName);
+                editFragment.Arguments = bundle;
+                transaction.AddSharedElement (cView.BackgroundLayout, cView.BackgroundLayout.TransitionName);
             }
 
-            var cView = parent.GetChildViewHolder (clickedView) as LogTimeEntriesAdapter.TimeEntryListItemHolder;
-
-            var bundle = new Bundle ();
-            bundle.PutString (EditTimeEntryFragment.TransitionNameBodyArgument, cView.BackgroundLayout.TransitionName);
-
-            editFragment.Arguments = bundle;
-            NewTimeEntry = false;
-            FragmentManager.BeginTransaction ()
-            .AddSharedElement (cView.BackgroundLayout, cView.BackgroundLayout.TransitionName)
-            .Replace (Resource.Id.ContentFrameLayout, editFragment)
+            transaction.Replace (Resource.Id.ContentFrameLayout, editFragment)
             .AddToBackStack (editFragment.Tag)
             .Commit ();
         }

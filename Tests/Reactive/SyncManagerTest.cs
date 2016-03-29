@@ -24,7 +24,7 @@ namespace Toggl.Phoebe.Tests.Reactive
             ServiceContainer.RegisterScoped<IPlatformUtils> (platformUtils);
             ServiceContainer.RegisterScoped<ITogglClient> (togglClient);
             networkSwitcher = new NetworkSwitcher ();
-            ServiceContainer.RegisterScoped<Net.INetworkPresence> (networkSwitcher);
+            ServiceContainer.RegisterScoped<INetworkPresence> (networkSwitcher);
             RxChain.Init (Util.GetInitAppState ());
         }
 

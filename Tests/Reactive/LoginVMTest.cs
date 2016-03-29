@@ -29,14 +29,13 @@ namespace Toggl.Phoebe.Tests.Reactive
             ServiceContainer.RegisterScoped<ITogglClient> (togglClient);
             ServiceContainer.RegisterScoped<ITracker> (new TrackerMock());
             networkSwitcher = new NetworkSwitcher ();
-            ServiceContainer.RegisterScoped<Net.INetworkPresence> (networkSwitcher);
+            ServiceContainer.RegisterScoped<INetworkPresence> (networkSwitcher);
         }
 
         [SetUp]
         public override void SetUp()
         {
             base.SetUp();
-            ServiceContainer.RegisterScoped (Moq.Mock.Of<Phoebe.Data.ISettingsStore> ());
             var initState = Util.GetInitAppState ();
             RxChain.Init (initState);
 
@@ -60,9 +59,9 @@ namespace Toggl.Phoebe.Tests.Reactive
 
             viewModel.PropertyChanged += (sender, e) => {
                 if (e.PropertyName == nameof (viewModel.AuthResult) &&
-                        viewModel.AuthResult != Net.AuthResult.Authenticating) {
+                        viewModel.AuthResult != AuthResult.Authenticating) {
                     // Correct login.
-                    Assert.That (viewModel.AuthResult, Is.EqualTo (Net.AuthResult.Success));
+                    Assert.That (viewModel.AuthResult, Is.EqualTo (AuthResult.Success));
                     Assert.That (StoreManager.Singleton.AppState.User.Email, Is.EqualTo (ToggleClientMock.fakeUserEmail));
 
                     // Check item has been correctly saved in database
@@ -72,11 +71,11 @@ namespace Toggl.Phoebe.Tests.Reactive
             };
 
             // None state.
-            Assert.That (viewModel.AuthResult, Is.EqualTo (Net.AuthResult.None));
+            Assert.That (viewModel.AuthResult, Is.EqualTo (AuthResult.None));
             viewModel.TryLogin (ToggleClientMock.fakeUserEmail, ToggleClientMock.fakeUserPassword);
 
             // Authenticating
-            Assert.That (viewModel.AuthResult, Is.EqualTo (Net.AuthResult.Authenticating));
+            Assert.That (viewModel.AuthResult, Is.EqualTo (AuthResult.Authenticating));
         }
 
         [Test]
@@ -87,9 +86,9 @@ namespace Toggl.Phoebe.Tests.Reactive
 
             viewModel.PropertyChanged += (sender, e) => {
                 if (e.PropertyName == nameof (viewModel.AuthResult) &&
-                        viewModel.AuthResult != Net.AuthResult.Authenticating) {
+                        viewModel.AuthResult != AuthResult.Authenticating) {
                     // Correct login.
-                    Assert.That (viewModel.AuthResult, Is.EqualTo (Net.AuthResult.Success));
+                    Assert.That (viewModel.AuthResult, Is.EqualTo (AuthResult.Success));
                     Assert.That (StoreManager.Singleton.AppState.User.Email, Is.EqualTo (ToggleClientMock.fakeUserEmail));
 
                     // Check item has been correctly saved in database
@@ -99,7 +98,7 @@ namespace Toggl.Phoebe.Tests.Reactive
             };
 
             // None state.
-            Assert.That (viewModel.AuthResult, Is.EqualTo (Net.AuthResult.None));
+            Assert.That (viewModel.AuthResult, Is.EqualTo (AuthResult.None));
             viewModel.TryLoginWithGoogle (ToggleClientMock.fakeGoogleId);
         }
 
@@ -110,9 +109,9 @@ namespace Toggl.Phoebe.Tests.Reactive
             networkSwitcher.SetNetworkConnection (true);
             viewModel.PropertyChanged += (sender, e) => {
                 if (e.PropertyName == nameof (viewModel.AuthResult) &&
-                        viewModel.AuthResult != Net.AuthResult.Authenticating) {
+                        viewModel.AuthResult != AuthResult.Authenticating) {
                     // Correct login.
-                    Assert.That (viewModel.AuthResult, Is.EqualTo (Net.AuthResult.SystemError));
+                    Assert.That (viewModel.AuthResult, Is.EqualTo (AuthResult.SystemError));
                     Assert.That (StoreManager.Singleton.AppState.User.Email, Is.EqualTo (string.Empty));
 
                     // Check item has been correctly saved in database
@@ -131,7 +130,7 @@ namespace Toggl.Phoebe.Tests.Reactive
             viewModel.PropertyChanged += (sender, e) => {
                 if (e.PropertyName == nameof (viewModel.AuthResult)) {
                     // Not Google account.
-                    Assert.That (viewModel.AuthResult, Is.EqualTo (Net.AuthResult.NoGoogleAccount));
+                    Assert.That (viewModel.AuthResult, Is.EqualTo (AuthResult.NoGoogleAccount));
                     Assert.That (StoreManager.Singleton.AppState.User, Is.Null);
 
                     // Nothing in DB.

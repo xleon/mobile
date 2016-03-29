@@ -192,14 +192,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)Data\Utils\TimeEntryGroup.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Data\Utils\TimeEntryHolder.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Data\Utils\TimeEntryInfo.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Data\ViewModels\ClientListViewModel.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Data\ViewModels\CreateClientViewModel.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Data\ViewModels\CreateTagViewModel.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Data\ViewModels\EditTimeEntryGroupViewModel.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Data\ViewModels\EditTimeEntryViewModel.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Data\ViewModels\NewProjectViewModel.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Data\ViewModels\ProjectListViewModel.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Data\ViewModels\TagListViewModel.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Data\Views\ProjectsCollection.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Data\Views\WidgetDataView.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Logging\BaseLogger.cs" />
@@ -244,6 +236,5 @@
   <ItemGroup>
     <None Include="$(MSBuildThisFileDirectory)Data\.DS_Store" />
     <None Include="$(MSBuildThisFileDirectory)Data\Utils\.DS_Store" />
-    <None Include="$(MSBuildThisFileDirectory)Data\ViewModels\.DS_Store" />
   </ItemGroup>
 </Project>

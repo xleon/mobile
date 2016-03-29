@@ -236,6 +236,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)_Net\IReportsClient.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)_Reports\SummaryReportView.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)_Helpers\Settings.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)_ViewModels\SettingsVM.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="$(MSBuildThisFileDirectory)Contrib\XPlatUtils\" />

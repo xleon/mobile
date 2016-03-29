@@ -1,26 +1,40 @@
-using System;
+﻿using System;
 using System.Text;
 using System.Threading.Tasks;
+using GalaSoft.MvvmLight;
+using PropertyChanged;
+using Toggl.Phoebe._Data.Json;
+using Toggl.Phoebe._Data.Models;
+using Toggl.Phoebe._Net;
 using Toggl.Phoebe._Reactive;
+using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data;
-using Toggl.Phoebe.Data.DataObjects;
-using Toggl.Phoebe.Data.Json;
 using Toggl.Phoebe.Logging;
 using XPlatUtils;
 
-namespace Toggl.Phoebe.Net
+namespace Toggl.Phoebe._ViewModels
 {
-    public class FeedbackMessage
+    public enum Mood {
+        Neutral,
+        Positive,
+        Negative,
+    }
+
+    [ImplementPropertyChanged]
+    public class FeedbackVM : ViewModelBase
     {
+        private readonly AppState state;
         private const string Tag = "FeedbackMessage";
 
-        public Mood CurrentMood { get; set; }
-
-        public string Message { get; set; }
-
-        public async Task<bool> Send ()
+        public FeedbackVM (AppState state)
         {
-            if (String.IsNullOrWhiteSpace (Message)) {
+            ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Feedback";
+            this.state = state;
+        }
+
+        public async Task<bool> Send (Mood currentMod, string message)
+        {
+            if (string.IsNullOrWhiteSpace (message)) {
                 return false;
             }
 
@@ -31,12 +45,12 @@ namespace Toggl.Phoebe.Net
 
             var sb = new StringBuilder ();
             sb.AppendLine ();
-            sb.AppendLine (Message);
+            sb.AppendLine (message);
             sb.AppendLine ();
             sb.AppendLine ("――――");
             sb.AppendLine ();
 
-            AppendMood (sb);
+            AppendMood (currentMod, sb);
             AppendTimeInfo (sb);
             await AppendTimeEntryStats (sb).ConfigureAwait (false);
 
@@ -49,7 +63,7 @@ namespace Toggl.Phoebe.Net
                     json.AttachmentName = "log.gz";
                 }
 
-                await client.CreateFeedback (json).ConfigureAwait (false);
+                await client.CreateFeedback (state.User.ApiToken, json).ConfigureAwait (false);
             } catch (Exception ex) {
                 var log = ServiceContainer.Resolve<ILogger> ();
                 if (ex.IsNetworkFailure ()) {
@@ -63,9 +77,9 @@ namespace Toggl.Phoebe.Net
             return true;
         }
 
-        private void AppendMood (StringBuilder sb)
+        private void AppendMood (Mood currentMood, StringBuilder sb)
         {
-            sb.AppendFormat ("Mood: {0}", CurrentMood);
+            sb.AppendFormat ("Mood: {0}", currentMood);
             sb.AppendLine ();
         }
 
@@ -75,37 +89,27 @@ namespace Toggl.Phoebe.Net
             sb.AppendFormat ("Time correction: {0}", timeManager.Correction);
             sb.AppendLine ();
             sb.AppendFormat ("Time zone: {0}", Time.TimeZoneId);
-            sb.AppendLine ();
+            sb.AppendLine();
         }
 
         private async Task AppendTimeEntryStats (StringBuilder sb)
         {
-            var userId = StoreManager.Singleton.AppState.User.Id;
+            var userId = state.User.Id;
             var dataStore = ServiceContainer.Resolve<IDataStore> ();
             var total = await dataStore.Table<TimeEntryData> ()
                         .Where (r => r.UserId == userId)
                         .CountAsync().ConfigureAwait (false);
             var dirty = await dataStore.Table<TimeEntryData> ()
-                        .Where (r => r.UserId == userId && r.IsDirty == true && r.RemoteRejected == false)
+                        .Where (r => r.UserId == userId && r.SyncPending == true)
                         .CountAsync().ConfigureAwait (false);
-            var rejected = await dataStore.Table<TimeEntryData> ()
-                           .Where (r => r.UserId == userId && r.RemoteRejected == true)
-                           .CountAsync().ConfigureAwait (false);
-
             sb.AppendLine ("Time entries:");
             sb.AppendFormat (" - {0} total", total);
             sb.AppendLine ();
             sb.AppendFormat (" - {0} not synced", dirty);
             sb.AppendLine ();
-            sb.AppendFormat (" - {0} rejected", rejected);
-            sb.AppendLine ();
-            sb.AppendLine ();
-        }
-
-        public enum Mood {
-            Neutral,
-            Positive,
-            Negative,
+            sb.AppendLine();
+            sb.AppendLine();
         }
     }
 }
+

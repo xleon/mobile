@@ -202,23 +202,12 @@
     <Compile Include="$(MSBuildThisFileDirectory)Logging\LogStore.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Net\AuthChangeReason.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Net\AuthResult.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Net\FeedbackMessage.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Net\INetworkPresence.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Net\IPushClient.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Net\ISyncManager.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Net\ITogglClient.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Net\LoggerUserManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Net\PushRestClient.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Net\PushService.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Net\SyncFinishedMessage.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Net\SyncManager.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Net\SyncMode.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Net\SyncStartedMessage.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Net\SyncWidgetMessage.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Net\TogglHttpResponseMessage.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Net\TogglRestClient.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Net\UnsuccessfulRequestException.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Net\UpdateDataMessage.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Build.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)IPlatformUtils.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ServiceContainer.cs" />
@@ -228,6 +217,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)_Net\IReportsClient.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)_Reports\SummaryReportView.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)_Helpers\Settings.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)_ViewModels\FeedbackVM.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="$(MSBuildThisFileDirectory)Contrib\XPlatUtils\" />

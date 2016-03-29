@@ -16,7 +16,6 @@ namespace Toggl.Phoebe
             ServiceContainer.Register<UpgradeManger> ();
             ServiceContainer.Register<DataCache> ();
             ServiceContainer.Register<ForeignRelationManager> ();
-            ServiceContainer.Register<ISyncManager> (() => new Net.SyncManager());
             ServiceContainer.Register<IPushClient> (() => new PushRestClient (Build.ApiUrl));
             ServiceContainer.Register<_Data.ISyncDataStore> (CreateSyncDataStore);
             ServiceContainer.Register<LogStore> ();

@@ -7,6 +7,7 @@ using XPlatUtils;
 
 namespace Toggl.Phoebe
 {
+    // TODO RX restore services correctly.
     public class TimeCorrectionManager : IDisposable
     {
         private const string LogTag = "TimeCorrectionManager";
@@ -14,24 +15,27 @@ namespace Toggl.Phoebe
 
         private readonly object syncRoot = new Object ();
         private readonly Queue<TimeCorrectionData> sample = new Queue<TimeCorrectionData> (SampleSize + 1);
-        private Subscription<TogglHttpResponseMessage> subscriptionHttpResponseMessage;
+        //private Subscription<TogglHttpResponseMessage> subscriptionHttpResponseMessage;
         private TimeSpan? lastCorrection;
 
         public TimeCorrectionManager ()
         {
             var bus = ServiceContainer.Resolve<MessageBus> ();
-            subscriptionHttpResponseMessage = bus.Subscribe<TogglHttpResponseMessage> (OnHttpResponse);
+            //subscriptionHttpResponseMessage = bus.Subscribe<TogglHttpResponseMessage> (OnHttpResponse);
         }
 
         public void Dispose ()
         {
+            /*
             if (subscriptionHttpResponseMessage != null) {
                 var bus = ServiceContainer.Resolve<MessageBus> ();
                 bus.Unsubscribe (subscriptionHttpResponseMessage);
                 subscriptionHttpResponseMessage = null;
             }
+            */
         }
 
+        /*
         private void OnHttpResponse (TogglHttpResponseMessage msg)
         {
             if (msg.ServerTime == null || msg.Latency == null) {
@@ -47,6 +51,7 @@ namespace Toggl.Phoebe
                 Correction = correction.Ticks,
             });
         }
+        */
 
         public void AddMeasurement (TimeCorrectionData data)
         {

@@ -4,13 +4,13 @@ using Android.Content;
 using Android.OS;
 using Android.Views;
 using Android.Widget;
-using Toggl.Phoebe.Analytics;
-using Toggl.Phoebe.Net;
 using XPlatUtils;
 using Toggl.Joey.UI.Utils;
 using Toggl.Joey.UI.Views;
 using Fragment = Android.Support.V4.App.Fragment;
 using FragmentManager = Android.Support.V4.App.FragmentManager;
+using Toggl.Phoebe._ViewModels;
+using Toggl.Phoebe._Reactive;
 
 namespace Toggl.Joey.UI.Fragments
 {
@@ -24,10 +24,13 @@ namespace Toggl.Joey.UI.Fragments
         private int userRating;
         private String userMessage;
         private bool isSendingFeedback;
+
         private static readonly int ratingNotSet = 0;
         private static readonly int ratingPositive = 1;
         private static readonly int ratingNeutral = 2;
         private static readonly int ratingNegative = 3;
+        private FeedbackVM ViewModel;
+
 
         public override View OnCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
         {
@@ -51,34 +54,35 @@ namespace Toggl.Joey.UI.Fragments
             return view;
         }
 
-        public override void OnCreate (Bundle state)
+        public override void OnViewCreated (View view, Bundle savedInstanceState)
         {
-            base.OnCreate (state);
+            base.OnViewCreated (view, savedInstanceState);
+            ViewModel = new FeedbackVM (StoreManager.Singleton.AppState);
+        }
+
+        public override void OnCreate (Bundle savedInstanceState)
+        {
+            base.OnCreate (savedInstanceState);
             RetainInstance = true;
         }
 
         public override void OnStart ()
         {
             base.OnStart ();
-            ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Feedback";
         }
 
         private async void OnSendClick (object sender, EventArgs e)
         {
             IsSendingFeedback = true;
 
-            var mood = FeedbackMessage.Mood.Neutral;
+            var mood = Mood.Neutral;
             if (UserRating == ratingPositive) {
-                mood = FeedbackMessage.Mood.Positive;
+                mood = Mood.Positive;
             } else if (UserRating == ratingNegative) {
-                mood = FeedbackMessage.Mood.Negative;
+                mood = Mood.Negative;
             }
 
-            var msg = new FeedbackMessage () {
-                CurrentMood = mood,
-                Message = UserMessage,
-            };
-            var sent = await msg.Send ();
+            var sent = await ViewModel.Send (mood, UserMessage);
 
             if (sent) {
                 if (userRating == ratingPositive) {
@@ -108,13 +112,13 @@ namespace Toggl.Joey.UI.Fragments
         private void ResetForm ()
         {
             SetRating (ratingNotSet);
-            feedbackMessageEditText.Text = String.Empty;
+            feedbackMessageEditText.Text = string.Empty;
         }
 
         private void SyncItems ()
         {
             submitFeedbackButton.SetText (isSendingFeedback ? Resource.String.SendFeedbackButtonActiveText : Resource.String.SendFeedbackButtonText);
-            submitFeedbackButton.Enabled = UserMessage != String.Empty && !isSendingFeedback;
+            submitFeedbackButton.Enabled = UserMessage != string.Empty && !isSendingFeedback;
             feedbackMessageEditText.Enabled = !isSendingFeedback;
             feedbackPositiveButton.Enabled = !isSendingFeedback;
             feedbackNeutralButton.Enabled = !isSendingFeedback;
@@ -148,7 +152,7 @@ namespace Toggl.Joey.UI.Fragments
             }
         }
 
-        private String UserMessage
+        private string UserMessage
         {
             set {
                 userMessage = value;
@@ -212,19 +216,19 @@ namespace Toggl.Joey.UI.Fragments
         {
         }
 
-        public AskPublishToAppStore (String userMessage)
+        public AskPublishToAppStore (string userMessage)
         {
             var args = new Bundle ();
             args.PutString (UserMessageArgument, userMessage);
             Arguments = args;
         }
 
-        public static void Show (String userMessage, FragmentManager fragmentManager)
+        public static void Show (string userMessage, FragmentManager fragmentManager)
         {
             new AskPublishToAppStore (userMessage).Show (fragmentManager, "askpublishtoappstore_dialog");
         }
 
-        private String UserMessage
+        private string UserMessage
         {
             get {
                 if (Arguments != null) {
@@ -257,7 +261,7 @@ namespace Toggl.Joey.UI.Fragments
 
             StartActivity (new Intent (
                                Intent.ActionView,
-                               Android.Net.Uri.Parse (Toggl.Phoebe.Build.GooglePlayUrl)
+                               Android.Net.Uri.Parse (Phoebe.Build.GooglePlayUrl)
                            ));
         }
     }

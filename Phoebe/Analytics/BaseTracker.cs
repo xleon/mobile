@@ -229,6 +229,7 @@ namespace Toggl.Phoebe.Analytics
         protected abstract void SendEvent (string category, string action, string label=null, long value=0);
         protected abstract void SetCustomDimension (int idx, string value);
 
+        // TODO RX restore services correctly.
         /*
         private void OnAuthChanged (AuthChangedMessage msg)
         {
@@ -238,7 +239,7 @@ namespace Toggl.Phoebe.Analytics
                 StartNewSession ();
             }
         }
-        */
+
 
         private async void OnSyncFinished (SyncFinishedMessage msg)
         {
@@ -249,6 +250,7 @@ namespace Toggl.Phoebe.Analytics
 
             UserPlan = numPremium > 0 ? Plan.Pro : Plan.Free;
         }
+        */
 
         private void OnExperimentChanged (ExperimentChangedMessage msg)
         {

@@ -1,9 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
-using Newtonsoft.Json;
-using Toggl.Phoebe._Data.Json;
 using Toggl.Phoebe._Data.Models;
 using Toggl.Phoebe._Helpers;
 using Toggl.Phoebe._Net;
@@ -131,7 +128,7 @@ namespace Toggl.Phoebe._Data
             }
         }
 
-        public sealed class TimeEntriesRemoveWithUndo : DataMsg
+        public sealed class TimeEntriesRemove : DataMsg
         {
             public Either<IEnumerable<ITimeEntryData>, Exception> Data
             {
@@ -139,50 +136,12 @@ namespace Toggl.Phoebe._Data
                 set { RawData = value.CastLeft<object> (); }
             }
 
-            public TimeEntriesRemoveWithUndo (ITimeEntryData data)
+            public TimeEntriesRemove (ITimeEntryData data)
             : this (new ITimeEntryData[] { data })
             {
             }
 
-            public TimeEntriesRemoveWithUndo (IEnumerable<ITimeEntryData> data)
-            {
-                Data = Either<IEnumerable<ITimeEntryData>, Exception>.Left (data);
-            }
-        }
-
-        public sealed class TimeEntriesRestoreFromUndo : DataMsg
-        {
-            public Either<IEnumerable<ITimeEntryData>, Exception> Data
-            {
-                get { return RawData.CastLeft<IEnumerable<ITimeEntryData>> (); }
-                set { RawData = value.CastLeft<object> (); }
-            }
-
-            public TimeEntriesRestoreFromUndo (ITimeEntryData data)
-            : this (new ITimeEntryData[] { data })
-            {
-            }
-
-            public TimeEntriesRestoreFromUndo (IEnumerable<ITimeEntryData> data)
-            {
-                Data = Either<IEnumerable<ITimeEntryData>, Exception>.Left (data);
-            }
-        }
-
-        public sealed class TimeEntriesRemovePermanently : DataMsg
-        {
-            public Either<IEnumerable<ITimeEntryData>, Exception> Data
-            {
-                get { return RawData.CastLeft<IEnumerable<ITimeEntryData>> (); }
-                set { RawData = value.CastLeft<object> (); }
-            }
-
-            public TimeEntriesRemovePermanently (ITimeEntryData data)
-            : this (new ITimeEntryData[] { data })
-            {
-            }
-
-            public TimeEntriesRemovePermanently (IEnumerable<ITimeEntryData> data)
+            public TimeEntriesRemove (IEnumerable<ITimeEntryData> data)
             {
                 Data = Either<IEnumerable<ITimeEntryData>, Exception>.Left (data);
             }

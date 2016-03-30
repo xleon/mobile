@@ -61,8 +61,8 @@ namespace Toggl.Phoebe._ViewModels
             List<Guid> tagList;
 
             if (timeEntryId == Guid.Empty) {
-                data = appState.GetTimeEntryDraft ();
-                tagList = GetDefaultTagList (appState, data).Select (x => x.Id).ToList ();
+                data = appState.GetTimeEntryDraft();
+                tagList = GetDefaultTagList (appState, data).Select (x => x.Id).ToList();
             } else {
                 var richTe = appState.TimeEntries[timeEntryId];
                 data = richTe.Data;
@@ -205,8 +205,9 @@ namespace Toggl.Phoebe._ViewModels
         public void Save ()
         {
             if (!IsManual) {
+                // TODO RX: Exclude TagIds until test finalize.
                 // If Public properties are not equal, save it.
-                if (!previousData.Data.PublicInstancePropertiesEqual (richData.Data, "Tags")) {
+                if (!previousData.Data.PublicInstancePropertiesEqual (richData.Data, "TagIds")) {
                     RxChain.Send (new DataMsg.TimeEntryPut (richData.Data));
                     RxChain.Send (new DataMsg.TagsPut (TagList));
                     previousData = richData;
@@ -217,7 +218,7 @@ namespace Toggl.Phoebe._ViewModels
         // TODO RX: Is this method necessary?
         public void Delete ()
         {
-            RxChain.Send (new DataMsg.TimeEntriesRemovePermanently (richData.Data));
+            RxChain.Send (new DataMsg.TimeEntriesRemove (richData.Data));
         }
 
         public void SaveManual ()

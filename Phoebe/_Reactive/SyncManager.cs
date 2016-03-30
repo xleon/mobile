@@ -242,6 +242,7 @@ namespace Toggl.Phoebe._Reactive
                     switch (data.SyncState) {
                     case SyncState.CreatePending:
                         response = await client.Create (authToken, mapper.MapToJson (data));
+                        response.ModifiedAt = DateTime.UtcNow;
                         break;
                     case SyncState.UpdatePending:
                         response = await client.Update (authToken, ensureRemoteId (data));

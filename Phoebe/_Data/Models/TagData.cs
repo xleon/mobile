@@ -25,6 +25,7 @@ namespace Toggl.Phoebe._Data.Models
             Name = name;
             WorkspaceId = workspaceId;
             WorkspaceRemoteId = workspaceRemoteId;
+            SyncState = SyncState.CreatePending;
         }
 
         protected TagData (TagData other) : base (other)

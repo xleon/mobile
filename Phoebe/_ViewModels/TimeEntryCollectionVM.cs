@@ -3,9 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reactive.Linq;
 using Toggl.Phoebe.Logging;
-using Toggl.Phoebe._Data;
 using Toggl.Phoebe._Data.Diff;
-using Toggl.Phoebe._Data.Models;
 using Toggl.Phoebe._Helpers;
 using Toggl.Phoebe._Reactive;
 using Toggl.Phoebe._ViewModels.Timer;
@@ -96,49 +94,6 @@ namespace Toggl.Phoebe._ViewModels
                    .GroupBy (x => x.GetStartTime ().ToLocalTime ().Date)
                    .SelectMany (gr => gr.Cast<IHolder>().Prepend (new DateHolder (gr.Key, gr.Cast<ITimeEntryHolder> ())))
                    .ToList ();
-        }
-
-        public void RestoreTimeEntryFromUndo ()
-        {
-            RxChain.Send (new DataMsg.TimeEntriesRestoreFromUndo (lastRemovedItem.EntryCollection.Select (x => x.Data)));
-        }
-
-        public void RemoveTimeEntryWithUndo (ITimeEntryHolder timeEntryHolder)
-        {
-            if (timeEntryHolder == null) {
-                return;
-            }
-
-            Action<ITimeEntryHolder> removeTimeEntryPermanently =
-                holder => RxChain.Send (new DataMsg.TimeEntriesRemovePermanently (holder.EntryCollection.Select (x => x.Data)));
-
-            System.Timers.ElapsedEventHandler undoTimerFinished = (sender, e) => {
-                removeTimeEntryPermanently (lastRemovedItem);
-                lastRemovedItem = null;
-            };
-
-            // Remove previous if exists
-            if (lastRemovedItem != null) {
-                removeTimeEntryPermanently (lastRemovedItem);
-            }
-
-            if (timeEntryHolder.Entry.Data.State == TimeEntryState.Running) {
-                RxChain.Send (new DataMsg.TimeEntryStop (timeEntryHolder.Entry.Data));
-            }
-            lastRemovedItem = timeEntryHolder;
-
-            RxChain.Send (new DataMsg.TimeEntriesRemoveWithUndo (timeEntryHolder.EntryCollection.Select (x => x.Data)));
-
-            // Create Undo timer
-            if (undoTimer != null) {
-                undoTimer.Elapsed += undoTimerFinished;
-                undoTimer.Close ();
-            }
-            // Using the correct timer.
-            undoTimer = new System.Timers.Timer ((Literals.TimeEntryRemoveUndoSeconds + 1) * 1000);
-            undoTimer.AutoReset = false;
-            undoTimer.Elapsed += undoTimerFinished;
-            undoTimer.Start ();
         }
     }
 }

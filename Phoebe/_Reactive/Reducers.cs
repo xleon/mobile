@@ -78,9 +78,7 @@ namespace Toggl.Phoebe._Reactive
                    .Add (typeof (DataMsg.FullSync), FullSync)
                    .Add (typeof (DataMsg.TimeEntriesLoad), TimeEntriesLoad)
                    .Add (typeof (DataMsg.TimeEntryPut), TimeEntryPut)
-                   .Add (typeof (DataMsg.TimeEntriesRemoveWithUndo), TimeEntryRemoveWithUndo)
-                   .Add (typeof (DataMsg.TimeEntriesRestoreFromUndo), TimeEntryRestoreFromUndo)
-                   .Add (typeof (DataMsg.TimeEntriesRemovePermanently), TimeEntryRemovePermanently)
+                   .Add (typeof (DataMsg.TimeEntriesRemove), TimeEntryRemove)
                    .Add (typeof (DataMsg.TimeEntryContinue), TimeEntryContinue)
                    .Add (typeof (DataMsg.TimeEntryStop), TimeEntryStop)
                    .Add (typeof (DataMsg.TagsPut), TagsPut)
@@ -122,11 +120,11 @@ namespace Toggl.Phoebe._Reactive
             var endDate = state.DownloadResult.NextDownloadFrom;
 
             DownloadResult downloadInfo = state.DownloadResult;
-            IList<TimeEntryData> dbEntries = new List<TimeEntryData> ();
+            IList<TimeEntryData> dbEntries = new List<TimeEntryData>();
 
             var startDate = GetDatesByDays (dataStore, endDate, Literals.TimeEntryLoadDays);
             dbEntries = dataStore
-                        .Table<TimeEntryData> ()
+                        .Table<TimeEntryData>()
                         .Where (r =>
                                 r.State != TimeEntryState.New &&
                                 r.StartTime >= startDate && r.StartTime < endDate &&
@@ -135,13 +133,13 @@ namespace Toggl.Phoebe._Reactive
                         //r.UserId == state.User.Id)
                         .Take (Literals.TimeEntryLoadMaxInit)
                         .OrderByDescending (r => r.StartTime)
-                        .ToList ();
+                        .ToList();
 
             downloadInfo =
                 downloadInfo.With (
                     isSyncing: true,
                     downloadFrom: endDate,
-                    nextDownloadFrom: dbEntries.Any ()
+                    nextDownloadFrom: dbEntries.Any()
                     ? dbEntries.Min (x => x.StartTime)
                     : endDate);
 
@@ -149,7 +147,7 @@ namespace Toggl.Phoebe._Reactive
                        state.With (
                            downloadResult: downloadInfo,
                            timeEntries: state.UpdateTimeEntries (dbEntries)),
-                       request: new ServerRequest.DownloadEntries ());
+                       request: new ServerRequest.DownloadEntries());
         }
 
         static DataSyncMsg<AppState> ReceivedFromSync (AppState state, DataMsg msg)
@@ -161,17 +159,17 @@ namespace Toggl.Phoebe._Reactive
                 state = UpdateStateWithNewData (state, receivedData);
 
                 // Update user
-                var dataStore = ServiceContainer.Resolve <ISyncDataStore> ();
+                var dataStore = ServiceContainer.Resolve<ISyncDataStore>();
                 UserData user = serverMsg.FullSyncInfo.Item1;
                 user.Id = state.User.Id;
                 user.DefaultWorkspaceId = state.Workspaces.Values.Single (x => x.RemoteId == user.DefaultWorkspaceRemoteId).Id;
-                var userUpdated = (UserData)dataStore.Update (ctx => ctx.Put (user)).Single ();
+                var userUpdated = (UserData)dataStore.Update (ctx => ctx.Put (user)).Single();
 
                 // Modify state.
                 return DataSyncMsg.Create (
                            state.With (
                                user: userUpdated,
-                               fullSyncResult: state.FullSyncResult.With (isSyncing:false, hadErrors:false, syncLastRun:serverMsg.FullSyncInfo.Item2),
+                               fullSyncResult: state.FullSyncResult.With (isSyncing: false, hadErrors: false, syncLastRun: serverMsg.FullSyncInfo.Item2),
                                settings: state.Settings.With (syncLastRun: serverMsg.FullSyncInfo.Item2)));
             },
             ex => DataSyncMsg.Create (state.With (fullSyncResult: state.FullSyncResult.With (isSyncing: false, hadErrors: true))));
@@ -186,7 +184,7 @@ namespace Toggl.Phoebe._Reactive
                 state = UpdateStateWithNewData (state, receivedData);
 
                 // Modify state with download info
-                var hasMore = receivedData.OfType<TimeEntryData> ().Any ();
+                var hasMore = receivedData.OfType<TimeEntryData>().Any();
                 return DataSyncMsg.Create (
                            state.With (downloadResult: state.DownloadResult.With (isSyncing: false, hasMore: hasMore, hadErrors: false)
                                       ));
@@ -196,8 +194,8 @@ namespace Toggl.Phoebe._Reactive
 
         static DataSyncMsg<AppState> TimeEntryPut (AppState state, DataMsg msg)
         {
-            var entryData = (msg as DataMsg.TimeEntryPut).Data.ForceLeft ();
-            var dataStore = ServiceContainer.Resolve <ISyncDataStore> ();
+            var entryData = (msg as DataMsg.TimeEntryPut).Data.ForceLeft();
+            var dataStore = ServiceContainer.Resolve<ISyncDataStore>();
 
             // TODO: Entry sanity check
             var updated = dataStore.Update (ctx => ctx.Put (entryData));
@@ -208,27 +206,11 @@ namespace Toggl.Phoebe._Reactive
                        updated);
         }
 
-        static DataSyncMsg<AppState> TimeEntryRemoveWithUndo (AppState state, DataMsg msg)
-        {
-            // Remove the TEs from AppState but not the db
-            var entriesData = (msg as DataMsg.TimeEntriesRemoveWithUndo).Data.ForceLeft ();
-            var updated = entriesData.Select (entryData => entryData.With (x => x.DeletedAt = Time.UtcNow)).ToList ();
-            return DataSyncMsg.Create (state.With (timeEntries: state.UpdateTimeEntries (updated)));
-        }
-
-        static DataSyncMsg<AppState> TimeEntryRestoreFromUndo (AppState state, DataMsg msg)
-        {
-            // The TEs weren't deleted from the db, just put them back in AppState
-            var entriesData = (msg as DataMsg.TimeEntriesRestoreFromUndo).Data.ForceLeft ();
-            var updated = entriesData.Select (entryData => entryData.With (x => x.DeletedAt = null)).ToList ();
-            return DataSyncMsg.Create (state.With (timeEntries: state.UpdateTimeEntries (updated)));
-        }
-
-        static DataSyncMsg<AppState> TimeEntryRemovePermanently (AppState state, DataMsg msg)
+        static DataSyncMsg<AppState> TimeEntryRemove (AppState state, DataMsg msg)
         {
             // The TEs should have been already removed from AppState but try to remove them again just in case
-            var entriesData = (msg as DataMsg.TimeEntriesRemovePermanently).Data.ForceLeft ();
-            var dataStore = ServiceContainer.Resolve <ISyncDataStore> ();
+            var entriesData = (msg as DataMsg.TimeEntriesRemove).Data.ForceLeft();
+            var dataStore = ServiceContainer.Resolve<ISyncDataStore>();
 
             var updated = dataStore.Update (ctx => {
                 foreach (var entryData in entriesData) {
@@ -243,8 +225,8 @@ namespace Toggl.Phoebe._Reactive
 
         static DataSyncMsg<AppState> TagsPut (AppState state, DataMsg msg)
         {
-            var tags = (msg as DataMsg.TagsPut).Data.ForceLeft ();
-            var dataStore = ServiceContainer.Resolve <ISyncDataStore> ();
+            var tags = (msg as DataMsg.TagsPut).Data.ForceLeft();
+            var dataStore = ServiceContainer.Resolve<ISyncDataStore>();
 
             var updated = dataStore.Update (ctx => {
                 foreach (var tag in tags) {
@@ -257,8 +239,8 @@ namespace Toggl.Phoebe._Reactive
 
         static DataSyncMsg<AppState> ClientDataPut (AppState state, DataMsg msg)
         {
-            var data = (msg as DataMsg.ClientDataPut).Data.ForceLeft ();
-            var dataStore = ServiceContainer.Resolve <ISyncDataStore> ();
+            var data = (msg as DataMsg.ClientDataPut).Data.ForceLeft();
+            var dataStore = ServiceContainer.Resolve<ISyncDataStore>();
 
             var updated = dataStore.Update (ctx => ctx.Put (data));
 
@@ -267,8 +249,8 @@ namespace Toggl.Phoebe._Reactive
 
         static DataSyncMsg<AppState> ProjectDataPut (AppState state, DataMsg msg)
         {
-            var data = (msg as DataMsg.ProjectDataPut).Data.ForceLeft ();
-            var dataStore = ServiceContainer.Resolve <ISyncDataStore> ();
+            var data = (msg as DataMsg.ProjectDataPut).Data.ForceLeft();
+            var dataStore = ServiceContainer.Resolve<ISyncDataStore>();
 
             var updated = dataStore.Update (ctx => ctx.Put (data));
 

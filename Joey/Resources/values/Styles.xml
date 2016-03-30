@@ -98,6 +98,11 @@
     <style name="Login">
     </style>
 
+    <style name="Login.TextInputLayout" parent="@android:style/TextAppearance">
+        <item name="android:textSize">18sp</item>
+        <item name="android:textColor">#ffffff</item>
+        <item name="android:textColorHint">#ffffff</item>
+    </style>
     <style name="Login.Input" parent="@android:style/TextAppearance">
         <item name="android:textSize">18sp</item>
         <item name="android:textColor">#ffffff</item>
@@ -140,10 +145,15 @@
     <style name="Register">
     </style>
 
+    <style name="Register.TextInputLayout" parent="@android:style/TextAppearance">
+        <item name="android:textSize">16sp</item>
+        <item name="android:textColor">@color/register_input_text</item>
+        <item name="android:textColorHint">@color/register_input_text</item>
+    </style>
     <style name="Register.Input" parent="@android:style/TextAppearance">
         <item name="android:textSize">16sp</item>
         <item name="android:textColor">@color/register_input_text</item>
-        <item name="android:textColorHint">@color/register_input_hint</item>
+        <item name="android:textColorHint">@color/register_input_text</item>
         <item name="android:paddingRight">60dp</item>
         <item name="android:paddingBottom">15dp</item>
     </style>

@@ -10,6 +10,7 @@ using Android.Content;
 using Android.Gms.Auth;
 using Android.Gms.Common;
 using Android.OS;
+using Android.Support.Design.Widget;
 using Android.Text;
 using Android.Text.Style;
 using Android.Views;
@@ -37,6 +38,7 @@ namespace Toggl.Joey.UI.Fragments
 
         private LinearLayout RegisterFormLayout;
         private EditText EmailEditText;
+        private TextInputLayout PasswordInputLayout;
         private EditText PasswordEditText;
         private Button PasswordToggleButton;
         private Button RegisterButton;
@@ -58,6 +60,7 @@ namespace Toggl.Joey.UI.Fragments
         private void FindViews (View v)
         {
             EmailEditText = v.FindViewById<EditText> (Resource.Id.CreateUserEmailEditText).SetFont (Font.Roboto);
+            PasswordInputLayout = v.FindViewById<TextInputLayout> (Resource.Id.CreateUserPasswordLayout);
             PasswordEditText = v.FindViewById<EditText> (Resource.Id.CreateUserPasswordEditText).SetFont (Font.Roboto);
             RegisterButton = v.FindViewById<Button> (Resource.Id.CreateUserButton).SetFont (Font.Roboto);
             SpinningImage = v.FindViewById<ImageView> (Resource.Id.RegisterLoadingImageView);
@@ -85,6 +88,7 @@ namespace Toggl.Joey.UI.Fragments
 
             EmailEditText.TextChanged += OnEmailEditTextTextChanged;
             PasswordEditText.TextChanged += OnPasswordEditTextTextChanged;
+            PasswordEditText.FocusChange += OnPasswordFocusChange;
             PasswordToggleButton.Click += OnPasswordToggleButtonClick;
             RegisterButton.Click += OnRegisterButtonClick;
             GoogleRegisterButton.Click += OnGoogleRegisterButtonClick;
@@ -162,6 +166,7 @@ namespace Toggl.Joey.UI.Fragments
         {
             SyncPasswordVisibility ();
             SyncRegisterButton ();
+            ValidatePasswordField (true);
         }
 
         private void OnPasswordToggleButtonClick (object sender, EventArgs e)
@@ -179,6 +184,21 @@ namespace Toggl.Joey.UI.Fragments
                 var dia = new GoogleAccountSelectionDialogFragment (ViewModel);
                 dia.Show (FragmentManager, "accounts_dialog");
             }
+        }
+
+        private void ValidatePasswordField (bool edit = false)
+        {
+            if (PasswordEditText.Text.Length > 0 && PasswordEditText.Text.Length < 6 && !edit) {
+                PasswordInputLayout.Error = GetText (Resource.String.LoginPasswordError);
+                PasswordInputLayout.ErrorEnabled = true;
+            } else if (PasswordEditText.Text.Length >= 6) {
+                PasswordInputLayout.ErrorEnabled = false;
+            }
+        }
+
+        private void OnPasswordFocusChange (object sender, Android.Views.View.FocusChangeEventArgs e)
+        {
+            ValidatePasswordField ();
         }
 
         private void GoToTimerButtonClick (object sender, EventArgs e)

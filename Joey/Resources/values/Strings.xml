@@ -8,6 +8,7 @@
     <string name="LoginSignupTabText">Create account</string>
     <string name="LoginEmailHint">Email address</string>
     <string name="LoginPasswordHint">Password</string>
+    <string name="LoginPasswordError">At least 6 letters.</string>
     <string name="LoginHideButtonText">HIDE</string>
     <string name="LoginShowButtonText">SHOW</string>
     <string name="LoginButtonText">Log in</string>

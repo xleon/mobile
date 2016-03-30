@@ -19,33 +19,47 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="40dp"
+                android:layout_marginBottom="20dp"
                 android:textSize="16sp"
                 android:gravity="center_horizontal" />
-            <EditText
-                android:inputType="textEmailAddress"
+            <android.support.design.widget.TextInputLayout
+                android:id="@+id/EmailInputLayout"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:id="@+id/CreateUserEmailEditText"
-                android:hint="@string/LoginEmailHint"
-                style="@style/Register.Input"
-                android:layout_marginTop="32dp" />
+                style="@style/Register.TextInputLayout"
+                android:layout_height="wrap_content">
+                <EditText
+                    android:inputType="textEmailAddress"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:id="@+id/CreateUserEmailEditText"
+                    android:hint="@string/LoginEmailHint"
+                    style="@style/Register.Input"
+                    android:layout_marginTop="32dp" />
+            </android.support.design.widget.TextInputLayout>
             <FrameLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
-                <EditText
-                    android:id="@+id/CreateUserPasswordEditText"
+                <android.support.design.widget.TextInputLayout
+                    android:id="@+id/CreateUserPasswordLayout"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:hint="@string/LoginPasswordHint"
-                    style="@style/Register.Input"
-                    android:layout_marginTop="15dp"
-                    android:inputType="textVisiblePassword"
-                    android:imeOptions="actionDone" />
+                    style="@style/Register.TextInputLayout"
+                    android:layout_height="wrap_content">
+                    <EditText
+                        android:id="@+id/CreateUserPasswordEditText"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:hint="@string/LoginPasswordHint"
+                        style="@style/Register.Input"
+                        android:layout_marginTop="15dp"
+                        android:inputType="textVisiblePassword"
+                        android:imeOptions="actionDone" />
+                </android.support.design.widget.TextInputLayout>
                 <Button
                     android:id="@+id/RegisterPasswordToggleButton"
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
                     android:layout_gravity="right|center_vertical"
+                    android:layout_marginBottom="5dp"
                     android:focusable="false"
                     android:textSize="12dp"
                     android:text="@string/LoginHideButtonText"

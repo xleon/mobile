@@ -316,6 +316,10 @@ namespace Toggl.Phoebe.Data
 
         public DataSyncMsg (T state, IEnumerable<ICommonData> syncData = null, IEnumerable<ServerRequest> serverRequests = null, SyncTestOptions syncTest = null)
         {
+            if (syncData != null) {
+                DataSyncMsg.CheckSyncDataOrder (syncData);
+            }
+
             State = state;
             SyncTest = syncTest;
             SyncData = syncData != null ? syncData.ToList () : new List<ICommonData> ();
@@ -335,6 +339,24 @@ namespace Toggl.Phoebe.Data
 
     public static class DataSyncMsg
     {
+        public static IReadOnlyList<string> DataOrder = new string[] {
+            nameof (UserData), nameof(WorkspaceData), nameof(ClientData), nameof(ProjectData),
+            nameof(TaskData), nameof(TagData), nameof(TimeEntryData)
+        };
+
+        public static void CheckSyncDataOrder (IEnumerable<ICommonData> syncData)
+        {
+            int lastIndex = 0;
+            foreach (var data in syncData) {
+                var dataType = data.GetType ().Name;
+                var curIndex = DataOrder.IndexOf (t => t == dataType);
+                if (curIndex < lastIndex) {
+                    throw new Exception (string.Format ("{0} cannot come after {1}", dataType, DataOrder[lastIndex]));
+                }
+                lastIndex = curIndex;
+            }
+        }
+
         static public DataSyncMsg<T> Create<T> (T state, IEnumerable<ICommonData> syncData = null, ServerRequest request = null, SyncTestOptions syncTest = null)
         {
             var serverRequests = request != null ? new List<ServerRequest> { request } : null;

@@ -207,7 +207,7 @@ namespace Toggl.Phoebe.ViewModels
             if (!IsManual) {
                 // TODO RX: Exclude TagIds until test finalize.
                 // If Public properties are not equal, save it.
-                if (!previousData.Data.PublicInstancePropertiesEqual (richData.Data, nameof (richData.Data.TagIds))) {
+                if (!previousData.Data.PublicInstancePropertiesEqual (richData.Data, "TagIds")) {
                     RxChain.Send (new DataMsg.TimeEntryPut (richData.Data));
                     RxChain.Send (new DataMsg.TagsPut (TagList));
                     previousData = richData;

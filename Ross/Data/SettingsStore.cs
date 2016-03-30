@@ -26,6 +26,7 @@ namespace Toggl.Ross.Data
         private const string PhoebeProjectSortKey = "projectSortKey";
         private const string PhoebeIsStagingKey = "isStagingKey";
         private const string PhoebeShowWelcomeKey = "showWelcomeKey";
+        private const string PhoebeIsOfflineKey = "isOfflineKey";
 
         private static string GetPropertyName<T> (Expression<Func<SettingsStore, T>> expr)
         {
@@ -280,6 +281,15 @@ namespace Toggl.Ross.Data
             get { return (GetInt (PhoebeShowWelcomeKey) ?? 1) == 1; }
             set {
                 SetInt (PhoebeShowWelcomeKey, value ? 1 : 0);
+            }
+        }
+
+        public bool OfflineMode
+        {
+            get {
+                return false;
+            } set {
+                SetInt (PhoebeIsOfflineKey, value ? 1 : 0);
             }
         }
     }

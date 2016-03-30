@@ -102,51 +102,9 @@ namespace Toggl.Phoebe.Tests.Reactive
             });
 
             RxChain.Send (new DataMsg.TimeEntryPut (te));
-
-            RxChain.Send (new DataMsg.TimeEntriesRemovePermanently (te));
+            RxChain.Send (new DataMsg.TimeEntriesRemove (te));
         }
 
-        [Test]
-        public void TestRemoveEntryWithUndo ()
-        {
-            int step = 0;
-            IDisposable subscription = null;
-            var te = Util.CreateTimeEntryData (DateTime.Now);
-            var db = ServiceContainer.Resolve<ISyncDataStore> ();
-
-            subscription = StoreManager
-                           .Singleton
-                           .Observe (x => x.State)
-            .Subscribe (state => {
-                switch (step) {
-                // Add
-                case 0:
-                    Assert.That (state.TimeEntries.ContainsKey (te.Id), Is.True);
-                    step++;
-                    break;
-                // Remove with undo
-                case 1:
-                    Assert.That (state.TimeEntries.ContainsKey (te.Id), Is.False);
-                    // The entry shouldn't actually be deleted from the db
-                    Assert.That (db.Table<TimeEntryData> ().Any (x => x.Id == te.Id), Is.True);
-                    step++;
-                    break;
-                // Restore from undo
-                case 2:
-                    Assert.That (state.TimeEntries.ContainsKey (te.Id), Is.True);
-                    subscription.Dispose ();
-                    break;
-                }
-            });
-
-            RxChain.Send (new DataMsg.TimeEntryPut (te));
-
-            RxChain.Send (new DataMsg.TimeEntriesRemoveWithUndo (
-                              new List<ITimeEntryData> { te }));
-
-            RxChain.Send (new DataMsg.TimeEntriesRestoreFromUndo (
-                              new List<ITimeEntryData> { te }));
-        }
 
         // TODO RX: Clone all the objects added to AppState to make this test work?
         //[Test]
@@ -206,8 +164,7 @@ namespace Toggl.Phoebe.Tests.Reactive
             });
 
             RxChain.Send (new DataMsg.TimeEntryPut (te));
-
-            RxChain.Send (new DataMsg.TimeEntriesRemovePermanently ( te ));
+            RxChain.Send (new DataMsg.TimeEntriesRemove ( te ));
         }
 
     }

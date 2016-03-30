@@ -36,7 +36,8 @@ namespace Toggl.Phoebe._ViewModels
                 Id = Guid.NewGuid (),
                 Name = tagName,
                 WorkspaceId = workspace.Id,
-                WorkspaceRemoteId = workspace.RemoteId.HasValue ? workspace.RemoteId.Value : 0
+                WorkspaceRemoteId = workspace.RemoteId.HasValue ? workspace.RemoteId.Value : 0,
+                SyncState = SyncState.CreatePending
             };
 
             RxChain.Send (new DataMsg.TagsPut (new[] { tag }), testOptions);

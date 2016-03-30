@@ -2,10 +2,10 @@
 using System.Collections.Generic;
 using SQLite.Net.Interop;
 using SQLite.Net.Platform.Generic;
-using Toggl.Phoebe._Data.Json;
-using Toggl.Phoebe._Data.Models;
-using Toggl.Phoebe._Net;
-using Toggl.Phoebe._Reactive;
+using Toggl.Phoebe.Data.Json;
+using Toggl.Phoebe.Data.Models;
+using Toggl.Phoebe.Net;
+using Toggl.Phoebe.Reactive;
 using System.Threading.Tasks;
 using Toggl.Phoebe.Analytics;
 

@@ -17,14 +17,14 @@ using Toggl.Joey.UI.Views;
 using Toggl.Phoebe.Logging;
 using XPlatUtils;
 using DialogFragment = Android.Support.V4.App.DialogFragment;
-using Toggl.Phoebe._ViewModels;
+using Toggl.Phoebe.ViewModels;
 using GalaSoft.MvvmLight.Helpers;
 using Android.Gms.Common.Apis;
 using Android.Gms.Auth.Api.SignIn;
 using Android.Gms.Auth.Api;
 using Android.Support.V4.App;
-using Toggl.Phoebe._Net;
-using Toggl.Phoebe._Helpers;
+using Toggl.Phoebe.Net;
+using Toggl.Phoebe.Helpers;
 
 namespace Toggl.Joey.UI.Activities
 {

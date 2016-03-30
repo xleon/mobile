@@ -8,8 +8,8 @@ using Android.Widget;
 using GalaSoft.MvvmLight.Helpers;
 using Toggl.Joey.UI.Utils;
 using Toggl.Joey.UI.Views;
-using Toggl.Phoebe._Data.Models;
-using Toggl.Phoebe._ViewModels;
+using Toggl.Phoebe.Data.Models;
+using Toggl.Phoebe.ViewModels;
 using Activity = Android.Support.V7.App.AppCompatActivity;
 
 namespace Toggl.Joey.UI.Fragments
@@ -54,7 +54,7 @@ namespace Toggl.Joey.UI.Fragments
         public override void OnCreate (Bundle savedInstanceState)
         {
             base.OnCreate (savedInstanceState);
-            viewModel = new ClientListVM (Phoebe._Reactive.StoreManager.Singleton.AppState, WorkspaceId);
+            viewModel = new ClientListVM (Phoebe.Reactive.StoreManager.Singleton.AppState, WorkspaceId);
         }
 
         public override void OnDestroy ()

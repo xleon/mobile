@@ -7,8 +7,8 @@ using Android.Graphics;
 using Android.Util;
 using Android.Views;
 using Android.Widget;
-using Toggl.Phoebe._Data.Models;
-using Toggl.Phoebe._Reports;
+using Toggl.Phoebe.Data.Models;
+using Toggl.Phoebe.Reports;
 
 namespace Toggl.Joey.UI.Views
 {

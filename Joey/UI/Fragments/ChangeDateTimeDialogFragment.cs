@@ -8,7 +8,7 @@ using Android.Views;
 using Android.Widget;
 using Toggl.Joey.UI.Utils;
 using Toggl.Joey.UI.Views;
-using Toggl.Phoebe._Reactive;
+using Toggl.Phoebe.Reactive;
 using XPlatUtils;
 
 namespace Toggl.Joey.UI.Fragments

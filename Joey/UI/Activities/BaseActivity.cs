@@ -24,7 +24,7 @@ namespace Toggl.Joey.UI.Activities
 
         protected virtual bool StartAuthActivity ()
         {
-            var user = Phoebe._Reactive.StoreManager.Singleton.AppState.User;
+            var user = Phoebe.Reactive.StoreManager.Singleton.AppState.User;
             if (user.Id == Guid.Empty) {
                 var intent = new Intent (this, typeof (LoginActivity));
                 intent.AddFlags (ActivityFlags.ClearTop);

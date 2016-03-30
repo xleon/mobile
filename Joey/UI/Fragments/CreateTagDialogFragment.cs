@@ -5,8 +5,8 @@ using Android.OS;
 using Android.Text;
 using Android.Widget;
 using GalaSoft.MvvmLight.Helpers;
-using Toggl.Phoebe._Reactive;
-using Toggl.Phoebe._ViewModels;
+using Toggl.Phoebe.Reactive;
+using Toggl.Phoebe.ViewModels;
 
 namespace Toggl.Joey.UI.Fragments
 {

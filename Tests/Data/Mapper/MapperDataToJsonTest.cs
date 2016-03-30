@@ -2,8 +2,9 @@
 using NUnit.Framework;
 using SQLite.Net.Interop;
 using SQLite.Net.Platform.Generic;
-using Toggl.Phoebe._Data.Json;
-using Toggl.Phoebe._Data.Models;
+using Toggl.Phoebe.Data;
+using Toggl.Phoebe.Data.Json;
+using Toggl.Phoebe.Data.Models;
 using XPlatUtils;
 
 namespace Toggl.Phoebe.Tests.Data.Mapper
@@ -239,7 +240,7 @@ namespace Toggl.Phoebe.Tests.Data.Mapper
                 ApiToken = "123",
                 Email = "support@toggl.com",
                 DateFormat = "MM-DD-YY",
-                DurationFormat = _Data.DurationFormat.Classic,
+                DurationFormat = DurationFormat.Classic,
                 GoogleAccessToken = "GoogleToken",
                 DefaultWorkspaceRemoteId = 111,
                 ImageUrl = "image.jpg",

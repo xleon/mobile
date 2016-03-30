@@ -6,8 +6,8 @@ using Android.Views;
 using Android.Widget;
 using Toggl.Joey.UI.Utils;
 using Toggl.Joey.UI.Views;
-using Toggl.Phoebe._Data.Models;
-using Toggl.Phoebe._ViewModels;
+using Toggl.Phoebe.Data.Models;
+using Toggl.Phoebe.ViewModels;
 using XPlatUtils;
 
 namespace Toggl.Joey.UI.Adapters

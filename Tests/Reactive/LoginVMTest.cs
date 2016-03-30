@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Linq;
 using NUnit.Framework;
-using Toggl.Phoebe._Data;
-using Toggl.Phoebe._Data.Models;
-using Toggl.Phoebe._Net;
-using Toggl.Phoebe._Reactive;
-using Toggl.Phoebe._ViewModels;
+using Toggl.Phoebe.Data;
+using Toggl.Phoebe.Data.Models;
+using Toggl.Phoebe.Net;
+using Toggl.Phoebe.Reactive;
+using Toggl.Phoebe.ViewModels;
 using Toggl.Phoebe.Analytics;
 using XPlatUtils;
 

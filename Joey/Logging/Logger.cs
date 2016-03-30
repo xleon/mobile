@@ -59,7 +59,7 @@ namespace Toggl.Joey.Logging
         protected override void AddExtraMetadata (Metadata md)
         {
             // TODO: RX Better way to do that!
-            var settings = Phoebe._Reactive.StoreManager.Singleton.AppState.Settings;
+            var settings = Phoebe.Reactive.StoreManager.Singleton.AppState.Settings;
             md.AddToTab ("State", "Experiment", OBMExperimentManager.ExperimentNumber);
             md.AddToTab ("State", "Push registered", string.IsNullOrWhiteSpace (settings.GcmRegistrationId) ? "No" : "Yes");
 

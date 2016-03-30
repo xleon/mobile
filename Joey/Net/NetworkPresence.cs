@@ -2,9 +2,9 @@
 using Android.Content;
 using Android.Content.PM;
 using Android.Net;
-using Toggl.Phoebe._Data;
-using Toggl.Phoebe._Reactive;
-using Toggl.Phoebe._Net;
+using Toggl.Phoebe.Data;
+using Toggl.Phoebe.Reactive;
+using Toggl.Phoebe.Net;
 
 namespace Toggl.Joey.Net
 {

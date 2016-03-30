@@ -9,8 +9,8 @@ using Toggl.Joey.UI.Utils;
 using Toggl.Joey.UI.Views;
 using Fragment = Android.Support.V4.App.Fragment;
 using FragmentManager = Android.Support.V4.App.FragmentManager;
-using Toggl.Phoebe._ViewModels;
-using Toggl.Phoebe._Reactive;
+using Toggl.Phoebe.ViewModels;
+using Toggl.Phoebe.Reactive;
 
 namespace Toggl.Joey.UI.Fragments
 {

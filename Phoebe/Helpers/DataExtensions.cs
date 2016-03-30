@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Linq;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Threading.Tasks;
 using SQLite.Net.Async;
 using Toggl.Phoebe.Data.Models;
@@ -158,16 +160,81 @@ namespace Toggl.Phoebe.Helpers
             return data;
         }
 
+        // GetProperties doesn't get properties from base interfaces, we need this
+        // From http://stackoverflow.com/a/2444090/3922220
+        public static PropertyInfo[] GetPublicProperties (this Type type)
+        {
+            if (type.IsInterface) {
+                var propertyInfos = new List<PropertyInfo> ();
+
+                var considered = new List<Type> ();
+                var queue = new Queue<Type> ();
+                considered.Add (type);
+                queue.Enqueue (type);
+                while (queue.Count > 0) {
+                    var subType = queue.Dequeue ();
+                    foreach (var subInterface in subType.GetInterfaces ()) {
+                        if (considered.Contains (subInterface)) continue;
+
+                        considered.Add (subInterface);
+                        queue.Enqueue (subInterface);
+                    }
+
+                    var typeProperties = subType.GetProperties (
+                        BindingFlags.FlattenHierarchy
+                        | BindingFlags.Public
+                        | BindingFlags.Instance);
+
+                    var newPropertyInfos = typeProperties
+                        .Where (x => !propertyInfos.Contains (x));
+
+                    propertyInfos.InsertRange (0, newPropertyInfos);
+                }
+
+                return propertyInfos.ToArray ();
+            }
+
+            return type.GetProperties (BindingFlags.FlattenHierarchy
+                | BindingFlags.Public | BindingFlags.Instance);
+        }
+
         public static bool PublicInstancePropertiesEqual<T> (this T self, T to, params string[] ignore) where T : ICommonData
         {
+            Func<object, object, bool> areDifferent = (x, y) => x != y && (x == null || !x.Equals (y));
+
             Type type = typeof (T);
             var ignoreList = new List<string> (ignore);
-            foreach (System.Reflection.PropertyInfo pi in type.GetProperties (System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)) {
+            foreach (PropertyInfo pi in type.GetPublicProperties ()) {
                 if (!ignoreList.Contains (pi.Name)) {
-                    object selfValue = type.GetProperty (pi.Name).GetValue (self, null);
-                    object toValue = type.GetProperty (pi.Name).GetValue (to, null);
+                    object selfValue = pi.GetValue (self, null);
+                    object toValue = pi.GetValue (to, null);
 
-                    if (selfValue != toValue && (selfValue == null || !selfValue.Equals (toValue))) {
+                    var selfSeq = selfValue as System.Collections.IEnumerable;
+                    var toSeq = toValue as System.Collections.IEnumerable;
+
+                    if (selfSeq != null && toSeq != null) {
+                        var bothFinished = false;
+                        var enum1 = selfSeq.GetEnumerator ();
+                        var enum2 = toSeq.GetEnumerator ();
+
+                        while (!bothFinished) {
+                            var firstFinished = !enum1.MoveNext ();
+                            var secondFinished = !enum2.MoveNext ();
+
+                            if (firstFinished && secondFinished) {
+                                bothFinished = true;
+                            }
+                            else if (firstFinished || secondFinished) {
+                                return false;
+                            }
+                            else {
+                                if (areDifferent (enum1.Current, enum2.Current)) {
+                                    return false;
+                                }
+                            }
+                        }
+                    }
+                    else if (areDifferent (selfValue, toValue)) {
                         return false;
                     }
                 }

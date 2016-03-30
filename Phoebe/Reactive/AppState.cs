@@ -184,7 +184,7 @@ namespace Toggl.Phoebe.Reactive
                    .OrderBy (p => p.Name);
         }
 
-        public TimeEntryData GetTimeEntryDraft ()
+        public ITimeEntryData GetTimeEntryDraft ()
         {
             var userId = User.Id;
             var workspaceId = User.DefaultWorkspaceId;
@@ -192,13 +192,12 @@ namespace Toggl.Phoebe.Reactive
             var durationOnly = User.TrackingMode == TrackingMode.Continue;
 
             // Create new draft object
-            return new TimeEntryData {
-                State = TimeEntryState.New,
-                UserId = userId,
-                WorkspaceId = workspaceId,
-                WorkspaceRemoteId = remoteWorkspaceId,
-                DurationOnly = durationOnly,
-            };
+            return TimeEntryData.Create (x => {
+                x.UserId = userId;
+                x.WorkspaceId = workspaceId;
+                x.WorkspaceRemoteId = remoteWorkspaceId;
+                x.DurationOnly = durationOnly;
+            });
         }
 
         public static AppState Init ()

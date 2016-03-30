@@ -310,23 +310,20 @@ namespace Toggl.Phoebe.Reactive
                     }));
                 }
 
-                // TODO RX: Review the conditions to create a new time entry
-                TimeEntryData newEntry = null;
+                ITimeEntryData newEntry = null;
                 if (entryData.Id == Guid.Empty) {
                     newEntry = state.GetTimeEntryDraft ();
                 } else {
                     CheckTimeEntryState (entryData, TimeEntryState.Finished, "continue");
-                    newEntry = (TimeEntryData)entryData.Clone ();
+                    newEntry = entryData;
                 }
 
-                newEntry.ModifiedAt = Time.UtcNow;
-                newEntry.SyncState = SyncState.CreatePending;
-                newEntry.RemoteId = null;
-                newEntry.Id = Guid.NewGuid ();
-                newEntry.State = TimeEntryState.Running;
-                newEntry.StartTime = Time.UtcNow;
-                newEntry.StopTime = null;
-                ctx.Put (newEntry);
+                ctx.Put (newEntry.With (x => {
+                    x.RemoteId = null;
+                    x.State = TimeEntryState.Running;
+                    x.StartTime = Time.UtcNow;
+                    x.StopTime = null;
+                }));
             });
 
             return DataSyncMsg.Create (

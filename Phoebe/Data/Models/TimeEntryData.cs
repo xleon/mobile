@@ -35,13 +35,22 @@ namespace Toggl.Phoebe.Data.Models
     [Table ("TimeEntryModel")]
     public class TimeEntryData : CommonData, ITimeEntryData
     {
+        public static ITimeEntryData Create (Action<TimeEntryData> transform = null)
+        {
+            return CommonData.Create (transform);
+        }
+
+        /// <summary>
+        /// ATTENTION: This constructor should only be used by SQL and JSON serializers
+        /// To create new objects, use the static Create method instead
+        /// </summary>
         public TimeEntryData ()
         {
             State = TimeEntryState.New;
             TagIds = new List<Guid> ();
         }
 
-        protected TimeEntryData (ITimeEntryData other) : base (other)
+        TimeEntryData (ITimeEntryData other) : base (other)
         {
             State = other.State;
             Description = other.Description;

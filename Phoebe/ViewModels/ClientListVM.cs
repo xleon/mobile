@@ -23,7 +23,7 @@ namespace Toggl.Phoebe.ViewModels
             ClientDataCollection = new ObservableRangeCollection<IClientData> ();
             var clients =  appState.Clients.Values.Where (r => r.DeletedAt == null && r.WorkspaceId == workspaceId).ToList ();
             if (!clients.Any ()) {
-                clients.Add (new ClientData { Name = "No client" });
+                clients.Add (ClientData.Create (x => x.Name = "No client"));
             }
             Sort (clients);
             ClientDataCollection.AddRange (clients);

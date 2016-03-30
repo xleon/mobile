@@ -30,13 +30,22 @@ namespace Toggl.Phoebe.Data.Models
     [Table ("WorkspaceModel")]
     public class WorkspaceData : CommonData, IWorkspaceData
     {
+        public static IWorkspaceData Create (Action<WorkspaceData> transform = null)
+        {
+            return CommonData.Create (transform);
+        }
+
+        /// <summary>
+        /// ATTENTION: This constructor should only be used by SQL and JSON serializers
+        /// To create new objects, use the static Create method instead
+        /// </summary>
         public WorkspaceData ()
         {
             ProjectCreationPrivileges = AccessLevel.Any;
             BillableRatesVisibility = AccessLevel.Any;
         }
 
-        public WorkspaceData (WorkspaceData other) : base (other)
+        WorkspaceData (WorkspaceData other) : base (other)
         {
             Name = other.Name;
             IsPremium = other.IsPremium;

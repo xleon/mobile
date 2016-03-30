@@ -17,6 +17,15 @@ namespace Toggl.Phoebe.Data.Models
     [Table ("ProjectUserModel")]
     public class ProjectUserData : CommonData, IProjectUserData
     {
+        public static IProjectUserData Create (Action<ProjectUserData> transform = null)
+        {
+            return CommonData.Create (transform);
+        }
+
+        /// <summary>
+        /// ATTENTION: This constructor should only be used by SQL and JSON serializers
+        /// To create new objects, use the static Create method instead
+        /// </summary>
         public ProjectUserData ()
         {
         }

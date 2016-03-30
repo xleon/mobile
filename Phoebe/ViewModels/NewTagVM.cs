@@ -32,13 +32,11 @@ namespace Toggl.Phoebe.ViewModels
                     r => r.WorkspaceId == workspace.Id && r.Name == tagName);
 
             var tag = existing
-            ?? new TagData {
-                Id = Guid.NewGuid (),
-                Name = tagName,
-                WorkspaceId = workspace.Id,
-                WorkspaceRemoteId = workspace.RemoteId.HasValue ? workspace.RemoteId.Value : 0,
-                SyncState = SyncState.CreatePending
-            };
+            ?? TagData.Create (x => {
+                x.Name = tagName;
+                x.WorkspaceId = workspace.Id;
+                x.WorkspaceRemoteId = workspace.RemoteId.HasValue ? workspace.RemoteId.Value : 0;
+            });
 
             RxChain.Send (new DataMsg.TagsPut (new[] { tag }), testOptions);
             return tag;

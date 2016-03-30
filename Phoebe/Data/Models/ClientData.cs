@@ -14,11 +14,20 @@ namespace Toggl.Phoebe.Data.Models
     [Table ("ClientModel")]
     public class ClientData : CommonData, IClientData
     {
+        public static IClientData Create (Action<ClientData> transform = null)
+        {
+            return CommonData.Create (transform);
+        }
+
+        /// <summary>
+        /// ATTENTION: This constructor should only be used by SQL and JSON serializers
+        /// To create new objects, use the static Create method instead
+        /// </summary>
         public ClientData ()
         {
         }
 
-        protected ClientData (ClientData other) : base (other)
+        ClientData (ClientData other) : base (other)
         {
             Name = other.Name;
             WorkspaceId = other.WorkspaceId;

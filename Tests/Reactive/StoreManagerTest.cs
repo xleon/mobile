@@ -50,8 +50,8 @@ namespace Toggl.Phoebe.Tests.Reactive
         {
             int step = 0;
             IDisposable subscription = null;
-            var te = Util.CreateTimeEntryData (DateTime.Now);
-            te.State = TimeEntryState.Running;
+            var te = Util.CreateTimeEntryData (DateTime.Now)
+                         .With (x => x.State = TimeEntryState.Running);
 
             subscription = StoreManager
                            .Singleton

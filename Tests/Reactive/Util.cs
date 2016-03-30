@@ -212,26 +212,23 @@ namespace Toggl.Phoebe.Tests.Reactive
         public static readonly Guid UserId = Guid.NewGuid ();
         public static readonly Guid WorkspaceId = Guid.NewGuid ();
 
-        public static TimeEntryData CreateTimeEntryData (
+        public static ITimeEntryData CreateTimeEntryData (
             DateTime startTime, long userRemoteId = 1, long workspaceRemoteId = 1)
         {
-            var id = Guid.NewGuid ();
-            return new TimeEntryData {
-                Id = id,
-                Description = id.ToString (),
-                IsBillable = true,
-                DurationOnly = true,
-                StartTime = startTime,
-                StopTime = startTime.AddMinutes (1),
-                TagIds = new List<Guid> (),
-                TaskRemoteId = null,
-                UserRemoteId = userRemoteId,
-                WorkspaceRemoteId = workspaceRemoteId,
-                UserId = UserId,
-                WorkspaceId = WorkspaceId,
-                State = TimeEntryState.Finished,
-                SyncState = SyncState.CreatePending
-            };
+            return TimeEntryData.Create (x => {
+                x.Description = x.Id.ToString ();
+                x.IsBillable = true;
+                x.DurationOnly = true;
+                x.StartTime = startTime;
+                x.StopTime = startTime.AddMinutes (1);
+                x.TagIds = new List<Guid> ();
+                x.TaskRemoteId = null;
+                x.UserRemoteId = userRemoteId;
+                x.WorkspaceRemoteId = workspaceRemoteId;
+                x.UserId = UserId;
+                x.WorkspaceId = WorkspaceId;
+                x.State = TimeEntryState.Finished;
+            });
         }
 
         public static TaskCompletionSource<T> CreateTask<T> (int timeout = 10000)

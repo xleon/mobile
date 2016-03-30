@@ -35,11 +35,20 @@ namespace Toggl.Phoebe.Data.Models
     [Table ("UserModel")]
     public class UserData : CommonData, IUserData
     {
+        public static IUserData Create (Action<UserData> transform = null)
+        {
+            return CommonData.Create (transform);
+        }
+
+        /// <summary>
+        /// ATTENTION: This constructor should only be used by SQL and JSON serializers
+        /// To create new objects, use the static Create method instead
+        /// </summary>
         public UserData ()
         {
         }
 
-        protected UserData (UserData other) : base (other)
+        UserData (UserData other) : base (other)
         {
             Name = other.Name;
             Email = other.Email;

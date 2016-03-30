@@ -15,20 +15,20 @@ namespace Toggl.Phoebe.Data.Models
     [Table ("TagModel")]
     public class TagData : CommonData, ITagData
     {
+        public static ITagData Create (Action<TagData> transform = null)
+        {
+            return CommonData.Create (transform);
+        }
+
+        /// <summary>
+        /// ATTENTION: This constructor should only be used by SQL and JSON serializers
+        /// To create new objects, use the static Create method instead
+        /// </summary>
         public TagData ()
         {
         }
 
-        public TagData (string name, Guid workspaceId, long workspaceRemoteId)
-        {
-            Id = Guid.NewGuid ();
-            Name = name;
-            WorkspaceId = workspaceId;
-            WorkspaceRemoteId = workspaceRemoteId;
-            SyncState = SyncState.CreatePending;
-        }
-
-        protected TagData (TagData other) : base (other)
+        TagData (TagData other) : base (other)
         {
             Name = other.Name;
             WorkspaceId = other.WorkspaceId;

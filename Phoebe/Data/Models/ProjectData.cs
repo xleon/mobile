@@ -35,6 +35,15 @@ namespace Toggl.Phoebe.Data.Models
 
         public static readonly string GroupedProjectColor = "#dddddd";
 
+        public static IProjectData Create (Action<ProjectData> transform = null)
+        {
+            return CommonData.Create (transform);
+        }
+
+        /// <summary>
+        /// ATTENTION: This constructor should only be used by SQL and JSON serializers
+        /// To create new objects, use the static Create method instead
+        /// </summary>
         public ProjectData ()
         {
         }

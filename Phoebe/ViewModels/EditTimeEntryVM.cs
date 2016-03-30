@@ -299,7 +299,13 @@ namespace Toggl.Phoebe.ViewModels
                     r => r.Name == DefaultTag && r.WorkspaceId == data.WorkspaceId).ToList ();
 
             if (defaultTagList.Count == 0) {
-                defaultTagList = new List<ITagData> { new TagData (DefaultTag, data.WorkspaceId, data.WorkspaceRemoteId) };
+                defaultTagList = new List<ITagData> {
+                    TagData.Create (x => {
+                        x.Name = DefaultTag;
+                        x.WorkspaceId = data.WorkspaceId;
+                        x.WorkspaceRemoteId = data.WorkspaceRemoteId;
+                    })
+                };
                 RxChain.Send (new DataMsg.TagsPut (defaultTagList));
             }
             return defaultTagList;

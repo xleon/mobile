@@ -13,22 +13,20 @@ namespace Toggl.Phoebe.ViewModels
     [ImplementPropertyChanged]
     public class NewProjectVM : IDisposable
     {
+		private IProjectData model;
         private readonly AppState appState;
         private readonly IWorkspaceData workspace;
-        private readonly ProjectData model;
 
         public NewProjectVM (AppState appState, Guid workspaceId)
         {
             this.appState = appState;
             workspace = appState.Workspaces[workspaceId];
-            model = new ProjectData {
-                Id = Guid.NewGuid (),
-                WorkspaceId = workspaceId,
-                WorkspaceRemoteId = workspace.RemoteId.HasValue ? workspace.RemoteId.Value : 0,
-                IsActive = true,
-                IsPrivate = true,
-                SyncState = SyncState.CreatePending
-            };
+            model = ProjectData.Create (x => {
+                x.WorkspaceId = workspaceId;
+                x.WorkspaceRemoteId = workspace.RemoteId.HasValue ? workspace.RemoteId.Value : 0;
+                x.IsActive = true;
+                x.IsPrivate = true;
+            });
             ServiceContainer.Resolve<ITracker> ().CurrentScreen = "New Project";
         }
 
@@ -40,15 +38,19 @@ namespace Toggl.Phoebe.ViewModels
 
         public void SetClient (IClientData clientData)
         {
-            model.ClientId = clientData.Id;
-            model.ClientRemoteId = clientData.RemoteId;
+            model = model.With (x => {
+                x.ClientId = clientData.Id;
+                x.ClientRemoteId = clientData.RemoteId;
+            });
             ClientName = clientData.Name;
         }
 
         public IProjectData SaveProject (string projectName, int projectColor, SyncTestOptions testOptions = null)
         {
-            model.Name = projectName;
-            model.Color = projectColor;
+            model = model.With (x => {
+                x.Name = projectName;
+                x.Color = projectColor;
+            });
 
             // TODO: RX for the moment, ProjectUserData
             // is not used in any case.

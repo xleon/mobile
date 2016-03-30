@@ -18,11 +18,20 @@ namespace Toggl.Phoebe.Data.Models
     [Table ("TaskModel")]
     public class TaskData : CommonData, ITaskData
     {
+        public static ITaskData Create (Action<TaskData> transform = null)
+        {
+            return CommonData.Create (transform);
+        }
+
+        /// <summary>
+        /// ATTENTION: This constructor should only be used by SQL and JSON serializers
+        /// To create new objects, use the static Create method instead
+        /// </summary>
         public TaskData ()
         {
         }
 
-        protected TaskData (TaskData other) : base (other)
+        TaskData (TaskData other) : base (other)
         {
             Name = other.Name;
             IsActive = other.IsActive;

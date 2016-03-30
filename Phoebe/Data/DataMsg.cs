@@ -178,15 +178,15 @@ namespace Toggl.Phoebe.Data
 
         public sealed class ProjectDataPut : DataMsg
         {
-            public Either<ProjectData, Exception> Data
+            public Either<IProjectData, Exception> Data
             {
-                get { return RawData.CastLeft<ProjectData> (); }
+                get { return RawData.CastLeft<IProjectData> (); }
                 set { RawData = value.CastLeft<object> (); }
             }
 
-            public ProjectDataPut (ProjectData project)
+            public ProjectDataPut (IProjectData project)
             {
-                Data = Either<ProjectData, Exception>.Left (project);
+                Data = Either<IProjectData, Exception>.Left (project);
             }
         }
 

@@ -4,9 +4,13 @@ using SQLite.Net.Attributes;
 namespace Toggl.Phoebe.Data.Models
 {
     public enum SyncState {
-        Synced,
+        /// <summary>
+        /// ILLEGAL: The default state must be changed immediately after creation
+        /// </summary>
+        None,
         CreatePending,
         UpdatePending,
+		Synced,
     }
 
     public interface ICommonData : IComparable<ICommonData>, ICloneable
@@ -20,6 +24,17 @@ namespace Toggl.Phoebe.Data.Models
 
     public abstract class CommonData : ICommonData
     {
+        protected static T Create<T> (Action<T> transform = null)
+        where T : CommonData, new ()
+        {
+            var x = new T ();
+            x.Id = Guid.NewGuid ();
+            x.SyncState = SyncState.CreatePending;
+            if (transform != null)
+                transform (x);
+            return x;
+        }
+
         protected CommonData ()
         {
             ModifiedAt = Time.UtcNow;

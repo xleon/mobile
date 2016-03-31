@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using Android.Views;
 using Android.Widget;
+using GalaSoft.MvvmLight.Helpers;
 using Toggl.Joey.Data;
 using Toggl.Joey.UI.Utils;
 using Toggl.Joey.UI.Views;
@@ -19,9 +20,14 @@ namespace Toggl.Joey.UI.Adapters
         private const int CheckboxViewType = 1;
         private readonly List<IListItem> listItems;
 
+
+        Binding<bool, bool> showNotificationBinding;
+
+        protected SettingsVM viewModel { get; set; }
+
         public SettingsAdapter ()
         {
-            var viewModel = new SettingsVM(StoreManager.Singleton.AppState);
+            this.viewModel = new SettingsVM(StoreManager.Singleton.AppState);
 
             listItems = new List<IListItem> () {
                 new HeaderListItem (Resource.String.SettingsGeneralHeader),
@@ -62,6 +68,9 @@ namespace Toggl.Joey.UI.Adapters
                 ),
 
             };
+
+            this.showNotificationBinding =
+                    this.SetBinding(() => viewModel.ShowNotification, () => ((CheckboxListItem)listItems[1]).IsChecked);
         }
 
         public override int ViewTypeCount
@@ -166,13 +175,16 @@ namespace Toggl.Joey.UI.Adapters
             private readonly Func<bool> valueGetter;
             private readonly Action<bool> valueSetter;
 
-            public CheckboxListItem (int titleResId, int descriptionResId, string settingName, Func<bool> valueGetter, Action<bool> valueSetter)
+            public CheckboxListItem (int titleResId, int descriptionResId, string settingName,
+                                     Func<bool> valueGetter, Action<bool> valueSetter)
             {
                 this.titleResId = titleResId;
                 this.descriptionResId = descriptionResId;
                 this.settingName = settingName;
                 this.valueGetter = valueGetter;
                 this.valueSetter = valueSetter;
+
+
             }
 
             public int ViewType

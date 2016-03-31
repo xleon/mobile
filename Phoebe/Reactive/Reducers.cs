@@ -310,15 +310,15 @@ namespace Toggl.Phoebe.Reactive
                     }));
                 }
 
-                ITimeEntryData newEntry = null;
+                ITimeEntryData draft = null;
                 if (entryData.Id == Guid.Empty) {
-                    newEntry = state.GetTimeEntryDraft ();
+                    draft = state.GetTimeEntryDraft ();
                 } else {
                     CheckTimeEntryState (entryData, TimeEntryState.Finished, "continue");
-                    newEntry = entryData;
+                    draft = entryData;
                 }
 
-                ctx.Put (newEntry.With (x => {
+                ctx.Put (TimeEntryData.Create (draft: draft, transform: x => {
                     x.RemoteId = null;
                     x.State = TimeEntryState.Running;
                     x.StartTime = Time.UtcNow;

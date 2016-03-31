@@ -174,19 +174,19 @@ namespace Toggl.Phoebe.Helpers
                 while (queue.Count > 0) {
                     var subType = queue.Dequeue ();
                     foreach (var subInterface in subType.GetInterfaces ()) {
-                        if (considered.Contains (subInterface)) continue;
+                        if (considered.Contains (subInterface)) { continue; }
 
                         considered.Add (subInterface);
                         queue.Enqueue (subInterface);
                     }
 
                     var typeProperties = subType.GetProperties (
-                        BindingFlags.FlattenHierarchy
-                        | BindingFlags.Public
-                        | BindingFlags.Instance);
+                                             BindingFlags.FlattenHierarchy
+                                             | BindingFlags.Public
+                                             | BindingFlags.Instance);
 
                     var newPropertyInfos = typeProperties
-                        .Where (x => !propertyInfos.Contains (x));
+                                           .Where (x => !propertyInfos.Contains (x));
 
                     propertyInfos.InsertRange (0, newPropertyInfos);
                 }
@@ -195,7 +195,7 @@ namespace Toggl.Phoebe.Helpers
             }
 
             return type.GetProperties (BindingFlags.FlattenHierarchy
-                | BindingFlags.Public | BindingFlags.Instance);
+                                       | BindingFlags.Public | BindingFlags.Instance);
         }
 
         public static bool PublicInstancePropertiesEqual<T> (this T self, T to, params string[] ignore) where T : ICommonData
@@ -223,18 +223,15 @@ namespace Toggl.Phoebe.Helpers
 
                             if (firstFinished && secondFinished) {
                                 bothFinished = true;
-                            }
-                            else if (firstFinished || secondFinished) {
+                            } else if (firstFinished || secondFinished) {
                                 return false;
-                            }
-                            else {
+                            } else {
                                 if (areDifferent (enum1.Current, enum2.Current)) {
                                     return false;
                                 }
                             }
                         }
-                    }
-                    else if (areDifferent (selfValue, toValue)) {
+                    } else if (areDifferent (selfValue, toValue)) {
                         return false;
                     }
                 }

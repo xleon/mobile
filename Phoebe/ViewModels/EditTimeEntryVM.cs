@@ -205,8 +205,7 @@ namespace Toggl.Phoebe.ViewModels
         public void Save ()
         {
             if (!IsManual) {
-                if (!previousData.Data.PublicInstancePropertiesEqual (richData.Data, "TagIds" ) ||
-                        !AreListEqual (richData.Data.TagIds, previousData.Data.TagIds)) {
+                if (!previousData.Data.PublicInstancePropertiesEqual (richData.Data)) {
                     RxChain.Send (new DataMsg.TimeEntryPut (richData.Data));
                     previousData = richData;
                 }
@@ -328,13 +327,6 @@ namespace Toggl.Phoebe.ViewModels
 
             // Create new tags and concat both lists
             return commonTags.Concat (tagsToCreate).ToList ();
-        }
-
-        private bool AreListEqual (IReadOnlyList<Guid> list1, IReadOnlyList<Guid> list2)
-        {
-            var firstNotSecond = list1.Except (list2).ToList();
-            var secondNotFirst = list2.Except (list1).ToList();
-            return firstNotSecond.Count == 0 && secondNotFirst.Count == 0;
         }
     }
 }

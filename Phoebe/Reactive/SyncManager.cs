@@ -228,8 +228,8 @@ namespace Toggl.Phoebe.Reactive
         {
             try {
                 var authToken = state.User.ApiToken;
-                var json = PrepareForSync (data, remoteObjects, state);
                 if (data.DeletedAt == null) {
+                    var json = PrepareForSync (data, remoteObjects, state);
                     CommonJson response = null;
                     switch (data.SyncState) {
                     case SyncState.CreatePending:
@@ -239,14 +239,20 @@ namespace Toggl.Phoebe.Reactive
                         response = await client.Update (authToken, json);
                         break;
                     default:
-                        // TODO RX: Throw exception?
-                        break;
+                        throw new Exception (
+                            string.Format ("Unexpected SyncState ({0}) of enqueued item: {1}",
+                                           Enum.GetName (typeof (SyncState), data.SyncState), data.Id));
                     }
                     var resData = mapper.Map (response);
                     resData.Id = data.Id;
                     remoteObjects.Add (resData);
                 } else {
-                    await client.Delete (authToken, json);
+                    var json = mapper.MapToJson (data);
+                    // If RemoteId is null, check whether it can be found in previously sent objects and ignore if not
+                    json.RemoteId = json.RemoteId ?? remoteObjects.SingleOrDefault (x => x.Id == data.Id)?.RemoteId;
+                    if (json.RemoteId != null) {
+                        await client.Delete (authToken, json);
+                    }
                 }
             } catch {
                 // TODO RX: Check the rejection reason: if an item is being specifically rejected,
@@ -476,15 +482,14 @@ namespace Toggl.Phoebe.Reactive
 
             if (data is ITimeEntryData) {
                 var timeEntry = (ITimeEntryData)data;
-                var tags = new List<string> ();
-                timeEntry.TagIds.ForEach (id => tags.Add (state.Tags [id].Name));
+                var tags = timeEntry.TagIds.Select (id => state.Tags [id].Name).ToList ();
                 json = mapper.Map<TimeEntryJson> (timeEntry);
                 ((TimeEntryJson)json).Tags = tags;
             } else {
                 json = mapper.MapToJson (data);
             }
 
-            if (json.RemoteId == null) {
+            if (data.SyncState == SyncState.UpdatePending && json.RemoteId == null) {
                 json.RemoteId = GetRemoteId (data.Id, remoteObjects, state, data.GetType ());
             }
             return json;

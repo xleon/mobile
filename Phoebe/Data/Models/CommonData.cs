@@ -10,7 +10,7 @@ namespace Toggl.Phoebe.Data.Models
         None,
         CreatePending,
         UpdatePending,
-		Synced,
+        Synced,
     }
 
     public interface ICommonData : IComparable<ICommonData>, ICloneable
@@ -24,14 +24,15 @@ namespace Toggl.Phoebe.Data.Models
 
     public abstract class CommonData : ICommonData
     {
-        protected static T Create<T> (Action<T> transform = null)
+        protected static T Create<T> (Action<T> transform = null, T draft = null)
         where T : CommonData, new ()
         {
-            var x = new T ();
+            var x = draft ?? new T ();
             x.Id = Guid.NewGuid ();
             x.SyncState = SyncState.CreatePending;
-            if (transform != null)
+            if (transform != null) {
                 transform (x);
+            }
             return x;
         }
 

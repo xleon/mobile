@@ -13,7 +13,7 @@ namespace Toggl.Phoebe.ViewModels
     [ImplementPropertyChanged]
     public class NewProjectVM : IDisposable
     {
-		private IProjectData model;
+        private IProjectData model;
         private readonly AppState appState;
         private readonly IWorkspaceData workspace;
 

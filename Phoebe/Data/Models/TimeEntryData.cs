@@ -35,9 +35,9 @@ namespace Toggl.Phoebe.Data.Models
     [Table ("TimeEntryModel")]
     public class TimeEntryData : CommonData, ITimeEntryData
     {
-        public static ITimeEntryData Create (Action<TimeEntryData> transform = null)
+        public static ITimeEntryData Create (Action<TimeEntryData> transform = null, ITimeEntryData draft = null)
         {
-            return CommonData.Create (transform);
+            return CommonData.Create (transform, draft != null ? new TimeEntryData (draft) : null);
         }
 
         /// <summary>

@@ -340,8 +340,8 @@ namespace Toggl.Phoebe.Data
     public static class DataSyncMsg
     {
         public static IReadOnlyList<string> DataOrder = new string[] {
-            nameof (UserData), nameof(WorkspaceData), nameof(ClientData), nameof(ProjectData),
-            nameof(TaskData), nameof(TagData), nameof(TimeEntryData)
+            nameof (UserData), nameof (WorkspaceData), nameof (ClientData), nameof (ProjectData),
+            nameof (TaskData), nameof (TagData), nameof (TimeEntryData)
         };
 
         public static void CheckSyncDataOrder (IEnumerable<ICommonData> syncData)

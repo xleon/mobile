@@ -226,26 +226,17 @@ namespace Toggl.Phoebe.Reactive
 
         async Task SendData (ICommonData data, List<CommonData> remoteObjects, AppState state)
         {
-            Func<ICommonData, CommonJson> ensureRemoteId = d => {
-                var json = mapper.MapToJson (d);
-                if (json.RemoteId == null) {
-                    json.RemoteId = GetRemoteId (d.Id, remoteObjects, state, d.GetType ());
-                }
-                return json;
-            };
-
             try {
                 var authToken = state.User.ApiToken;
-                data = BuildRemoteRelationships (data, remoteObjects, state);
+                var json = PrepareForSync (data, remoteObjects, state);
                 if (data.DeletedAt == null) {
                     CommonJson response = null;
                     switch (data.SyncState) {
                     case SyncState.CreatePending:
-                        response = await client.Create (authToken, mapper.MapToJson (data));
-                        response.ModifiedAt = DateTime.UtcNow;
+                        response = await client.Create (authToken, json);
                         break;
                     case SyncState.UpdatePending:
-                        response = await client.Update (authToken, ensureRemoteId (data));
+                        response = await client.Update (authToken, json);
                         break;
                     default:
                         // TODO RX: Throw exception?
@@ -255,7 +246,7 @@ namespace Toggl.Phoebe.Reactive
                     resData.Id = data.Id;
                     remoteObjects.Add (resData);
                 } else {
-                    await client.Delete (authToken, ensureRemoteId (data));
+                    await client.Delete (authToken, json);
                 }
             } catch {
                 // TODO RX: Check the rejection reason: if an item is being specifically rejected,
@@ -476,6 +467,27 @@ namespace Toggl.Phoebe.Reactive
             var te = mapper.Map<TimeEntryData> (jsonEntry);
             te.TagIds = tagIds;
             return te;
+        }
+
+        CommonJson PrepareForSync (ICommonData data, List<CommonData> remoteObjects, AppState state)
+        {
+            CommonJson json;
+            data = BuildRemoteRelationships (data, remoteObjects, state);
+
+            if (data is ITimeEntryData) {
+                var timeEntry = (ITimeEntryData)data;
+                var tags = new List<string> ();
+                timeEntry.TagIds.ForEach (id => tags.Add (state.Tags [id].Name));
+                json = mapper.Map<TimeEntryJson> (timeEntry);
+                ((TimeEntryJson)json).Tags = tags;
+            } else {
+                json = mapper.MapToJson (data);
+            }
+
+            if (json.RemoteId == null) {
+                json.RemoteId = GetRemoteId (data.Id, remoteObjects, state, data.GetType ());
+            }
+            return json;
         }
 
         ICommonData BuildRemoteRelationships (ICommonData data, List<CommonData> remoteObjects, AppState state)

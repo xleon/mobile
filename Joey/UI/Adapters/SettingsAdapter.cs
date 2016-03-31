@@ -6,6 +6,8 @@ using Toggl.Joey.Data;
 using Toggl.Joey.UI.Utils;
 using Toggl.Joey.UI.Views;
 using Toggl.Phoebe;
+using Toggl.Phoebe._Reactive;
+using Toggl.Phoebe._ViewModels;
 using Toggl.Phoebe.Data;
 using XPlatUtils;
 
@@ -19,43 +21,45 @@ namespace Toggl.Joey.UI.Adapters
 
         public SettingsAdapter ()
         {
+            var viewModel = new SettingsVM(StoreManager.Singleton.AppState);
+
             listItems = new List<IListItem> () {
                 new HeaderListItem (Resource.String.SettingsGeneralHeader),
-                    new CheckboxListItem (
-                        Resource.String.SettingsGeneralShowNotificationTitle,
-                        Resource.String.SettingsGeneralShowNotificationDesc,
-                        SettingsStore.PropertyShowNotification,
-                        s => s.ShowNotification,
-                        (s, v) => s.ShowNotification = v
-                    ),
-                    new CheckboxListItem (
-                        Resource.String.SettingsGeneralNotifTitle,
-                        Resource.String.SettingsGeneralNotifDesc,
-                        SettingsStore.PropertyIdleNotification,
-                        s => s.IdleNotification,
-                        (s, v) => s.IdleNotification = v
-                    ),
-                    new CheckboxListItem (
-                        Resource.String.SettingsGeneralAskProjectTitle,
-                        Resource.String.SettingsGeneralAskProjectDesc,
-                        SettingsStore.PropertyChooseProjectForNew,
-                        s => s.ChooseProjectForNew,
-                        (s, v) => s.ChooseProjectForNew = v
-                    ),
-                    new CheckboxListItem (
-                        Resource.String.SettingsGeneralMobileTagTitle,
-                        Resource.String.SettingsGeneralMobileTagDesc,
-                        SettingsStore.PropertyUseDefaultTag,
-                        s => s.UseDefaultTag,
-                        (s, v) => s.UseDefaultTag = v
-                    ),
-                    new CheckboxListItem (
-                        Resource.String.SettingsGeneralGroupedEntriesTitle,
-                        Resource.String.SettingsGeneralGroupedEntriesDesc,
-                        SettingsStore.PropertyGroupedTimeEntries,
-                        s => s.GroupedTimeEntries,
-                        (s, v) => s.GroupedTimeEntries = v
-                    ),
+                new CheckboxListItem (
+                    Resource.String.SettingsGeneralShowNotificationTitle,
+                    Resource.String.SettingsGeneralShowNotificationDesc,
+                    SettingsStore.PropertyShowNotification,
+                    () => viewModel.ShowNotification,
+                    viewModel.SetShowNotification
+                ),
+                new CheckboxListItem (
+                    Resource.String.SettingsGeneralNotifTitle,
+                    Resource.String.SettingsGeneralNotifDesc,
+                    SettingsStore.PropertyIdleNotification,
+                    () => viewModel.IdleNotification,
+                    viewModel.SetIdleNotification
+                ),
+                new CheckboxListItem (
+                    Resource.String.SettingsGeneralAskProjectTitle,
+                    Resource.String.SettingsGeneralAskProjectDesc,
+                    SettingsStore.PropertyChooseProjectForNew,
+                    () => viewModel.ChooseProjectForNew,
+                    viewModel.SetChooseProjectForNew
+                ),
+                new CheckboxListItem (
+                    Resource.String.SettingsGeneralMobileTagTitle,
+                    Resource.String.SettingsGeneralMobileTagDesc,
+                    SettingsStore.PropertyUseDefaultTag,
+                    () => viewModel.UseDefaultTag,
+                    viewModel.SetUseDefaultTag
+                ),
+                new CheckboxListItem (
+                    Resource.String.SettingsGeneralGroupedEntriesTitle,
+                    Resource.String.SettingsGeneralGroupedEntriesDesc,
+                    SettingsStore.PropertyGroupedTimeEntries,
+                    () => viewModel.GroupedTimeEntries,
+                    viewModel.SetGroupedTimeEntries
+                ),
 
             };
         }
@@ -159,10 +163,10 @@ namespace Toggl.Joey.UI.Adapters
             private readonly int titleResId;
             private readonly int descriptionResId;
             private readonly string settingName;
-            private readonly Func<SettingsStore, bool> valueGetter;
-            private readonly Action<SettingsStore, bool> valueSetter;
+            private readonly Func<bool> valueGetter;
+            private readonly Action<bool> valueSetter;
 
-            public CheckboxListItem (int titleResId, int descriptionResId, string settingName, Func<SettingsStore, bool> valueGetter, Action<SettingsStore, bool> valueSetter)
+            public CheckboxListItem (int titleResId, int descriptionResId, string settingName, Func<bool> valueGetter, Action<bool> valueSetter)
             {
                 this.titleResId = titleResId;
                 this.descriptionResId = descriptionResId;
@@ -194,15 +198,13 @@ namespace Toggl.Joey.UI.Adapters
             public bool IsChecked
             {
                 get {
-                    var store = ServiceContainer.Resolve<SettingsStore> ();
-                    return valueGetter (store);
+                    return valueGetter ();
                 }
             }
 
             public void Toggle ()
             {
-                var store = ServiceContainer.Resolve<SettingsStore> ();
-                valueSetter (store, !valueGetter (store));
+                valueSetter (!valueGetter ());
             }
         }
 

@@ -2,9 +2,9 @@ using System;
 using System.Collections.Generic;
 using CoreGraphics;
 using UIKit;
-using Toggl.Phoebe.Data;
-using Toggl.Phoebe.Data.Reports;
 using Toggl.Ross.Theme;
+using Toggl.Phoebe.Reports;
+using Toggl.Phoebe.Data.Models;
 
 namespace Toggl.Ross.Views.Charting
 {

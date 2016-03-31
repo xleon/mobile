@@ -2,8 +2,8 @@ using System;
 using CoreGraphics;
 using Foundation;
 using GalaSoft.MvvmLight.Helpers;
-using Toggl.Phoebe.Data.DataObjects;
-using Toggl.Phoebe.Data.ViewModels;
+using Toggl.Phoebe.Data.Models;
+using Toggl.Phoebe.ViewModels;
 using Toggl.Ross.Theme;
 using UIKit;
 
@@ -11,7 +11,7 @@ namespace Toggl.Ross.ViewControllers
 {
     public class ClientSelectionViewController : ObservableTableViewController<ClientData>
     {
-        private ClientListViewModel viewModel;
+        private ClientListVM viewModel;
         private readonly IOnClientSelectedHandler handler;
         private readonly Guid workspaceId;
 
@@ -28,7 +28,7 @@ namespace Toggl.Ross.ViewControllers
 
             View.Apply (Style.Screen);
             EdgesForExtendedLayout = UIRectEdge.None;
-            viewModel = await ClientListViewModel.Init (workspaceId);
+            viewModel = await ClientListVM.Init (workspaceId);
 
             // Set ObservableTableViewController settings
             // ObservableTableViewController is a helper class

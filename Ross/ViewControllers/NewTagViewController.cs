@@ -6,20 +6,20 @@ using Foundation;
 using UIKit;
 using Toggl.Ross.Theme;
 using Toggl.Ross.Views;
-using Toggl.Phoebe.Data.ViewModels;
+using Toggl.Phoebe.ViewModels;
 
 namespace Toggl.Ross.ViewControllers
 {
     public class NewTagViewController : UIViewController
     {
         private TextField nameTextField;
-        private CreateTagViewModel viewModel { get; set; }
+        private NewTagVM viewModel { get; set; }
         private IOnTagSelectedHandler handler;
 
         public NewTagViewController (Guid workspaceId, IOnTagSelectedHandler handler)
         {
             Title = "NewTagTitle".Tr();
-            viewModel = new CreateTagViewModel (workspaceId);
+            viewModel = new NewTagVM (workspaceId);
             this.handler = handler;
         }
 

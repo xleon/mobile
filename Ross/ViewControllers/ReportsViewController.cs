@@ -3,11 +3,11 @@ using System.Collections.Generic;
 using CoreGraphics;
 using Toggl.Phoebe.Reports;
 using Toggl.Phoebe.Analytics;
-using Toggl.Phoebe.Data;
 using Toggl.Ross.Theme;
 using Toggl.Ross.Views;
 using UIKit;
 using XPlatUtils;
+using Toggl.Phoebe.Data.Models;
 
 namespace Toggl.Ross.ViewControllers
 {
@@ -35,7 +35,7 @@ namespace Toggl.Ross.ViewControllers
         private TopBorder topBorder;
         private SummaryReportView dataSource;
         private InfiniteScrollView<ReportView> scrollView;
-        private SyncStatusViewController.StatusView statusView;
+        private StatusView statusView;
         private List<ReportView> cachedReports;
         private nint _timeSpaceIndex;
         private bool showStatus;
@@ -81,7 +81,7 @@ namespace Toggl.Ross.ViewControllers
             scrollView.Delegate = new InfiniteScrollDelegate();
             scrollView.OnChangePage += (sender, e) => LoadReportData ();
 
-            statusView = new SyncStatusViewController.StatusView () {
+            statusView = new StatusView () {
                 Retry = LoadReportData,
                 Cancel = () => StatusBarShown = false,
                 StatusFailText = "ReportsStatusFailText".Tr(),

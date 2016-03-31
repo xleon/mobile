@@ -5,9 +5,10 @@ using Foundation;
 using UIKit;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Analytics;
-using Toggl.Phoebe.Net;
 using XPlatUtils;
 using Toggl.Ross.Theme;
+using Toggl.Phoebe.ViewModels;
+using Toggl.Phoebe.Reactive;
 
 namespace Toggl.Ross.ViewControllers
 {
@@ -27,8 +28,10 @@ namespace Toggl.Ross.ViewControllers
         private UITextView messageTextView;
         private UIView messageBottomBorderView;
         private UIButton sendButton;
-        private FeedbackMessage.Mood? userMood;
+        private Mood? userMood;
         private bool isSending;
+
+        private FeedbackVM viewModel;
 
         public FeedbackViewController ()
         {
@@ -152,6 +155,9 @@ namespace Toggl.Ross.ViewControllers
         {
             base.ViewWillAppear (animated);
 
+            // Create viewModel
+            viewModel = new FeedbackVM (StoreManager.Singleton.AppState);
+
             ObserveNotification (UIKeyboard.WillHideNotification, (notif) => {
                 var duration = notif.UserInfo.ObjectForKey (UIKeyboard.AnimationDurationUserInfoKey) as NSNumber;
                 keyboardDuration = duration != null ? duration.FloatValue : 0.3f;
@@ -218,11 +224,11 @@ namespace Toggl.Ross.ViewControllers
                 return;
             }
             if (sender == positiveMoodButton) {
-                userMood = FeedbackMessage.Mood.Positive;
+                userMood = Mood.Positive;
             } else if (sender == neutralMoodButton) {
-                userMood = FeedbackMessage.Mood.Neutral;
+                userMood = Mood.Neutral;
             } else if (sender == negativeMoodButton) {
-                userMood = FeedbackMessage.Mood.Negative;
+                userMood = Mood.Negative;
             } else {
                 userMood = null;
             }
@@ -232,17 +238,17 @@ namespace Toggl.Ross.ViewControllers
 
         private void RebindMoodButtons ()
         {
-            if (userMood == FeedbackMessage.Mood.Positive) {
+            if (userMood == Mood.Positive) {
                 positiveMoodButton.Apply (Style.Feedback.PositiveMoodButtonSelected);
             } else {
                 positiveMoodButton.Apply (Style.Feedback.PositiveMoodButton);
             }
-            if (userMood == FeedbackMessage.Mood.Neutral) {
+            if (userMood == Mood.Neutral) {
                 neutralMoodButton.Apply (Style.Feedback.NeutralMoodButtonSelected);
             } else {
                 neutralMoodButton.Apply (Style.Feedback.NeutralMoodButton);
             }
-            if (userMood == FeedbackMessage.Mood.Negative) {
+            if (userMood == Mood.Negative) {
                 negativeMoodButton.Apply (Style.Feedback.NegativeMoodButtonSelected);
             } else {
                 negativeMoodButton.Apply (Style.Feedback.NegativeMoodButton);
@@ -269,15 +275,10 @@ namespace Toggl.Ross.ViewControllers
             RebindSendButton ();
 
             try {
-                var msg = new FeedbackMessage () {
-                    CurrentMood = userMood.Value,
-                    Message = messageTextView.Text,
-                };
-
-                var sent = await msg.Send ();
+                var sent = await viewModel.Send (userMood.Value, messageTextView.Text);
                 if (sent) {
                     var appStoreUrl = new NSUrl (Build.AppStoreUrl);
-                    var askReview = userMood == FeedbackMessage.Mood.Positive && UIApplication.SharedApplication.CanOpenUrl (appStoreUrl);
+                    var askReview = userMood == Mood.Positive && UIApplication.SharedApplication.CanOpenUrl (appStoreUrl);
                     var userMessage = messageTextView.Text;
 
                     // Reset state before showing alert.

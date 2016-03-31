@@ -6,9 +6,9 @@ using Foundation;
 using UIKit;
 using Toggl.Ross.Theme;
 using Toggl.Ross.Views;
-using Toggl.Phoebe.Data.ViewModels;
-using Toggl.Phoebe.Data.DataObjects;
 using GalaSoft.MvvmLight.Helpers;
+using Toggl.Phoebe.ViewModels;
+using Toggl.Phoebe.Data.Models;
 
 namespace Toggl.Ross.ViewControllers
 {
@@ -18,7 +18,7 @@ namespace Toggl.Ross.ViewControllers
         private UIButton clientButton;
         private Guid workspaceId;
         private IOnProjectSelectedHandler handler;
-        private NewProjectViewModel ViewModel {get; set;}
+        private NewProjectVM ViewModel {get; set;}
         private Binding<string, string> clientBinding;
 
         public NewProjectViewController (Guid workspaceId, IOnProjectSelectedHandler handler)
@@ -64,7 +64,7 @@ namespace Toggl.Ross.ViewControllers
         {
             base.ViewDidLoad ();
 
-            ViewModel = await NewProjectViewModel.Init (workspaceId);
+            ViewModel = await NewProjectVM.Init (workspaceId);
             clientBinding = this.SetBinding (() => ViewModel.ClientName).WhenSourceChanges (() => {
                 var name = string.IsNullOrEmpty (ViewModel.ClientName) ? "NewProjectClientHint".Tr () : ViewModel.ClientName;
                 if (string.IsNullOrEmpty (ViewModel.ClientName)) {
@@ -89,7 +89,7 @@ namespace Toggl.Ross.ViewControllers
         }
 
         #region IOnClientSelectedHandler implementation
-        public void OnClientSelected (ClientData data)
+        public void OnClientSelected (IClientData data)
         {
             ViewModel.SetClient (data);
 
@@ -104,10 +104,10 @@ namespace Toggl.Ross.ViewControllers
         }
         #endregion
 
-        private async void OnSetBtnPressed (object sender, EventArgs e)
+        private void OnSetBtnPressed (object sender, EventArgs e)
         {
             var projectName = nameTextField.Text;
-            var existsName = await ViewModel.ExistProjectWithName (projectName);
+            var existsName = ViewModel.ExistProjectWithName (projectName);
             if (existsName) {
                 var alert = new UIAlertView (
                     "NewProjectNameExistTitle".Tr (),
@@ -125,7 +125,7 @@ namespace Toggl.Ross.ViewControllers
             }
 
             var random = new Random ();
-            var newProjectData = await ViewModel.SaveProject (projectName, random.Next (Phoebe.Data.Models.ProjectModel.HexColors.Length - 1));
+            var newProjectData = ViewModel.SaveProject (projectName, random.Next (ProjectData.HexColors.Length - 1));
             handler.OnProjectSelected (newProjectData.Id, Guid.Empty);
         }
 

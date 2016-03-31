@@ -8,12 +8,10 @@ using CoreGraphics;
 using Foundation;
 using GalaSoft.MvvmLight.Helpers;
 using Toggl.Phoebe;
-using Toggl.Phoebe.Data;
-using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
-using Toggl.Phoebe.Data.Utils;
-using Toggl.Phoebe.Data.ViewModels;
-using Toggl.Ross.Data;
+using Toggl.Phoebe.Reactive;
+using Toggl.Phoebe.ViewModels;
+using Toggl.Phoebe.ViewModels.Timer;
 using Toggl.Ross.DataSources;
 using Toggl.Ross.Theme;
 using Toggl.Ross.Views;
@@ -38,10 +36,9 @@ namespace Toggl.Ross.ViewControllers
 
         private Binding<string, string> durationBinding;
         private Binding<bool, bool> syncBinding, hasMoreBinding, hasErrorBinding, isRunningBinding;
-        private Binding<LogTimeEntriesViewModel.CollectionState, LogTimeEntriesViewModel.CollectionState> hasItemsBinding, loadMoreBinding;
         private Binding<ObservableCollection<IHolder>, ObservableCollection<IHolder>> collectionBinding;
 
-        protected LogTimeEntriesViewModel ViewModel {get; set;}
+        protected LogTimeEntriesVM ViewModel {get; set;}
 
         public LogViewController () : base (UITableViewStyle.Plain)
         {
@@ -100,7 +97,7 @@ namespace Toggl.Ross.ViewControllers
             TableView.SetEditing (false, true);
 
             // Create view model
-            ViewModel = LogTimeEntriesViewModel.Init ();
+            ViewModel = new LogTimeEntriesVM (StoreManager.Singleton.AppState);
 
             var headerView = new TableViewRefreshView ();
             RefreshControl = headerView;
@@ -120,15 +117,8 @@ namespace Toggl.Ross.ViewControllers
             collectionBinding = this.SetBinding (() => ViewModel.Collection).WhenSourceChanges (() => {
                 TableView.Source = new TimeEntriesSource (this, ViewModel);
             });
-            isRunningBinding = this.SetBinding (() => ViewModel.IsTimeEntryRunning).WhenSourceChanges (SetStartStopButtonState);
+            isRunningBinding = this.SetBinding (() => ViewModel.IsEntryRunning).WhenSourceChanges (SetStartStopButtonState);
             durationBinding = this.SetBinding (() => ViewModel.Duration).WhenSourceChanges (() => durationButton.SetTitle (ViewModel.Duration, UIControlState.Normal));
-
-            // TODO: Review this line.
-            // Get data to fill the list. For the moment,
-            // until a screenloader is added to the screen
-            // is better to load the items after create
-            // the viewModel and show the loader from RecyclerView
-            await ViewModel.LoadMore ();
         }
 
         public override void ViewWillDisappear (bool animated)
@@ -159,7 +149,7 @@ namespace Toggl.Ross.ViewControllers
             ViewModel.ReportExperiment (OBMExperimentManager.StartButtonActionKey,
                                         OBMExperimentManager.ClickActionValue);
 
-            var entry = await ViewModel.StartStopTimeEntry ();
+            var entry = ViewModel.StartStopTimeEntry ();
             if (entry.State == TimeEntryState.Running) {
                 // Show next viewController.
                 var controllers = new List<UIViewController> (NavigationController.ViewControllers);
@@ -175,7 +165,7 @@ namespace Toggl.Ross.ViewControllers
 
         private void SetStartStopButtonState ()
         {
-            if (ViewModel.IsTimeEntryRunning) {
+            if (ViewModel.IsEntryRunning) {
                 actionButton.Apply (Style.NavTimer.StopButton);
             } else {
                 actionButton.Apply (Style.NavTimer.StartButton);
@@ -226,14 +216,14 @@ namespace Toggl.Ross.ViewControllers
             }
         }
 
-        private async void OnCountinueTimeEntry (int index)
+        private void OnCountinueTimeEntry (int index)
         {
-            await ViewModel.ContinueTimeEntryAsync (index);
+            ViewModel.ContinueTimeEntry (index);
         }
 
-        private async void OnTryAgainBtnPressed ()
+        private void OnTryAgainBtnPressed ()
         {
-            await ViewModel.LoadMore ();
+            ViewModel.LoadMore ();
         }
 
         private void OnNavigationButtonTouched (object sender, EventArgs e)
@@ -246,10 +236,10 @@ namespace Toggl.Ross.ViewControllers
         class TimeEntriesSource : ObservableCollectionViewSource<IHolder, DateHolder, ITimeEntryHolder>
         {
             private bool isLoading;
-            private LogTimeEntriesViewModel VM;
+            private readonly LogTimeEntriesVM VM;
             private LogViewController owner;
 
-            public TimeEntriesSource (LogViewController owner, LogTimeEntriesViewModel viewModel) : base (owner.TableView, viewModel.Collection)
+            public TimeEntriesSource (LogViewController owner, LogTimeEntriesVM viewModel) : base (owner.TableView, viewModel.Collection)
             {
                 this.owner = owner;
                 VM = viewModel;
@@ -295,25 +285,22 @@ namespace Toggl.Ross.ViewControllers
                 return true;
             }
 
-            public async override void CommitEditingStyle (UITableView tableView, UITableViewCellEditingStyle editingStyle, NSIndexPath indexPath)
+            public override void CommitEditingStyle (UITableView tableView, UITableViewCellEditingStyle editingStyle, NSIndexPath indexPath)
             {
                 if (editingStyle == UITableViewCellEditingStyle.Delete) {
                     var rowIndex = GetPlainIndexFromRow (collection, indexPath);
-                    await VM.RemoveTimeEntryAsync (rowIndex);
+                    VM.RemoveTimeEntry (rowIndex);
                 }
             }
 
-            public async override void RowSelected (UITableView tableView, NSIndexPath indexPath)
+            public override void RowSelected (UITableView tableView, NSIndexPath indexPath)
             {
                 var rowIndex = GetPlainIndexFromRow (collection, indexPath);
                 var holder = collection.ElementAt (rowIndex) as ITimeEntryHolder;
-
-                var teData = (TimeEntryModel)holder.Data;
-                List<TagData> tags = await ServiceContainer.Resolve<IDataStore> ().GetTimeEntryTags (teData.Id);
-                owner.NavigationController.PushViewController (new EditTimeEntryViewController (teData, tags), true);
+                owner.NavigationController.PushViewController (new EditTimeEntryViewController (holder.Entry.Data.Id), true);
             }
 
-            public async override void Scrolled (UIScrollView scrollView)
+            public override void Scrolled (UIScrollView scrollView)
             {
                 var currentOffset = scrollView.ContentOffset.Y;
                 var maximumOffset = scrollView.ContentSize.Height - scrollView.Frame.Height;
@@ -324,15 +311,15 @@ namespace Toggl.Ross.ViewControllers
 
                 if (!isLoading && maximumOffset - currentOffset <= 200.0) {
                     isLoading = true;
-                    await VM.LoadMore ();
+                    VM.LoadMore ();
                 }
             }
 
-            private async void OnContinueTimeEntry (TimeEntryCell cell)
+            private void OnContinueTimeEntry (TimeEntryCell cell)
             {
                 var indexPath = TableView.IndexPathForCell (cell);
                 var rowIndex = GetPlainIndexFromRow (collection, indexPath);
-                await VM.ContinueTimeEntryAsync (rowIndex);
+                VM.ContinueTimeEntry (rowIndex);
             }
         }
         #endregion

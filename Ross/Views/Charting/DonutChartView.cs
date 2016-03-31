@@ -4,9 +4,8 @@ using System.Linq;
 using CoreAnimation;
 using CoreGraphics;
 using Foundation;
-using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
-using Toggl.Phoebe.Data.Reports;
+using Toggl.Phoebe.Reports;
 using Toggl.Ross.Theme;
 using UIKit;
 

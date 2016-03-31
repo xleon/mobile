@@ -2,8 +2,8 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using CoreGraphics;
-using Toggl.Phoebe.Data;
-using Toggl.Phoebe.Data.Reports;
+using Toggl.Phoebe.Data.Models;
+using Toggl.Phoebe.Reports;
 using Toggl.Ross.Views.Charting;
 using UIKit;
 

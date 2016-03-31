@@ -3,7 +3,6 @@ using Foundation;
 using UIKit;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Net;
-using XPlatUtils;
 using CoreGraphics;
 using Toggl.Ross.Theme;
 
@@ -11,8 +10,6 @@ namespace Toggl.Ross.ViewControllers
 {
     public class MainViewController : UINavigationController
     {
-        private Subscription<AuthChangedMessage> subscriptionAuthChanged;
-        private Subscription<TogglHttpResponseMessage> subscriptionTogglHttpResponse;
         private UIAlertView upgradeAlert;
         private UIView fadeView;
 
@@ -40,14 +37,6 @@ namespace Toggl.Ross.ViewControllers
         public override void ViewWillAppear (bool animated)
         {
             base.ViewWillAppear (animated);
-
-            var bus = ServiceContainer.Resolve<MessageBus> ();
-            if (subscriptionAuthChanged == null) {
-                subscriptionAuthChanged = bus.Subscribe<AuthChangedMessage> (OnAuthChanged);
-            }
-            if (subscriptionTogglHttpResponse == null) {
-                subscriptionTogglHttpResponse = bus.Subscribe<TogglHttpResponseMessage> (OnTogglHttpResponse);
-            }
             ResetRootViewController ();
         }
 
@@ -92,16 +81,6 @@ namespace Toggl.Ross.ViewControllers
 
         public override void ViewWillDisappear (bool animated)
         {
-            var bus = ServiceContainer.Resolve<MessageBus> ();
-            if (subscriptionAuthChanged != null) {
-                bus.Unsubscribe (subscriptionAuthChanged);
-                subscriptionAuthChanged = null;
-            }
-            if (subscriptionTogglHttpResponse != null) {
-                bus.Unsubscribe (subscriptionTogglHttpResponse);
-                subscriptionTogglHttpResponse = null;
-            }
-
             base.ViewWillDisappear (animated);
         }
 
@@ -176,27 +155,17 @@ namespace Toggl.Ross.ViewControllers
 
         protected override void Dispose (bool disposing)
         {
-            if (disposing) {
-                var bus = ServiceContainer.Resolve<MessageBus> ();
-                if (subscriptionAuthChanged != null) {
-                    bus.Unsubscribe (subscriptionAuthChanged);
-                    subscriptionAuthChanged = null;
-                }
-                if (subscriptionTogglHttpResponse != null) {
-                    bus.Unsubscribe (subscriptionTogglHttpResponse);
-                    subscriptionTogglHttpResponse = null;
-                }
-            }
             base.Dispose (disposing);
         }
 
-        private void OnAuthChanged (AuthChangedMessage msg)
+        private void OnAuthChanged ()
         {
             ResetRootViewController ();
         }
 
         private void OnTogglHttpResponse (TogglHttpResponseMessage msg)
         {
+            // TODO Rx Activate update mechanism.
             if (msg.StatusCode == System.Net.HttpStatusCode.Gone) {
                 if (upgradeAlert == null) {
                     upgradeAlert = new UIAlertView (
@@ -211,7 +180,8 @@ namespace Toggl.Ross.ViewControllers
 
         private void ResetRootViewController ()
         {
-            var authManager = ServiceContainer.Resolve<AuthManager> ();
+            // TODO Rx Activated when user changes.
+            /*
             UIViewController vc = null;
             bool emptyStack = ViewControllers.Length < 1;
             if (authManager.IsAuthenticated && (emptyStack || ViewControllers [0] is WelcomeViewController)) {
@@ -224,6 +194,7 @@ namespace Toggl.Ross.ViewControllers
             if (vc != null) {
                 SetViewControllers (new [] { vc }, ViewControllers.Length > 0);
             }
+            */
         }
 
         private class NavDelegate : UINavigationControllerDelegate

@@ -205,14 +205,18 @@ namespace Toggl.Phoebe.ViewModels
         public void Save ()
         {
             if (!IsManual) {
-                // TODO RX: Exclude TagIds until test finalize.
-                // If Public properties are not equal, save it.
-                if (!previousData.Data.PublicInstancePropertiesEqual (richData.Data, "TagIds")) {
+                if (!previousData.Data.PublicInstancePropertiesEqual (richData.Data, "TagIds" ) ||
+                        !AreListEqual (richData.Data.TagIds, previousData.Data.TagIds)) {
                     RxChain.Send (new DataMsg.TimeEntryPut (richData.Data));
-                    RxChain.Send (new DataMsg.TagsPut (TagList));
                     previousData = richData;
                 }
             }
+        }
+
+        public void SaveManual ()
+        {
+            IsManual = false;
+            Save ();
         }
 
         // TODO RX: Is this method necessary?
@@ -221,11 +225,6 @@ namespace Toggl.Phoebe.ViewModels
             RxChain.Send (new DataMsg.TimeEntriesRemove (richData.Data));
         }
 
-        public void SaveManual ()
-        {
-            IsManual = false;
-            Save ();
-        }
 
         private void UpdateView (Action<TimeEntryData> updater, params string[] changedProperties)
         {
@@ -329,6 +328,13 @@ namespace Toggl.Phoebe.ViewModels
 
             // Create new tags and concat both lists
             return commonTags.Concat (tagsToCreate).ToList ();
+        }
+
+        private bool AreListEqual (IReadOnlyList<Guid> list1, IReadOnlyList<Guid> list2)
+        {
+            var firstNotSecond = list1.Except (list2).ToList();
+            var secondNotFirst = list2.Except (list1).ToList();
+            return firstNotSecond.Count == 0 && secondNotFirst.Count == 0;
         }
     }
 }

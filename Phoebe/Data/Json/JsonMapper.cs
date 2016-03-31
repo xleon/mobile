@@ -14,37 +14,38 @@ namespace Toggl.Phoebe.Data.Json
             var mapConfig = new MapperConfiguration (config => {
                 // TODO: Review how map reverse works with include.
                 config.CreateMap<CommonJson, CommonData> ()
-                .ForMember (dest => dest.ModifiedAt, opt => opt.MapFrom (src => src.ModifiedAt.ToUtc ()))
-                .ForMember (dest => dest.DeletedAt, opt => opt.ResolveUsing<DeletedAtResolver> ())
+                .ForMember (dest => dest.SyncState, opt => opt.UseValue (SyncState.Synced))
+                .ForMember (dest => dest.ModifiedAt, opt => opt.ResolveUsing<ModifiedAtResolver> ())
+                .ForMember (dest => dest.DeletedAt, opt => opt.ResolveUsing<DeletedAtResolver>())
                 .Include<ProjectJson, ProjectData> ()
                 .Include<ClientJson, ClientData> ()
-                .Include<TagJson, TagData> ()
-                .Include<TaskJson, TaskData> ()
-                .Include<WorkspaceJson, WorkspaceData> ()
-                .Include<WorkspaceUserJson, WorkspaceUserData> ()
-                .Include<UserJson, UserData> ()
-                .Include<TimeEntryJson, TimeEntryData> ().ReverseMap ();
+                .Include<TagJson, TagData>()
+                .Include<TaskJson, TaskData>()
+                .Include<WorkspaceJson, WorkspaceData>()
+                .Include<WorkspaceUserJson, WorkspaceUserData>()
+                .Include<UserJson, UserData>()
+                .Include<TimeEntryJson, TimeEntryData>().ReverseMap();
 
-                config.CreateMap<CommonData, CommonJson> ()
-                .ForMember (dest => dest.DeletedAt, opt => opt.ResolveUsing<InverseDeletedAtResolver> ())
-                .ForMember (dest => dest.ModifiedAt, opt => opt.MapFrom (src => src.ModifiedAt.ToUtc ()));
+                config.CreateMap<CommonData, CommonJson>()
+                .ForMember (dest => dest.DeletedAt, opt => opt.ResolveUsing<InverseDeletedAtResolver>())
+                .ForMember (dest => dest.ModifiedAt, opt => opt.MapFrom (src => src.ModifiedAt.ToUtc()));
 
-                config.CreateMap<ProjectJson, ProjectData> ().ReverseMap ();
-                config.CreateMap<ProjectUserJson, ProjectUserData> ().ReverseMap ();
-                config.CreateMap<ClientJson, ClientData> ();
-                config.CreateMap<ClientData, ClientJson> ();
-                config.CreateMap<TagJson, TagData> ().ReverseMap ();
-                config.CreateMap<TaskJson, TaskData> ().ReverseMap ();
-                config.CreateMap<WorkspaceUserJson, WorkspaceUserData> ().ReverseMap ();
-                config.CreateMap<WorkspaceJson, WorkspaceData> ().ReverseMap ();
+                config.CreateMap<ProjectJson, ProjectData> ().ReverseMap();
+                config.CreateMap<ProjectUserJson, ProjectUserData>().ReverseMap();
+                config.CreateMap<ClientJson, ClientData>();
+                config.CreateMap<ClientData, ClientJson>();
+                config.CreateMap<TagJson, TagData>().ReverseMap();
+                config.CreateMap<TaskJson, TaskData>().ReverseMap();
+                config.CreateMap<WorkspaceUserJson, WorkspaceUserData>().ReverseMap();
+                config.CreateMap<WorkspaceJson, WorkspaceData>().ReverseMap();
 
                 // User mapping
-                config.CreateMap<UserJson, UserData> ()
+                config.CreateMap<UserJson, UserData>()
                 .ForMember (dest => dest.TrackingMode, opt => opt.MapFrom (src => src.StoreStartAndStopTime ? TrackingMode.StartNew : TrackingMode.Continue))
                 .ForMember (dest => dest.ExperimentIncluded, opt => opt.MapFrom (src => src.OBM.Included))
                 .ForMember (dest => dest.ExperimentNumber, opt => opt.MapFrom (src => src.OBM.Number));
 
-                config.CreateMap<UserData, UserJson> ()
+                config.CreateMap<UserData, UserJson>()
                 .ForMember (dest => dest.OBM, opt => opt.MapFrom (src => new OBMJson {
                     Included = src.ExperimentIncluded,
                     Number = src.ExperimentNumber
@@ -52,25 +53,25 @@ namespace Toggl.Phoebe.Data.Json
                 .ForMember (dest => dest.CreatedWith, opt => opt.UseValue (Platform.DefaultCreatedWith));
 
                 // TimeEntry mapping
-                config.CreateMap<TimeEntryJson, TimeEntryData> ()
-                .ForMember (dest => dest.StartTime, opt => opt.ResolveUsing<StartTimeResolver> ())
-                .ForMember (dest => dest.StopTime, opt => opt.ResolveUsing<StopTimeResolver> ())
-                .ForMember (dest => dest.State, opt => opt.ResolveUsing<StateResolver> ());
+                config.CreateMap<TimeEntryJson, TimeEntryData>()
+                .ForMember (dest => dest.StartTime, opt => opt.ResolveUsing<StartTimeResolver>())
+                .ForMember (dest => dest.StopTime, opt => opt.ResolveUsing<StopTimeResolver>())
+                .ForMember (dest => dest.State, opt => opt.ResolveUsing<StateResolver>());
 
-                config.CreateMap<TimeEntryData, TimeEntryJson> ()
-                .ForMember (dest => dest.StartTime, opt => opt.MapFrom (src => src.StartTime.ToUtc ()))
-                .ForMember (dest => dest.StopTime, opt => opt.MapFrom (src => src.StopTime.ToUtc ()))
+                config.CreateMap<TimeEntryData, TimeEntryJson>()
+                .ForMember (dest => dest.StartTime, opt => opt.MapFrom (src => src.StartTime.ToUtc()))
+                .ForMember (dest => dest.StopTime, opt => opt.MapFrom (src => src.StopTime.ToUtc()))
                 .ForMember (dest => dest.CreatedWith, opt => opt.UseValue (Platform.DefaultCreatedWith))
-                .ForMember (dest => dest.Duration, opt => opt.ResolveUsing<DurationResolver> ());
+                .ForMember (dest => dest.Duration, opt => opt.ResolveUsing<DurationResolver>());
 
                 // Extra mappings
-                config.CreateMap<ReportJson, ReportData> ()
-                .ForMember (dest => dest.Activity, opt => opt.ResolveUsing<ReportActivityResolver> ())
-                .ForMember (dest => dest.Projects, opt => opt.ResolveUsing<ReportProjectsResolver> ())
-                .ForMember (dest => dest.TotalCost, opt => opt.ResolveUsing<ReportTotalCostResolver> ());
+                config.CreateMap<ReportJson, ReportData>()
+                .ForMember (dest => dest.Activity, opt => opt.ResolveUsing<ReportActivityResolver>())
+                .ForMember (dest => dest.Projects, opt => opt.ResolveUsing<ReportProjectsResolver>())
+                .ForMember (dest => dest.TotalCost, opt => opt.ResolveUsing<ReportTotalCostResolver>());
             });
 
-            mapper = mapConfig.CreateMapper ();
+            mapper = mapConfig.CreateMapper();
         }
 
         public T Map<T> (object source)
@@ -80,7 +81,7 @@ namespace Toggl.Phoebe.Data.Json
 
         public CommonData Map (CommonJson source)
         {
-            Type sourceType = source.GetType ();
+            Type sourceType = source.GetType();
 
             if (sourceType == typeof (ClientJson)) {
                 return mapper.Map<ClientData> (source as ClientJson);
@@ -108,7 +109,7 @@ namespace Toggl.Phoebe.Data.Json
         public CommonJson MapToJson (ICommonData source)
         {
             Type destinationType = null;
-            Type sourceType = source.GetType ();
+            Type sourceType = source.GetType();
 
             if (sourceType == typeof (ClientData)) {
                 destinationType = typeof (ClientJson);
@@ -136,6 +137,17 @@ namespace Toggl.Phoebe.Data.Json
         }
 
         #region TimeEntry resolvers
+        public class ModifiedAtResolver : ValueResolver<CommonJson, DateTime>
+        {
+            protected override DateTime ResolveCore (CommonJson source)
+            {
+                if (source.ModifiedAt == DateTime.MinValue) {
+                    return DateTime.UtcNow;
+                }
+                return source.ModifiedAt.ToUtc();
+            }
+        }
+
         public class DeletedAtResolver : ValueResolver<CommonJson, DateTime?>
         {
             protected override DateTime? ResolveCore (CommonJson source)

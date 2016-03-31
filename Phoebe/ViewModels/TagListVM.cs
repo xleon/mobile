@@ -41,16 +41,9 @@ namespace Toggl.Phoebe.ViewModels
             AppState appState, Guid workspaceId, List<Guid> previousSelectedIds)
         {
             var tagCollection = new ObservableRangeCollection<ITagData> ();
-
-            var selectedTags =
-                appState.Tags.Values.Where (
-                    r => r.WorkspaceId == workspaceId &&
-                    previousSelectedIds.Contains (r.Id)).ToList ();
-
-            selectedTags.Sort (
-                (a, b) => string.Compare (a?.Name ?? "", b?.Name ?? "", StringComparison.Ordinal));
-
-            tagCollection.AddRange (selectedTags);
+            var workspaceTags = appState.Tags.Values
+                                .Where (r => r.DeletedAt == null && r.WorkspaceId == workspaceId);
+            tagCollection.AddRange (workspaceTags);
             return tagCollection;
         }
     }

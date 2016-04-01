@@ -208,11 +208,13 @@ namespace Toggl.Joey.UI.Fragments
 
         private void SetFooterState ()
         {
-            if (ViewModel.HasMoreItems && !ViewModel.HasLoadErrors) {
+            var authManager = ServiceContainer.Resolve<AuthManager> ();
+
+            if (ViewModel.HasMoreItems && !ViewModel.HasLoadErrors && !authManager.OfflineMode) {
                 logAdapter.SetFooterState (RecyclerCollectionDataAdapter<IHolder>.RecyclerLoadState.Loading);
             } else if (ViewModel.HasMoreItems && ViewModel.HasLoadErrors) {
                 logAdapter.SetFooterState (RecyclerCollectionDataAdapter<IHolder>.RecyclerLoadState.Retry);
-            } else if (!ViewModel.HasMoreItems && !ViewModel.HasLoadErrors) {
+            } else if (!ViewModel.HasMoreItems && !ViewModel.HasLoadErrors || authManager.OfflineMode) {
                 logAdapter.SetFooterState (RecyclerCollectionDataAdapter<IHolder>.RecyclerLoadState.Finished);
             }
         }

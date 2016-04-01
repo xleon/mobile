@@ -85,19 +85,21 @@ namespace Toggl.Phoebe._Reactive
         void logInfo (string msg, Exception exc = null)
         {
             var logger = ServiceContainer.Resolve<ILogger> ();
-            if (exc == null)
+            if (exc == null) {
                 logger.Info (Tag, msg);
-            else
+            } else {
                 logger.Info (Tag, exc, msg);
+            }
         }
 
         void logWarning (string msg, Exception exc = null)
         {
             var logger = ServiceContainer.Resolve<ILogger> ();
-            if (exc == null)
+            if (exc == null) {
                 logger.Warning (Tag, msg);
-            else
+            } else {
                 logger.Warning (Tag, exc, msg);
+            }
         }
 
         async Task EnqueueOrSend (DataSyncMsg<AppState> syncMsg)
@@ -339,9 +341,9 @@ namespace Toggl.Phoebe._Reactive
             const int endDate = Literals.TimeEntryLoadDays;
 
             try {
-				// Download new Entries
-				var jsonEntries = await client.ListTimeEntries (authToken, startDate, endDate);
-				
+                // Download new Entries
+                var jsonEntries = await client.ListTimeEntries (authToken, startDate, endDate);
+
                 var newWorkspaces = new List<WorkspaceJson> ();
                 var newProjects = new List<ProjectJson> ();
                 var newClients = new List<ClientJson> ();
@@ -417,11 +419,10 @@ namespace Toggl.Phoebe._Reactive
             var tagIds = new List<Guid> ();
             foreach (var tag in jsonEntry.Tags) {
                 var tagData = state.Tags.Values.SingleOrDefault (
-                    x => x.WorkspaceRemoteId == jsonEntry.WorkspaceRemoteId && x.Name == tag);
+                                  x => x.WorkspaceRemoteId == jsonEntry.WorkspaceRemoteId && x.Name == tag);
                 if (tagData != null) {
                     tagIds.Add (tagData.Id);
-                }
-                else {
+                } else {
                     // TODO RX: How to retrieve the tag from server without RemoteId?
                     //newTags.Add (await client.Get<TagJson> (authToken, tagRemoteId));
                 }
@@ -436,8 +437,7 @@ namespace Toggl.Phoebe._Reactive
         {
             if (stateObject.RemoteId != null) {
                 return stateObject.RemoteId;
-            }
-            else {
+            } else {
                 var d = remoteObjects.SingleOrDefault (x => x.Id == localId);
                 return d != null ? d.RemoteId : null;
             }
@@ -447,93 +447,97 @@ namespace Toggl.Phoebe._Reactive
         {
             if (data is TimeEntryData) {
                 var te = (TimeEntryData)data;
-				if (te.UserRemoteId == 0) {
-					if (state.User.RemoteId != null)
-						te.UserRemoteId = state.User.RemoteId.Value;
-					else
-						return false;
-				}
+                if (te.UserRemoteId == 0) {
+                    if (state.User.RemoteId != null) {
+                        te.UserRemoteId = state.User.RemoteId.Value;
+                    } else {
+                        return false;
+                    }
+                }
                 if (te.WorkspaceRemoteId == 0) {
                     var rid = getRemoteId (te.WorkspaceId, remoteObjects, state.Workspaces[te.WorkspaceId]);
-                    if (rid != null)
+                    if (rid != null) {
                         te.WorkspaceRemoteId = rid.Value;
-                    else
+                    } else {
                         return false;
+                    }
                 }
                 if (te.ProjectId != Guid.Empty && te.ProjectRemoteId == null) {
                     var rid = getRemoteId (te.ProjectId, remoteObjects, state.Projects[te.ProjectId]);
-                    if (rid != null)
+                    if (rid != null) {
                         te.ProjectRemoteId = rid;
-                    else
+                    } else {
                         return false;
+                    }
                 }
                 if (te.TaskId != Guid.Empty && te.TaskRemoteId == null) {
                     var rid = getRemoteId (te.TaskId, remoteObjects, state.Tasks[te.TaskId]);
-                    if (rid != null)
+                    if (rid != null) {
                         te.TaskRemoteId = rid;
-                    else
+                    } else {
                         return false;
+                    }
                 }
-            }
-            else if (data is ProjectData) {
+            } else if (data is ProjectData) {
                 var pr = (ProjectData)data;
                 if (pr.WorkspaceRemoteId == 0) {
                     var rid = getRemoteId (pr.WorkspaceId, remoteObjects, state.Workspaces[pr.WorkspaceId]);
-                    if (rid != null)
+                    if (rid != null) {
                         pr.WorkspaceRemoteId = rid.Value;
-                    else
+                    } else {
                         return false;
+                    }
                 }
                 if (pr.ClientId != Guid.Empty && pr.ClientRemoteId == null) {
                     var rid = getRemoteId (pr.ClientId, remoteObjects, state.Clients[pr.ClientId]);
-                    if (rid != null)
+                    if (rid != null) {
                         pr.ClientRemoteId = rid;
-                    else
+                    } else {
                         return false;
+                    }
                 }
-            }
-            else if (data is ClientData) {
+            } else if (data is ClientData) {
                 var cl = (ClientData)data;
                 if (cl.WorkspaceRemoteId == 0) {
                     var rid = getRemoteId (cl.WorkspaceId, remoteObjects, state.Workspaces[cl.WorkspaceId]);
-                    if (rid != null)
+                    if (rid != null) {
                         cl.WorkspaceRemoteId = rid.Value;
-                    else
+                    } else {
                         return false;
+                    }
                 }
-            }
-            else if (data is TaskData) {
+            } else if (data is TaskData) {
                 var ts = (TaskData)data;
                 if (ts.WorkspaceRemoteId == 0) {
                     var rid = getRemoteId (ts.WorkspaceId, remoteObjects, state.Workspaces[ts.WorkspaceId]);
-                    if (rid != null)
+                    if (rid != null) {
                         ts.WorkspaceRemoteId = rid.Value;
-                    else
+                    } else {
                         return false;
+                    }
                 }
                 if (ts.ProjectRemoteId == 0) {
                     var rid = getRemoteId (ts.ProjectId, remoteObjects, state.Projects[ts.ProjectId]);
-                    if (rid != null)
+                    if (rid != null) {
                         ts.ProjectRemoteId = rid.Value;
-                    else
+                    } else {
                         return false;
+                    }
                 }
-            }
-            else if (data is TagData) {
+            } else if (data is TagData) {
                 var t = (TagData)data;
                 if (t.WorkspaceRemoteId == 0) {
                     var rid = getRemoteId (t.WorkspaceId, remoteObjects, state.Workspaces[t.WorkspaceId]);
-                    if (rid != null)
+                    if (rid != null) {
                         t.WorkspaceRemoteId = rid.Value;
-                    else
+                    } else {
                         return false;
+                    }
                 }
-            }
-            else if (data is UserData) {
+            } else if (data is UserData) {
                 //var u = (UserData)data;
                 // TODO RX: How to get DefaultWorkspaceRemoteId
-            }
-            else {
+            } else {
                 // TODO RX: Throw exception? Return false?
             }
             return true;

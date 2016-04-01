@@ -370,31 +370,30 @@ namespace Toggl.Phoebe._Reactive
             SettingsState newSettings = state.Settings;
 
 
-            switch (info.Item1)
-            {
-                case nameof(SettingsState.ShowWelcome):
-                    newSettings = newSettings.With(showWelcome: (bool)info.Item2);
-                    break;
-                case nameof(SettingsState.ProjectSort):
-                    newSettings = newSettings.With(projectSort: (string)info.Item2);
-                    break;
-                case nameof(SettingsState.ShowNotification):
-                    newSettings = newSettings.With(showNotification: (bool)info.Item2);
-                    break;
-                case nameof(SettingsState.IdleNotification):
-                    newSettings = newSettings.With(idleNotification: (bool)info.Item2);
-                    break;
-                case nameof(SettingsState.ChooseProjectForNew):
-                    newSettings = newSettings.With(chooseProjectForNew: (bool)info.Item2);
-                    break;
-                case nameof(SettingsState.UseDefaultTag):
-                    newSettings = newSettings.With(useTag: (bool)info.Item2);
-                    break;
-                case nameof(SettingsState.GroupedEntries):
-                    newSettings = newSettings.With(groupedEntries: (bool)info.Item2);
-                    break;
+            switch (info.Item1) {
+            case nameof (SettingsState.ShowWelcome):
+                newSettings = newSettings.With (showWelcome: (bool)info.Item2);
+                break;
+            case nameof (SettingsState.ProjectSort):
+                newSettings = newSettings.With (projectSort: (string)info.Item2);
+                break;
+            case nameof (SettingsState.ShowNotification):
+                newSettings = newSettings.With (showNotification: (bool)info.Item2);
+                break;
+            case nameof (SettingsState.IdleNotification):
+                newSettings = newSettings.With (idleNotification: (bool)info.Item2);
+                break;
+            case nameof (SettingsState.ChooseProjectForNew):
+                newSettings = newSettings.With (chooseProjectForNew: (bool)info.Item2);
+                break;
+            case nameof (SettingsState.UseDefaultTag):
+                newSettings = newSettings.With (useTag: (bool)info.Item2);
+                break;
+            case nameof (SettingsState.GroupedEntries):
+                newSettings = newSettings.With (groupedEntries: (bool)info.Item2);
+                break;
 
-                    // TODO: log invalid/unknowns?
+                // TODO: log invalid/unknowns?
             }
 
 

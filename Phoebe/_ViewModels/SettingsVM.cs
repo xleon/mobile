@@ -1,22 +1,25 @@
 ﻿using System;
 using System.Reactive.Linq;
+using GalaSoft.MvvmLight;
 using PropertyChanged;
 using Toggl.Phoebe._Data;
 using Toggl.Phoebe._Reactive;
+using XPlatUtils;
 
 namespace Toggl.Phoebe._ViewModels
 {
     [ImplementPropertyChanged]
-    public class SettingsVM : IDisposable
+    public class SettingsVM : ViewModelBase, IDisposable
     {
         private readonly IDisposable subscription;
 
-        public SettingsVM(AppState state)
+        public SettingsVM (AppState state)
         {
-            this.subscription = StoreManager.Singleton
-                .Observe(x => x.State)
-                .StartWith(state)
-                .Subscribe(this.stateUpdated);
+            subscription = StoreManager.Singleton
+                           .Observe (x => x.State.Settings)
+                           .StartWith (state.Settings)
+                           .DistinctUntilChanged ()
+                           .Subscribe (stateUpdated);
         }
 
         #region exposed UI properties
@@ -31,48 +34,48 @@ namespace Toggl.Phoebe._ViewModels
 
         #region public methods
 
-        public void SetShowNotification(bool value)
+        public void SetShowNotification (bool value)
         {
-            setSetting(nameof(SettingsState.ShowNotification), value);
+            setSetting (nameof (SettingsState.ShowNotification), value);
         }
-        public void SetIdleNotification(bool value)
+        public void SetIdleNotification (bool value)
         {
-            setSetting(nameof(SettingsState.IdleNotification), value);
+            setSetting (nameof (SettingsState.IdleNotification), value);
         }
-        public void SetChooseProjectForNew(bool value)
+        public void SetChooseProjectForNew (bool value)
         {
-            setSetting(nameof(SettingsState.ChooseProjectForNew), value);
+            setSetting (nameof (SettingsState.ChooseProjectForNew), value);
         }
-        public void SetUseDefaultTag(bool value)
+        public void SetUseDefaultTag (bool value)
         {
-            setSetting(nameof(SettingsState.UseDefaultTag), value);
+            setSetting (nameof (SettingsState.UseDefaultTag), value);
         }
-        public void SetGroupedTimeEntries(bool value)
+        public void SetGroupedTimeEntries (bool value)
         {
-            setSetting(nameof(SettingsState.GroupedEntries), value);
+            setSetting (nameof (SettingsState.GroupedEntries), value);
         }
 
         #endregion
 
-        private void stateUpdated(AppState state)
+        private void stateUpdated (SettingsState settings)
         {
-            var settings = state.Settings;
-
-            this.ShowNotification = settings.ShowNotification;
-            this.IdleNotification = settings.IdleNotification;
-            this.ChooseProjectForNew = settings.ChooseProjectForNew;
-            this.UseDefaultTag = settings.UseDefaultTag;
-            this.GroupedTimeEntries = settings.GroupedEntries;
+            ServiceContainer.Resolve<IPlatformUtils> ().DispatchOnUIThread (() => {
+                ShowNotification = settings.ShowNotification;
+                IdleNotification = settings.IdleNotification;
+                ChooseProjectForNew = settings.ChooseProjectForNew;
+                UseDefaultTag = settings.UseDefaultTag;
+                GroupedTimeEntries = settings.GroupedEntries;
+            });
         }
 
-        private static void setSetting(string propertyName, object value)
+        private static void setSetting (string propertyName, object value)
         {
-            RxChain.Send(new DataMsg.UpdateSetting(propertyName, value));
+            RxChain.Send (new DataMsg.UpdateSetting (propertyName, value));
         }
 
         public void Dispose()
         {
-            this.subscription.Dispose();
+            subscription.Dispose();
         }
     }
 }

@@ -1,19 +1,13 @@
 ﻿using System;
-using System.Collections.Generic;
 using Foundation;
-using Newtonsoft.Json;
 using NotificationCenter;
 using Toggl.Phoebe;
-using Toggl.Phoebe.Data;
-using Toggl.Phoebe.Data.Models;
-using Toggl.Phoebe.Net;
-using Toggl.Ross.ViewControllers;
 using UIKit;
 using XPlatUtils;
 
 namespace Toggl.Ross.Data
 {
-    public class WidgetUpdateService : IWidgetUpdateService
+    public class WidgetUpdateService //: IWidgetUpdateService
     {
         public static string MillisecondsKey = "milliseconds_key";
         public static string TimeEntriesKey = "time_entries_key";
@@ -47,9 +41,9 @@ namespace Toggl.Ross.Data
             // if we try to update auth state from Phoebe
             // WidgetUpdateService still doesn't exists.
 
-            var authManager = ServiceContainer.Resolve<AuthManager>();
+            //var authManager = ServiceContainer.Resolve<AuthManager>();
 
-            IsUserLogged = authManager.IsAuthenticated;
+            //IsUserLogged = authManager.IsAuthenticated;
             SetAppActivated (true);
             SetAppOnBackground (false);
             rootController = UIApplication.SharedApplication.KeyWindow.RootViewController;
@@ -57,6 +51,7 @@ namespace Toggl.Ross.Data
 
         #region IWidgetUpdateService implementation
 
+        /*
         List<WidgetSyncManager.WidgetEntryData> lastEntries;
 
         public List<WidgetSyncManager.WidgetEntryData> LastEntries
@@ -72,7 +67,7 @@ namespace Toggl.Ross.Data
                 }
             }
         }
-
+        */
         private string duration;
 
         public string RunningEntryDuration
@@ -125,6 +120,7 @@ namespace Toggl.Ross.Data
             UpdateWidgetContent();
         }
 
+        /*
         public async void ShowNewTimeEntryScreen (TimeEntryModel currentTimeEntry)
         {
             var topVCList = new List<UIViewController> (rootController.ChildViewControllers);
@@ -140,6 +136,7 @@ namespace Toggl.Ross.Data
                 topVCList[0].NavigationController.SetViewControllers (controllers.ToArray (), true);
             }
         }
+        */
 
         public void UpdateWidgetContent()
         {

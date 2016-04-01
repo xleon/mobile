@@ -3,14 +3,13 @@ using CoreGraphics;
 using CoreAnimation;
 using Foundation;
 using UIKit;
-using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
-using Toggl.Phoebe.Data.Views;
 using Toggl.Ross.DataSources;
 using Toggl.Ross.Theme;
-using Toggl.Phoebe.Data.ViewModels;
 using GalaSoft.MvvmLight.Helpers;
 using System.Collections.ObjectModel;
+using Toggl.Phoebe.ViewModels;
+using Toggl.Phoebe.Reactive;
 
 namespace Toggl.Ross.ViewControllers
 {
@@ -22,7 +21,7 @@ namespace Toggl.Ross.ViewControllers
 
         private const float CellSpacing = 4f;
         private Guid workspaceId;
-        private ProjectListViewModel viewModel;
+        private ProjectListVM viewModel;
         private readonly IOnProjectSelectedHandler handler;
 
         public ProjectSelectionViewController (Guid workspaceId, IOnProjectSelectedHandler handler) : base (UITableViewStyle.Plain)
@@ -32,7 +31,7 @@ namespace Toggl.Ross.ViewControllers
             this.handler = handler;
         }
 
-        public async override void ViewDidLoad ()
+        public override void ViewDidLoad ()
         {
             base.ViewDidLoad ();
 
@@ -50,7 +49,7 @@ namespace Toggl.Ross.ViewControllers
             defaultFooterView.StartAnimating ();
             TableView.TableFooterView = defaultFooterView;
 
-            viewModel = await ProjectListViewModel.Init (workspaceId);
+            viewModel = new ProjectListVM (StoreManager.Singleton.AppState, workspaceId);
             TableView.Source = new Source (this, viewModel);
 
             var addBtn = new UIBarButtonItem (UIBarButtonSystemItem.Add, OnAddNewProject);
@@ -64,13 +63,13 @@ namespace Toggl.Ross.ViewControllers
             TableView.TableFooterView = null;
         }
 
-        protected void OnItemSelected (CommonData m)
+        protected void OnItemSelected (ICommonData m)
         {
             Guid projectId = Guid.Empty;
             Guid taskId = Guid.Empty;
 
             if (m is ProjectData) {
-                if (! ((ProjectsCollection.SuperProjectData)m).IsEmpty) {
+                if (! ((ProjectsCollectionVM.SuperProjectData)m).IsEmpty) {
                     projectId = m.Id;
                 }
             } else if (m is TaskData) {
@@ -95,12 +94,12 @@ namespace Toggl.Ross.ViewControllers
             PresentViewController (popoverController, true, null);
         }
 
-        class Source : ObservableCollectionViewSource<CommonData, ClientData, ProjectData>
+        class Source : ObservableCollectionViewSource<ICommonData, IClientData, IProjectData>
         {
             private readonly ProjectSelectionViewController owner;
-            private readonly ProjectListViewModel viewModel;
+            private readonly ProjectListVM viewModel;
 
-            public Source (ProjectSelectionViewController owner, ProjectListViewModel viewModel)  : base (owner.TableView, viewModel.ProjectList)
+            public Source (ProjectSelectionViewController owner, ProjectListVM viewModel)  : base (owner.TableView, viewModel.ProjectList)
             {
                 this.owner = owner;
                 this.viewModel = viewModel;
@@ -113,7 +112,7 @@ namespace Toggl.Ross.ViewControllers
 
                 if (data is ProjectData) {
                     var cell = (ProjectCell)tableView.DequeueReusableCell (ProjectCellId, indexPath);
-                    cell.Bind ((ProjectsCollection.SuperProjectData)data, viewModel.ProjectList.AddTasks);
+                    cell.Bind ((ProjectsCollectionVM.SuperProjectData)data, viewModel.ProjectList.AddTasks);
                     return cell;
                 } else {
                     var cell = (TaskCell)tableView.DequeueReusableCell (TaskCellId, indexPath);
@@ -168,7 +167,7 @@ namespace Toggl.Ross.ViewControllers
             private UILabel projectLabel;
             private UILabel clientLabel;
             private UIButton tasksButton;
-            private ProjectsCollection.SuperProjectData projectData;
+            private ProjectsCollectionVM.SuperProjectData projectData;
             private Action<ProjectData> onPressedTagBtn;
 
             public ProjectCell (IntPtr handle) : base (handle)
@@ -255,7 +254,7 @@ namespace Toggl.Ross.ViewControllers
                 }
             }
 
-            public void Bind (ProjectsCollection.SuperProjectData projectData, Action<ProjectData> onPressedTagBtn, bool showClient = false)
+            public void Bind (ProjectsCollectionVM.SuperProjectData projectData, Action<ProjectData> onPressedTagBtn, bool showClient = false)
             {
                 this.projectData = projectData;
                 this.onPressedTagBtn = onPressedTagBtn;
@@ -269,7 +268,7 @@ namespace Toggl.Ross.ViewControllers
                     return;
                 }
 
-                var color = UIColor.Clear.FromHex (ProjectModel.HexColors [projectData.Color % ProjectModel.HexColors.Length]);
+                var color = UIColor.Clear.FromHex (ProjectData.HexColors [projectData.Color % ProjectData.HexColors.Length]);
                 BackgroundView.BackgroundColor = color;
 
                 projectLabel.Text = projectData.Name;
@@ -377,12 +376,12 @@ namespace Toggl.Ross.ViewControllers
             }
         }
 
-        class WorkspaceSelectorPopover : ObservableTableViewController<WorkspaceData>, IUIPopoverPresentationControllerDelegate
+        class WorkspaceSelectorPopover : ObservableTableViewController<IWorkspaceData>, IUIPopoverPresentationControllerDelegate
         {
-            private readonly ProjectListViewModel viewModel;
+            private readonly ProjectListVM viewModel;
             private const int cellHeight = 45;
 
-            public WorkspaceSelectorPopover (ProjectListViewModel viewModel, CGRect sourceRect)
+            public WorkspaceSelectorPopover (ProjectListVM viewModel, CGRect sourceRect)
             {
                 this.viewModel = viewModel;
                 ModalPresentationStyle = UIModalPresentationStyle.Popover;
@@ -409,7 +408,7 @@ namespace Toggl.Ross.ViewControllers
                 TableView.RowHeight = cellHeight;
                 CreateCellDelegate = CreateWorkspaceCell;
                 BindCellDelegate = BindCell;
-                DataSource = new ObservableCollection<WorkspaceData> (viewModel.WorkspaceList);
+                DataSource = new ObservableCollection<IWorkspaceData> (viewModel.WorkspaceList);
                 PopoverPresentationController.SourceView = TableView;
             }
 

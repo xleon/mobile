@@ -73,7 +73,10 @@
     <Reference Include="System.Core" />
     <Reference Include="Xamarin.iOS" />
     <Reference Include="Newtonsoft.Json">
-      <HintPath>..\packages\Newtonsoft.Json.7.0.1\lib\portable-net40+sl5+wp80+win8+wpa81\Newtonsoft.Json.dll</HintPath>
+      <HintPath>..\packages\Newtonsoft.Json.8.0.3\lib\portable-net40+sl5+wp80+win8+wpa81\Newtonsoft.Json.dll</HintPath>
+    </Reference>
+    <Reference Include="Cirrious.FluentLayouts.Touch">
+      <HintPath>..\packages\Cirrious.FluentLayout.2.5.0\lib\Xamarin.iOS10\Cirrious.FluentLayouts.Touch.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
@@ -95,5 +98,11 @@
   <Import Project="$(MSBuildExtensionsPath)\Xamarin\iOS\Xamarin.iOS.AppExtension.CSharp.targets" />
   <ItemGroup>
     <BundleResource Include="Resources\en.lproj\Localizable.strings" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Ross\Ross.csproj">
+      <Project>{ECB3366F-09AD-4C14-A2D2-FAE5D8D311DA}</Project>
+      <Name>Ross</Name>
+    </ProjectReference>
   </ItemGroup>
 </Project>

@@ -1,5 +1,4 @@
-using System;
-using Toggl.Phoebe.Data.Reports;
+using Toggl.Phoebe.Reports;
 
 namespace Toggl.Ross.Views.Charting
 {

@@ -2,8 +2,9 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using CoreGraphics;
-using Toggl.Phoebe.Data;
-using Toggl.Phoebe.Data.Reports;
+using Toggl.Phoebe.Data.Models;
+using Toggl.Phoebe.Reactive;
+using Toggl.Phoebe.Reports;
 using Toggl.Ross.Views.Charting;
 using UIKit;
 
@@ -166,7 +167,7 @@ namespace Toggl.Ross.Views
                     await Task.Delay (500, cts.Token);
                     _delaying = false;
 
-                    await dataSource.Load (TimeSpaceIndex);
+                    await dataSource.Load (StoreManager.Singleton.AppState.User, TimeSpaceIndex);
 
                     if ( !dataSource.IsLoading) {
                         barChart.ReportView = dataSource;

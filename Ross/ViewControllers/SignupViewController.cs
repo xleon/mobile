@@ -1,12 +1,13 @@
 using System;
-using System.Threading.Tasks;
 using Cirrious.FluentLayouts.Touch;
 using Foundation;
+using GalaSoft.MvvmLight.Helpers;
 using Google.SignIn;
 using MonoTouch.TTTAttributedLabel;
 using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Logging;
 using Toggl.Phoebe.Net;
+using Toggl.Phoebe.ViewModels;
 using Toggl.Ross.Theme;
 using Toggl.Ross.Views;
 using UIKit;
@@ -27,10 +28,18 @@ namespace Toggl.Ross.ViewControllers
         private UIButton passwordActionButton;
         private UIButton googleActionButton;
         private TTTAttributedLabel legalLabel;
+        private Binding<bool, bool> isAuthenticatingBinding;
+        private Binding<AuthResult, AuthResult> resultBinding;
+
+        private LoginVM viewModel {get; set;}
 
         public SignupViewController ()
         {
             Title = "SignupTitle".Tr ();
+            viewModel = new LoginVM ();
+            if (viewModel.CurrentLoginMode == LoginVM.LoginMode.Login) {
+                viewModel.ChangeLoginMode ();
+            }
         }
 
         public override void LoadView ()
@@ -142,6 +151,36 @@ namespace Toggl.Ross.ViewControllers
 
             SignIn.SharedInstance.Delegate = this;
             SignIn.SharedInstance.UIDelegate = this;
+
+            isAuthenticatingBinding = this.SetBinding (() => viewModel.IsAuthenticating, () => IsAuthenticating);
+            resultBinding = this.SetBinding (() => viewModel.AuthResult).WhenSourceChanges (() => {
+                switch (viewModel.AuthResult) {
+                case AuthResult.None:
+                case AuthResult.Authenticating:
+                    IsAuthenticating = true;
+                    break;
+
+                case AuthResult.Success:
+                    // TODO RX: Start the initial sync for the user
+                    //ServiceContainer.Resolve<ISyncManager> ().Run ();
+                    // Start the initial sync for the user
+                    break;
+
+                // Error cases
+                default:
+                    IsAuthenticating = false;
+                    if (viewModel.CurrentLoginMode == LoginVM.LoginMode.Login) {
+                        if (viewModel.AuthResult == AuthResult.InvalidCredentials) {
+                            passwordTextField.Text = string.Empty;
+                        }
+                        passwordTextField.BecomeFirstResponder ();
+                    } else {
+                        emailTextField.BecomeFirstResponder ();
+                    }
+                    AuthErrorAlert.Show (this, emailTextField.Text, viewModel.AuthResult, AuthErrorAlert.Mode.Login);
+                    break;
+                }
+            });
         }
 
         public override void ViewDidAppear (bool animated)
@@ -159,8 +198,8 @@ namespace Toggl.Ross.ViewControllers
         private void ResetSignupButtonState ()
         {
             var enabled = !IsAuthenticating
-                          && !String.IsNullOrWhiteSpace (emailTextField.Text) && emailTextField.Text.Contains ("@")
-                          && !String.IsNullOrWhiteSpace (passwordTextField.Text) && passwordTextField.Text.Length >= 6;
+                          && !string.IsNullOrWhiteSpace (emailTextField.Text) && emailTextField.Text.Contains ("@")
+                          && !string.IsNullOrWhiteSpace (passwordTextField.Text) && passwordTextField.Text.Length >= 6;
             passwordActionButton.Enabled = enabled;
         }
 
@@ -170,10 +209,10 @@ namespace Toggl.Ross.ViewControllers
             var arg0 = "SignupToS".Tr ();
             var arg1 = "SignupPrivacy".Tr ();
 
-            var arg0idx = String.Format (template, "{0}", arg1).IndexOf ("{0}", StringComparison.Ordinal);
-            var arg1idx = String.Format (template, arg0, "{1}").IndexOf ("{1}", StringComparison.Ordinal);
+            var arg0idx = string.Format (template, "{0}", arg1).IndexOf ("{0}", StringComparison.Ordinal);
+            var arg1idx = string.Format (template, arg0, "{1}").IndexOf ("{1}", StringComparison.Ordinal);
 
-            label.Text = (NSString)String.Format (template, arg0, arg1);
+            label.Text = (NSString)string.Format (template, arg0, arg1);
             label.AddLinkToURL (
                 new NSUrl (Phoebe.Build.TermsOfServiceUrl.ToString ()),
                 new NSRange (arg0idx, arg0.Length));
@@ -208,63 +247,25 @@ namespace Toggl.Ross.ViewControllers
 
         public void DidSignIn (SignIn signIn, GoogleUser user, NSError error)
         {
-            InvokeOnMainThread (async delegate {
-                await AuthWithGoogleTokenAsync (signIn, user, error);
-            });
-        }
-
-        private async void TryPasswordSignup ()
-        {
-            if (IsAuthenticating) {
-                return;
-            }
-
-            IsAuthenticating = true;
-
-            try {
-                var authManager = ServiceContainer.Resolve<AuthManager> ();
-                var authRes = await authManager.SignupAsync (emailTextField.Text, passwordTextField.Text);
-
-                if (authRes != AuthResult.Success) {
-                    AuthErrorAlert.Show (this, emailTextField.Text, authRes, AuthErrorAlert.Mode.Signup);
-                }
-            } finally {
-                IsAuthenticating = false;
-            }
-        }
-
-        public async Task AuthWithGoogleTokenAsync (SignIn signIn, GoogleUser user, Foundation.NSError error)
-        {
-            try {
-                if (error == null) {
-                    IsAuthenticating = true;
-
-                    var token = user.Authentication.AccessToken;
-                    var authManager = ServiceContainer.Resolve<AuthManager> ();
-                    var authRes = await authManager.SignupWithGoogleAsync (token);
-                    // No need to keep the users Google account access around anymore
-                    signIn.DisconnectUser ();
-
-                    if (authRes != AuthResult.Success) {
-                        var email = user.Profile.Email;
-                        AuthErrorAlert.Show (this, email, authRes, AuthErrorAlert.Mode.Signup, googleAuth: true);
-                    }
-                } else if (error.Code != -5) { // Cancel error code.
-                    new UIAlertView (
-                        "WelcomeGoogleErrorTitle".Tr (),
-                        "WelcomeGoogleErrorMessage".Tr (),
-                        null, "WelcomeGoogleErrorOk".Tr (), null).Show ();
-                }
-            } catch (InvalidOperationException ex) {
+            if (error == null) {
+                var token = user.Authentication.AccessToken;
+                //googleEmail = user.Profile.Email;
+                signIn.DisconnectUser (); // Disconnect user from Google.
+                viewModel.TryLoginWithGoogle (token);
+            } else if (error.Code != -5) { // Cancel error code.
+                new UIAlertView ("WelcomeGoogleErrorTitle".Tr (), "WelcomeGoogleErrorMessage".Tr (), null, "WelcomeGoogleErrorOk".Tr (), null).Show ();
                 var log = ServiceContainer.Resolve<ILogger> ();
-                log.Info (Tag, ex, "Failed to authenticate (G+) the user.");
-            } finally {
+                log.Info (Tag, "Failed to authenticate (G+) the user.");
                 IsAuthenticating = false;
             }
+        }
+
+        private void TryPasswordSignup ()
+        {
+            viewModel.TryLogin (emailTextField.Text, passwordTextField.Text);
         }
 
         private bool isAuthenticating;
-
         private bool IsAuthenticating
         {
             get { return isAuthenticating; }
@@ -287,7 +288,7 @@ namespace Toggl.Ross.ViewControllers
                 var tosUrl = Phoebe.Build.TermsOfServiceUrl.ToString ();
                 var privacyUrl = Phoebe.Build.PrivacyPolicyUrl.ToString ();
                 if (stringUrl.Equals (tosUrl) || stringUrl.Equals (privacyUrl)) {
-                    url = new NSUrl (String.Format ("{0}?simple=true", stringUrl));
+                    url = new NSUrl (string.Format ("{0}?simple=true", stringUrl));
                 }
                 WebViewController controller = new WebViewController (url);
                 label.Window.RootViewController.PresentViewController (controller, true, null);

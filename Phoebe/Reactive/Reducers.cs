@@ -369,7 +369,6 @@ namespace Toggl.Phoebe.Reactive
             var info = (msg as DataMsg.UpdateSetting).Data.ForceLeft ();
             SettingsState newSettings = state.Settings;
 
-
             switch (info.Item1) {
             case nameof (SettingsState.ShowWelcome):
                 newSettings = newSettings.With (showWelcome: (bool)info.Item2);
@@ -395,7 +394,6 @@ namespace Toggl.Phoebe.Reactive
 
                 // TODO: log invalid/unknowns?
             }
-
 
             return DataSyncMsg.Create (state.With (settings:newSettings));
         }

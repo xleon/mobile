@@ -3,37 +3,38 @@ using System.Collections.Generic;
 using CoreGraphics;
 using Foundation;
 using UIKit;
-using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Ross.Theme;
-using Toggl.Phoebe.Data.ViewModels;
 using GalaSoft.MvvmLight.Helpers;
 using System.Linq;
+using Toggl.Phoebe.Data.Models;
+using Toggl.Phoebe.ViewModels;
+using Toggl.Phoebe.Reactive;
 
 namespace Toggl.Ross.ViewControllers
 {
-    public class TagSelectionViewController : ObservableTableViewController<TagData>
+    public class TagSelectionViewController : ObservableTableViewController<ITagData>
     {
-        private TagListViewModel viewModel;
+        private TagListVM viewModel;
         private Guid workspaceId;
-        private List<TagData> previousSelectedTags;
+        private List<ITagData> previousSelectedTags;
         private IOnTagSelectedHandler handler;
 
-        public TagSelectionViewController (Guid workspaceId, List<TagData> previousSelectedTags, IOnTagSelectedHandler handler) : base (UITableViewStyle.Plain)
+        public TagSelectionViewController (Guid workspaceId, IReadOnlyList<ITagData> previousSelectedTags, IOnTagSelectedHandler handler) : base (UITableViewStyle.Plain)
         {
             Title = "TagTitle".Tr ();
             this.workspaceId = workspaceId;
-            this.previousSelectedTags = previousSelectedTags;
+            this.previousSelectedTags = previousSelectedTags.ToList ();
             this.handler = handler;
         }
 
-        public async override void ViewDidLoad ()
+        public override void ViewDidLoad ()
         {
             base.ViewDidLoad ();
 
             View.Apply (Style.Screen);
             EdgesForExtendedLayout = UIRectEdge.None;
 
-            viewModel = await TagListViewModel.Init (workspaceId, previousSelectedTags.Select (t => t.Id).ToList ());
+            viewModel = new TagListVM (StoreManager.Singleton.AppState, workspaceId, previousSelectedTags.Select (t => t.Id).ToList ());
 
             // Set ObservableTableViewController settings
             // ObservableTableViewController is a helper class

@@ -2,11 +2,8 @@ using System;
 using System.Collections.Generic;
 using Cirrious.FluentLayouts.Touch;
 using UIKit;
-using Toggl.Phoebe;
 using Toggl.Phoebe.Analytics;
-using Toggl.Phoebe.Data;
 using XPlatUtils;
-using Toggl.Ross.Data;
 using Toggl.Ross.Theme;
 using Toggl.Ross.Views;
 
@@ -16,7 +13,6 @@ namespace Toggl.Ross.ViewControllers
     {
         private LabelSwitchView askProjectView;
         private LabelSwitchView mobileTagView;
-        private Subscription<SettingChangedMessage> subscriptionSettingChanged;
         private bool isResuming;
 
         public SettingsViewController ()
@@ -28,11 +24,6 @@ namespace Toggl.Ross.ViewControllers
         protected override void Dispose (bool disposing)
         {
             if (disposing) {
-                if (subscriptionSettingChanged != null) {
-                    var bus = ServiceContainer.Resolve<MessageBus> ();
-                    bus.Unsubscribe (subscriptionSettingChanged);
-                    subscriptionSettingChanged = null;
-                }
             }
             base.Dispose (disposing);
         }
@@ -67,12 +58,12 @@ namespace Toggl.Ross.ViewControllers
 
         private void BindAskProjectView (LabelSwitchView v)
         {
-            v.Switch.On = SettingsStore.ChooseProjectForNew;
+            //v.Switch.On = SettingsStore.ChooseProjectForNew;
         }
 
         private void BindMobileTagView (LabelSwitchView v)
         {
-            v.Switch.On = SettingsStore.UseDefaultTag;
+            //v.Switch.On = SettingsStore.UseDefaultTag;
         }
 
         private void Rebind ()
@@ -83,22 +74,17 @@ namespace Toggl.Ross.ViewControllers
 
         private void OnAskProjectViewValueChanged (object sender, EventArgs e)
         {
-            SettingsStore.ChooseProjectForNew = askProjectView.Switch.On;
+            //SettingsStore.ChooseProjectForNew = askProjectView.Switch.On;
         }
 
         private void OnMobileTagViewValueChanged (object sender, EventArgs e)
         {
-            SettingsStore.UseDefaultTag = mobileTagView.Switch.On;
+            //SettingsStore.UseDefaultTag = mobileTagView.Switch.On;
         }
 
         public override void ViewWillAppear (bool animated)
         {
             base.ViewWillAppear (animated);
-
-            if (subscriptionSettingChanged == null) {
-                var bus = ServiceContainer.Resolve<MessageBus> ();
-                subscriptionSettingChanged = bus.Subscribe<SettingChangedMessage> (OnSettingChanged);
-            }
 
             if (isResuming) {
                 Rebind ();
@@ -117,14 +103,16 @@ namespace Toggl.Ross.ViewControllers
         public override void ViewWillDisappear (bool animated)
         {
             base.ViewWillDisappear (animated);
-
+            /*
             if (subscriptionSettingChanged != null) {
                 var bus = ServiceContainer.Resolve<MessageBus> ();
                 bus.Unsubscribe (subscriptionSettingChanged);
                 subscriptionSettingChanged = null;
             }
+            */
         }
 
+        /*
         private void OnSettingChanged (SettingChangedMessage msg)
         {
             Rebind ();
@@ -134,7 +122,7 @@ namespace Toggl.Ross.ViewControllers
         {
             get { return ServiceContainer.Resolve<SettingsStore> (); }
         }
-
+        */
         private static IEnumerable<FluentLayout> MakeConstraints (UIView container)
         {
             UIView prev = null;

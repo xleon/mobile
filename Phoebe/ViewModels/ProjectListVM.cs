@@ -14,6 +14,11 @@ using Toggl.Phoebe.Data;
 
 namespace Toggl.Phoebe.ViewModels
 {
+    public interface IOnProjectSelectedHandler
+    {
+        void OnProjectSelected (Guid projectId, Guid taskId);
+    }
+
     [ImplementPropertyChanged]
     public class ProjectListVM : ViewModelBase, IDisposable
     {

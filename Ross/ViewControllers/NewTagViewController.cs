@@ -6,20 +6,21 @@ using Foundation;
 using UIKit;
 using Toggl.Ross.Theme;
 using Toggl.Ross.Views;
-using Toggl.Phoebe.Data.ViewModels;
+using Toggl.Phoebe.ViewModels;
+using Toggl.Phoebe.Reactive;
 
 namespace Toggl.Ross.ViewControllers
 {
     public class NewTagViewController : UIViewController
     {
         private TextField nameTextField;
-        private CreateTagViewModel viewModel { get; set; }
+        private NewTagVM viewModel { get; set; }
         private IOnTagSelectedHandler handler;
 
         public NewTagViewController (Guid workspaceId, IOnTagSelectedHandler handler)
         {
             Title = "NewTagTitle".Tr();
-            viewModel = new CreateTagViewModel (workspaceId);
+            viewModel = new NewTagVM (StoreManager.Singleton.AppState, workspaceId);
             this.handler = handler;
         }
 
@@ -54,9 +55,9 @@ namespace Toggl.Ross.ViewControllers
             nameTextField.BecomeFirstResponder();
         }
 
-        private async void OnAddTag (object sender, EventArgs e)
+        private void OnAddTag (object sender, EventArgs e)
         {
-            var newTagData = await viewModel.SaveTagModel (nameTextField.Text);
+            var newTagData = viewModel.SaveTag (nameTextField.Text);
             handler.OnCreateNewTag (newTagData);
         }
 

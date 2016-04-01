@@ -2,7 +2,6 @@ using System;
 using CoreGraphics;
 using Foundation;
 using UIKit;
-using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Ross.Theme;
 
@@ -21,12 +20,12 @@ namespace Toggl.Ross.Views
                 _data = value;
 
                 string hex;
-                if (_data.Color == ProjectModel.GroupedProjectColorIndex) {
-                    hex = ProjectModel.GroupedProjectColor;
-                    projectTitleLabel.Text = String.Format ( "ReportsCellGroupedProject".Tr(), _data.Project);
+                if (_data.Color == ProjectData.GroupedProjectColorIndex) {
+                    hex = ProjectData.GroupedProjectColor;
+                    projectTitleLabel.Text = string.Format ( "ReportsCellGroupedProject".Tr(), _data.Project);
                 } else {
-                    hex = ProjectModel.HexColors [ _data.Color % ProjectModel.HexColors.Length];
-                    projectTitleLabel.Text = String.IsNullOrEmpty ( _data.Project) ? "ReportsCellNoProject".Tr() : _data.Project;
+                    hex = ProjectData.HexColors [ _data.Color % ProjectData.HexColors.Length];
+                    projectTitleLabel.Text = string.IsNullOrEmpty ( _data.Project) ? "ReportsCellNoProject".Tr() : _data.Project;
                 }
                 circleView.BackgroundColor = UIColor.Clear.FromHex ( hex);
                 timeLabel.Text = _data.FormattedTotalTime;

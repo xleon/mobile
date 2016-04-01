@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using Cirrious.FluentLayouts.Touch;
 using Foundation;
-using GalaSoft.MvvmLight.Helpers;
-using Toggl.Phoebe.Data.ViewModels;
+using Toggl.Phoebe.Reactive;
+using Toggl.Phoebe.ViewModels;
 using Toggl.Ross.Theme;
 using Toggl.Ross.Views;
 using UIKit;
@@ -13,7 +13,7 @@ namespace Toggl.Ross.ViewControllers
 {
     public class NewClientViewController : UIViewController
     {
-        private CreateClientViewModel ViewModel {get; set;}
+        private NewClientVM ViewModel {get; set;}
         private TextField NameTextField { get; set; }
         private Guid workspaceId;
         private IOnClientSelectedHandler handler;
@@ -49,12 +49,10 @@ namespace Toggl.Ross.ViewControllers
             NavigationItem.RightBarButtonItem.Enabled = false;
         }
 
-        public async override void ViewDidLoad ()
+        public override void ViewDidLoad ()
         {
             base.ViewDidLoad ();
-            ViewModel = await CreateClientViewModel.Init (workspaceId);
-            this.SetBinding (() => ViewModel.ClientName, () => NameTextField.Text, BindingMode.TwoWay)
-            .UpdateTargetTrigger ("EditingChanged");
+            ViewModel = new NewClientVM (StoreManager.Singleton.AppState, workspaceId);
         }
 
         public override void ViewDidAppear (bool animated)
@@ -74,9 +72,9 @@ namespace Toggl.Ross.ViewControllers
             base.ViewWillDisappear (animated);
         }
 
-        private async void OnNavigationBarAddClicked (object sender, EventArgs e)
+        private void OnNavigationBarAddClicked (object sender, EventArgs e)
         {
-            var clientData = await ViewModel.SaveNewClient ();
+            var clientData = ViewModel.SaveClient (NameTextField.Text);
             handler.OnClientSelected (clientData);
         }
 

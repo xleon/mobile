@@ -1,4 +1,3 @@
-using System;
 using Toggl.Phoebe.Net;
 using UIKit;
 using MessageUI;
@@ -40,7 +39,7 @@ namespace Toggl.Ross.Views
                             var mail = new MFMailComposeViewController ();
                             mail.SetToRecipients (new[] { "AuthErrorNoWorkspaceEmail".Tr () });
                             mail.SetSubject ("AuthErrorNoWorkspaceSubject".Tr ());
-                            mail.SetMessageBody (String.Format ("AuthErrorNoWorkspaceBody".Tr (), email), false);
+                            mail.SetMessageBody (string.Format ("AuthErrorNoWorkspaceBody".Tr (), email), false);
                             mail.Finished += delegate {
                                 controller.DismissViewController (true, null);
                             };

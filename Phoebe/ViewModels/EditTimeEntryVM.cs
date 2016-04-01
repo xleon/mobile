@@ -219,6 +219,7 @@ namespace Toggl.Phoebe.ViewModels
         }
 
         // TODO RX: Is this method necessary?
+        // Yes. For iOS.
         public void Delete ()
         {
             RxChain.Send (new DataMsg.TimeEntriesRemove (richData.Data));

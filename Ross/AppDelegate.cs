@@ -12,6 +12,7 @@ using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Logging;
 using Toggl.Phoebe.Net;
+using Toggl.Phoebe.Reactive;
 using Toggl.Ross.Analytics;
 using Toggl.Ross.Data;
 using Toggl.Ross.Logging;
@@ -50,7 +51,7 @@ namespace Toggl.Ross
             // Setup Google sign in
             SetupGoogleServices ();
 
-            Toggl.Ross.Theme.Style.Initialize ();
+            Theme.Style.Initialize ();
 
             // Start app
             window = new TogglWindow (UIScreen.MainScreen.Bounds);
@@ -60,19 +61,23 @@ namespace Toggl.Ross
             // Make sure critical services are running are running:
             ServiceContainer.Resolve<UpgradeManger> ().TryUpgrade ();
             ServiceContainer.Resolve<ILoggerClient> ();
-            ServiceContainer.Resolve<LoggerUserManager> ();
             ServiceContainer.Resolve<ITracker> ();
             ServiceContainer.Resolve<APNSManager> ();
+
+            // This needs some services, like ITimeProvider, so run it at the end
+            RxChain.Init (AppState.Init ());
 
             return true;
         }
 
         public override void RegisteredForRemoteNotifications (UIApplication application, NSData deviceToken)
         {
+            /*
             Task.Run (async () => {
                 var service = ServiceContainer.Resolve<APNSManager> ();
-                await service.RegisteredForRemoteNotificationsAsync (application, deviceToken);
+                //await service.RegisteredForRemoteNotificationsAsync (application, deviceToken);
             });
+            */
         }
 
         public override void FailedToRegisterForRemoteNotifications (UIApplication application, NSError error)
@@ -91,13 +96,13 @@ namespace Toggl.Ross
         public override void OnActivated (UIApplication application)
         {
             // Make sure the user data is refreshed when the application becomes active
-            ServiceContainer.Resolve<ISyncManager> ().Run ();
+            RxChain.Send (new DataMsg.FullSync ());
             ServiceContainer.Resolve<NetworkIndicatorManager> ();
 
             if (systemVersion > minVersionWidget) {
-                ServiceContainer.Resolve<WidgetSyncManager>();
-                var widgetService = ServiceContainer.Resolve<WidgetUpdateService>();
-                widgetService.SetAppOnBackground (false);
+                // ServiceContainer.Resolve<WidgetSyncManager>();
+                // var widgetService = ServiceContainer.Resolve<WidgetUpdateService>();
+                // widgetService.SetAppOnBackground (false);
             }
         }
 
@@ -105,6 +110,7 @@ namespace Toggl.Ross
         {
             if (systemVersion > minVersionWidget) {
                 if (url.AbsoluteString.Contains (WidgetUpdateService.TodayUrlPrefix)) {
+                    /*
                     var widgetManager = ServiceContainer.Resolve<WidgetSyncManager>();
                     if (url.AbsoluteString.Contains (WidgetUpdateService.StartEntryUrlPrefix)) {
                         widgetManager.StartStopTimeEntry();
@@ -114,6 +120,7 @@ namespace Toggl.Ross
                         widgetManager.ContinueTimeEntry (Guid.Parse (guid));
                     }
                     return true;
+                    */
                 }
             }
             return SignIn.SharedInstance.HandleUrl (url, sourceApplication, annotation);
@@ -139,8 +146,6 @@ namespace Toggl.Ross
         {
             // Register platform info first.
             ServiceContainer.Register<IPlatformUtils> (this);
-            ServiceContainer.Register<SettingsStore> ();
-            ServiceContainer.Register<ISettingsStore> (() => ServiceContainer.Resolve<SettingsStore> ());
 
             // Register Phoebe services
             Services.Register ();
@@ -151,12 +156,12 @@ namespace Toggl.Ross
             // Register Ross components:
             ServiceContainer.Register<ILogger> (() => new Logger ());
             if (systemVersion > minVersionWidget) {
-                ServiceContainer.Register<WidgetUpdateService> (() => new WidgetUpdateService());
-                ServiceContainer.Register<IWidgetUpdateService> (() => ServiceContainer.Resolve<WidgetUpdateService> ());
+                //ServiceContainer.Register<WidgetUpdateService> (() => new WidgetUpdateService());
+                //ServiceContainer.Register<IWidgetUpdateService> (() => ServiceContainer.Resolve<WidgetUpdateService> ());
             }
             ServiceContainer.Register<ExperimentManager> (() => new ExperimentManager (
-                typeof (Toggl.Phoebe.Analytics.Experiments),
-                typeof (Toggl.Ross.Analytics.Experiments)));
+                typeof (Phoebe.Analytics.Experiments),
+                typeof (Analytics.Experiments)));
             ServiceContainer.Register<ILoggerClient> (() => new LogClient ());
             ServiceContainer.Register<ITracker> (() => new Tracker());
             ServiceContainer.Register<INetworkPresence> (() => new NetworkPresence ());

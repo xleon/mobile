@@ -7,9 +7,9 @@ using CoreGraphics;
 using Foundation;
 using GalaSoft.MvvmLight.Helpers;
 using Toggl.Phoebe;
-using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
-using Toggl.Phoebe.Data.ViewModels;
+using Toggl.Phoebe.Reactive;
+using Toggl.Phoebe.ViewModels;
 using Toggl.Ross.Theme;
 using Toggl.Ross.Views;
 using UIKit;
@@ -17,7 +17,10 @@ using XPlatUtils;
 
 namespace Toggl.Ross.ViewControllers
 {
-    public class EditTimeEntryViewController : UIViewController, DurationChangeViewController.IChangeDuration, IOnTagSelectedHandler, IOnProjectSelectedHandler
+    public class EditTimeEntryViewController : UIViewController,
+        DurationChangeViewController.IChangeDuration,
+        IOnTagSelectedHandler,
+        IOnProjectSelectedHandler
     {
         private const string DefaultDurationText = " 00:00:00 ";
 
@@ -38,23 +41,16 @@ namespace Toggl.Ross.ViewControllers
         private Binding<string, string> durationBinding, projectBinding, clientBinding, descriptionBinding, taskBinding, projectColorBinding;
         private Binding<DateTime, DateTime> startTimeBinding;
         private Binding<DateTime, DateTime> stopTimeBinding;
-        private Binding<List<TagData>, List<TagData>> tagBinding;
+        private Binding<IReadOnlyList<ITagData>, IReadOnlyList<ITagData>> tagBinding;
         private Binding<bool, bool> isBillableBinding, billableBinding, isRunningBinding, isPremiumBinding;
 
         private readonly TimeEntryData data;
         private readonly List<TagData> tagList;
-        protected EditTimeEntryViewModel ViewModel { get; set; }
+        protected EditTimeEntryVM ViewModel { get; set; }
 
-        public EditTimeEntryViewController (TimeEntryData data, List<TagData> tagList)
+        public EditTimeEntryViewController (Guid dataId)
         {
-            this.tagList = tagList;
-            this.data = data;
-            ViewModel = EditTimeEntryViewModel.Init (data, tagList);
-        }
-
-        protected override void Dispose (bool disposing)
-        {
-            base.Dispose (disposing);
+            ViewModel = new EditTimeEntryVM (StoreManager.Singleton.AppState, dataId);
         }
 
         public override void LoadView ()
@@ -169,11 +165,11 @@ namespace Toggl.Ross.ViewControllers
             billableSwitch.Switch.ValueChanged += (sender, e) => { ViewModel.ChangeBillable (billableSwitch.Switch.On); };
         }
 
-        public async override void ViewWillDisappear (bool animated)
+        public override void ViewWillDisappear (bool animated)
         {
             NSNotificationCenter.DefaultCenter.RemoveObservers (notificationObjects);
             notificationObjects.Clear ();
-            await ViewModel.SaveAsync ();
+            ViewModel.Save ();
 
             // TODO: Release ViewModel only when the
             // ViewController is poped. It is a weird behaviour
@@ -253,9 +249,9 @@ namespace Toggl.Ross.ViewControllers
                 null,
                 "EditEntryConfirmCancel".Tr (),
                 "EditEntryConfirmDelete".Tr ());
-            alert.Clicked += async (s, ev) => {
+            alert.Clicked += (s, ev) => {
                 if (ev.ButtonIndex == 1) {
-                    await ViewModel.DeleteAsync ();
+                    ViewModel.Delete ();
                     NavigationController.PopToRootViewController (true);
                 }
             };
@@ -304,7 +300,7 @@ namespace Toggl.Ross.ViewControllers
         #region IProjectSelected implementation
         public void OnProjectSelected (Guid projectId, Guid taskId)
         {
-            ViewModel.SetProjectAndTask (projectId, taskId);
+            ViewModel.ChangeProjectAndTask (projectId, taskId);
             NavigationController.PopToViewController (this, true);
         }
         #endregion
@@ -318,15 +314,17 @@ namespace Toggl.Ross.ViewControllers
         #endregion
 
         #region IUpdateTagList implementation
-        public void OnCreateNewTag (TagData newTagData)
+        public void OnCreateNewTag (ITagData newTagData)
         {
-            ViewModel.AddTag (newTagData);
+            var newTagList = ViewModel.TagList.ToList ();
+            newTagList.Add (newTagData);
+            ViewModel.ChangeTagList (newTagList.Select (t => t.Id));
             NavigationController.PopToViewController (this, true);
         }
 
-        public void OnModifyTagList (List<TagData> newTagList)
+        public void OnModifyTagList (List<ITagData> newTagList)
         {
-            ViewModel.ChangeTagList (newTagList);
+            ViewModel.ChangeTagList (newTagList.Select (t => t.Id));
             NavigationController.PopToViewController (this, true);
         }
         #endregion
@@ -867,7 +865,7 @@ namespace Toggl.Ross.ViewControllers
                 get { return "#ffffff"; }
                 set {
                     // If string Hex color is default or null:
-                    if (value == ProjectModel.HexColors [ProjectModel.DefaultColor] || string.IsNullOrEmpty (value)) {
+                    if (value == ProjectData.HexColors [ProjectData.DefaultColor] || string.IsNullOrEmpty (value)) {
                         projectLabel.Apply (Style.EditTimeEntry.ProjectHintLabel);
                         SetBackgroundImage (Color.White.ToImage (), UIControlState.Normal);
                         SetBackgroundImage (Color.LightestGray.ToImage (), UIControlState.Highlighted);

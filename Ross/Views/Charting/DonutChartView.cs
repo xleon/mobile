@@ -4,9 +4,8 @@ using System.Linq;
 using CoreAnimation;
 using CoreGraphics;
 using Foundation;
-using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
-using Toggl.Phoebe.Data.Reports;
+using Toggl.Phoebe.Reports;
 using Toggl.Ross.Theme;
 using UIKit;
 
@@ -337,7 +336,7 @@ namespace Toggl.Ross.Views.Charting
 
         public nint NumberOfSlicesInPieChart (XYDonutChart pieChart)
         {
-            return (nint)DonutProjectList.Count;
+            return DonutProjectList.Count;
         }
 
         public nfloat ValueForSliceAtIndex (XYDonutChart pieChart, nint index)
@@ -348,10 +347,10 @@ namespace Toggl.Ross.Views.Charting
         public UIColor ColorForSliceAtIndex (XYDonutChart pieChart, nint index)
         {
             string hex;
-            if (DonutProjectList [ (int)index].Color == ProjectModel.GroupedProjectColorIndex) {
-                hex = ProjectModel.GroupedProjectColor;
+            if (DonutProjectList [ (int)index].Color == ProjectData.GroupedProjectColorIndex) {
+                hex = ProjectData.GroupedProjectColor;
             } else {
-                hex = ProjectModel.HexColors [DonutProjectList [ (int)index].Color % ProjectModel.HexColors.Length];
+                hex = ProjectData.HexColors [DonutProjectList [ (int)index].Color % ProjectData.HexColors.Length];
             }
             return UIColor.Clear.FromHex (hex);
         }

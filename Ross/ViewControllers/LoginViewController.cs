@@ -1,13 +1,12 @@
 using System;
 using Cirrious.FluentLayouts.Touch;
-using Toggl.Phoebe.Analytics;
-using Toggl.Phoebe.Data;
-using Toggl.Phoebe.Logging;
+using GalaSoft.MvvmLight.Helpers;
+using Toggl.Phoebe.Helpers;
 using Toggl.Phoebe.Net;
+using Toggl.Phoebe.ViewModels;
 using Toggl.Ross.Theme;
 using Toggl.Ross.Views;
 using UIKit;
-using XPlatUtils;
 
 namespace Toggl.Ross.ViewControllers
 {
@@ -22,10 +21,18 @@ namespace Toggl.Ross.ViewControllers
         private UITextField emailTextField;
         private UITextField passwordTextField;
         private UIButton passwordActionButton;
+        private Binding<bool, bool> isAuthenticatingBinding;
+        private Binding<AuthResult, AuthResult> resultBinding;
+
+        protected LoginVM ViewModel { get; private set; }
 
         public LoginViewController ()
         {
             Title = "LoginTitle".Tr ();
+            ViewModel = LoginVM.Init ();
+            if (ViewModel.CurrentLoginMode == LoginVM.LoginMode.Signup) {
+                ViewModel.ChangeLoginMode ();
+            }
         }
 
         public override void LoadView ()
@@ -114,7 +121,35 @@ namespace Toggl.Ross.ViewControllers
             base.ViewDidAppear (animated);
             emailTextField.BecomeFirstResponder ();
 
-            ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Login";
+            isAuthenticatingBinding = this.SetBinding (() => ViewModel.IsAuthenticating, () => IsAuthenticating);
+            resultBinding = this.SetBinding (() => ViewModel.AuthResult).WhenSourceChanges (() => {
+                switch (ViewModel.AuthResult) {
+                case AuthResult.None:
+                case AuthResult.Authenticating:
+                    IsAuthenticating = true;
+                    break;
+
+                case AuthResult.Success:
+                    // TODO RX: Start the initial sync for the user
+                    //ServiceContainer.Resolve<ISyncManager> ().Run ();
+                    // Start the initial sync for the user
+                    break;
+
+                // Error cases
+                default:
+                    IsAuthenticating = false;
+                    if (ViewModel.CurrentLoginMode == LoginVM.LoginMode.Login) {
+                        if (ViewModel.AuthResult == AuthResult.InvalidCredentials) {
+                            passwordTextField.Text = string.Empty;
+                        }
+                        passwordTextField.BecomeFirstResponder ();
+                    } else {
+                        emailTextField.BecomeFirstResponder ();
+                    }
+                    AuthErrorAlert.Show (this, emailTextField.Text, ViewModel.AuthResult, AuthErrorAlert.Mode.Login);
+                    break;
+                }
+            });
         }
 
         private bool HandleShouldReturn (UITextField textField)
@@ -135,46 +170,25 @@ namespace Toggl.Ross.ViewControllers
             TryPasswordAuth ();
         }
 
-        private async void TryPasswordAuth ()
+        private void TryPasswordAuth ()
         {
             // Small UI trick to permit OBM testers
             // interact with the staging API
             if (emailTextField.Text == "staging") {
-                var isStaging = !ServiceContainer.Resolve<ISettingsStore> ().IsStagingMode;
-                ServiceContainer.Resolve<ISettingsStore> ().IsStagingMode = isStaging;
+                var isStaging = !Settings.IsStaging;
+                Settings.IsStaging = isStaging;
                 var msg = !isStaging ? "You're in Normal Mode" : "You're in Staging Mode";
                 var alertView = new UIAlertView ("Staging Mode", msg + "\nRestart the app to continue.", null, "Ok");
                 alertView.Show ();
                 return;
             }
 
-            if (IsAuthenticating) {
-                return;
-            }
-
-            IsAuthenticating = true;
-
-            try {
-                var authManager = ServiceContainer.Resolve<AuthManager> ();
-                var authRes = await authManager.AuthenticateAsync (emailTextField.Text, passwordTextField.Text);
-
-                if (authRes != AuthResult.Success) {
-                    AuthErrorAlert.Show (this, emailTextField.Text, authRes, AuthErrorAlert.Mode.Login);
-                } else {
-                    // Start the initial sync for the user
-                    ServiceContainer.Resolve<ISyncManager> ().Run (SyncMode.Full);
-                }
-            } catch (InvalidOperationException ex) {
-                var log = ServiceContainer.Resolve<ILogger> ();
-                log.Info (Tag, ex, "Failed to authenticate (password) the user.");
-            } finally {
-                IsAuthenticating = false;
-            }
+            ViewModel.TryLogin (emailTextField.Text, passwordTextField.Text);
         }
 
         private bool isAuthenticating;
 
-        private bool IsAuthenticating
+        protected bool IsAuthenticating
         {
             get { return isAuthenticating; }
             set {
@@ -182,7 +196,6 @@ namespace Toggl.Ross.ViewControllers
                 emailTextField.Enabled = !isAuthenticating;
                 passwordTextField.Enabled = !isAuthenticating;
                 passwordActionButton.Enabled = !isAuthenticating;
-
                 passwordActionButton.SetTitle ("LoginLoginProgressText".Tr (), UIControlState.Disabled);
             }
         }

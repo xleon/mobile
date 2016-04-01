@@ -370,7 +370,7 @@ namespace Toggl.Joey.UI.Adapters
             public bool IsNormalState
             {
                 get {
-                    return SwipeLayout.TranslationX < 5;
+                    return SwipeLayout.Visibility == ViewStates.Visible;
                 }
             }
 

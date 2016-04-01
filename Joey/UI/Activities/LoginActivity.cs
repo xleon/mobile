@@ -11,6 +11,7 @@ using Android.Content.PM;
 using Android.Gms.Auth;
 using Android.Gms.Common;
 using Android.OS;
+using Android.Support.Design.Widget;
 using Android.Text;
 using Android.Text.Style;
 using Android.Views;
@@ -57,7 +58,11 @@ namespace Toggl.Joey.UI.Activities
 
         protected Button SwitchModeButton { get; private set; }
 
+        protected TextInputLayout EmailInputLayout { get; private set; }
+
         protected AutoCompleteTextView EmailEditText { get; private set; }
+
+        protected TextInputLayout PasswordInputLayout { get; private set; }
 
         protected EditText PasswordEditText { get; private set; }
 
@@ -86,7 +91,9 @@ namespace Toggl.Joey.UI.Activities
             FindViewById<TextView> (Resource.Id.SwitchViewText).SetFont (Font.RobotoLight);
             bigLogo = FindViewById<ImageView> (Resource.Id.MainLogoLoginScreen);
             SwitchModeButton = FindViewById<Button> (Resource.Id.SwitchViewButton);
+            EmailInputLayout = FindViewById<TextInputLayout> (Resource.Id.EmailInputLayout);
             EmailEditText = FindViewById<AutoCompleteTextView> (Resource.Id.EmailAutoCompleteTextView).SetFont (Font.RobotoLight);
+            PasswordInputLayout = FindViewById<TextInputLayout> (Resource.Id.PasswordInputLayout);
             PasswordEditText = FindViewById<EditText> (Resource.Id.PasswordEditText).SetFont (Font.RobotoLight);
             PasswordToggleButton = FindViewById<Button> (Resource.Id.PasswordToggleButton).SetFont (Font.Roboto);
             LoginButton = FindViewById<Button> (Resource.Id.LoginButton).SetFont (Font.Roboto);
@@ -149,6 +156,7 @@ namespace Toggl.Joey.UI.Activities
             EmailEditText.Threshold = 1;
             EmailEditText.TextChanged += OnEmailEditTextTextChanged;
             PasswordEditText.TextChanged += OnPasswordEditTextTextChanged;
+            PasswordEditText.FocusChange += OnPasswordFocusChange;
             PasswordToggleButton.Click += OnPasswordToggleButtonClick;
             SwitchModeButton.Click += OnModeToggleButtonClick;
             hasGoogleAccounts = GoogleAccounts.Count > 0;
@@ -287,12 +295,32 @@ namespace Toggl.Joey.UI.Activities
         {
             SyncPasswordVisibility ();
             SyncLoginButton ();
+            ValidatePasswordField (true);
+        }
+
+        private void OnPasswordFocusChange (object sender, Android.Views.View.FocusChangeEventArgs e)
+        {
+            ValidatePasswordField ();
         }
 
         private void OnPasswordToggleButtonClick (object sender, EventArgs e)
         {
             showPassword = !showPassword;
             SyncPasswordVisibility ();
+        }
+
+        private void ValidatePasswordField (bool edit = false)
+        {
+            if (CurrentMode == Mode.Login) {
+                PasswordInputLayout.ErrorEnabled = false;
+                return;
+            }
+            if (PasswordEditText.Text.Length > 0 && PasswordEditText.Text.Length < 6 && !edit) {
+                PasswordInputLayout.Error = GetText (Resource.String.LoginPasswordError);
+                PasswordInputLayout.ErrorEnabled = true;
+            } else if (PasswordEditText.Text.Length >= 6) {
+                PasswordInputLayout.ErrorEnabled = false;
+            }
         }
 
         private async void OnLoginButtonClick (object sender, EventArgs e)

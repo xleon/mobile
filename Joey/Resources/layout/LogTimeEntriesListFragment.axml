@@ -87,6 +87,14 @@
             android:layout_marginBottom="50dp"
             android:layout_marginTop="10dp" />
     </RelativeLayout>
+    <Toggl.Joey.UI.Views.StartStopFab
+        android:id="@+id/StartStopBtn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:clickable="true"
+        android:src="@drawable/IcPlayArrowWhite"
+        android:layout_gravity="bottom|right|end"
+        android:layout_margin="@dimen/fab_margin" />
     <RelativeLayout
         android:id="@+id/LayoverView"
         android:layout_height="match_parent"
@@ -136,12 +144,4 @@
             android:layout_below="@+id/LayoverText"
             android:layout_marginTop="20dp" />
     </RelativeLayout>
-    <Toggl.Joey.UI.Views.StartStopFab
-        android:id="@+id/StartStopBtn"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:clickable="true"
-        android:src="@drawable/IcPlayArrowWhite"
-        android:layout_gravity="bottom|right|end"
-        android:layout_margin="@dimen/fab_margin" />
 </android.support.design.widget.CoordinatorLayout>

@@ -27,7 +27,7 @@ using ViewPager = Android.Support.V4.View.ViewPager;
 
 namespace Toggl.Joey.UI.Fragments
 {
-    public class ReportsPagerFragment : Fragment, Toolbar.IOnMenuItemClickListener
+    public class ReportsPagerFragment : Fragment
     {
         private const string ExtraCurrentItem = "com.toggl.timer.current_item";
         private const int PagesCount = 500;
@@ -152,6 +152,7 @@ namespace Toggl.Joey.UI.Fragments
             toolbar = activity.MainToolbar;
 
             HasOptionsMenu = true;
+            Activity.InvalidateOptionsMenu ();
 
             ResetAdapter ();
             UpdatePeriod ();
@@ -263,14 +264,15 @@ namespace Toggl.Joey.UI.Fragments
             UpdatePeriod ();
         }
 
+        #region Menu setup
+
         public override void OnCreateOptionsMenu (IMenu menu, MenuInflater inflater)
         {
             inflater.Inflate (Resource.Menu.ReportsToolbarMenu, menu);
-            toolbar.SetOnMenuItemClickListener (this);
             toolbar.OverflowIcon = Resources.GetDrawable (Resource.Drawable.IcReportsOverflow);
         }
 
-        public bool OnMenuItemClick (IMenuItem item)
+        public override bool OnOptionsItemSelected (IMenuItem item)
         {
             switch (item.ItemId) {
             case Resource.Id.ReportsToolbarWeek:
@@ -288,6 +290,8 @@ namespace Toggl.Joey.UI.Fragments
             }
             return true;
         }
+
+        #endregion
 
         private void ShowSyncError (bool visible)
         {

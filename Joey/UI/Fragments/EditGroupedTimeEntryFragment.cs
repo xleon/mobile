@@ -11,6 +11,7 @@ using Android.Support.V7.Widget;
 using Android.Views;
 using Android.Widget;
 using GalaSoft.MvvmLight.Helpers;
+using Toggl.Joey.Data;
 using Toggl.Joey.UI.Activities;
 using Toggl.Joey.UI.Utils;
 using Toggl.Joey.UI.Views;
@@ -18,6 +19,7 @@ using Toggl.Phoebe;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.ViewModels;
+using XPlatUtils;
 using ActionBar = Android.Support.V7.App.ActionBar;
 using Activity = Android.Support.V7.App.AppCompatActivity;
 using Fragment = Android.Support.V4.App.Fragment;
@@ -115,8 +117,8 @@ namespace Toggl.Joey.UI.Fragments
             base.OnViewCreated (view, savedInstanceState);
             ViewModel = await EditTimeEntryGroupViewModel.Init (TimeEntryIds.ToList ());
 
-            ProjectField.TextField.Click += OnProjectEditTextClick;
-            ProjectField.Click += OnProjectEditTextClick;
+            ProjectField.TextField.Click += (sender, e) => OpenProjectListActivity ();
+            ProjectField.Click += (sender, e) => OpenProjectListActivity ();
 
             durationBinding = this.SetBinding (() => ViewModel.Duration, () => DurationTextView.Text);
             startTimeBinding = this.SetBinding (() => ViewModel.StartDate, () => StartTimeEditText.Text).ConvertSourceToTarget (dateTime => dateTime.ToDeviceTimeString ());
@@ -128,6 +130,16 @@ namespace Toggl.Joey.UI.Fragments
                 StopTimeEditText.Visibility = ViewModel.IsRunning ? ViewStates.Gone : ViewStates.Visible;
                 stopTimeEditLabel.Visibility = ViewModel.IsRunning ? ViewStates.Gone : ViewStates.Visible;
             });
+
+            var settingsStore = ServiceContainer.Resolve<SettingsStore> ();
+            if (settingsStore.ChooseProjectForNew && LogTimeEntriesListFragment.NewTimeEntry) {
+                OpenProjectListActivity ();
+            } else if (LogTimeEntriesListFragment.NewTimeEntry) {
+                DescriptionField.RequestFocus ();
+                ((EditTimeEntryActivity)Activity).ShowSoftKeyboard (DescriptionField.TextField, false);
+                LogTimeEntriesListFragment.NewTimeEntry = false;
+            }
+
             // Set adapter using Mvvm light utils.
             timeEntriesListView.Adapter = ViewModel.TimeEntryCollection.GetAdapter (GetTimeEntryView);
             timeEntriesListView.ItemClick += (sender, e) => HandleTimeEntryClick (ViewModel.TimeEntryCollection [e.Position]);
@@ -168,7 +180,7 @@ namespace Toggl.Joey.UI.Fragments
             }
         }
 
-        private void OnProjectEditTextClick (object sender, EventArgs e)
+        private void OpenProjectListActivity ()
         {
             var intent = new Intent (Activity, typeof (ProjectListActivity));
             intent.PutExtra (BaseActivity.IntentWorkspaceIdArgument, ViewModel.WorkspaceId.ToString ());
@@ -184,6 +196,12 @@ namespace Toggl.Joey.UI.Fragments
 
                 await Util.AwaitPredicate (() => ViewModel != null);
                 await ViewModel.SetProjectAndTask (projectId, taskId);
+
+                if (LogTimeEntriesListFragment.NewTimeEntry) {
+                    DescriptionField.RequestFocus ();
+                    ((EditTimeEntryActivity)Activity).ShowSoftKeyboard (DescriptionField.TextField, false);
+                    LogTimeEntriesListFragment.NewTimeEntry = false;
+                }
             }
         }
 

@@ -98,13 +98,13 @@ namespace Toggl.Joey.UI.Fragments
             StartStopBtn = view.FindViewById<StartStopFab> (Resource.Id.StartStopBtn);
             timerComponent = ((MainDrawerActivity)Activity).Timer; // TODO: a better way to do this?
             HasOptionsMenu = true;
+            Activity.InvalidateOptionsMenu ();
 
             var settingsStore = ServiceContainer.Resolve<SettingsStore> ();
             var authManager = ServiceContainer.Resolve<AuthManager> ();
             if (settingsStore.ShowOverlay || !authManager.OfflineMode) {
                 layoverView.Visibility = ViewStates.Gone;
             }
-
             return view;
         }
 

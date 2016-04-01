@@ -9,6 +9,7 @@ using Toggl.Ross.Views;
 using GalaSoft.MvvmLight.Helpers;
 using Toggl.Phoebe.ViewModels;
 using Toggl.Phoebe.Data.Models;
+using Toggl.Phoebe.Reactive;
 
 namespace Toggl.Ross.ViewControllers
 {
@@ -60,11 +61,11 @@ namespace Toggl.Ross.ViewControllers
             NavigationItem.RightBarButtonItem = addBtn;
         }
 
-        public async override void ViewDidLoad ()
+        public override void ViewDidLoad ()
         {
             base.ViewDidLoad ();
 
-            ViewModel = await NewProjectVM.Init (workspaceId);
+            ViewModel = new NewProjectVM (StoreManager.Singleton.AppState, workspaceId);
             clientBinding = this.SetBinding (() => ViewModel.ClientName).WhenSourceChanges (() => {
                 var name = string.IsNullOrEmpty (ViewModel.ClientName) ? "NewProjectClientHint".Tr () : ViewModel.ClientName;
                 if (string.IsNullOrEmpty (ViewModel.ClientName)) {

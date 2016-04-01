@@ -377,10 +377,11 @@ namespace Toggl.Phoebe.Reactive
                 newSettings = newSettings.With (reportsCurrentItem: (int)info.Item2);
             } else if (info.Item1 == nameof (SettingsState.LastReportZoom)) {
                 newSettings = newSettings.With (lastReportZoom: (int)info.Item2);
+            } else if (info.Item1 == nameof (SettingsState.RossReadDurOnlyNotice)) {
+                newSettings = newSettings.With (rossReadDurOnlyNotice: (bool)info.Item2);
             }
 
-            return DataSyncMsg.Create (
-                       state.With (settings:newSettings));
+            return DataSyncMsg.Create (state.With (settings:newSettings));
         }
 
         #region Util

@@ -1,5 +1,4 @@
 using System;
-using System.Threading.Tasks;
 using Cirrious.FluentLayouts.Touch;
 using GalaSoft.MvvmLight.Helpers;
 using Google.SignIn;
@@ -25,6 +24,7 @@ namespace Toggl.Ross.ViewControllers
         private UIButton passwordButton;
         private UIButton googleButton;
         private LoginVM viewModel {get; set;}
+        private string googleEmail;
 
         public WelcomeViewController()
         {
@@ -33,11 +33,11 @@ namespace Toggl.Ross.ViewControllers
 
         public override void LoadView ()
         {
-            View = new UIImageView () {
+            View = new UIImageView {
                 UserInteractionEnabled = true,
             } .Apply (Style.Welcome.Background);
             View.Add (logoImageView = new UIImageView ().Apply (Style.Welcome.Logo));
-            View.Add (sloganLabel = new UILabel () {
+            View.Add (sloganLabel = new UILabel {
                 Text = "WelcomeSlogan".Tr (),
             } .Apply (Style.Welcome.Slogan));
             View.Add (createButton = new UIButton ().Apply (Style.Welcome.CreateAccount));
@@ -99,7 +99,7 @@ namespace Toggl.Ross.ViewControllers
         {
             if (error == null) {
                 var token = user.Authentication.AccessToken;
-                var email = user.Profile.Email;
+                googleEmail = user.Profile.Email;
                 signIn.DisconnectUser (); // Disconnect user from Google.
                 viewModel.TryLoginWithGoogle (token);
             } else if (error.Code != -5) { // Cancel error code.
@@ -120,7 +120,7 @@ namespace Toggl.Ross.ViewControllers
             SignIn.SharedInstance.Delegate = this;
             SignIn.SharedInstance.UIDelegate = this;
 
-            isAuthenticatingBinding = this.SetBinding (() => viewModel.IsAuthenticating).WhenSourceChanges (SetViewState);
+            isAuthenticatingBinding = this.SetBinding (() => viewModel.IsAuthenticating, () => IsAuthenticating);
             resultBinding = this.SetBinding (() => viewModel.AuthResult).WhenSourceChanges (() => {
                 switch (viewModel.AuthResult) {
                 case AuthResult.None:
@@ -131,23 +131,11 @@ namespace Toggl.Ross.ViewControllers
                 case AuthResult.Success:
                     // TODO RX: Start the initial sync for the user
                     //ServiceContainer.Resolve<ISyncManager> ().Run ();
-                    var intent = new Intent (this, typeof (MainDrawerActivity));
-                    intent.AddFlags (ActivityFlags.ClearTop);
-                    StartActivity (intent);
-                    Finish ();
                     break;
 
                 // Error cases
                 default:
-                    if (viewModel.CurrentLoginMode == LoginVM.LoginMode.Login) {
-                        if (viewModel.AuthResult == AuthResult.InvalidCredentials) {
-                            PasswordEditText.Text = string.Empty;
-                        }
-                        PasswordEditText.RequestFocus ();
-                    } else {
-                        EmailEditText.RequestFocus ();
-                    }
-                    ShowAuthError (EmailEditText.Text, ViewModel.AuthResult, ViewModel.CurrentLoginMode);
+                    AuthErrorAlert.Show (this, googleEmail, viewModel.AuthResult, AuthErrorAlert.Mode.Login, true);
                     break;
                 }
             });
@@ -199,36 +187,6 @@ namespace Toggl.Ross.ViewControllers
                 }
                                );
                 passwordButton.SetTitle (value ? "WelcomeLoggingIn".Tr () : "WelcomePassword".Tr (), UIControlState.Normal);
-            }
-        }
-
-        public void AuthWithGoogleTokenAsync (SignIn signIn, GoogleUser user, Foundation.NSError error)
-        {
-
-
-
-            try {
-                if (error == null) {
-                    IsAuthenticating = true;
-                    var token = user.Authentication.AccessToken;
-
-                    // No need to keep the users Google account access around anymore
-
-                    if (authRes != AuthResult.Success) {
-
-                        AuthErrorAlert.Show (this, email, authRes, AuthErrorAlert.Mode.Login, true);
-                    } else {
-                        // Start the initial sync for the user
-                        ServiceContainer.Resolve<ISyncManager> ().Run ();
-                    }
-                } else if (error.Code != -5) { // Cancel error code.
-                    new UIAlertView ("WelcomeGoogleErrorTitle".Tr (), "WelcomeGoogleErrorMessage".Tr (), null, "WelcomeGoogleErrorOk".Tr (), null).Show ();
-                }
-            } catch (InvalidOperationException ex) {
-                var log = ServiceContainer.Resolve<ILogger> ();
-                log.Info (Tag, ex, "Failed to authenticate (G+) the user.");
-            } finally {
-                IsAuthenticating = false;
             }
         }
     }

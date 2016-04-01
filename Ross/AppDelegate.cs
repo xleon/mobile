@@ -64,6 +64,9 @@ namespace Toggl.Ross
             ServiceContainer.Resolve<ITracker> ();
             ServiceContainer.Resolve<APNSManager> ();
 
+            // This needs some services, like ITimeProvider, so run it at the end
+            RxChain.Init (AppState.Init ());
+
             return true;
         }
 

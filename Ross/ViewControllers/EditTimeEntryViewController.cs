@@ -41,7 +41,7 @@ namespace Toggl.Ross.ViewControllers
         private Binding<string, string> durationBinding, projectBinding, clientBinding, descriptionBinding, taskBinding, projectColorBinding;
         private Binding<DateTime, DateTime> startTimeBinding;
         private Binding<DateTime, DateTime> stopTimeBinding;
-        private Binding<List<TagData>, List<TagData>> tagBinding;
+        private Binding<IReadOnlyList<ITagData>, IReadOnlyList<ITagData>> tagBinding;
         private Binding<bool, bool> isBillableBinding, billableBinding, isRunningBinding, isPremiumBinding;
 
         private readonly TimeEntryData data;

@@ -3,13 +3,14 @@ using CoreGraphics;
 using Foundation;
 using GalaSoft.MvvmLight.Helpers;
 using Toggl.Phoebe.Data.Models;
+using Toggl.Phoebe.Reactive;
 using Toggl.Phoebe.ViewModels;
 using Toggl.Ross.Theme;
 using UIKit;
 
 namespace Toggl.Ross.ViewControllers
 {
-    public class ClientSelectionViewController : ObservableTableViewController<ClientData>
+    public class ClientSelectionViewController : ObservableTableViewController<IClientData>
     {
         private ClientListVM viewModel;
         private readonly IOnClientSelectedHandler handler;
@@ -22,13 +23,13 @@ namespace Toggl.Ross.ViewControllers
             Title = "ClientTitle".Tr ();
         }
 
-        public async override void ViewDidLoad ()
+        public override void ViewDidLoad ()
         {
             base.ViewDidLoad ();
 
             View.Apply (Style.Screen);
             EdgesForExtendedLayout = UIRectEdge.None;
-            viewModel = await ClientListVM.Init (workspaceId);
+            viewModel = new ClientListVM (StoreManager.Singleton.AppState, workspaceId);
 
             // Set ObservableTableViewController settings
             // ObservableTableViewController is a helper class

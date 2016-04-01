@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using Cirrious.FluentLayouts.Touch;
 using CoreGraphics;
 using Foundation;
+using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Net;
+using Toggl.Phoebe.Reactive;
 using Toggl.Ross.Data;
 using Toggl.Ross.Theme;
 using UIKit;
@@ -79,9 +81,6 @@ namespace Toggl.Ross.ViewControllers
             logButton.HorizontalAlignment = reportsButton.HorizontalAlignment = settingsButton.HorizontalAlignment =
                                                 feedbackButton.HorizontalAlignment = signOutButton.HorizontalAlignment = UIControlContentHorizontalAlignment.Left;
 
-            var authManager = ServiceContainer.Resolve<AuthManager> ();
-            authManager.PropertyChanged += OnUserLoad;
-
             foreach (var button in menuButtons) {
                 button.Apply (Style.LeftView.Button);
                 button.TouchUpInside += OnMenuButtonTouchUpInside;
@@ -121,15 +120,13 @@ namespace Toggl.Ross.ViewControllers
             if (View.Frame.Height > 480) {
                 View.AddSubview (separatorLineImage);
             }
+
+            ConfigureUserData ();
         }
 
-        private void OnUserLoad (object sender, System.ComponentModel.PropertyChangedEventArgs e)
+        private void ConfigureUserData ()
         {
-            var userData = ServiceContainer.Resolve<AuthManager> ().User;
-            if (userData == null) {
-                return;
-            }
-
+            var userData = StoreManager.Singleton.AppState.User;
             usernameLabel.Text = userData.Name;
             emailLabel.Text = userData.Email;
 
@@ -142,7 +139,7 @@ namespace Toggl.Ross.ViewControllers
                 var url = new NSUrl (userData.ImageUrl);
                 var data = NSData.FromUrl (url);
                 image = UIImage.LoadFromData (data);
-            } catch (Exception ex) {
+            } catch  {
                 image = UIImage.FromFile ("profile.png");
             }
             userAvatarImage.Image = image;
@@ -239,7 +236,7 @@ namespace Toggl.Ross.ViewControllers
             } else if (sender == feedbackButton) {
                 main.PushViewController (new FeedbackViewController (), true);
             } else {
-                ServiceContainer.Resolve<AuthManager> ().Forget ();
+                RxChain.Send (new DataMsg.ResetState ());
             }
             main.CloseMenu();
         }

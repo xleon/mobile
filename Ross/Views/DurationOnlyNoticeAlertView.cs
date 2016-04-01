@@ -1,8 +1,7 @@
 using UIKit;
-using Toggl.Phoebe;
-using Toggl.Phoebe.Net;
-using XPlatUtils;
-using Toggl.Ross.Data;
+using Toggl.Phoebe.Reactive;
+using Toggl.Phoebe.Data.Models;
+using Toggl.Phoebe.Data;
 
 namespace Toggl.Ross.Views
 {
@@ -16,21 +15,19 @@ namespace Toggl.Ross.Views
         {
         }
 
-        public static bool TryShow ()
+        public static bool TryShow (AppState state)
         {
-            var authManager = ServiceContainer.Resolve<AuthManager> ();
-            if (authManager.User == null || authManager.User.TrackingMode == TrackingMode.StartNew) {
+            if (state.User == null || state.User.TrackingMode == TrackingMode.StartNew) {
                 return false;
             }
 
-            var settingsStore = ServiceContainer.Resolve<SettingsStore> ();
-            if (settingsStore.ReadDurOnlyNotice) {
+            if (state.Settings.RossReadDurOnlyNotice) {
                 return false;
             }
 
             var dia = new DurationOnlyNoticeAlertView ();
             dia.Clicked += delegate {
-                settingsStore.ReadDurOnlyNotice = true;
+                RxChain.Send (new DataMsg.UpdateSetting (nameof (SettingsState.RossReadDurOnlyNotice), true));
             };
             dia.Show ();
             return true;

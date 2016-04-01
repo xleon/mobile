@@ -54,12 +54,40 @@ namespace Toggl.Phoebe.Data.Json
         public string CreatedWith { get; set; }
 
         [JsonProperty ("default_wid")]
-        public long DefaultWorkspaceId { get; set; }
+        public long DefaultWorkspaceRemoteId { get; set; }
 
         [JsonProperty ("duration_format")]
         public DurationFormat DurationFormat { get; set; }
 
         [JsonProperty ("obm")]
         public OBMJson OBM { get; set; }
+    }
+
+
+    public class CloseAccountInfo
+    {
+        public class Options
+        {
+            [JsonProperty ("question")]
+            public int Question { get; set; }
+
+            [JsonProperty ("variants")]
+            public string[] Variants { get; set; }
+        }
+
+        [JsonProperty ("comments")]
+        public string Comments { get; set; }
+
+        [JsonProperty ("closing_options")]
+        public Options ClosingOptions { get; set; }
+
+        public CloseAccountInfo ()
+        {
+            Comments = string.Empty;
+            ClosingOptions = new Options () {
+                Question = 0,
+                Variants = new string[0]
+            };
+        }
     }
 }

@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Linq;
 using NUnit.Framework;
-using Toggl.Phoebe._Data;
-using Toggl.Phoebe._Data.Models;
-using Toggl.Phoebe._Net;
-using Toggl.Phoebe._Reactive;
-using Toggl.Phoebe._ViewModels;
+using Toggl.Phoebe.Data;
+using Toggl.Phoebe.Data.Models;
+using Toggl.Phoebe.Net;
+using Toggl.Phoebe.Reactive;
+using Toggl.Phoebe.ViewModels;
 using XPlatUtils;
 using Toggl.Phoebe.Analytics;
 using System.Threading.Tasks;
@@ -48,7 +48,7 @@ namespace Toggl.Phoebe.Tests.Reactive
 
             viewModel.SaveTag (name, new SyncTestOptions (false, (state, sent, queued) => {
                 try {
-                    TagData tag = null;
+                    ITagData tag = null;
                     Assert.That (tag = state.Tags.Values.SingleOrDefault (
                                            x => x.WorkspaceId == Util.WorkspaceId && x.Name == name), Is.Not.Null);
 

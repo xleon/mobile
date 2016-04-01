@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading;
@@ -12,7 +13,6 @@ using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Toggl.Phoebe.Data.Json;
-using System.Net.Security;
 using XPlatUtils;
 
 namespace Toggl.Phoebe.Net
@@ -22,7 +22,6 @@ namespace Toggl.Phoebe.Net
         private static readonly DateTime UnixStart = new DateTime (1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
         private readonly Uri v8Url;
         private readonly Uri v9Url;
-
 
         public TogglRestClient (Uri url)
         {
@@ -47,140 +46,142 @@ namespace Toggl.Phoebe.Net
             return client;
         }
 
-        public async Task<T> Create<T> (T jsonObject)
+        public async Task<T> Create<T> (string authToken, T jsonObject)
         where T : CommonJson
         {
             var type = jsonObject.GetType ();
             if (type == typeof (ClientJson)) {
-                return (T) (object)await CreateClient ((ClientJson) (object)jsonObject);
+                return (T) (object)await CreateClient (authToken, (ClientJson) (object)jsonObject);
             } else if (type == typeof (ProjectJson)) {
-                return (T) (object)await CreateProject ((ProjectJson) (object)jsonObject);
+                return (T) (object)await CreateProject (authToken, (ProjectJson) (object)jsonObject);
             } else if (type == typeof (TaskJson)) {
-                return (T) (object)await CreateTask ((TaskJson) (object)jsonObject);
+                return (T) (object)await CreateTask (authToken, (TaskJson) (object)jsonObject);
             } else if (type == typeof (TimeEntryJson)) {
-                return (T) (object)await CreateTimeEntry ((TimeEntryJson) (object)jsonObject);
+                return (T) (object)await CreateTimeEntry (authToken, (TimeEntryJson) (object)jsonObject);
             } else if (type == typeof (WorkspaceJson)) {
-                return (T) (object)await CreateWorkspace ((WorkspaceJson) (object)jsonObject);
+                return (T) (object)await CreateWorkspace (authToken, (WorkspaceJson) (object)jsonObject);
             } else if (type == typeof (UserJson)) {
                 return (T) (object)await CreateUser ((UserJson) (object)jsonObject);
             } else if (type == typeof (TagJson)) {
-                return (T) (object)await CreateTag ((TagJson) (object)jsonObject);
+                return (T) (object)await CreateTag (authToken, (TagJson) (object)jsonObject);
             } else if (type == typeof (WorkspaceUserJson)) {
-                return (T) (object)await CreateWorkspaceUser ((WorkspaceUserJson) (object)jsonObject);
+                return (T) (object)await CreateWorkspaceUser (authToken, (WorkspaceUserJson) (object)jsonObject);
             } else if (type == typeof (ProjectUserJson)) {
-                return (T) (object)await CreateProjectUser ((ProjectUserJson) (object)jsonObject);
+                return (T) (object)await CreateProjectUser (authToken, (ProjectUserJson) (object)jsonObject);
             } else {
-                throw new NotSupportedException (String.Format ("Creating of {0} is not supported.", type));
+                throw new NotSupportedException (string.Format ("Creating of {0} is not supported.", type));
             }
         }
 
-        public async Task<T> Get<T> (long id)
+        public async Task<T> Get<T> (string authToken, long id)
         where T : CommonJson
         {
             var type = typeof (T);
             if (type == typeof (ClientJson)) {
-                return (T) (object)await GetClient (id);
+                return (T) (object)await GetClient (authToken, id);
             } else if (type == typeof (ProjectJson)) {
-                return (T) (object)await GetProject (id);
+                return (T) (object)await GetProject (authToken, id);
             } else if (type == typeof (TaskJson)) {
-                return (T) (object)await GetTask (id);
+                return (T) (object)await GetTask (authToken, id);
             } else if (type == typeof (TimeEntryJson)) {
-                return (T) (object)await GetTimeEntry (id);
+                return (T) (object)await GetTimeEntry (authToken, id);
             } else if (type == typeof (WorkspaceJson)) {
-                return (T) (object)await GetWorkspace (id);
+                return (T) (object)await GetWorkspace (authToken, id);
             } else if (type == typeof (UserJson)) {
                 return (T) (object)await GetUser (id);
             } else {
-                throw new NotSupportedException (String.Format ("Fetching of {0} is not supported.", type));
+                throw new NotSupportedException (string.Format ("Fetching of {0} is not supported.", type));
             }
         }
 
-        public async Task<List<T>> List<T> ()
+        public async Task<List<T>> List<T> (string authToken)
         where T : CommonJson
         {
             var type = typeof (T);
             if (type == typeof (ClientJson)) {
-                return (List<T>) (object)await ListClients ();
+                return (List<T>) (object)await ListClients (authToken);
             } else if (type == typeof (TimeEntryJson)) {
-                return (List<T>) (object)await ListTimeEntries ();
+                return (List<T>) (object)await ListTimeEntries (authToken);
             } else if (type == typeof (WorkspaceJson)) {
-                return (List<T>) (object)await ListWorkspaces ();
+                return (List<T>) (object)await ListWorkspaces (authToken);
             } else {
-                throw new NotSupportedException (String.Format ("Listing of {0} is not supported.", type));
+                throw new NotSupportedException (string.Format ("Listing of {0} is not supported.", type));
             }
         }
 
-        public async Task<T> Update<T> (T jsonObject)
+        public async Task<T> Update<T> (string authToken, T jsonObject)
         where T : CommonJson
         {
             var type = jsonObject.GetType ();
             if (type == typeof (ClientJson)) {
-                return (T) (object)await UpdateClient ((ClientJson) (object)jsonObject);
+                return (T) (object)await UpdateClient (authToken, (ClientJson) (object)jsonObject);
             } else if (type == typeof (ProjectJson)) {
-                return (T) (object)await UpdateProject ((ProjectJson) (object)jsonObject);
+                return (T) (object)await UpdateProject (authToken, (ProjectJson) (object)jsonObject);
             } else if (type == typeof (TaskJson)) {
-                return (T) (object)await UpdateTask ((TaskJson) (object)jsonObject);
+                return (T) (object)await UpdateTask (authToken, (TaskJson) (object)jsonObject);
             } else if (type == typeof (TimeEntryJson)) {
-                return (T) (object)await UpdateTimeEntry ((TimeEntryJson) (object)jsonObject);
+                return (T) (object)await UpdateTimeEntry (authToken, (TimeEntryJson) (object)jsonObject);
             } else if (type == typeof (WorkspaceJson)) {
-                return (T) (object)await UpdateWorkspace ((WorkspaceJson) (object)jsonObject);
+                return (T) (object)await UpdateWorkspace (authToken, (WorkspaceJson) (object)jsonObject);
             } else if (type == typeof (UserJson)) {
-                return (T) (object)await UpdateUser ((UserJson) (object)jsonObject);
+                return (T) (object)await UpdateUser (authToken, (UserJson) (object)jsonObject);
             } else if (type == typeof (TagJson)) {
-                return (T) (object)await UpdateTag ((TagJson) (object)jsonObject);
+                return (T) (object)await UpdateTag (authToken, (TagJson) (object)jsonObject);
             } else if (type == typeof (WorkspaceUserJson)) {
-                return (T) (object)await UpdateWorkspaceUser ((WorkspaceUserJson) (object)jsonObject);
+                return (T) (object)await UpdateWorkspaceUser (authToken, (WorkspaceUserJson) (object)jsonObject);
             } else if (type == typeof (ProjectUserJson)) {
-                return (T) (object)await UpdateProjectUser ((ProjectUserJson) (object)jsonObject);
+                return (T) (object)await UpdateProjectUser (authToken, (ProjectUserJson) (object)jsonObject);
             } else {
-                throw new NotSupportedException (String.Format ("Updating of {0} is not supported.", type));
+                throw new NotSupportedException (string.Format ("Updating of {0} is not supported.", type));
             }
         }
 
-        public async Task Delete<T> (T jsonObject)
+        public async Task Delete<T> (string authToken, T jsonObject)
         where T : CommonJson
         {
             var type = jsonObject.GetType ();
             if (type == typeof (ClientJson)) {
-                await DeleteClient ((ClientJson) (object)jsonObject);
+                await DeleteClient (authToken, (ClientJson) (object)jsonObject);
             } else if (type == typeof (ProjectJson)) {
-                await DeleteProject ((ProjectJson) (object)jsonObject);
+                await DeleteProject (authToken, (ProjectJson) (object)jsonObject);
             } else if (type == typeof (TaskJson)) {
-                await DeleteTask ((TaskJson) (object)jsonObject);
+                await DeleteTask (authToken, (TaskJson) (object)jsonObject);
             } else if (type == typeof (TimeEntryJson)) {
-                await DeleteTimeEntry ((TimeEntryJson) (object)jsonObject);
+                await DeleteTimeEntry (authToken, (TimeEntryJson) (object)jsonObject);
             } else if (type == typeof (TagJson)) {
-                await DeleteTag ((TagJson) (object)jsonObject);
+                await DeleteTag (authToken, (TagJson) (object)jsonObject);
             } else if (type == typeof (WorkspaceUserJson)) {
-                await DeleteWorkspaceUser ((WorkspaceUserJson) (object)jsonObject);
+                await DeleteWorkspaceUser (authToken, (WorkspaceUserJson) (object)jsonObject);
             } else if (type == typeof (ProjectUserJson)) {
-                await DeleteProjectUser ((ProjectUserJson) (object)jsonObject);
+                await DeleteProjectUser (authToken, (ProjectUserJson) (object)jsonObject);
+            } else if (type == typeof (UserJson)) {
+                await DeleteUser (authToken);
             } else {
-                throw new NotSupportedException (String.Format ("Deleting of {0} is not supported.", type));
+                throw new NotSupportedException (string.Format ("Deleting of {0} is not supported.", type));
             }
         }
 
-        public async Task Delete<T> (IEnumerable<T> jsonObjects)
+        public async Task Delete<T> (string authToken, IEnumerable<T> jsonObjects)
         where T : CommonJson
         {
             var type = typeof (T);
             if (type == typeof (ClientJson)) {
-                await Task.WhenAll (jsonObjects.Select ((object json) => DeleteClient ((ClientJson)json)));
+                await Task.WhenAll (jsonObjects.Select ((object json) => DeleteClient (authToken, (ClientJson)json)));
             } else if (type == typeof (ProjectJson)) {
-                await DeleteProjects (jsonObjects as IEnumerable<ProjectJson>);
+                await DeleteProjects (authToken, jsonObjects as IEnumerable<ProjectJson>);
             } else if (type == typeof (TaskJson)) {
-                await DeleteTasks (jsonObjects as IEnumerable<TaskJson>);
+                await DeleteTasks (authToken, jsonObjects as IEnumerable<TaskJson>);
             } else if (type == typeof (TimeEntryJson)) {
-                await Task.WhenAll (jsonObjects.Select ((object json) => DeleteTimeEntry ((TimeEntryJson)json)));
+                await Task.WhenAll (jsonObjects.Select ((object json) => DeleteTimeEntry (authToken, (TimeEntryJson)json)));
             } else if (type == typeof (CommonJson)) {
                 // Cannot use LINQ due to AOT failure when using lambdas that use generic method calls inside them.
                 var tasks = new List<Task> ();
                 foreach (var json in jsonObjects) {
-                    tasks.Add (Delete (json));
+                    tasks.Add (Delete (authToken, json));
                 }
                 await Task.WhenAll (tasks);
             } else {
-                throw new NotSupportedException (String.Format ("Batch deleting of {0} is not supported.", type));
+                throw new NotSupportedException (string.Format ("Batch deleting of {0} is not supported.", type));
             }
         }
 
@@ -208,7 +209,7 @@ namespace Toggl.Phoebe.Net
             } else if (type == typeof (ProjectUserJson)) {
                 dataKey = "project_user";
             } else {
-                throw new ArgumentException (String.Format ("Don't know how to handle JSON object of type {0}.", type), "jsonObject");
+                throw new ArgumentException (string.Format ("Don't know how to handle JSON object of type {0}.", type), "jsonObject");
             }
 
             var json = new JObject ();
@@ -216,21 +217,19 @@ namespace Toggl.Phoebe.Net
             return json.ToString (Formatting.None);
         }
 
-        private HttpRequestMessage SetupRequest (HttpRequestMessage req)
+        private HttpRequestMessage SetupRequest (string authToken, HttpRequestMessage req)
         {
-            /*
-            var authManager = ServiceContainer.Resolve<AuthManager> ();
-            if (authManager.Token != null) {
-                req.Headers.Authorization = new AuthenticationHeaderValue ("Basic",
-                        Convert.ToBase64String (Encoding.ASCII.GetBytes (
-                                                    string.Format ("{0}:api_token", authManager.Token))));
-            }*/
+            req.Headers.Authorization = new AuthenticationHeaderValue ("Basic",
+                    Convert.ToBase64String (Encoding.ASCII.GetBytes (
+                                                string.Format ("{0}:api_token", authToken))));
             return req;
         }
 
         private async Task PrepareResponse (HttpResponseMessage resp, TimeSpan requestTime)
         {
+            // TODO RX: Eliminate MessageBus
             ServiceContainer.Resolve<MessageBus> ().Send (new TogglHttpResponseMessage (this, resp, requestTime));
+
             if (!resp.IsSuccessStatusCode) {
                 string content = string.Empty;
                 if (resp.Content != null) {
@@ -249,420 +248,394 @@ namespace Toggl.Phoebe.Net
         {
             using (var httpClient = MakeHttpClient ()) {
                 var reqTimer = Stopwatch.StartNew ();
-                var httpResp = await httpClient.SendAsync (httpReq, cancellationToken)
-                               .ConfigureAwait (false);
+                HttpResponseMessage httpResp;
+                httpResp = await httpClient.SendAsync (httpReq, cancellationToken).ConfigureAwait (false);
                 reqTimer.Stop ();
-
                 await PrepareResponse (httpResp, reqTimer.Elapsed);
-
                 return httpResp;
             }
         }
 
-        private async Task<T> CreateObject<T> (Uri url, T jsonObject)
+        private async Task<T> CreateObject<T> (string authToken, Uri url, T jsonObject)
         where T : CommonJson, new()
         {
             var json = StringifyJson (jsonObject);
-            var httpReq = SetupRequest (new HttpRequestMessage () {
+            var httpReq = SetupRequest (authToken, new HttpRequestMessage () {
                 Method = HttpMethod.Post,
                 RequestUri = url,
                 Content = new StringContent (json, Encoding.UTF8, "application/json"),
             });
-            var httpResp = await SendAsync (httpReq)
-                           .ConfigureAwait (false);
-
-            var respData = await httpResp.Content.ReadAsStringAsync ()
-                           .ConfigureAwait (false);
+            var httpResp = await SendAsync (httpReq).ConfigureAwait (false);
+            var respData = await httpResp.Content.ReadAsStringAsync ().ConfigureAwait (false);
             var wrap = JsonConvert.DeserializeObject<Wrapper<T>> (respData);
             return wrap.Data;
         }
 
-        private async Task<T> GetObject<T> (Uri url)
+        private async Task<T> GetObject<T> (string authToken, Uri url)
         where T : CommonJson, new()
         {
-            var httpReq = SetupRequest (new HttpRequestMessage () {
+            var httpReq = SetupRequest (authToken, new HttpRequestMessage () {
                 Method = HttpMethod.Get,
                 RequestUri = url,
             });
-            var httpResp = await SendAsync (httpReq)
-                           .ConfigureAwait (false);
-
-            var respData = await httpResp.Content.ReadAsStringAsync ()
-                           .ConfigureAwait (false);
+            var httpResp = await SendAsync (httpReq).ConfigureAwait (false);
+            var respData = await httpResp.Content.ReadAsStringAsync ().ConfigureAwait (false);
             var wrap = JsonConvert.DeserializeObject<Wrapper<T>> (respData);
             return wrap.Data;
         }
 
-        private async Task<T> UpdateObject<T> (Uri url, T jsonObject)
+        private async Task<T> UpdateObject<T> (string authToken, Uri url, T jsonObject)
         where T : CommonJson, new()
         {
             var json = StringifyJson (jsonObject);
-            var httpReq = SetupRequest (new HttpRequestMessage () {
+            var httpReq = SetupRequest (authToken, new HttpRequestMessage () {
                 Method = HttpMethod.Put,
                 RequestUri = url,
                 Content = new StringContent (json, Encoding.UTF8, "application/json"),
             });
-            var httpResp = await SendAsync (httpReq)
-                           .ConfigureAwait (false);
-
-            var respData = await httpResp.Content.ReadAsStringAsync ()
-                           .ConfigureAwait (false);
+            var httpResp = await SendAsync (httpReq).ConfigureAwait (false);
+            var respData = await httpResp.Content.ReadAsStringAsync ().ConfigureAwait (false);
             var wrap = JsonConvert.DeserializeObject<Wrapper<T>> (respData);
             return wrap.Data;
         }
 
-        private Task<List<T>> ListObjects<T> (Uri url)
+        private Task<List<T>> ListObjects<T> (string authToken, Uri url)
         where T : CommonJson, new()
         {
-            return ListObjects<T> (url, CancellationToken.None);
+            return ListObjects<T> (authToken, url, CancellationToken.None);
         }
 
-        private async Task<List<T>> ListObjects<T> (Uri url, CancellationToken cancellationToken)
+        private async Task<List<T>> ListObjects<T> (string authToken, Uri url, CancellationToken cancellationToken)
         where T : CommonJson, new()
         {
-            var httpReq = SetupRequest (new HttpRequestMessage () {
+            var httpReq = SetupRequest (authToken, new HttpRequestMessage () {
                 Method = HttpMethod.Get,
                 RequestUri = url,
             });
-
-            var httpResp = await SendAsync (httpReq, cancellationToken)
-                           .ConfigureAwait (false);
-
-            var respData = await httpResp.Content.ReadAsStringAsync ()
-                           .ConfigureAwait (false);
+            var httpResp = await SendAsync (httpReq, cancellationToken).ConfigureAwait (false);
+            var respData = await httpResp.Content.ReadAsStringAsync ().ConfigureAwait (false);
             return JsonConvert.DeserializeObject<List<T>> (respData) ?? new List<T> (0);
         }
 
-        private async Task DeleteObject (Uri url)
+        private async Task DeleteObject (string authToken, Uri url)
         {
-            var httpReq = SetupRequest (new HttpRequestMessage () {
+            var httpReq = SetupRequest (authToken, new HttpRequestMessage () {
                 Method = HttpMethod.Delete,
                 RequestUri = url,
             });
             await SendAsync (httpReq).ConfigureAwait (false);
         }
 
-        private Task DeleteObjects (Uri url)
+        private Task DeleteObjects (string authToken, Uri url)
         {
-            return DeleteObject (url);
+            return DeleteObject (authToken, url);
         }
 
         #region Client methods
 
-        public Task<ClientJson> CreateClient (ClientJson jsonObject)
+        public Task<ClientJson> CreateClient (string authToken, ClientJson jsonObject)
         {
             var url = new Uri (v8Url, "clients");
-            return CreateObject (url, jsonObject);
+            return CreateObject (authToken, url, jsonObject);
         }
 
-        public Task<ClientJson> GetClient (long id)
+        public Task<ClientJson> GetClient (string authToken, long id)
         {
-            var url = new Uri (v8Url, String.Format ("clients/{0}", id.ToString ()));
-            return GetObject<ClientJson> (url);
+            var url = new Uri (v8Url, string.Format ("clients/{0}", id.ToString ()));
+            return GetObject<ClientJson> (authToken, url);
         }
 
-        public Task<List<ClientJson>> ListClients ()
+        public Task<List<ClientJson>> ListClients (string authToken)
         {
             var url = new Uri (v8Url, "clients");
-            return ListObjects<ClientJson> (url);
+            return ListObjects<ClientJson> (authToken, url);
         }
 
-        public Task<List<ClientJson>> ListWorkspaceClients (long workspaceId)
+        public Task<List<ClientJson>> ListWorkspaceClients (string authToken, long workspaceId)
         {
-            var url = new Uri (v8Url, String.Format ("workspaces/{0}/clients", workspaceId.ToString ()));
-            return ListObjects<ClientJson> (url);
+            var url = new Uri (v8Url, string.Format ("workspaces/{0}/clients", workspaceId.ToString ()));
+            return ListObjects<ClientJson> (authToken, url);
         }
 
-        public Task<ClientJson> UpdateClient (ClientJson jsonObject)
+        public Task<ClientJson> UpdateClient (string authToken, ClientJson jsonObject)
         {
-            var url = new Uri (v8Url, String.Format ("clients/{0}", jsonObject.Id.Value.ToString ()));
-            return UpdateObject (url, jsonObject);
+            var url = new Uri (v8Url, string.Format ("clients/{0}", jsonObject.RemoteId.Value.ToString ()));
+            return UpdateObject (authToken, url, jsonObject);
         }
 
-        public Task DeleteClient (ClientJson jsonObject)
+        public Task DeleteClient (string authToken, ClientJson jsonObject)
         {
-            var url = new Uri (v8Url, String.Format ("clients/{0}", jsonObject.Id.Value.ToString ()));
-            return DeleteObject (url);
+            var url = new Uri (v8Url, string.Format ("clients/{0}", jsonObject.RemoteId.Value.ToString ()));
+            return DeleteObject (authToken, url);
         }
 
         #endregion
 
         #region Project methods
 
-        public Task<ProjectJson> CreateProject (ProjectJson jsonObject)
+        public Task<ProjectJson> CreateProject (string authToken, ProjectJson jsonObject)
         {
             var url = new Uri (v8Url, "projects");
-            return CreateObject (url, jsonObject);
+            return CreateObject (authToken, url, jsonObject);
         }
 
-        public Task<ProjectJson> GetProject (long id)
+        public Task<ProjectJson> GetProject (string authToken, long id)
         {
-            var url = new Uri (v8Url, String.Format ("projects/{0}", id.ToString ()));
-            return GetObject<ProjectJson> (url);
+            var url = new Uri (v8Url, string.Format ("projects/{0}", id.ToString ()));
+            return GetObject<ProjectJson> (authToken, url);
         }
 
-        public Task<List<ProjectJson>> ListWorkspaceProjects (long workspaceId)
+        public Task<List<ProjectJson>> ListWorkspaceProjects (string authToken, long workspaceId)
         {
-            var url = new Uri (v8Url, String.Format ("workspaces/{0}/projects", workspaceId.ToString ()));
-            return ListObjects<ProjectJson> (url);
+            var url = new Uri (v8Url, string.Format ("workspaces/{0}/projects", workspaceId.ToString ()));
+            return ListObjects<ProjectJson> (authToken, url);
         }
 
-        public Task<List<WorkspaceUserJson>> ListWorkspaceUsers (long workspaceId)
+        public Task<List<WorkspaceUserJson>> ListWorkspaceUsers (string authToken, long workspaceId)
         {
-            var url = new Uri (v8Url, String.Format ("workspaces/{0}/workspace_users", workspaceId.ToString ()));
-            return ListObjects<WorkspaceUserJson> (url);
+            var url = new Uri (v8Url, string.Format ("workspaces/{0}/workspace_users", workspaceId.ToString ()));
+            return ListObjects<WorkspaceUserJson> (authToken, url);
         }
 
-        public Task<ProjectJson> UpdateProject (ProjectJson jsonObject)
+        public Task<ProjectJson> UpdateProject (string authToken, ProjectJson jsonObject)
         {
-            var url = new Uri (v8Url, String.Format ("projects/{0}", jsonObject.Id.Value.ToString ()));
-            return UpdateObject (url, jsonObject);
+            var url = new Uri (v8Url, string.Format ("projects/{0}", jsonObject.RemoteId.Value.ToString ()));
+            return UpdateObject (authToken, url, jsonObject);
         }
 
-        public Task DeleteProject (ProjectJson jsonObject)
+        public Task DeleteProject (string authToken, ProjectJson jsonObject)
         {
-            var url = new Uri (v8Url, String.Format ("projects/{0}", jsonObject.Id.Value.ToString ()));
-            return DeleteObject (url);
+            var url = new Uri (v8Url, string.Format ("projects/{0}", jsonObject.RemoteId.Value.ToString ()));
+            return DeleteObject (authToken, url);
         }
 
-        public Task DeleteProjects (IEnumerable<ProjectJson> jsonObjects)
+        public Task DeleteProjects (string authToken, IEnumerable<ProjectJson> jsonObjects)
         {
-            var url = new Uri (v8Url, String.Format ("projects/{0}",
-                               String.Join (",", jsonObjects.Select ((model) => model.Id.Value.ToString ()))));
-            return DeleteObjects (url);
+            var url = new Uri (v8Url, string.Format ("projects/{0}",
+                               string.Join (",", jsonObjects.Select ((model) => model.RemoteId.Value.ToString ()))));
+            return DeleteObjects (authToken, url);
         }
 
         #endregion
 
         #region Task methods
 
-        public Task<TaskJson> CreateTask (TaskJson jsonObject)
+        public Task<TaskJson> CreateTask (string authToken, TaskJson jsonObject)
         {
             var url = new Uri (v8Url, "tasks");
-            return CreateObject (url, jsonObject);
+            return CreateObject (authToken, url, jsonObject);
         }
 
-        public Task<TaskJson> GetTask (long id)
+        public Task<TaskJson> GetTask (string authToken, long id)
         {
-            var url = new Uri (v8Url, String.Format ("tasks/{0}", id.ToString ()));
-            return GetObject<TaskJson> (url);
+            var url = new Uri (v8Url, string.Format ("tasks/{0}", id.ToString ()));
+            return GetObject<TaskJson> (authToken, url);
         }
 
-        public Task<List<TaskJson>> ListProjectTasks (long projectId)
+        public Task<List<TaskJson>> ListProjectTasks (string authToken, long projectId)
         {
-            var url = new Uri (v8Url, String.Format ("projects/{0}/tasks", projectId.ToString ()));
-            return ListObjects<TaskJson> (url);
+            var url = new Uri (v8Url, string.Format ("projects/{0}/tasks", projectId.ToString ()));
+            return ListObjects<TaskJson> (authToken, url);
         }
 
-        public Task<List<ProjectUserJson>> ListProjectUsers (long projectId)
+        public Task<List<ProjectUserJson>> ListProjectUsers (string authToken, long projectId)
         {
-            var url = new Uri (v8Url, String.Format ("projects/{0}/project_users", projectId.ToString ()));
-            return ListObjects<ProjectUserJson> (url);
+            var url = new Uri (v8Url, string.Format ("projects/{0}/project_users", projectId.ToString ()));
+            return ListObjects<ProjectUserJson> (authToken, url);
         }
 
-        public Task<List<TaskJson>> ListWorkspaceTasks (long workspaceId)
+        public Task<List<TaskJson>> ListWorkspaceTasks (string authToken, long workspaceId)
         {
-            var url = new Uri (v8Url, String.Format ("workspaces/{0}/tasks", workspaceId.ToString ()));
-            return ListObjects<TaskJson> (url);
+            var url = new Uri (v8Url, string.Format ("workspaces/{0}/tasks", workspaceId.ToString ()));
+            return ListObjects<TaskJson> (authToken, url);
         }
 
-        public Task<TaskJson> UpdateTask (TaskJson jsonObject)
+        public Task<TaskJson> UpdateTask (string authToken, TaskJson jsonObject)
         {
-            var url = new Uri (v8Url, String.Format ("tasks/{0}", jsonObject.Id.Value.ToString ()));
-            return UpdateObject (url, jsonObject);
+            var url = new Uri (v8Url, string.Format ("tasks/{0}", jsonObject.RemoteId.Value.ToString ()));
+            return UpdateObject (authToken, url, jsonObject);
         }
 
-        public Task DeleteTask (TaskJson jsonObject)
+        public Task DeleteTask (string authToken, TaskJson jsonObject)
         {
-            var url = new Uri (v8Url, String.Format ("tasks/{0}", jsonObject.Id.Value.ToString ()));
-            return DeleteObject (url);
+            var url = new Uri (v8Url, string.Format ("tasks/{0}", jsonObject.RemoteId.Value.ToString ()));
+            return DeleteObject (authToken, url);
         }
 
-        public Task DeleteTasks (IEnumerable<TaskJson> jsonObjects)
+        public Task DeleteTasks (string authToken, IEnumerable<TaskJson> jsonObjects)
         {
-            var url = new Uri (v8Url, String.Format ("tasks/{0}",
-                               String.Join (",", jsonObjects.Select ((json) => json.Id.Value.ToString ()))));
-            return DeleteObjects (url);
+            var url = new Uri (v8Url, string.Format ("tasks/{0}",
+                               string.Join (",", jsonObjects.Select ((json) => json.RemoteId.Value.ToString ()))));
+            return DeleteObjects (authToken, url);
         }
 
         #endregion
 
         #region Time entry methods
 
-        public Task<TimeEntryJson> CreateTimeEntry (TimeEntryJson jsonObject)
+        public Task<TimeEntryJson> CreateTimeEntry (string authToken, TimeEntryJson jsonObject)
         {
             var url = new Uri (v8Url, "time_entries");
-            jsonObject.CreatedWith = Platform.DefaultCreatedWith;
-            return CreateObject (url, jsonObject);
+            jsonObject.CreatedWith = String.Format ("{0}-obm-{1}", Platform.DefaultCreatedWith, OBMExperimentManager.ExperimentNumber);
+            return CreateObject (authToken, url, jsonObject);
         }
 
-        public Task<TimeEntryJson> GetTimeEntry (long id)
+        public Task<TimeEntryJson> GetTimeEntry (string authToken, long id)
         {
-            var url = new Uri (v8Url, String.Format ("time_entries/{0}", id.ToString ()));
-            return GetObject<TimeEntryJson> (url);
+            var url = new Uri (v8Url, string.Format ("time_entries/{0}", id));
+            return GetObject<TimeEntryJson> (authToken, url);
         }
 
-        public Task<List<TimeEntryJson>> ListTimeEntries ()
+        public Task<List<TimeEntryJson>> ListTimeEntries (string authToken)
         {
             var url = new Uri (v8Url, "time_entries");
-            return ListObjects<TimeEntryJson> (url);
+            return ListObjects<TimeEntryJson> (authToken, url);
         }
 
-        public Task<List<TimeEntryJson>> ListTimeEntries (DateTime start, DateTime end)
+        public Task<List<TimeEntryJson>> ListTimeEntries (string authToken, DateTime start, DateTime end)
+        {
+            return ListTimeEntries (authToken, start, end, CancellationToken.None);
+        }
+
+        public Task<List<TimeEntryJson>> ListTimeEntries (string authToken, DateTime start, DateTime end, CancellationToken cancellationToken)
         {
             var url = new Uri (v8Url,
-                               String.Format ("time_entries?start_date={0}&end_date={1}",
+                               string.Format ("time_entries?start_date={0}&end_date={1}",
                                               WebUtility.UrlEncode (start.ToUtc ().ToString ("o")),
                                               WebUtility.UrlEncode (end.ToUtc ().ToString ("o"))));
-            return ListObjects<TimeEntryJson> (url);
+            return ListObjects<TimeEntryJson> (authToken, url, cancellationToken);
         }
 
-        public Task<List<TimeEntryJson>> ListTimeEntries (DateTime end, int days)
+        public Task<List<TimeEntryJson>> ListTimeEntries (string authToken, DateTime end, int days)
+        {
+            return ListTimeEntries (authToken, end, days, CancellationToken.None);
+        }
+
+        public Task<List<TimeEntryJson>> ListTimeEntries (string authToken, DateTime end, int days, CancellationToken cancellationToken)
         {
             var url = new Uri (v8Url,
-                               String.Format ("time_entries?end_date={0}&num_of_days={1}",
+                               string.Format ("time_entries?end_date={0}&num_of_days={1}",
                                               WebUtility.UrlEncode (end.ToUtc ().ToString ("o")),
                                               days));
-            return ListObjects<TimeEntryJson> (url);
+            return ListObjects<TimeEntryJson> (authToken, url, cancellationToken);
         }
 
-        public Task<List<TimeEntryJson>> ListTimeEntries (DateTime start, DateTime end, CancellationToken cancellationToken)
+        public Task<TimeEntryJson> UpdateTimeEntry (string authToken, TimeEntryJson jsonObject)
         {
-            var url = new Uri (v8Url,
-                               String.Format ("time_entries?start_date={0}&end_date={1}",
-                                              WebUtility.UrlEncode (start.ToUtc ().ToString ("o")),
-                                              WebUtility.UrlEncode (end.ToUtc ().ToString ("o"))));
-            return ListObjects<TimeEntryJson> (url, cancellationToken);
+            var url = new Uri (v8Url, string.Format ("time_entries/{0}", jsonObject.RemoteId.Value.ToString ()));
+            return UpdateObject (authToken, url, jsonObject);
         }
 
-        public Task<List<TimeEntryJson>> ListTimeEntries (DateTime end, int days, CancellationToken cancellationToken)
+        public Task DeleteTimeEntry (string authToken, TimeEntryJson jsonObject)
         {
-            var url = new Uri (v8Url,
-                               String.Format ("time_entries?end_date={0}&num_of_days={1}",
-                                              WebUtility.UrlEncode (end.ToUtc ().ToString ("o")),
-                                              days));
-            return ListObjects<TimeEntryJson> (url, cancellationToken);
-        }
-
-        public Task<TimeEntryJson> UpdateTimeEntry (TimeEntryJson jsonObject)
-        {
-            var url = new Uri (v8Url, String.Format ("time_entries/{0}", jsonObject.Id.Value.ToString ()));
-            return UpdateObject (url, jsonObject);
-        }
-
-        public Task DeleteTimeEntry (TimeEntryJson jsonObject)
-        {
-            var url = new Uri (v8Url, String.Format ("time_entries/{0}", jsonObject.Id.Value.ToString ()));
-            return DeleteObject (url);
+            var url = new Uri (v8Url, string.Format ("time_entries/{0}", jsonObject.RemoteId.Value.ToString ()));
+            return DeleteObject (authToken, url);
         }
 
         #endregion
 
         #region Workspace methods
 
-        public Task<WorkspaceJson> CreateWorkspace (WorkspaceJson jsonObject)
+        public Task<WorkspaceJson> CreateWorkspace (string authToken, WorkspaceJson jsonObject)
         {
             var url = new Uri (v8Url, "workspaces");
-            return CreateObject (url, jsonObject);
+            return CreateObject (authToken, url, jsonObject);
         }
 
-        public Task<WorkspaceJson> GetWorkspace (long id)
+        public Task<WorkspaceJson> GetWorkspace (string authToken, long id)
         {
-            var url = new Uri (v8Url, String.Format ("workspaces/{0}", id.ToString ()));
-            return GetObject<WorkspaceJson> (url);
+            var url = new Uri (v8Url, string.Format ("workspaces/{0}", id.ToString ()));
+            return GetObject<WorkspaceJson> (authToken, url);
         }
 
-        public Task<List<WorkspaceJson>> ListWorkspaces ()
+        public Task<List<WorkspaceJson>> ListWorkspaces (string authToken)
         {
             var url = new Uri (v8Url, "workspaces");
-            return ListObjects<WorkspaceJson> (url);
+            return ListObjects<WorkspaceJson> (authToken, url);
         }
 
-        public Task<WorkspaceJson> UpdateWorkspace (WorkspaceJson jsonObject)
+        public Task<WorkspaceJson> UpdateWorkspace (string authToken, WorkspaceJson jsonObject)
         {
-            var url = new Uri (v8Url, String.Format ("workspaces/{0}", jsonObject.Id.Value.ToString ()));
-            return UpdateObject (url, jsonObject);
+            var url = new Uri (v8Url, string.Format ("workspaces/{0}", jsonObject.RemoteId.Value.ToString ()));
+            return UpdateObject (authToken, url, jsonObject);
         }
 
         #endregion
 
         #region Tag methods
 
-        public Task<TagJson> CreateTag (TagJson jsonObject)
+        public Task<TagJson> CreateTag (string authToken, TagJson jsonObject)
         {
             var url = new Uri (v8Url, "tags");
-            return CreateObject (url, jsonObject);
+            return CreateObject (authToken, url, jsonObject);
         }
 
-        public Task<TagJson> UpdateTag (TagJson jsonObject)
+        public Task<TagJson> UpdateTag (string authToken, TagJson jsonObject)
         {
-            var url = new Uri (v8Url, String.Format ("tags/{0}", jsonObject.Id.Value.ToString ()));
-            return UpdateObject (url, jsonObject);
+            var url = new Uri (v8Url, string.Format ("tags/{0}", jsonObject.RemoteId.Value.ToString ()));
+            return UpdateObject (authToken, url, jsonObject);
         }
 
-        public Task DeleteTag (TagJson jsonObject)
+        public Task DeleteTag (string authToken, TagJson jsonObject)
         {
-            var url = new Uri (v8Url, String.Format ("tags/{0}", jsonObject.Id.Value.ToString ()));
-            return DeleteObject (url);
+            var url = new Uri (v8Url, string.Format ("tags/{0}", jsonObject.RemoteId.Value.ToString ()));
+            return DeleteObject (authToken, url);
         }
 
         #endregion
 
         #region Workspace user methods
 
-        public async Task<WorkspaceUserJson> CreateWorkspaceUser (WorkspaceUserJson jsonObject)
+        public async Task<WorkspaceUserJson> CreateWorkspaceUser (string authToken, WorkspaceUserJson jsonObject)
         {
-            var url = new Uri (v8Url, String.Format ("workspaces/{0}/invite", jsonObject.WorkspaceId.ToString ()));
+            var url = new Uri (v8Url, string.Format ("workspaces/{0}/invite", jsonObject.WorkspaceRemoteId.ToString ()));
 
             var json = JsonConvert.SerializeObject (new {
                 emails = new string[] { jsonObject.Email },
             });
-            var httpReq = SetupRequest (new HttpRequestMessage () {
+            var httpReq = SetupRequest (authToken, new HttpRequestMessage () {
                 Method = HttpMethod.Post,
                 RequestUri = url,
                 Content = new StringContent (json, Encoding.UTF8, "application/json"),
             });
-            var httpResp = await SendAsync (httpReq)
-                           .ConfigureAwait (continueOnCapturedContext: false);
-
-            var wrap = JObject.Parse (await httpResp.Content.ReadAsStringAsync ()
-                                      .ConfigureAwait (continueOnCapturedContext: false));
+            var httpResp = await SendAsync (httpReq).ConfigureAwait (false);
+            var wrap = JObject.Parse (await httpResp.Content.ReadAsStringAsync ().ConfigureAwait (false));
             var data = wrap ["data"] [0].ToObject<WorkspaceUserJson> ();
             return data;
         }
 
-        public Task<WorkspaceUserJson> UpdateWorkspaceUser (WorkspaceUserJson jsonObject)
+        public Task<WorkspaceUserJson> UpdateWorkspaceUser (string authToken, WorkspaceUserJson jsonObject)
         {
-            var url = new Uri (v8Url, String.Format ("workspace_users/{0}", jsonObject.Id.Value.ToString ()));
-            return UpdateObject (url, jsonObject);
+            var url = new Uri (v8Url, string.Format ("workspace_users/{0}", jsonObject.RemoteId.Value.ToString ()));
+            return UpdateObject (authToken, url, jsonObject);
         }
 
-        public Task DeleteWorkspaceUser (WorkspaceUserJson jsonObject)
+        public Task DeleteWorkspaceUser (string authToken, WorkspaceUserJson jsonObject)
         {
-            var url = new Uri (v8Url, String.Format ("workspace_users/{0}", jsonObject.Id.Value.ToString ()));
-            return DeleteObject (url);
+            var url = new Uri (v8Url, string.Format ("workspace_users/{0}", jsonObject.RemoteId.Value.ToString ()));
+            return DeleteObject (authToken, url);
         }
 
         #endregion
 
         #region Project user methods
 
-        public Task<ProjectUserJson> CreateProjectUser (ProjectUserJson jsonObject)
+        public Task<ProjectUserJson> CreateProjectUser (string authToken, ProjectUserJson jsonObject)
         {
             var url = new Uri (v8Url, "project_users");
-            return CreateObject (url, jsonObject);
+            return CreateObject (authToken, url, jsonObject);
         }
 
-        public Task<ProjectUserJson> UpdateProjectUser (ProjectUserJson jsonObject)
+        public Task<ProjectUserJson> UpdateProjectUser (string authToken, ProjectUserJson jsonObject)
         {
-            var url = new Uri (v8Url, String.Format ("project_users/{0}", jsonObject.Id.Value.ToString ()));
-            return UpdateObject (url, jsonObject);
+            var url = new Uri (v8Url, string.Format ("project_users/{0}", jsonObject.RemoteId.Value.ToString ()));
+            return UpdateObject (authToken, url, jsonObject);
         }
 
-        public Task DeleteProjectUser (ProjectUserJson jsonObject)
+        public Task DeleteProjectUser (string authToken, ProjectUserJson jsonObject)
         {
-            var url = new Uri (v8Url, String.Format ("project_users/{0}", jsonObject.Id.Value.ToString ()));
-            return DeleteObject (url);
+            var url = new Uri (v8Url, string.Format ("project_users/{0}", jsonObject.RemoteId.Value.ToString ()));
+            return DeleteObject (authToken, url);
         }
 
         #endregion
@@ -672,20 +645,14 @@ namespace Toggl.Phoebe.Net
         public Task<UserJson> CreateUser (UserJson jsonObject)
         {
             var url = new Uri (v8Url, jsonObject.GoogleAccessToken != null ? "signups?app_name=toggl_mobile" : "signups");
-            jsonObject.CreatedWith = String.Format ("{0}-obm-{1}", Platform.DefaultCreatedWith, OBMExperimentManager.ExperimentNumber);
-            return CreateObject (url, jsonObject);
+            jsonObject.CreatedWith = Platform.DefaultCreatedWith;
+            return CreateObject (string.Empty, url, jsonObject);
         }
 
         public Task<UserJson> GetUser (long id)
         {
-            /*
-            var authManager = ServiceContainer.Resolve<AuthManager> ();
-            if (authManager.Token == null || authManager.User.RemoteId != (long?)id) {
-                throw new NotSupportedException ("Can only update currently logged in user.");
-            }
-            */
             var url = new Uri (v8Url, "me");
-            return GetObject<UserJson> (url);
+            return GetObject<UserJson> (string.Empty, url);
         }
 
         public async Task<UserJson> GetUser (string username, string password)
@@ -699,11 +666,8 @@ namespace Toggl.Phoebe.Net
             httpReq.Headers.Authorization = new AuthenticationHeaderValue ("Basic",
                     Convert.ToBase64String (Encoding.ASCII.GetBytes (
                                                 string.Format ("{0}:{1}", username, password))));
-            var httpResp = await SendAsync (httpReq)
-                           .ConfigureAwait (continueOnCapturedContext: false);
-
-            var respData = await httpResp.Content.ReadAsStringAsync ()
-                           .ConfigureAwait (continueOnCapturedContext: false);
+            var httpResp = await SendAsync (httpReq).ConfigureAwait (false);
+            var respData = await httpResp.Content.ReadAsStringAsync ().ConfigureAwait (false);
             var wrap = JsonConvert.DeserializeObject<Wrapper<UserJson>> (respData);
 
             return wrap.Data;
@@ -720,60 +684,59 @@ namespace Toggl.Phoebe.Net
             httpReq.Headers.Authorization = new AuthenticationHeaderValue ("Basic",
                     Convert.ToBase64String (Encoding.ASCII.GetBytes (
                                                 string.Format ("{0}:{1}", googleAccessToken, "google_access_token"))));
-            var httpResp = await SendAsync (httpReq)
-                           .ConfigureAwait (false);
-
-            var respData = await httpResp.Content.ReadAsStringAsync ()
-                           .ConfigureAwait (false);
+            var httpResp = await SendAsync (httpReq).ConfigureAwait (false);
+            var respData = await httpResp.Content.ReadAsStringAsync ().ConfigureAwait (false);
             var wrap = JsonConvert.DeserializeObject<Wrapper<UserJson>> (respData);
 
             return wrap.Data;
         }
 
-        public Task<UserJson> UpdateUser (UserJson jsonObject)
+        public Task<UserJson> UpdateUser (string authToken, UserJson jsonObject)
         {
-            /*
-            var authManager = ServiceContainer.Resolve<AuthManager> ();
-            if (authManager.User == null || authManager.User.RemoteId != jsonObject.Id) {
-                throw new NotSupportedException ("Can only update currently logged in user.");
-            }
-            */
             var url = new Uri (v8Url, "me");
-            return UpdateObject (url, jsonObject);
+            return UpdateObject (authToken, url, jsonObject);
         }
 
+        // TODO: For testing purposes only
+        public async Task DeleteUser (string authToken)
+        {
+            var json = JsonConvert.SerializeObject (new CloseAccountInfo ());
+            var httpReq = SetupRequest (authToken, new HttpRequestMessage () {
+                Method = HttpMethod.Post,
+                RequestUri = new Uri (v8Url, "me/close_account"),
+                Content = new StringContent (json, Encoding.UTF8, "application/json"),
+            });
+            await SendAsync (httpReq).ConfigureAwait (false);
+        }
         #endregion
 
-        public async Task<UserRelatedJson> GetChanges (DateTime? since)
+        public async Task<UserRelatedJson> GetChanges (string authToken, DateTime? since)
         {
             since = since.ToUtc ();
             var relUrl = "me?with_related_data=true";
             if (since.HasValue) {
-                relUrl = String.Format ("{0}&since={1}", relUrl, (long) (since.Value - UnixStart).TotalSeconds);
+                relUrl = string.Format ("{0}&since={1}", relUrl, (long) (since.Value - UnixStart).TotalSeconds);
             }
             var url = new Uri (v8Url, relUrl);
 
-            var httpReq = SetupRequest (new HttpRequestMessage () {
+            var httpReq = SetupRequest (authToken, new HttpRequestMessage () {
                 Method = HttpMethod.Get,
                 RequestUri = url,
             });
-            var httpResp = await SendAsync (httpReq)
-                           .ConfigureAwait (false);
-
-            var respData = await httpResp.Content.ReadAsStringAsync ()
-                           .ConfigureAwait (false);
+            var httpResp = await SendAsync (httpReq).ConfigureAwait (false);
+            var respData = await httpResp.Content.ReadAsStringAsync ().ConfigureAwait (false);
             var json = JObject.Parse (respData);
 
-            var user = json ["data"].ToObject<UserJson> ();
+            var user = json["data"].ToObject<UserJson> ();
             return new UserRelatedJson () {
-                Timestamp = UnixStart + TimeSpan.FromSeconds ((long)json ["since"]),
+                Timestamp = UnixStart + TimeSpan.FromSeconds ((long)json["since"]),
                 User = user,
-                Workspaces = GetChangesObjects<WorkspaceJson> (json ["data"] ["workspaces"]),
-                Tags = GetChangesObjects<TagJson> (json ["data"] ["tags"]),
-                Clients = GetChangesObjects<ClientJson> (json ["data"] ["clients"]),
-                Projects = GetChangesObjects<ProjectJson> (json ["data"] ["projects"]),
-                Tasks = GetChangesObjects<TaskJson> (json ["data"] ["tasks"]),
-                TimeEntries = GetChangesTimeEntryObjects (json ["data"] ["time_entries"], user),
+                Workspaces = GetChangesObjects<WorkspaceJson> (json["data"]["workspaces"]),
+                Tags = GetChangesObjects<TagJson> (json["data"]["tags"]),
+                Clients = GetChangesObjects<ClientJson> (json["data"]["clients"]),
+                Projects = GetChangesObjects<ProjectJson> (json["data"]["projects"]),
+                Tasks = GetChangesObjects<TaskJson> (json["data"]["tasks"]),
+                TimeEntries = GetChangesTimeEntryObjects (json["data"]["time_entries"], user),
             };
         }
 
@@ -792,20 +755,20 @@ namespace Toggl.Phoebe.Net
                 return Enumerable.Empty<TimeEntryJson> ();
             }
             return json.ToObject<List<TimeEntryJson>> ().Select ((te) => {
-                te.UserId = user.Id.Value;
+                te.UserRemoteId = user.RemoteId.Value;
                 return te;
             });
         }
 
-        public async Task CreateFeedback (FeedbackJson jsonObject)
+        public async Task CreateFeedback (string authToken, FeedbackJson jsonObject)
         {
             var url = new Uri (v8Url, "feedback");
 
-            jsonObject.AppVersion = String.Format ("{0}/{1}", Platform.AppIdentifier, Platform.AppVersion);
+            jsonObject.AppVersion = string.Format ("{0}/{1}", Platform.AppIdentifier, Platform.AppVersion);
             jsonObject.Timestamp = Time.Now;
 
             var json = JsonConvert.SerializeObject (jsonObject);
-            var httpReq = SetupRequest (new HttpRequestMessage () {
+            var httpReq = SetupRequest (authToken, new HttpRequestMessage () {
                 Method = HttpMethod.Post,
                 RequestUri = url,
                 Content = new StringContent (json, Encoding.UTF8, "application/json"),
@@ -813,12 +776,12 @@ namespace Toggl.Phoebe.Net
             await SendAsync (httpReq).ConfigureAwait (false);
         }
 
-        public async Task CreateExperimentAction (ActionJson jsonObject)
+        public async Task CreateExperimentAction (string authToken, ActionJson jsonObject)
         {
             var url = new Uri (v9Url, "obm/actions");
             var json = JsonConvert.SerializeObject (jsonObject);
 
-            var httpReq = SetupRequest (new HttpRequestMessage () {
+            var httpReq = SetupRequest (authToken, new HttpRequestMessage () {
                 Method = HttpMethod.Post,
                 RequestUri = url,
                 Content = new StringContent (json, Encoding.UTF8, "application/json")

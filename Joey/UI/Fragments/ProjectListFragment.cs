@@ -10,8 +10,8 @@ using Android.Widget;
 using Toggl.Joey.UI.Activities;
 using Toggl.Joey.UI.Adapters;
 using Toggl.Joey.UI.Views;
-using Toggl.Phoebe._Data.Models;
-using Toggl.Phoebe._ViewModels;
+using Toggl.Phoebe.Data.Models;
+using Toggl.Phoebe.ViewModels;
 using Activity = Android.Support.V7.App.AppCompatActivity;
 using Fragment = Android.Support.V4.App.Fragment;
 using SearchView = Android.Support.V7.Widget.SearchView;
@@ -91,7 +91,7 @@ namespace Toggl.Joey.UI.Fragments
         public override void OnViewCreated (View view, Bundle savedInstanceState)
         {
             base.OnViewCreated (view, savedInstanceState);
-            viewModel = new ProjectListVM (Phoebe._Reactive.StoreManager.Singleton.AppState, WorkspaceId);
+            viewModel = new ProjectListVM (Phoebe.Reactive.StoreManager.Singleton.AppState, WorkspaceId);
 
             var adapter = new ProjectListAdapter (recyclerView, viewModel.ProjectList);
             adapter.HandleItemSelection = OnItemSelected;

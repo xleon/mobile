@@ -1,11 +1,13 @@
 using System;
+using System.ComponentModel;
 using Newtonsoft.Json;
 
 namespace Toggl.Phoebe.Data.Json
 {
     public class ProjectJson : CommonJson
     {
-        [JsonProperty ("name")]
+        [DefaultValue ("")]
+        [JsonProperty (PropertyName = "name", DefaultValueHandling = DefaultValueHandling.Populate)]
         public string Name { get; set; }
 
         [JsonProperty ("color")]
@@ -27,9 +29,9 @@ namespace Toggl.Phoebe.Data.Json
         public bool UseTasksEstimate { get; set; }
 
         [JsonProperty ("wid")]
-        public long WorkspaceId { get; set; }
+        public long WorkspaceRemoteId { get; set; }
 
         [JsonProperty ("cid")]
-        public long? ClientId { get; set; }
+        public long? ClientRemoteId { get; set; }
     }
 }

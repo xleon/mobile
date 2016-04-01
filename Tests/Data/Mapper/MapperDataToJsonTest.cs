@@ -2,8 +2,9 @@
 using NUnit.Framework;
 using SQLite.Net.Interop;
 using SQLite.Net.Platform.Generic;
-using Toggl.Phoebe._Data.Json;
-using Toggl.Phoebe._Data.Models;
+using Toggl.Phoebe.Data;
+using Toggl.Phoebe.Data.Json;
+using Toggl.Phoebe.Data.Models;
 using XPlatUtils;
 
 namespace Toggl.Phoebe.Tests.Data.Mapper
@@ -23,15 +24,13 @@ namespace Toggl.Phoebe.Tests.Data.Mapper
         [Test]
         public void TestCommonJsonMap()
         {
-            var commonData = new ClientData {
-                Id = Guid.NewGuid(),
-                ModifiedAt = DateTime.Now,
-                DeletedAt = DateTime.Now,
-                Name = "Client",
-                WorkspaceId = Guid.NewGuid(),
-                WorkspaceRemoteId = 321,
-                RemoteId = 123
-            };
+            var commonData = ClientData.Create (x => {
+                x.DeletedAt = DateTime.Now;
+                x.Name = "Client";
+                x.WorkspaceId = Guid.NewGuid();
+                x.WorkspaceRemoteId = 321;
+                x.RemoteId = 123;
+            });
 
             var commonJson = mapper.Map<CommonJson> (commonData);
 
@@ -84,21 +83,20 @@ namespace Toggl.Phoebe.Tests.Data.Mapper
         [Test]
         public void TestProjectJsonMap()
         {
-            var projectData = new ProjectData {
-                Name = "Project",
-                ClientId = Guid.NewGuid (),
-                ClientRemoteId = 333,
-                WorkspaceId = Guid.NewGuid(),
-                WorkspaceRemoteId = 321,
-                RemoteId = 123,
-                Color = 3,
-                IsActive = true,
-                IsBillable = true,
-                SyncPending = true,
-                IsPrivate = true,
-                IsTemplate = true,
-                UseTasksEstimate = true
-            };
+            var projectData = ProjectData.Create (x => {
+                x.Name = "Project";
+                x.ClientId = Guid.NewGuid ();
+                x.ClientRemoteId = 333;
+                x.WorkspaceId = Guid.NewGuid();
+                x.WorkspaceRemoteId = 321;
+                x.RemoteId = 123;
+                x.Color = 3;
+                x.IsActive = true;
+                x.IsBillable = true;
+                x.IsPrivate = true;
+                x.IsTemplate = true;
+                x.UseTasksEstimate = true;
+            });
 
             var projectJson = mapper.Map<ProjectJson> (projectData);
 
@@ -117,15 +115,15 @@ namespace Toggl.Phoebe.Tests.Data.Mapper
         [Test]
         public void TestProjectUserJsonMap()
         {
-            var projectUserData = new ProjectUserData {
-                RemoteId = 123,
-                HourlyRate = 1,
-                ProjectId = Guid.NewGuid (),
-                ProjectRemoteId = 234,
-                IsManager = true,
-                UserId = Guid.NewGuid (),
-                UserRemoteId = 456
-            };
+            var projectUserData = ProjectUserData.Create (x => {
+                x.RemoteId = 123;
+                x.HourlyRate = 1;
+                x.ProjectId = Guid.NewGuid ();
+                x.ProjectRemoteId = 234;
+                x.IsManager = true;
+                x.UserId = Guid.NewGuid ();
+                x.UserRemoteId = 456;
+            });
 
             var projectUserJson = mapper.Map<ProjectUserJson> (projectUserData);
 
@@ -139,12 +137,12 @@ namespace Toggl.Phoebe.Tests.Data.Mapper
         [Test]
         public void TestTagJsonMap()
         {
-            var tagData = new TagData {
-                RemoteId = 123,
-                Name = "Tag",
-                WorkspaceId = Guid.Empty,
-                WorkspaceRemoteId = 321,
-            };
+            var tagData = TagData.Create (x => {
+                x.RemoteId = 123;
+                x.Name = "Tag";
+                x.WorkspaceId = Guid.Empty;
+                x.WorkspaceRemoteId = 321;
+            });
 
             var tagJson = mapper.Map<TagJson> (tagData);
 
@@ -155,14 +153,14 @@ namespace Toggl.Phoebe.Tests.Data.Mapper
         [Test]
         public void TestTaskJsonMap()
         {
-            var taskData = new TaskData {
-                RemoteId = 123,
-                Name = "Task",
-                WorkspaceRemoteId = 321,
-                ProjectRemoteId = 111,
-                Estimate = 12,
-                IsActive = true
-            };
+            var taskData = TaskData.Create (x => {
+                x.RemoteId = 123;
+                x.Name = "Task";
+                x.WorkspaceRemoteId = 321;
+                x.ProjectRemoteId = 111;
+                x.Estimate = 12;
+                x.IsActive = true;
+            });
 
             var taskJson = mapper.Map<TaskJson> (taskData);
 
@@ -176,16 +174,16 @@ namespace Toggl.Phoebe.Tests.Data.Mapper
         [Test]
         public void TestWorkspaceUserJsonMap()
         {
-            var workspaceUserData = new WorkspaceUserData {
-                WorkspaceId = Guid.Empty,
-                UserId = Guid.Empty,
-                RemoteId = 123,
-                WorkspaceRemoteId = 321,
-                IsActive = true,
-                Email = "support@toggl.com",
-                IsAdmin = true,
-                UserRemoteId = 123
-            };
+            var workspaceUserData = WorkspaceUserData.Create (x => {
+                x.WorkspaceId = Guid.Empty;
+                x.UserId = Guid.Empty;
+                x.RemoteId = 123;
+                x.WorkspaceRemoteId = 321;
+                x.IsActive = true;
+                x.Email = "support@toggl.com";
+                x.IsAdmin = true;
+                x.UserRemoteId = 123;
+            });
 
             var workspaceUserJson = mapper.Map<WorkspaceUserJson> (workspaceUserData);
 
@@ -200,21 +198,21 @@ namespace Toggl.Phoebe.Tests.Data.Mapper
         [Test]
         public void TestWorkspaceJsonMap()
         {
-            var workspaceData = new WorkspaceData {
-                RemoteId = 123,
-                Name = "WsU",
-                IsAdmin = true,
-                DefaultCurrency = "euro",
-                DefaultRate = 1,
-                IsPremium = true,
-                LogoUrl = "http://logout.com",
-                OnlyAdminsMayCreateProjects = true,
-                OnlyAdminsSeeBillableRates = true,
-                RoundingMode = RoundingMode.Up,
-                RoundingPercision = 1,
-                BillableRatesVisibility = AccessLevel.Admin,
-                ProjectCreationPrivileges = AccessLevel.Regular
-            };
+            var workspaceData = WorkspaceData.Create (x => {
+                x.RemoteId = 123;
+                x.Name = "WsU";
+                x.IsAdmin = true;
+                x.DefaultCurrency = "euro";
+                x.DefaultRate = 1;
+                x.IsPremium = true;
+                x.LogoUrl = "http://logout.com";
+                x.OnlyAdminsMayCreateProjects = true;
+                x.OnlyAdminsSeeBillableRates = true;
+                x.RoundingMode = RoundingMode.Up;
+                x.RoundingPercision = 1;
+                x.BillableRatesVisibility = AccessLevel.Admin;
+                x.ProjectCreationPrivileges = AccessLevel.Regular;
+            });
 
             var wData = mapper.Map<WorkspaceData> (workspaceData);
 
@@ -233,26 +231,26 @@ namespace Toggl.Phoebe.Tests.Data.Mapper
         [Test]
         public void TestUserJsonMap()
         {
-            var userData = new UserData {
-                RemoteId = 123,
-                Name = "User",
-                ApiToken = "123",
-                Email = "support@toggl.com",
-                DateFormat = "MM-DD-YY",
-                DurationFormat = _Data.DurationFormat.Classic,
-                GoogleAccessToken = "GoogleToken",
-                DefaultWorkspaceRemoteId = 111,
-                ImageUrl = "image.jpg",
-                Locale = "locale",
-                ExperimentIncluded = true,
-                ExperimentNumber = 1,
-                SendProductEmails = true,
-                SendTimerNotifications = true,
-                SendWeeklyReport = true,
-                StartOfWeek = DayOfWeek.Monday,
-                TimeFormat = "MM:SS",
-                Timezone = "TimeZone"
-            };
+            var userData = UserData.Create (x => {
+                x.RemoteId = 123;
+                x.Name = "User";
+                x.ApiToken = "123";
+                x.Email = "support@toggl.com";
+                x.DateFormat = "MM-DD-YY";
+                x.DurationFormat = DurationFormat.Classic;
+                x.GoogleAccessToken = "GoogleToken";
+                x.DefaultWorkspaceRemoteId = 111;
+                x.ImageUrl = "image.jpg";
+                x.Locale = "locale";
+                x.ExperimentIncluded = true;
+                x.ExperimentNumber = 1;
+                x.SendProductEmails = true;
+                x.SendTimerNotifications = true;
+                x.SendWeeklyReport = true;
+                x.StartOfWeek = DayOfWeek.Monday;
+                x.TimeFormat = "MM:SS";
+                x.Timezone = "TimeZone";
+            });
 
             var userJson = mapper.Map<UserJson> (userData);
 
@@ -279,25 +277,25 @@ namespace Toggl.Phoebe.Tests.Data.Mapper
         [Test]
         public void TestTimeEntryJsonMap()
         {
-            var tags = new System.Collections.Generic.List<string> {"tag1", "tag2", "tag3"};
+            var tags = new System.Collections.Generic.List<Guid> ();
             var duration = TimeSpan.FromMinutes (3);
             var startTime = new DateTime (DateTime.Now.Ticks);
             var stopTime = startTime + duration;
 
-            var teData = new TimeEntryData {
-                RemoteId = 123,
-                Description = "description",
-                IsBillable = true,
-                ProjectRemoteId = 123,
-                DurationOnly = true,
-                StartTime = startTime,
-                StopTime = stopTime,
-                Tags = tags,
-                TaskRemoteId = null,
-                UserRemoteId = 333,
-                WorkspaceRemoteId = 222,
-                State = TimeEntryState.Finished
-            };
+            var teData = TimeEntryData.Create (x => {
+                x.RemoteId = 123;
+                x.Description = "description";
+                x.IsBillable = true;
+                x.ProjectRemoteId = 123;
+                x.DurationOnly = true;
+                x.StartTime = startTime;
+                x.StopTime = stopTime;
+                x.TagIds = tags;
+                x.TaskRemoteId = null;
+                x.UserRemoteId = 333;
+                x.WorkspaceRemoteId = 222;
+                x.State = TimeEntryState.Finished;
+            });
 
             var teJson = mapper.Map<TimeEntryJson> (teData);
 
@@ -315,7 +313,7 @@ namespace Toggl.Phoebe.Tests.Data.Mapper
             Assert.That (teJson.WorkspaceRemoteId, Is.EqualTo (teData.WorkspaceRemoteId));
             Assert.That (teJson.CreatedWith, Is.EqualTo (Platform.DefaultCreatedWith));
 
-            teData.State = TimeEntryState.Running;
+            teData = teData.With (x => x.State = TimeEntryState.Running);
             teJson = mapper.Map<TimeEntryJson> (teData);
 
             //TODO: check startTime.

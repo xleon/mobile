@@ -1,16 +1,13 @@
 using System;
-using System.Linq;
 using Android.App;
 using Android.Content;
 using Toggl.Phoebe;
-using Toggl.Phoebe.Data;
-using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Logging;
-using Toggl.Phoebe.Net;
 using XPlatUtils;
 
 namespace Toggl.Joey.Net
 {
+    // TODO RX restore services correctly.
     [Service (Exported = false)]
     public class GcmService : Service
     {
@@ -25,7 +22,7 @@ namespace Toggl.Joey.Net
         {
         }
 
-        private Subscription<SyncFinishedMessage> subscriptionSyncFinishedMessage;
+        //private Subscription<SyncFinishedMessage> subscriptionSyncFinishedMessage;
         private Intent wakelockIntent;
         private int? lastStartId;
         private DateTime? lastSyncTime;
@@ -69,6 +66,7 @@ namespace Toggl.Joey.Net
 
         private void SyncOrStop (bool checkRunning = true)
         {
+            /*
             var syncManager = ServiceContainer.Resolve<ISyncManager> ();
             // Need to check IsRunning, as it will tell us if the sync actually has finished
             if (checkRunning && syncManager.IsRunning) {
@@ -85,19 +83,20 @@ namespace Toggl.Joey.Net
                     return;
                 }
             }
-
+            */
             // Stop the service:
             ClearLastStartId ();
             ClearWakelockIntent ();
         }
 
-        public override async void OnStart (Intent intent, int startId)
+        public override void OnStart (Intent intent, int startId)
         {
             UpdateWakelockIntent (intent);
             UpdateLastStartId (startId);
 
             try {
                 // Check if we need can skip sync
+                /*
                 if (intent != null && intent.Extras != null) {
                     var extras = intent.Extras;
                     var entryId = Convert.ToInt64 (extras.GetString ("task_id", String.Empty));
@@ -117,7 +116,7 @@ namespace Toggl.Joey.Net
                         return;
                     }
                 }
-
+                */
                 ScheduleSync ();
             } catch (Exception exc) {
                 // Log errors
@@ -145,26 +144,28 @@ namespace Toggl.Joey.Net
 
             ((AndroidApp)Application).InitializeComponents ();
 
-            var bus = ServiceContainer.Resolve<MessageBus> ();
-            subscriptionSyncFinishedMessage = bus.Subscribe<SyncFinishedMessage> (OnSyncFinishedMessage);
+            //var bus = ServiceContainer.Resolve<MessageBus> ();
+            //subscriptionSyncFinishedMessage = bus.Subscribe<SyncFinishedMessage> (OnSyncFinishedMessage);
         }
 
         public override void OnDestroy ()
         {
+            /*
             if (subscriptionSyncFinishedMessage != null) {
                 var bus = ServiceContainer.Resolve<MessageBus> ();
                 bus.Unsubscribe (subscriptionSyncFinishedMessage);
                 subscriptionSyncFinishedMessage = null;
             }
-
+            */
             base.OnDestroy ();
         }
 
+        /*
         private void OnSyncFinishedMessage (SyncFinishedMessage msg)
         {
             SyncOrStop (checkRunning: false);
         }
-
+        */
         private static DateTime ParseDate (string value)
         {
             DateTime dt;

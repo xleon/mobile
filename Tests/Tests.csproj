@@ -134,6 +134,7 @@
     <Compile Include="Reactive\StoreManagerTest.cs" />
     <Compile Include="Reactive\SyncManagerTest.cs" />
     <Compile Include="Reactive\Util.cs" />
+    <Compile Include="Data\DataTest.cs" />
   </ItemGroup>
   <ItemGroup Condition="$(DefineConstants.Contains('STAGING'))">
     <Compile Include="Staging\**\*.cs" />

@@ -2,8 +2,9 @@ using System.IO;
 using System.Threading;
 using NUnit.Framework;
 using SQLite.Net.Platform.Generic;
-using Toggl.Phoebe.Logging;
+using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Net;
+using Toggl.Phoebe.Logging;
 using XPlatUtils;
 
 namespace Toggl.Phoebe.Tests
@@ -23,8 +24,8 @@ namespace Toggl.Phoebe.Tests
             ServiceContainer.RegisterScoped<MessageBus> (new MessageBus ());
             ServiceContainer.RegisterScoped<ITimeProvider> (new DefaultTimeProvider ());
             ServiceContainer.Register<TimeCorrectionManager> (new TimeCorrectionManager ());
-            ServiceContainer.RegisterScoped<_Data.ISyncDataStore> (
-                new _Data.SyncSqliteDataStore (databasePath, new SQLitePlatformGeneric ()));
+            ServiceContainer.RegisterScoped<ISyncDataStore> (
+                new SyncSqliteDataStore (databasePath, new SQLitePlatformGeneric ()));
             ServiceContainer.RegisterScoped<LogStore> ((LogStore)null);
             ServiceContainer.RegisterScoped<ILoggerClient> ((ILoggerClient)null);
             ServiceContainer.RegisterScoped<ILogger> (new VoidLogger());

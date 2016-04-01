@@ -7,8 +7,8 @@ using Toggl.Joey.Data;
 using Toggl.Joey.UI.Utils;
 using Toggl.Joey.UI.Views;
 using Toggl.Phoebe;
-using Toggl.Phoebe._Reactive;
-using Toggl.Phoebe._ViewModels;
+using Toggl.Phoebe.Reactive;
+using Toggl.Phoebe.ViewModels;
 using Toggl.Phoebe.Data;
 using XPlatUtils;
 

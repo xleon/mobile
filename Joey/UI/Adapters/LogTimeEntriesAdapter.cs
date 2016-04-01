@@ -10,9 +10,9 @@ using Toggl.Joey.UI.Activities;
 using Toggl.Joey.UI.Utils;
 using Toggl.Joey.UI.Views;
 using Toggl.Phoebe;
-using Toggl.Phoebe._Data.Models;
-using Toggl.Phoebe._ViewModels;
-using Toggl.Phoebe._ViewModels.Timer;
+using Toggl.Phoebe.Data.Models;
+using Toggl.Phoebe.ViewModels;
+using Toggl.Phoebe.ViewModels.Timer;
 using XPlatUtils;
 
 namespace Toggl.Joey.UI.Adapters
@@ -404,14 +404,13 @@ namespace Toggl.Joey.UI.Adapters
                 var entryData = datasource.Entry.Data;
                 var ctx = ServiceContainer.Resolve<Context> ();
 
-                // TODO RX: IsDirty has no meaning in the new architecture
-                if (entryData.RemoteId.HasValue && !entryData.SyncPending) {
+                if (entryData.RemoteId.HasValue && entryData.SyncState == SyncState.Synced) {
                     NotSyncedView.Visibility = ViewStates.Gone;
                 } else {
                     NotSyncedView.Visibility = ViewStates.Visible;
                 }
                 var notSyncedShape = NotSyncedView.Background as GradientDrawable;
-                if (entryData.SyncPending && entryData.RemoteId.HasValue) {
+                if (entryData.RemoteId.HasValue) {
                     notSyncedShape.SetColor (ctx.Resources.GetColor (Resource.Color.light_gray));
                 } else {
                     notSyncedShape.SetColor (ctx.Resources.GetColor (Resource.Color.material_red));

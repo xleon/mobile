@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Linq;
 using NUnit.Framework;
-using Toggl.Phoebe._Data;
-using Toggl.Phoebe._Data.Models;
-using Toggl.Phoebe._Net;
-using Toggl.Phoebe._Reactive;
-using Toggl.Phoebe._ViewModels;
+using Toggl.Phoebe.Data;
+using Toggl.Phoebe.Data.Models;
+using Toggl.Phoebe.Net;
+using Toggl.Phoebe.Reactive;
+using Toggl.Phoebe.ViewModels;
 using XPlatUtils;
 using Toggl.Phoebe.Analytics;
 using System.Threading.Tasks;
@@ -49,7 +49,7 @@ namespace Toggl.Phoebe.Tests.Reactive
 
             viewModel.SaveProject (pname, pcolor, new SyncTestOptions (false, (state, sent, queued) => {
                 try {
-                    ProjectData project = null;
+                    IProjectData project = null;
                     Assert.That (project = state.Projects.Values.SingleOrDefault (
                                                x => x.WorkspaceId == Util.WorkspaceId && x.Name == pname && x.Color == pcolor), Is.Not.Null);
 
@@ -58,8 +58,8 @@ namespace Toggl.Phoebe.Tests.Reactive
                                      x => x.WorkspaceId == Util.WorkspaceId && x.Name == pname && x.Color == pcolor && x.Id == project.Id), Is.Not.Null);
 
                     // ProjectUserData
-                    Assert.That (state.ProjectUsers.Values.SingleOrDefault (x => x.ProjectId == project.Id), Is.Not.Null);
-                    Assert.That (dataStore.Table<ProjectUserData> ().SingleOrDefault (x => x.ProjectId == project.Id), Is.Not.Null);
+                    //Assert.That (state.ProjectUsers.Values.SingleOrDefault (x => x.ProjectId == project.Id), Is.Not.Null);
+                    //Assert.That (dataStore.Table<ProjectUserData> ().SingleOrDefault (x => x.ProjectId == project.Id), Is.Not.Null);
 
                     tcs.SetResult (true);
                 } catch (Exception ex) {
@@ -75,10 +75,7 @@ namespace Toggl.Phoebe.Tests.Reactive
         {
             var pcolor = 5;
             var pname = "MyProject2";
-            var client = new ClientData {
-                Id = Guid.NewGuid (),
-                Name = "MyClient"
-            };
+            var client = ClientData.Create (x => x.Name = "MyClient");
             var tcs = Util.CreateTask<bool> ();
 
             viewModel.SetClient (client);

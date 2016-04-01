@@ -1,8 +1,10 @@
 ﻿using System;
+using Toggl.Phoebe.Data.Models;
 
 namespace Toggl.Phoebe.Data
 {
     public struct Duration {
+
         private readonly int encoded;
         private readonly int digits;
 

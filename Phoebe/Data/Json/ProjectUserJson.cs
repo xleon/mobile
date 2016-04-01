@@ -12,9 +12,9 @@ namespace Toggl.Phoebe.Data.Json
         public int HourlyRate { get; set; }
 
         [JsonProperty ("pid")]
-        public long ProjectId { get; set; }
+        public long ProjectRemoteId { get; set; }
 
         [JsonProperty ("uid")]
-        public long UserId { get; set; }
+        public long UserRemoteId { get; set; }
     }
 }

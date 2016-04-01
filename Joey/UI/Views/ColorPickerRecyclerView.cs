@@ -76,14 +76,14 @@ namespace Toggl.Joey.UI.Views
             public override void OnBindViewHolder (RecyclerView.ViewHolder holder, int position)
             {
                 var h = (ColorPickerViewHolder)holder;
-                h.Button.SetBackgroundColor (Color.ParseColor (ProjectModel.HexColors.ElementAt (position)));
+                h.Button.SetBackgroundColor (Color.ParseColor (ProjectData.HexColors.ElementAt (position)));
                 h.Tick.Visibility = position == SelectedColor ? ViewStates.Visible : ViewStates.Invisible;
             }
 
             public override int ItemCount
             {
                 get {
-                    return ProjectModel.HexColors.Take (ColumnsCount*RowsCount).Count();
+                    return ProjectData.HexColors.Take (ColumnsCount*RowsCount).Count();
                 }
             }
 

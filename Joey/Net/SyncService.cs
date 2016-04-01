@@ -2,16 +2,14 @@
 using Android.App;
 using Android.Content;
 using Android.OS;
-using Toggl.Phoebe;
-using Toggl.Phoebe.Net;
-using XPlatUtils;
 
 namespace Toggl.Joey.Net
 {
+    // TODO RX restore services correctly.
     [Service (Exported = false)]
     public class SyncService : Service
     {
-        Subscription<SyncFinishedMessage> subscriptionSyncFinished;
+        //Subscription<SyncFinishedMessage> subscriptionSyncFinished;
 
         public SyncService () : base ()
         {
@@ -24,6 +22,7 @@ namespace Toggl.Joey.Net
 
         protected override void Dispose (bool disposing)
         {
+            /*
             if (disposing) {
                 if (subscriptionSyncFinished != null) {
                     var bus = ServiceContainer.Resolve<MessageBus> ();
@@ -31,16 +30,19 @@ namespace Toggl.Joey.Net
                     subscriptionSyncFinished = null;
                 }
             }
+            */
             base.Dispose (disposing);
         }
 
         public override void OnStart (Intent intent, int startId)
         {
+            /*
             if (subscriptionSyncFinished != null) {
                 return;
             }
 
             ((AndroidApp)Application).InitializeComponents ();
+
 
             var bus = ServiceContainer.Resolve<MessageBus> ();
             subscriptionSyncFinished = bus.Subscribe<SyncFinishedMessage> (OnSyncFinished);
@@ -54,6 +56,7 @@ namespace Toggl.Joey.Net
                     subscriptionSyncFinished = null;
                 }
             }
+            */
         }
 
         public override StartCommandResult OnStartCommand (Intent intent, StartCommandFlags flags, int startId)
@@ -67,6 +70,7 @@ namespace Toggl.Joey.Net
             return null;
         }
 
+        /*
         private void OnSyncFinished (SyncFinishedMessage msg)
         {
             // Protect against Java side being GCed
@@ -82,6 +86,7 @@ namespace Toggl.Joey.Net
 
             StopSelf ();
         }
+        */
     }
 }
 

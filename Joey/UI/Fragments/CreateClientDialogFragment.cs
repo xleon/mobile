@@ -4,7 +4,7 @@ using Android.Content;
 using Android.OS;
 using Android.Text;
 using Android.Widget;
-using Toggl.Phoebe._ViewModels;
+using Toggl.Phoebe.ViewModels;
 
 namespace Toggl.Joey.UI.Fragments
 {
@@ -49,7 +49,7 @@ namespace Toggl.Joey.UI.Fragments
         public override void OnCreate (Bundle savedInstanceState)
         {
             base.OnCreate (savedInstanceState);
-            ViewModel = new NewClientVM (Phoebe._Reactive.StoreManager.Singleton.AppState, WorkspaceId);
+            ViewModel = new NewClientVM (Phoebe.Reactive.StoreManager.Singleton.AppState, WorkspaceId);
             ValidateClientName ();
         }
 

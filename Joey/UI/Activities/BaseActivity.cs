@@ -2,8 +2,6 @@
 using System.IO;
 using Android.Content;
 using Android.OS;
-using Toggl.Joey.UI.Fragments;
-using Toggl.Phoebe.Net;
 using Activity = Android.Support.V7.App.AppCompatActivity;
 using FragmentManager = Android.Support.V4.App.FragmentManager;
 
@@ -24,19 +22,9 @@ namespace Toggl.Joey.UI.Activities
         /// </summary>
         public static BaseActivity CurrentActivity { get; private set; }
 
-        private void OnTogglHttpResponse (TogglHttpResponseMessage msg)
-        {
-            if (Handle == IntPtr.Zero) {
-                return;
-            }
-            if (msg.StatusCode == System.Net.HttpStatusCode.Gone) {
-                new ForcedUpgradeDialogFragment ().Show (FragmentManager, "upgrade_dialog");
-            }
-        }
-
         protected virtual bool StartAuthActivity ()
         {
-            var user = Phoebe._Reactive.StoreManager.Singleton.AppState.User;
+            var user = Phoebe.Reactive.StoreManager.Singleton.AppState.User;
             if (user.Id == Guid.Empty) {
                 var intent = new Intent (this, typeof (LoginActivity));
                 intent.AddFlags (ActivityFlags.ClearTop);

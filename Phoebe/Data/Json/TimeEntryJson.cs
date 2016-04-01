@@ -1,12 +1,14 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using Newtonsoft.Json;
 
 namespace Toggl.Phoebe.Data.Json
 {
     public class TimeEntryJson : CommonJson
     {
-        [JsonProperty ("description")]
+        [DefaultValue ("")]
+        [JsonProperty (PropertyName = "description", DefaultValueHandling = DefaultValueHandling.Populate)]
         public string Description { get; set; }
 
         [JsonProperty ("billable")]
@@ -33,18 +35,18 @@ namespace Toggl.Phoebe.Data.Json
         public long Duration { get; set; }
 
         [JsonProperty ("tags")]
-        public List<string> Tags { get; set; }
+        public List<string> Tags { get; set; } = new List<string> ();
 
         [JsonProperty ("uid")]
-        public long UserId { get; set; }
+        public long UserRemoteId { get; set; }
 
         [JsonProperty ("wid")]
-        public long WorkspaceId { get; set; }
+        public long WorkspaceRemoteId { get; set; }
 
         [JsonProperty ("pid")]
-        public long? ProjectId { get; set; }
+        public long? ProjectRemoteId { get; set; }
 
         [JsonProperty ("tid")]
-        public long? TaskId { get; set; }
+        public long? TaskRemoteId { get; set; }
     }
 }

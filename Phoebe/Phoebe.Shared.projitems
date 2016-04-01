@@ -54,6 +54,8 @@
     <Compile Include="$(MSBuildThisFileDirectory)Data\DataMsg.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Data\Duration.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Data\ISyncDataStore.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Data\ISettingsStore.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Data\SettingChangedMessage.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Data\StartStopMessage.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Data\SyncSqliteDataStore.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Data\Diff\Diff.cs" />
@@ -111,6 +113,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)Net\IReportsClient.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Reports\SummaryReportView.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Helpers\Settings.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ViewModels\SettingsVM.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ViewModels\FeedbackVM.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Net\IPushClient.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Net\PushRestClient.cs" />

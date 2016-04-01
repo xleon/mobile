@@ -369,18 +369,35 @@ namespace Toggl.Phoebe.Reactive
             var info = (msg as DataMsg.UpdateSetting).Data.ForceLeft ();
             SettingsState newSettings = state.Settings;
 
-            if (info.Item1 == nameof (SettingsState.ShowWelcome)) {
+
+            switch (info.Item1) {
+            case nameof (SettingsState.ShowWelcome):
                 newSettings = newSettings.With (showWelcome: (bool)info.Item2);
-            } else if (info.Item1 == nameof (SettingsState.ProjectSort)) {
+                break;
+            case nameof (SettingsState.ProjectSort):
                 newSettings = newSettings.With (projectSort: (string)info.Item2);
-            } else if (info.Item1 == nameof (SettingsState.ReportsCurrentItem)) {
-                newSettings = newSettings.With (reportsCurrentItem: (int)info.Item2);
-            } else if (info.Item1 == nameof (SettingsState.LastReportZoom)) {
-                newSettings = newSettings.With (lastReportZoom: (int)info.Item2);
+                break;
+            case nameof (SettingsState.ShowNotification):
+                newSettings = newSettings.With (showNotification: (bool)info.Item2);
+                break;
+            case nameof (SettingsState.IdleNotification):
+                newSettings = newSettings.With (idleNotification: (bool)info.Item2);
+                break;
+            case nameof (SettingsState.ChooseProjectForNew):
+                newSettings = newSettings.With (chooseProjectForNew: (bool)info.Item2);
+                break;
+            case nameof (SettingsState.UseDefaultTag):
+                newSettings = newSettings.With (useTag: (bool)info.Item2);
+                break;
+            case nameof (SettingsState.GroupedEntries):
+                newSettings = newSettings.With (groupedEntries: (bool)info.Item2);
+                break;
+
+                // TODO: log invalid/unknowns?
             }
 
-            return DataSyncMsg.Create (
-                       state.With (settings:newSettings));
+
+            return DataSyncMsg.Create (state.With (settings:newSettings));
         }
 
         #region Util

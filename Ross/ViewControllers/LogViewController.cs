@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Timers;
@@ -16,7 +15,6 @@ using Toggl.Ross.DataSources;
 using Toggl.Ross.Theme;
 using Toggl.Ross.Views;
 using UIKit;
-using XPlatUtils;
 
 namespace Toggl.Ross.ViewControllers
 {
@@ -34,6 +32,7 @@ namespace Toggl.Ross.ViewControllers
         private UIBarButtonItem navigationButton;
         private UIActivityIndicatorView defaultFooterView;
 
+        private Binding<int, int> hasItemsBinding, loadMoreBinding;
         private Binding<string, string> durationBinding;
         private Binding<bool, bool> syncBinding, hasMoreBinding, hasErrorBinding, isRunningBinding;
         private Binding<ObservableCollection<IHolder>, ObservableCollection<IHolder>> collectionBinding;
@@ -87,7 +86,7 @@ namespace Toggl.Ross.ViewControllers
             navigationItem.RightBarButtonItem = navigationButton;
         }
 
-        public async override void ViewDidLoad ()
+        public override void ViewDidLoad ()
         {
             base.ViewDidLoad ();
 
@@ -105,15 +104,15 @@ namespace Toggl.Ross.ViewControllers
             headerView.ValueChanged += (sender, e) => ViewModel.TriggerFullSync ();
 
             // Bindings
-            syncBinding = this.SetBinding (() => ViewModel.IsAppSyncing).WhenSourceChanges (() => {
-                if (!ViewModel.IsAppSyncing) {
+            syncBinding = this.SetBinding (() => ViewModel.IsFullSyncing).WhenSourceChanges (() => {
+                if (!ViewModel.IsFullSyncing) {
                     headerView.EndRefreshing ();
                 }
             });
-            hasMoreBinding = this.SetBinding (() => ViewModel.HasMoreItems).WhenSourceChanges (SetFooterState);
-            hasErrorBinding = this.SetBinding (() => ViewModel.HasLoadErrors).WhenSourceChanges (SetFooterState);
-            hasItemsBinding = this.SetBinding (() => ViewModel.HasItems).WhenSourceChanges (SetCollectionState);
-            loadMoreBinding = this.SetBinding (() => ViewModel.HasItems).WhenSourceChanges (LoadMoreIfNeeded);
+            hasMoreBinding = this.SetBinding (() => ViewModel.LoadInfo.HasMore).WhenSourceChanges (SetFooterState);
+            hasErrorBinding = this.SetBinding (() => ViewModel.LoadInfo.HadErrors).WhenSourceChanges (SetFooterState);
+            hasItemsBinding = this.SetBinding (() => ViewModel.Collection.Count).WhenSourceChanges (SetCollectionState);
+            loadMoreBinding = this.SetBinding (() => ViewModel.Collection.Count).WhenSourceChanges (LoadMoreIfNeeded);
             collectionBinding = this.SetBinding (() => ViewModel.Collection).WhenSourceChanges (() => {
                 TableView.Source = new TimeEntriesSource (this, ViewModel);
             });
@@ -143,17 +142,16 @@ namespace Toggl.Ross.ViewControllers
 
         }
 
-        private async void OnActionButtonTouchUpInside (object sender, EventArgs e)
+        private void OnActionButtonTouchUpInside (object sender, EventArgs e)
         {
             // Send experiment data.
             ViewModel.ReportExperiment (OBMExperimentManager.StartButtonActionKey,
                                         OBMExperimentManager.ClickActionValue);
-
-            var entry = ViewModel.StartStopTimeEntry ();
+            ViewModel.StartStopTimeEntry ();
+            /*
             if (entry.State == TimeEntryState.Running) {
                 // Show next viewController.
                 var controllers = new List<UIViewController> (NavigationController.ViewControllers);
-                var tagList = await ServiceContainer.Resolve<IDataStore> ().GetTimeEntryTags (entry.Id);
                 var editController = new EditTimeEntryViewController (entry, tagList);
                 controllers.Add (editController);
                 if (ServiceContainer.Resolve<SettingsStore> ().ChooseProjectForNew) {
@@ -161,6 +159,7 @@ namespace Toggl.Ross.ViewControllers
                 }
                 NavigationController.SetViewControllers (controllers.ToArray (), true);
             }
+            */
         }
 
         private void SetStartStopButtonState ()
@@ -172,48 +171,50 @@ namespace Toggl.Ross.ViewControllers
             }
         }
 
-        private async void LoadMoreIfNeeded ()
+        private void LoadMoreIfNeeded ()
         {
             // TODO: Small hack due to the scroll needs more than the
             // 10 items to work correctly and load more itens.
             if (ViewModel.Collection.Count > 0 && ViewModel.Collection.Count < 10) {
-                await ViewModel.LoadMore ();
+                ViewModel.LoadMore ();
             }
         }
 
         private void SetFooterState ()
         {
-            if (ViewModel.HasMoreItems && !ViewModel.HasLoadErrors) {
+            if (ViewModel.LoadInfo.HasMore && !ViewModel.LoadInfo.HadErrors) {
                 if (defaultFooterView == null) {
                     defaultFooterView = new UIActivityIndicatorView (UIActivityIndicatorViewStyle.Gray);
                     defaultFooterView.Frame = new CGRect (0, 0, 50, 50);
                     defaultFooterView.StartAnimating ();
                 }
                 TableView.TableFooterView = defaultFooterView;
-            } else if (ViewModel.HasMoreItems && ViewModel.HasLoadErrors) {
+            } else if (ViewModel.LoadInfo.HasMore && ViewModel.LoadInfo.HadErrors) {
                 TableView.TableFooterView = reloadView;
-            } else if (!ViewModel.HasMoreItems && !ViewModel.HasLoadErrors) {
+            } else if (!ViewModel.LoadInfo.HasMore && !ViewModel.LoadInfo.HadErrors) {
                 SetCollectionState ();
             }
         }
 
         private void SetCollectionState ()
         {
-            if (ViewModel.HasItems != LogTimeEntriesViewModel.CollectionState.NotReady) {
-                UIView emptyView = defaultEmptyView; // Default empty view.
-                var isWelcome = ServiceContainer.Resolve<ISettingsStore> ().ShowWelcome;
-                var isInExperiment = OBMExperimentManager.IncludedInExperiment ();
-                var hasItems = ViewModel.HasItems == LogTimeEntriesViewModel.CollectionState.NotEmpty;
-
-                // According to settings, show welcome message or no.
-                ((SimpleEmptyView)emptyView).Title = isWelcome ? "LogWelcomeTitle".Tr () : "LogEmptyTitle".Tr ();
-
-                if (isWelcome && isInExperiment) {
-                    emptyView = obmEmptyView;
-                }
-
-                TableView.TableFooterView = hasItems ? new UIView () : emptyView;
+            if (ViewModel.LoadInfo.IsSyncing && ViewModel.Collection.Count == 0) {
+                return;
             }
+
+            UIView emptyView = defaultEmptyView; // Default empty view.
+            var isWelcome = ViewModel.IsWelcomeMessageShown ();
+            var hasItems = ViewModel.Collection.Count > 0;
+            var isInExperiment = ViewModel.IsInExperiment ();
+
+            // According to settings, show welcome message or no.
+            ((SimpleEmptyView)emptyView).Title = isWelcome ? "LogWelcomeTitle".Tr () : "LogEmptyTitle".Tr ();
+
+            if (isWelcome && isInExperiment) {
+                emptyView = obmEmptyView;
+            }
+
+            TableView.TableFooterView = hasItems ? new UIView () : emptyView;
         }
 
         private void OnCountinueTimeEntry (int index)
@@ -392,11 +393,11 @@ namespace Toggl.Ross.ViewControllers
                 var projectName = "LogCellNoProject".Tr ();
                 var projectColor = Color.Gray;
                 var clientName = string.Empty;
-                var info = dataSource.Info;
+                var info = dataSource.Entry.Info;
 
                 if (!string.IsNullOrWhiteSpace (info.ProjectData.Name)) {
                     projectName = info.ProjectData.Name;
-                    projectColor = UIColor.Clear.FromHex (ProjectModel.HexColors [info.ProjectData.Color % ProjectModel.HexColors.Length]);
+                    projectColor = UIColor.Clear.FromHex (ProjectData.HexColors [info.ProjectData.Color % ProjectData.HexColors.Length]);
 
                     if (!string.IsNullOrWhiteSpace (info.ClientData.Name)) {
                         clientName = info.ClientData.Name;
@@ -415,7 +416,7 @@ namespace Toggl.Ross.ViewControllers
 
                 var taskName = info.TaskData.Name;
                 var taskHidden = string.IsNullOrWhiteSpace (taskName);
-                var description = info.Description;
+                var description = dataSource.Entry.Data.Description;
                 var descHidden = string.IsNullOrWhiteSpace (description);
 
                 if (taskHidden && descHidden) {
@@ -441,7 +442,7 @@ namespace Toggl.Ross.ViewControllers
 
                 // Set duration
                 duration = dataSource.GetDuration ();
-                isRunning = dataSource.Data.State == TimeEntryState.Running;
+                isRunning = dataSource.Entry.Data.State == TimeEntryState.Running;
 
                 RebindTags (dataSource);
                 RebindDuration ();
@@ -464,7 +465,7 @@ namespace Toggl.Ross.ViewControllers
                     timer.Start ();
                 }
 
-                durationLabel.Text = TimeEntryModel.GetFormattedDuration (duration);
+                durationLabel.Text = TimeEntryData.GetFormattedDuration (null, duration);
                 runningImageView.Hidden = !isRunning;
             }
 
@@ -477,8 +478,8 @@ namespace Toggl.Ross.ViewControllers
 
             private void RebindTags (ITimeEntryHolder dataSource)
             {
-                var hasTags = dataSource.Info.NumberOfTags > 0;
-                var isBillable = dataSource.Info.IsBillable;
+                var hasTags = dataSource.Entry.Data.TagIds.Count > 0;
+                var isBillable = dataSource.Entry.Data.IsBillable;
 
                 if (hasTags && isBillable) {
                     billableTagsImageView.Apply (Style.Log.BillableAndTaggedEntry);
@@ -689,20 +690,20 @@ namespace Toggl.Ross.ViewControllers
                 InvokeOnMainThread (() => SetContentData ());
             }
 
-            private string FormatDuration (TimeSpan duration)
+            private string FormatDuration (TimeSpan dr)
             {
-                if (duration.TotalHours >= 1f) {
+                if (dr.TotalHours >= 1f) {
                     return string.Format (
                                "LogHeaderDurationHoursMinutes".Tr (),
-                               (int)duration.TotalHours,
-                               duration.Minutes
+                               (int)dr.TotalHours,
+                               dr.Minutes
                            );
                 }
 
-                if (duration.Minutes > 0) {
+                if (dr.Minutes > 0) {
                     return string.Format (
                                "LogHeaderDurationMinutes".Tr (),
-                               duration.Minutes
+                               dr.Minutes
                            );
                 }
 

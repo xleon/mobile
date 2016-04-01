@@ -1,10 +1,12 @@
 using System;
 using System.Threading.Tasks;
 using Cirrious.FluentLayouts.Touch;
+using GalaSoft.MvvmLight.Helpers;
 using Google.SignIn;
 using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Logging;
 using Toggl.Phoebe.Net;
+using Toggl.Phoebe.ViewModels;
 using Toggl.Ross.Theme;
 using Toggl.Ross.Views;
 using UIKit;
@@ -22,6 +24,12 @@ namespace Toggl.Ross.ViewControllers
         private UIButton createButton;
         private UIButton passwordButton;
         private UIButton googleButton;
+        private LoginVM viewModel {get; set;}
+
+        public WelcomeViewController()
+        {
+            viewModel = new LoginVM ();
+        }
 
         public override void LoadView ()
         {
@@ -89,10 +97,21 @@ namespace Toggl.Ross.ViewControllers
 
         public void DidSignIn (SignIn signIn, GoogleUser user, Foundation.NSError error)
         {
-            InvokeOnMainThread (async delegate {
-                await AuthWithGoogleTokenAsync (signIn, user, error);
-            });
+            if (error == null) {
+                var token = user.Authentication.AccessToken;
+                var email = user.Profile.Email;
+                signIn.DisconnectUser (); // Disconnect user from Google.
+                viewModel.TryLoginWithGoogle (token);
+            } else if (error.Code != -5) { // Cancel error code.
+                new UIAlertView ("WelcomeGoogleErrorTitle".Tr (), "WelcomeGoogleErrorMessage".Tr (), null, "WelcomeGoogleErrorOk".Tr (), null).Show ();
+                var log = ServiceContainer.Resolve<ILogger> ();
+                log.Info (Tag, "Failed to authenticate (G+) the user.");
+                IsAuthenticating = false;
+            }
         }
+
+        private Binding<bool, bool> isAuthencticatedBinding, isAuthenticatingBinding;
+        private Binding<AuthResult, AuthResult> resultBinding;
 
         public override void ViewWillAppear (bool animated)
         {
@@ -100,6 +119,38 @@ namespace Toggl.Ross.ViewControllers
 
             SignIn.SharedInstance.Delegate = this;
             SignIn.SharedInstance.UIDelegate = this;
+
+            isAuthenticatingBinding = this.SetBinding (() => viewModel.IsAuthenticating).WhenSourceChanges (SetViewState);
+            resultBinding = this.SetBinding (() => viewModel.AuthResult).WhenSourceChanges (() => {
+                switch (viewModel.AuthResult) {
+                case AuthResult.None:
+                case AuthResult.Authenticating:
+                    IsAuthenticating = true;
+                    break;
+
+                case AuthResult.Success:
+                    // TODO RX: Start the initial sync for the user
+                    //ServiceContainer.Resolve<ISyncManager> ().Run ();
+                    var intent = new Intent (this, typeof (MainDrawerActivity));
+                    intent.AddFlags (ActivityFlags.ClearTop);
+                    StartActivity (intent);
+                    Finish ();
+                    break;
+
+                // Error cases
+                default:
+                    if (viewModel.CurrentLoginMode == LoginVM.LoginMode.Login) {
+                        if (viewModel.AuthResult == AuthResult.InvalidCredentials) {
+                            PasswordEditText.Text = string.Empty;
+                        }
+                        PasswordEditText.RequestFocus ();
+                    } else {
+                        EmailEditText.RequestFocus ();
+                    }
+                    ShowAuthError (EmailEditText.Text, ViewModel.AuthResult, ViewModel.CurrentLoginMode);
+                    break;
+                }
+            });
 
             navController = NavigationController;
             if (navController != null) {
@@ -151,18 +202,20 @@ namespace Toggl.Ross.ViewControllers
             }
         }
 
-        public async Task AuthWithGoogleTokenAsync (SignIn signIn, GoogleUser user, Foundation.NSError error)
+        public void AuthWithGoogleTokenAsync (SignIn signIn, GoogleUser user, Foundation.NSError error)
         {
+
+
+
             try {
                 if (error == null) {
                     IsAuthenticating = true;
                     var token = user.Authentication.AccessToken;
-                    var authManager = ServiceContainer.Resolve<AuthManager> ();
-                    var authRes = await authManager.AuthenticateWithGoogleAsync (token);
+
                     // No need to keep the users Google account access around anymore
-                    signIn.DisconnectUser ();
+
                     if (authRes != AuthResult.Success) {
-                        var email = user.Profile.Email;
+
                         AuthErrorAlert.Show (this, email, authRes, AuthErrorAlert.Mode.Login, true);
                     } else {
                         // Start the initial sync for the user

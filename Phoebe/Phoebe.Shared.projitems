@@ -119,5 +119,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)Helpers\ObservableRangeCollection.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Helpers\Duration.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Helpers\ServiceContainer.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Helpers\Settings.cs" />
   </ItemGroup>
 </Project>

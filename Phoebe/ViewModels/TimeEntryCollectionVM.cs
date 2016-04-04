@@ -14,6 +14,20 @@ namespace Toggl.Phoebe.ViewModels
 {
     public class TimeEntryCollectionVM : ObservableRangeCollection<IHolder>, IDisposable
     {
+        #region Nested classes
+        class InnerState
+        {
+            public IList<IHolder> Holders { get; }
+            public IList<DiffSection<IHolder>> Diffs { get; }
+
+            public InnerState (IList<IHolder> holders = null, IList<DiffSection<IHolder>> diffs = null)
+            {
+                Holders = holders ?? new List<IHolder> ();
+                Diffs = diffs ?? new List<DiffSection<IHolder>> ();
+            }
+        }
+        #endregion
+
         IDisposable disposable;
         readonly TimeEntryGrouper grouper;
 
@@ -23,10 +37,11 @@ namespace Toggl.Phoebe.ViewModels
             disposable = StoreManager
                          .Singleton
                          .Observe (x => x.State.TimeEntries)
-                         .ObserveOn (uiContext)
                          .DistinctUntilChanged ()
-                         .SelectMany (x => GetDiffsFromNewValues (this, x.Values))
-                         .Subscribe (diffs => UpdateCollection (diffs));
+                         .ObserveOn (uiContext)
+                         .Select (x => x.Values)
+                         .Scan (new InnerState (), GetDiffsFromNewValues)
+                         .Subscribe (state => UpdateCollection (state.Diffs));
         }
 
         public void Dispose ()
@@ -37,7 +52,7 @@ namespace Toggl.Phoebe.ViewModels
             }
         }
 
-        private IObservable<IList<DiffSection<IHolder>>> GetDiffsFromNewValues (IList<IHolder> currentHolders, IEnumerable<RichTimeEntry> entries)
+        private InnerState GetDiffsFromNewValues (InnerState state, IEnumerable<RichTimeEntry> entries)
         {
             try {
                 var timeHolders = entries.Select (x => new TimeEntryHolder (x)).ToList ();
@@ -46,17 +61,18 @@ namespace Toggl.Phoebe.ViewModels
                 var newItemCollection = CreateItemCollection (timeHolders);
 
                 // Check diffs, modify ItemCollection and notify changes
-                var diffs = Diff.Calculate (currentHolders, newItemCollection);
+                var diffs = Diff.Calculate (state.Holders, newItemCollection);
 
                 // Swap remove events to delete normal items before headers.
                 // iOS requierement.
                 diffs = Diff.SortRemoveEvents<IHolder,DateHolder> (diffs);
 
-                return Observable.Return (diffs);
+                return new InnerState (newItemCollection, diffs);
+
             } catch (Exception ex) {
                 var log = ServiceContainer.Resolve<ILogger> ();
                 log.Error (GetType ().Name, ex, "Failed to update collection");
-                return Observable.Return (new List<DiffSection<IHolder>> ());
+                return new InnerState (state.Holders);
             }
         }
 

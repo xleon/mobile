@@ -100,7 +100,7 @@ namespace Toggl.Ross.ViewControllers
             // Create view model
             ViewModel = new LogTimeEntriesVM (StoreManager.Singleton.AppState);
             ViewModel.PropertyChanged += (sender, e) => {
-                Console.WriteLine (e.PropertyName);
+                //Console.WriteLine (e.PropertyName);
             };
 
             var headerView = new TableViewRefreshView ();
@@ -451,12 +451,11 @@ namespace Toggl.Ross.ViewControllers
                 isRunning = dataSource.Entry.Data.State == TimeEntryState.Running;
 
                 if (isRunning && timerSuscriber == null) {
-                    timerSuscriber = Observable.Timer (TimeSpan.FromMilliseconds (1000 - duration.Milliseconds),
-                                                       TimeSpan.FromSeconds (1))
+                    Console.WriteLine ("RebindDuration!! " + GetHashCode() + " " + dataSource.Entry.Data.Id);
+                    timerSuscriber = Observable.Timer (TimeSpan.FromMilliseconds (1000 - duration.Milliseconds), TimeSpan.FromSeconds (1))
                                      .Subscribe (x => RebindDuration ());
-                    Console.WriteLine ("suscribeeed" + timerSuscriber.GetHashCode ());
                 } else if (!isRunning && timerSuscriber != null) {
-                    Console.WriteLine ("unssuscribeeed" + timerSuscriber.GetHashCode ());
+                    Console.WriteLine ("unsuscribe " + GetHashCode() + " " + dataSource.Entry.Data.Id);
                     timerSuscriber.Dispose ();
                     timerSuscriber = null;
                 }
@@ -464,13 +463,13 @@ namespace Toggl.Ross.ViewControllers
                 RebindTags (dataSource);
                 RebindDuration ();
                 LayoutIfNeeded ();
+
             }
 
             // Rebind duration with the saved state "lastDataSource"
             // TODO: Try to find a stateless method.
             private void RebindDuration ()
             {
-                Console.WriteLine ("RebindDuration!!");
                 runningImageView.Hidden = !isRunning;
                 duration = duration.Add (TimeSpan.FromSeconds (1000));
                 durationLabel.Text = string.Format ("{0:D2}:{1:mm}:{1:ss}", (int)duration.TotalHours, duration);

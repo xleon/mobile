@@ -252,7 +252,7 @@ namespace Toggl.Phoebe.Tests.Data.Mapper
             Assert.That(wData.OnlyAdminsMayCreateProjects, Is.EqualTo(workspaceJson.OnlyAdminsMayCreateProjects));
             Assert.That(wData.OnlyAdminsSeeBillableRates, Is.EqualTo(workspaceJson.OnlyAdminsSeeBillableRates));
             Assert.That(wData.RoundingMode, Is.EqualTo(workspaceJson.RoundingMode));
-            Assert.That(wData.RoundingPercision, Is.EqualTo(workspaceJson.RoundingPercision));
+            Assert.That(wData.RoundingPrecision, Is.EqualTo(workspaceJson.RoundingPrecision));
         }
 
         [Test]

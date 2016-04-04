@@ -124,5 +124,9 @@
     <Compile Include="$(MSBuildThisFileDirectory)Helpers\Duration.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Helpers\ServiceContainer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Helpers\Settings.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Data\Models\Old\DB_VERSION_0.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="$(MSBuildThisFileDirectory)Data\Models\Old\" />
   </ItemGroup>
 </Project>

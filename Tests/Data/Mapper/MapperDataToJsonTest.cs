@@ -218,7 +218,7 @@ namespace Toggl.Phoebe.Tests.Data.Mapper
                 x.OnlyAdminsMayCreateProjects = true;
                 x.OnlyAdminsSeeBillableRates = true;
                 x.RoundingMode = RoundingMode.Up;
-                x.RoundingPercision = 1;
+                x.RoundingPrecision = 1;
                 x.BillableRatesVisibility = AccessLevel.Admin;
                 x.ProjectCreationPrivileges = AccessLevel.Regular;
             });
@@ -234,7 +234,7 @@ namespace Toggl.Phoebe.Tests.Data.Mapper
             Assert.That(wData.OnlyAdminsMayCreateProjects, Is.EqualTo(workspaceData.OnlyAdminsMayCreateProjects));
             Assert.That(wData.OnlyAdminsSeeBillableRates, Is.EqualTo(workspaceData.OnlyAdminsSeeBillableRates));
             Assert.That(wData.RoundingMode, Is.EqualTo(workspaceData.RoundingMode));
-            Assert.That(wData.RoundingPercision, Is.EqualTo(workspaceData.RoundingPercision));
+            Assert.That(wData.RoundingPrecision, Is.EqualTo(workspaceData.RoundingPrecision));
         }
 
         [Test]

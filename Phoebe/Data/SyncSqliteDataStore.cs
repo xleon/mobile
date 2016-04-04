@@ -44,7 +44,7 @@ namespace Toggl.Phoebe.Data
 
         public int GetVersion ()
         {
-            var data = cnn.Table<MetaData> ().SingleOrDefault (x => x.Id == nameof(DB_VERSION));
+            var data = cnn.Table<MetaData> ().Where (x => x.Id == nameof(DB_VERSION)).FirstOrDefault ();
             return data?.Convert<int> () ?? 0;
         }
 

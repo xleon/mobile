@@ -9,6 +9,28 @@ namespace Toggl.Phoebe.Data
 {
     public class SyncSqliteDataStore : ISyncDataStore
     {
+		public const int DB_VERSION = 1;
+
+        public class MetaData
+        {
+            [SQLite.Net.Attributes.PrimaryKey]
+            public string Id { get; set; }
+            public string Json { get; set; }
+
+            public T Convert<T> ()
+            {
+                return Newtonsoft.Json.JsonConvert.DeserializeObject<T> (Json);
+            }
+
+            public static MetaData Create<T> (string id, T data)
+            {
+                return new MetaData {
+                    Id = id,
+                    Json = Newtonsoft.Json.JsonConvert.SerializeObject (data)
+                };
+            }
+        }
+
         readonly SQLiteConnectionWithLock cnn;
 
         public SyncSqliteDataStore(string dbPath, ISQLitePlatform platformInfo)
@@ -20,12 +42,21 @@ namespace Toggl.Phoebe.Data
             CleanOldDraftEntry();
         }
 
-        private void CreateTables()
+        public int GetVersion ()
         {
-            var dataObjects = DiscoverDataModels();
-            foreach (var t in dataObjects)
-            {
-                cnn.CreateTable(t);
+            var data = cnn.Table<MetaData> ().SingleOrDefault (x => x.Id == nameof(DB_VERSION));
+            return data?.Convert<int> () ?? 0;
+        }
+
+        private void CreateTables ()
+        {
+            // Meta Data: DB Version, etc
+            cnn.CreateTable<MetaData> ();
+            cnn.InsertOrIgnore (MetaData.Create (nameof (DB_VERSION), DB_VERSION));
+
+            // Data Models: Time Entries, etc
+            foreach (var t in GetDataModels ()) {
+                cnn.CreateTable (t);
             }
         }
 
@@ -36,19 +67,19 @@ namespace Toggl.Phoebe.Data
             cnn.Table<TimeEntryData>().Delete(t => t.State == TimeEntryState.New);
         }
 
-        internal static List<Type> DiscoverDataModels()
+        internal static List<Type> GetDataModels ()
         {
-            return new List<Type>()
+            return new List<Type>
             {
-                typeof(UserData),
-                       typeof(WorkspaceData),
-                       typeof(WorkspaceUserData),
-                       typeof(ProjectData),
-                       typeof(ProjectUserData),
-                       typeof(ClientData),
-                       typeof(TaskData),
-                       typeof(TagData),
-                       typeof(TimeEntryData)
+                typeof (UserData),
+                typeof (WorkspaceData),
+                typeof (WorkspaceUserData),
+                typeof (ProjectData),
+                typeof (ProjectUserData),
+                typeof (ClientData),
+                typeof (TaskData),
+                typeof (TagData),
+                typeof (TimeEntryData)
             };
         }
 
@@ -73,13 +104,14 @@ namespace Toggl.Phoebe.Data
 
         public void WipeTables()
         {
-            var dataObjects = DiscoverDataModels();
+            var dataTypes = GetDataModels ();
+            dataTypes.Add (typeof (MetaData));
 
-            foreach (var t in dataObjects)
+            foreach (var t in dataTypes)
             {
-                var map = cnn.GetMapping(t);
-                var query = string.Format("DELETE FROM \"{0}\"", map.TableName);
-                cnn.Execute(query);
+                var map = cnn.GetMapping (t);
+                var query = string.Format ("DELETE FROM \"{0}\"", map.TableName);
+                cnn.Execute (query);
             }
         }
 

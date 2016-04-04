@@ -29,7 +29,7 @@ namespace Toggl.Phoebe.Data.Json
         public RoundingMode RoundingMode { get; set; }
 
         [JsonProperty("rounding_minutes")]
-        public int RoundingPercision { get; set; }
+        public int RoundingPrecision { get; set; }
 
         [JsonProperty("logo_url")]
         public string LogoUrl { get; set; }

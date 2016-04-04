@@ -238,7 +238,7 @@ namespace Toggl.Phoebe.Tests.Data.Mapper
                 OnlyAdminsMayCreateProjects = true,
                 OnlyAdminsSeeBillableRates = true,
                 RoundingMode = RoundingMode.Up,
-                RoundingPercision = 1
+                RoundingPrecision = 1
             };
 
             var wData = mapper.Map<WorkspaceData> (workspaceJson);

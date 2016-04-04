@@ -6,14 +6,22 @@ using Toggl.Phoebe.Analytics;
 using XPlatUtils;
 using Toggl.Ross.Theme;
 using Toggl.Ross.Views;
+using Toggl.Phoebe.ViewModels;
+using Toggl.Phoebe.Reactive;
+using GalaSoft.MvvmLight.Helpers;
 
 namespace Toggl.Ross.ViewControllers
 {
     public class SettingsViewController : UIViewController
     {
-        private LabelSwitchView askProjectView;
-        private LabelSwitchView mobileTagView;
+        private SettingsVM viewModel { get; set; }
+
+        private LabelSwitchView askProjectView { get; set; }
+        private LabelSwitchView mobileTagView { get; set; }
         private bool isResuming;
+
+        private Binding<bool, bool> askProjectBinding;
+        private Binding<bool, bool> mobileTagBinding;
 
         public SettingsViewController ()
         {
@@ -74,21 +82,36 @@ namespace Toggl.Ross.ViewControllers
 
         private void OnAskProjectViewValueChanged (object sender, EventArgs e)
         {
-            //SettingsStore.ChooseProjectForNew = askProjectView.Switch.On;
+            viewModel.SetChooseProjectForNew(askProjectView.Switch.On);
         }
 
         private void OnMobileTagViewValueChanged (object sender, EventArgs e)
         {
-            //SettingsStore.UseDefaultTag = mobileTagView.Switch.On;
+            Console.WriteLine($"send message to switch to: {mobileTagView.Switch.On}");
+            viewModel.SetUseDefaultTag(mobileTagView.Switch.On);
         }
 
         public override void ViewWillAppear (bool animated)
         {
             base.ViewWillAppear (animated);
 
-            if (isResuming) {
-                Rebind ();
-            }
+            viewModel = new SettingsVM(StoreManager.Singleton.AppState);
+
+            // these bindings crash
+            //this.askProjectBinding = this.SetBinding(() => viewModel.ChooseProjectForNew, () => askProjectView.Switch.On);
+            //this.mobileTagBinding  = this.SetBinding(() => viewModel.UseDefaultTag, () => mobileTagView.Switch.On);
+
+            // this binding SEEMS to work, except that the settings state does not appear to be updated
+            this.mobileTagBinding = this.SetBinding(() => viewModel.UseDefaultTag)
+                .WhenSourceChanges(() =>
+                {
+                    mobileTagView.Switch.On = viewModel.UseDefaultTag;
+                    Console.WriteLine($"switch to: {viewModel.UseDefaultTag}, is now: {mobileTagView.Switch.On}");
+                });
+            
+            //if (isResuming) {
+            //    Rebind ();
+            //}
 
             isResuming = true;
         }
@@ -97,12 +120,18 @@ namespace Toggl.Ross.ViewControllers
         {
             base.ViewDidAppear (animated);
 
+
             ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Settings";
         }
 
         public override void ViewWillDisappear (bool animated)
         {
+            //this.askProjectBinding.Detach();
+            this.mobileTagBinding.Detach();
+            viewModel.Dispose();
+
             base.ViewWillDisappear (animated);
+
             /*
             if (subscriptionSettingChanged != null) {
                 var bus = ServiceContainer.Resolve<MessageBus> ();
@@ -112,17 +141,6 @@ namespace Toggl.Ross.ViewControllers
             */
         }
 
-        /*
-        private void OnSettingChanged (SettingChangedMessage msg)
-        {
-            Rebind ();
-        }
-
-        private SettingsStore SettingsStore
-        {
-            get { return ServiceContainer.Resolve<SettingsStore> (); }
-        }
-        */
         private static IEnumerable<FluentLayout> MakeConstraints (UIView container)
         {
             UIView prev = null;

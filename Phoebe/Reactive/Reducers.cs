@@ -386,6 +386,7 @@ namespace Toggl.Phoebe.Reactive
                 newSettings = newSettings.With (chooseProjectForNew: (bool)info.Item2);
                 break;
             case nameof (SettingsState.UseDefaultTag):
+                Console.WriteLine($"updated tag setting: {(bool)info.Item2}");
                 newSettings = newSettings.With (useTag: (bool)info.Item2);
                 break;
             case nameof (SettingsState.GroupedEntries):

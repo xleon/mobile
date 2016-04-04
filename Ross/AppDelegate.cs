@@ -3,13 +3,10 @@ using System.Threading.Tasks;
 using Foundation;
 using Google.Core;
 using Google.SignIn;
-using Mindscape.Raygun4Net;
 using SQLite.Net.Interop;
 using SQLite.Net.Platform.XamarinIOS;
-using TestFairyLib;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Analytics;
-using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Logging;
 using Toggl.Phoebe.Net;
 using Toggl.Phoebe.Reactive;
@@ -53,11 +50,6 @@ namespace Toggl.Ross
 
             Theme.Style.Initialize ();
 
-            // Start app
-            window = new TogglWindow (UIScreen.MainScreen.Bounds);
-            window.RootViewController = new MainViewController ();
-            window.MakeKeyAndVisible ();
-
             // Make sure critical services are running are running:
             ServiceContainer.Resolve<UpgradeManger> ().TryUpgrade ();
             ServiceContainer.Resolve<ILoggerClient> ();
@@ -66,6 +58,11 @@ namespace Toggl.Ross
 
             // This needs some services, like ITimeProvider, so run it at the end
             RxChain.Init (AppState.Init ());
+
+            // Start app
+            window = new TogglWindow (UIScreen.MainScreen.Bounds);
+            window.RootViewController = new MainViewController ();
+            window.MakeKeyAndVisible ();
 
             return true;
         }
@@ -96,7 +93,8 @@ namespace Toggl.Ross
         public override void OnActivated (UIApplication application)
         {
             // Make sure the user data is refreshed when the application becomes active
-            RxChain.Send (new DataMsg.FullSync ());
+            // TODO Rx Removed full sync from here.
+            // RxChain.Send (new DataMsg.FullSync ());
             ServiceContainer.Resolve<NetworkIndicatorManager> ();
 
             if (systemVersion > minVersionWidget) {
@@ -230,7 +228,9 @@ namespace Toggl.Ross
 
         public void DispatchOnUIThread (Action action)
         {
-            InvokeOnMainThread (action);
+            Console.WriteLine (action.Target);
+            //InvokeOnMainThread (action);
+
         }
 
         #endregion

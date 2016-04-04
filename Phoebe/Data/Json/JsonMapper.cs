@@ -46,10 +46,10 @@ namespace Toggl.Phoebe.Data.Json
                 .ForMember (dest => dest.ExperimentNumber, opt => opt.MapFrom (src => src.OBM.Number));
 
                 config.CreateMap<UserData, UserJson>()
-                .ForMember (dest => dest.OBM, opt => opt.MapFrom (src => new OBMJson {
-                    Included = src.ExperimentIncluded,
-                    Number = src.ExperimentNumber
-                }))
+                //.ForMember (dest => dest.OBM, opt => opt.MapFrom (src => new OBMJson {
+                //    Included = src.ExperimentIncluded,
+                //    Number = src.ExperimentNumber
+                //}))
                 .ForMember (dest => dest.CreatedWith, opt => opt.UseValue (Platform.DefaultCreatedWith));
 
                 // TimeEntry mapping

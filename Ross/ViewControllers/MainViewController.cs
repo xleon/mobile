@@ -5,6 +5,9 @@ using Toggl.Phoebe;
 using Toggl.Phoebe.Net;
 using CoreGraphics;
 using Toggl.Ross.Theme;
+using Toggl.Phoebe.Reactive;
+using System.Reactive.Linq;
+using Toggl.Phoebe.Data;
 
 namespace Toggl.Ross.ViewControllers
 {
@@ -27,6 +30,7 @@ namespace Toggl.Ross.ViewControllers
         private nfloat MaxDraggingX { get { return Width - menuOffset; } }
         private nfloat MinDraggingX { get { return 0; } }
         private bool MenuOpen {  get { return 0 != CurrentX; }}
+        private IDisposable stateObserver;
 
         // TODO: Because the gesture of some events
         // is the same to the gesture of open/close
@@ -34,10 +38,18 @@ namespace Toggl.Ross.ViewControllers
         // deactivate it. This behaviour will change soon.
         public bool MenuEnabled { get; set; }
 
+
         public override void ViewWillAppear (bool animated)
         {
             base.ViewWillAppear (animated);
-            ResetRootViewController ();
+            // ATTENTION Suscription to state (settings) changes inside
+            // the view. This will be replaced for "router"
+            // modified in the reducers.
+            stateObserver = StoreManager.Singleton
+                            .Observe (x => x.State.Settings.UserId)
+                            .StartWith (StoreManager.Singleton.AppState.Settings.UserId)
+                            .DistinctUntilChanged ()
+                            .Subscribe (userGuid => ResetRootViewController (userGuid));
         }
 
         public override void ViewDidAppear (bool animated)
@@ -81,6 +93,7 @@ namespace Toggl.Ross.ViewControllers
 
         public override void ViewWillDisappear (bool animated)
         {
+            stateObserver.Dispose ();
             base.ViewWillDisappear (animated);
         }
 
@@ -158,11 +171,6 @@ namespace Toggl.Ross.ViewControllers
             base.Dispose (disposing);
         }
 
-        private void OnAuthChanged ()
-        {
-            ResetRootViewController ();
-        }
-
         private void OnTogglHttpResponse (TogglHttpResponseMessage msg)
         {
             // TODO Rx Activate update mechanism.
@@ -178,13 +186,16 @@ namespace Toggl.Ross.ViewControllers
             }
         }
 
-        private void ResetRootViewController ()
+        private void ResetRootViewController (Guid userGuid)
         {
-            // TODO Rx Activated when user changes.
-            /*
             UIViewController vc = null;
+            bool isUserLogged = userGuid != Guid.Empty;
             bool emptyStack = ViewControllers.Length < 1;
-            if (authManager.IsAuthenticated && (emptyStack || ViewControllers [0] is WelcomeViewController)) {
+
+            if (isUserLogged && (emptyStack || ViewControllers [0] is WelcomeViewController)) {
+                // TODO Rx a Fullsync is triggered.
+                // Evaluate if it is the best place or not.
+                RxChain.Send (new DataMsg.FullSync ());
                 vc = new LogViewController ();
                 MenuEnabled = true;
             } else if (emptyStack || ! (ViewControllers [0] is WelcomeViewController)) {
@@ -194,7 +205,6 @@ namespace Toggl.Ross.ViewControllers
             if (vc != null) {
                 SetViewControllers (new [] { vc }, ViewControllers.Length > 0);
             }
-            */
         }
 
         private class NavDelegate : UINavigationControllerDelegate

@@ -4,7 +4,6 @@ using Foundation;
 using GalaSoft.MvvmLight.Helpers;
 using Google.SignIn;
 using MonoTouch.TTTAttributedLabel;
-using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Logging;
 using Toggl.Phoebe.Net;
 using Toggl.Phoebe.ViewModels;
@@ -36,10 +35,6 @@ namespace Toggl.Ross.ViewControllers
         public SignupViewController ()
         {
             Title = "SignupTitle".Tr ();
-            viewModel = new LoginVM ();
-            if (viewModel.CurrentLoginMode == LoginVM.LoginMode.Login) {
-                viewModel.ChangeLoginMode ();
-            }
         }
 
         public override void LoadView ()
@@ -152,12 +147,16 @@ namespace Toggl.Ross.ViewControllers
             SignIn.SharedInstance.Delegate = this;
             SignIn.SharedInstance.UIDelegate = this;
 
+            viewModel = new LoginVM ();
+            if (viewModel.CurrentLoginMode == LoginVM.LoginMode.Login) {
+                viewModel.ChangeLoginMode ();
+            }
+
             isAuthenticatingBinding = this.SetBinding (() => viewModel.IsAuthenticating, () => IsAuthenticating);
             resultBinding = this.SetBinding (() => viewModel.AuthResult).WhenSourceChanges (() => {
                 switch (viewModel.AuthResult) {
                 case AuthResult.None:
                 case AuthResult.Authenticating:
-                    IsAuthenticating = true;
                     break;
 
                 case AuthResult.Success:
@@ -183,11 +182,12 @@ namespace Toggl.Ross.ViewControllers
             });
         }
 
-        public override void ViewDidAppear (bool animated)
+        public override void ViewWillDisappear (bool animated)
         {
-            base.ViewDidAppear (animated);
-
-            ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Signup";
+            isAuthenticatingBinding.Detach ();
+            resultBinding.Detach ();
+            viewModel.Dispose ();
+            base.ViewWillDisappear (animated);
         }
 
         private void OnTextFieldEditingChanged (object sender, EventArgs e)
@@ -266,7 +266,7 @@ namespace Toggl.Ross.ViewControllers
         }
 
         private bool isAuthenticating;
-        private bool IsAuthenticating
+        public bool IsAuthenticating
         {
             get { return isAuthenticating; }
             set {

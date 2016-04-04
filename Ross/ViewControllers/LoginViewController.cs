@@ -29,10 +29,6 @@ namespace Toggl.Ross.ViewControllers
         public LoginViewController ()
         {
             Title = "LoginTitle".Tr ();
-            ViewModel = LoginVM.Init ();
-            if (ViewModel.CurrentLoginMode == LoginVM.LoginMode.Signup) {
-                ViewModel.ChangeLoginMode ();
-            }
         }
 
         public override void LoadView ()
@@ -44,7 +40,7 @@ namespace Toggl.Ross.ViewControllers
 
             inputsContainer.Add (topBorder = new UIView ().Apply (Style.Login.InputsBorder));
 
-            inputsContainer.Add (emailTextField = new UITextField () {
+            inputsContainer.Add (emailTextField = new UITextField {
                 Placeholder = "LoginEmailHint".Tr (),
                 AutocapitalizationType = UITextAutocapitalizationType.None,
                 KeyboardType = UIKeyboardType.EmailAddress,
@@ -116,17 +112,20 @@ namespace Toggl.Ross.ViewControllers
             View.SubviewsDoNotTranslateAutoresizingMaskIntoConstraints ();
         }
 
-        public override void ViewDidAppear (bool animated)
+        public override void ViewWillAppear (bool animated)
         {
-            base.ViewDidAppear (animated);
-            emailTextField.BecomeFirstResponder ();
+            base.ViewWillAppear (animated);
+
+            ViewModel = new LoginVM ();
+            if (ViewModel.CurrentLoginMode == LoginVM.LoginMode.Signup) {
+                ViewModel.ChangeLoginMode ();
+            }
 
             isAuthenticatingBinding = this.SetBinding (() => ViewModel.IsAuthenticating, () => IsAuthenticating);
             resultBinding = this.SetBinding (() => ViewModel.AuthResult).WhenSourceChanges (() => {
                 switch (ViewModel.AuthResult) {
                 case AuthResult.None:
                 case AuthResult.Authenticating:
-                    IsAuthenticating = true;
                     break;
 
                 case AuthResult.Success:
@@ -150,6 +149,20 @@ namespace Toggl.Ross.ViewControllers
                     break;
                 }
             });
+        }
+
+        public override void ViewDidAppear (bool animated)
+        {
+            base.ViewDidAppear (animated);
+            emailTextField.BecomeFirstResponder ();
+        }
+
+        public override void ViewWillDisappear (bool animated)
+        {
+            isAuthenticatingBinding.Detach ();
+            resultBinding.Detach ();
+            ViewModel.Dispose ();
+            base.ViewWillDisappear (animated);
         }
 
         private bool HandleShouldReturn (UITextField textField)
@@ -187,8 +200,7 @@ namespace Toggl.Ross.ViewControllers
         }
 
         private bool isAuthenticating;
-
-        protected bool IsAuthenticating
+        public bool IsAuthenticating
         {
             get { return isAuthenticating; }
             set {

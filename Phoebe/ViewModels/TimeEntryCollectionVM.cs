@@ -8,31 +8,25 @@ using Toggl.Phoebe.Helpers;
 using Toggl.Phoebe.Reactive;
 using Toggl.Phoebe.ViewModels.Timer;
 using XPlatUtils;
+using System.Threading;
 
 namespace Toggl.Phoebe.ViewModels
 {
     public class TimeEntryCollectionVM : ObservableRangeCollection<IHolder>, IDisposable
     {
         IDisposable disposable;
-        ITimeEntryHolder lastRemovedItem;
         readonly TimeEntryGrouper grouper;
-        System.Timers.Timer undoTimer = new System.Timers.Timer ();
 
-        public IEnumerable<IHolder> Data
-        {
-            get { return Items; }
-        }
-
-        public TimeEntryCollectionVM (TimeEntryGroupMethod groupMethod)
+        public TimeEntryCollectionVM (TimeEntryGroupMethod groupMethod, SynchronizationContext uiContext)
         {
             grouper = new TimeEntryGrouper (groupMethod);
             disposable = StoreManager
                          .Singleton
                          .Observe (x => x.State.TimeEntries)
+                         .ObserveOn (uiContext)
                          .DistinctUntilChanged ()
-                         .Select (x => x.Values)
-                         .Scan (new List<IHolder> (), UpdateItems)
-                         .Subscribe ();
+                         .SelectMany (x => GetDiffsFromNewValues (this, x.Values))
+                         .Subscribe (diffs => UpdateCollection (diffs));
         }
 
         public void Dispose ()
@@ -43,7 +37,7 @@ namespace Toggl.Phoebe.ViewModels
             }
         }
 
-        private List<IHolder> UpdateItems (List<IHolder> currentHolders, IEnumerable<RichTimeEntry> entries)
+        private IObservable<IList<DiffSection<IHolder>>> GetDiffsFromNewValues (IList<IHolder> currentHolders, IEnumerable<RichTimeEntry> entries)
         {
             try {
                 var timeHolders = entries.Select (x => new TimeEntryHolder (x)).ToList ();
@@ -57,33 +51,34 @@ namespace Toggl.Phoebe.ViewModels
                 // Swap remove events to delete normal items before headers.
                 // iOS requierement.
                 diffs = Diff.SortRemoveEvents<IHolder,DateHolder> (diffs);
-                Console.WriteLine ("updates: " + diffs.Count);
-                // CollectionChanged events must be fired on UI thread
-                ServiceContainer.Resolve<IPlatformUtils> ().DispatchOnUIThread (() => {
-                    foreach (var diff in diffs) {
-                        switch (diff.Type) {
-                        case DiffType.Add:
-                            Insert (diff.NewIndex, diff.NewItem);
-                            break;
-                        case DiffType.Remove:
-                            RemoveAt (diff.NewIndex);
-                            break;
-                        case DiffType.Replace:
-                            this[diff.NewIndex] = diff.NewItem;
-                            break;
-                        case DiffType.Move:
-                            Move (diff.OldIndex, diff.NewIndex, diff.NewItem);
-                            break;
-                        }
-                    }
-                });
 
-                return newItemCollection;
-
+                return Observable.Return (diffs);
             } catch (Exception ex) {
                 var log = ServiceContainer.Resolve<ILogger> ();
                 log.Error (GetType ().Name, ex, "Failed to update collection");
-                return currentHolders;
+                return Observable.Return (new List<DiffSection<IHolder>> ());
+            }
+        }
+
+        private void UpdateCollection (IList<DiffSection<IHolder>> diffs)
+        {
+            Console.WriteLine ("updates: " + diffs.Count);
+
+            foreach (var diff in diffs) {
+                switch (diff.Type) {
+                case DiffType.Add:
+                    Insert (diff.NewIndex, diff.NewItem);
+                    break;
+                case DiffType.Remove:
+                    RemoveAt (diff.NewIndex);
+                    break;
+                case DiffType.Replace:
+                    this[diff.NewIndex] = diff.NewItem;
+                    break;
+                case DiffType.Move:
+                    Move (diff.OldIndex, diff.NewIndex, diff.NewItem);
+                    break;
+                }
             }
         }
 

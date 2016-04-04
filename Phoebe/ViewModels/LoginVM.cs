@@ -9,6 +9,7 @@ using Toggl.Phoebe.Net;
 using Toggl.Phoebe.Reactive;
 using Toggl.Phoebe.Analytics;
 using XPlatUtils;
+using System.Threading;
 
 namespace Toggl.Phoebe.ViewModels
 {
@@ -36,17 +37,11 @@ namespace Toggl.Phoebe.ViewModels
             subscription = StoreManager.Singleton
                            .Observe (x => x.State.AuthResult)
                            .DistinctUntilChanged ()
+                           .ObserveOn (SynchronizationContext.Current)
             .SubscribeSimple (state => {
-                ServiceContainer.Resolve<IPlatformUtils> ().DispatchOnUIThread (() => {
-                    AuthResult = state;
-                    IsAuthenticating = state == AuthResult.Authenticating;
-                });
+                AuthResult = state;
+                IsAuthenticating = state == AuthResult.Authenticating;
             });
-        }
-
-        public static LoginVM Init ()
-        {
-            return new LoginVM ();
         }
 
         public void Dispose ()

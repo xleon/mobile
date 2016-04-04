@@ -1,6 +1,7 @@
 using System;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Reactive.Linq;
 using System.Timers;
 using CoreAnimation;
 using CoreGraphics;
@@ -32,12 +33,13 @@ namespace Toggl.Ross.ViewControllers
         private UIBarButtonItem navigationButton;
         private UIActivityIndicatorView defaultFooterView;
 
+        private Binding<LogTimeEntriesVM.LoadInfoType, LogTimeEntriesVM.LoadInfoType> loadInfoBinding;
         private Binding<int, int> hasItemsBinding, loadMoreBinding;
         private Binding<string, string> durationBinding;
-        private Binding<bool, bool> syncBinding, hasMoreBinding, hasErrorBinding, isRunningBinding;
+        private Binding<bool, bool> syncBinding, hasErrorBinding, isRunningBinding;
         private Binding<ObservableCollection<IHolder>, ObservableCollection<IHolder>> collectionBinding;
 
-        protected LogTimeEntriesVM ViewModel {get; set;}
+        protected LogTimeEntriesVM ViewModel { get; set;}
 
         public LogViewController () : base (UITableViewStyle.Plain)
         {
@@ -97,6 +99,9 @@ namespace Toggl.Ross.ViewControllers
 
             // Create view model
             ViewModel = new LogTimeEntriesVM (StoreManager.Singleton.AppState);
+            ViewModel.PropertyChanged += (sender, e) => {
+                Console.WriteLine (e.PropertyName);
+            };
 
             var headerView = new TableViewRefreshView ();
             RefreshControl = headerView;
@@ -109,10 +114,10 @@ namespace Toggl.Ross.ViewControllers
                     headerView.EndRefreshing ();
                 }
             });
-            hasMoreBinding = this.SetBinding (() => ViewModel.LoadInfo.HasMore).WhenSourceChanges (SetFooterState);
-            hasErrorBinding = this.SetBinding (() => ViewModel.LoadInfo.HadErrors).WhenSourceChanges (SetFooterState);
+
+            loadInfoBinding = this.SetBinding (() => ViewModel.LoadInfo).WhenSourceChanges (SetFooterState);
             hasItemsBinding = this.SetBinding (() => ViewModel.Collection.Count).WhenSourceChanges (SetCollectionState);
-            loadMoreBinding = this.SetBinding (() => ViewModel.Collection.Count).WhenSourceChanges (LoadMoreIfNeeded);
+            //loadMoreBinding = this.SetBinding (() => ViewModel.Collection.Count).WhenSourceChanges (LoadMoreIfNeeded);
             collectionBinding = this.SetBinding (() => ViewModel.Collection).WhenSourceChanges (() => {
                 TableView.Source = new TimeEntriesSource (this, ViewModel);
             });
@@ -176,7 +181,8 @@ namespace Toggl.Ross.ViewControllers
             // TODO: Small hack due to the scroll needs more than the
             // 10 items to work correctly and load more itens.
             if (ViewModel.Collection.Count > 0 && ViewModel.Collection.Count < 10) {
-                ViewModel.LoadMore ();
+                Console.WriteLine (" cuandooooooo!!");
+                //ViewModel.LoadMore ();
             }
         }
 
@@ -338,10 +344,10 @@ namespace Toggl.Ross.ViewControllers
             private readonly UIImageView billableTagsImageView;
             private readonly UILabel durationLabel;
             private readonly UIImageView runningImageView;
-            private Timer timer;
             private bool isRunning;
             private TimeSpan duration;
             private Action<TimeEntryCell> OnContinueAction;
+            private IDisposable timerSuscriber;
 
             public TimeEntryCell (IntPtr ptr) : base (ptr)
             {
@@ -444,6 +450,17 @@ namespace Toggl.Ross.ViewControllers
                 duration = dataSource.GetDuration ();
                 isRunning = dataSource.Entry.Data.State == TimeEntryState.Running;
 
+                if (isRunning && timerSuscriber == null) {
+                    timerSuscriber = Observable.Timer (TimeSpan.FromMilliseconds (1000 - duration.Milliseconds),
+                                                       TimeSpan.FromSeconds (1))
+                                     .Subscribe (x => RebindDuration ());
+                    Console.WriteLine ("suscribeeed" + timerSuscriber.GetHashCode ());
+                } else if (!isRunning && timerSuscriber != null) {
+                    Console.WriteLine ("unssuscribeeed" + timerSuscriber.GetHashCode ());
+                    timerSuscriber.Dispose ();
+                    timerSuscriber = null;
+                }
+
                 RebindTags (dataSource);
                 RebindDuration ();
                 LayoutIfNeeded ();
@@ -453,28 +470,12 @@ namespace Toggl.Ross.ViewControllers
             // TODO: Try to find a stateless method.
             private void RebindDuration ()
             {
-                if (timer != null) {
-                    timer.Stop ();
-                    timer.Elapsed -= OnDurationElapsed;
-                    timer = null;
-                }
-
-                if (isRunning) {
-                    timer = new Timer (1000 - duration.Milliseconds);
-                    timer.Elapsed += OnDurationElapsed;
-                    timer.Start ();
-                }
-
-                durationLabel.Text = TimeEntryData.GetFormattedDuration (null, duration);
+                Console.WriteLine ("RebindDuration!!");
                 runningImageView.Hidden = !isRunning;
+                duration = duration.Add (TimeSpan.FromSeconds (1000));
+                durationLabel.Text = string.Format ("{0:D2}:{1:mm}:{1:ss}", (int)duration.TotalHours, duration);
             }
 
-            private void OnDurationElapsed (object sender, ElapsedEventArgs e)
-            {
-                // Update duration with new time.
-                duration = duration.Add (TimeSpan.FromMilliseconds (timer.Interval));
-                InvokeOnMainThread (() => RebindDuration ());
-            }
 
             private void RebindTags (ITimeEntryHolder dataSource)
             {
@@ -608,7 +609,7 @@ namespace Toggl.Ross.ViewControllers
                     Font = view.Font,
                 };
                 var rect = ((NSString) (view.Text ?? string.Empty)).GetBoundingRect (
-                               new CGSize (Single.MaxValue, Single.MaxValue),
+                               new CGSize (float.MaxValue, float.MaxValue),
                                NSStringDrawingOptions.UsesLineFragmentOrigin,
                                attrs, null);
                 rect.Height = (float)Math.Ceiling (rect.Height);

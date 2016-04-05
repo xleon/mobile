@@ -46,6 +46,7 @@ namespace Toggl.Phoebe.Data.ViewModels
             subscriptionSyncFinished = bus.Subscribe<SyncFinishedMessage> (OnSyncFinished);
             subscriptionUpdateFinished = bus.Subscribe<UpdateFinishedMessage> (OnUpdateItemsFinished);
 
+            HasMoreItems = true;
             HasLoadErrors = false;
             HasItems = CollectionState.NotReady;
 

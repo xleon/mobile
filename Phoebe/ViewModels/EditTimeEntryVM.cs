@@ -151,7 +151,7 @@ namespace Toggl.Phoebe.ViewModels
                     x.ProjectRemoteId = remoteProjectId;
                     x.ProjectId = projectId;
                     x.TaskId = taskId;
-                }, nameof(ProjectName), nameof(ClientName));
+                }, nameof (ProjectName), nameof (ClientName), nameof (ProjectColorHex));
             }
         }
 

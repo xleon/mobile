@@ -62,7 +62,6 @@ namespace Toggl.Ross.ViewControllers
             {
                 NavigationItem.RightBarButtonItem = addBtn;
             }
-
             TableView.TableFooterView = null;
         }
 

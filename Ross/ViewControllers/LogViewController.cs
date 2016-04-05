@@ -1,7 +1,7 @@
 using System;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Timers;
+using System.Reactive.Linq;
 using CoreAnimation;
 using CoreGraphics;
 using Foundation;
@@ -22,7 +22,7 @@ namespace Toggl.Ross.ViewControllers
     {
         private const string DefaultDurationText = " 00:00:00 ";
         readonly static NSString EntryCellId = new NSString ("EntryCellId");
-        readonly static NSString SectionHeaderId = new NSString ("SectionHeaderId");
+        readonly static NSString SectionCellId = new NSString ("SectionCellId");
 
         private SimpleEmptyView defaultEmptyView;
         private UIView obmEmptyView;
@@ -32,12 +32,13 @@ namespace Toggl.Ross.ViewControllers
         private UIBarButtonItem navigationButton;
         private UIActivityIndicatorView defaultFooterView;
 
-        private Binding<int, int> hasItemsBinding, loadMoreBinding;
+        private Binding<LogTimeEntriesVM.LoadInfoType, LogTimeEntriesVM.LoadInfoType> loadInfoBinding, loadMoreBinding;
+        private Binding<int, int> hasItemsBinding;
         private Binding<string, string> durationBinding;
-        private Binding<bool, bool> syncBinding, hasMoreBinding, hasErrorBinding, isRunningBinding;
+        private Binding<bool, bool> syncBinding, hasErrorBinding, isRunningBinding;
         private Binding<ObservableCollection<IHolder>, ObservableCollection<IHolder>> collectionBinding;
 
-        protected LogTimeEntriesVM ViewModel {get; set;}
+        protected LogTimeEntriesVM ViewModel { get; set;}
 
         public LogViewController () : base (UITableViewStyle.Plain)
         {
@@ -92,7 +93,7 @@ namespace Toggl.Ross.ViewControllers
 
             EdgesForExtendedLayout = UIRectEdge.None;
             TableView.RegisterClassForCellReuse (typeof (TimeEntryCell), EntryCellId);
-            TableView.RegisterClassForHeaderFooterViewReuse (typeof (SectionHeaderView), SectionHeaderId);
+            TableView.RegisterClassForCellReuse (typeof (SectionCell), SectionCellId);
             TableView.SetEditing (false, true);
 
             // Create view model
@@ -109,10 +110,10 @@ namespace Toggl.Ross.ViewControllers
                     headerView.EndRefreshing ();
                 }
             });
-            hasMoreBinding = this.SetBinding (() => ViewModel.LoadInfo.HasMore).WhenSourceChanges (SetFooterState);
-            hasErrorBinding = this.SetBinding (() => ViewModel.LoadInfo.HadErrors).WhenSourceChanges (SetFooterState);
+
+            loadInfoBinding = this.SetBinding (() => ViewModel.LoadInfo).WhenSourceChanges (SetFooterState);
             hasItemsBinding = this.SetBinding (() => ViewModel.Collection.Count).WhenSourceChanges (SetCollectionState);
-            loadMoreBinding = this.SetBinding (() => ViewModel.Collection.Count).WhenSourceChanges (LoadMoreIfNeeded);
+            loadMoreBinding = this.SetBinding (() => ViewModel.LoadInfo).WhenSourceChanges (LoadMoreIfNeeded);
             collectionBinding = this.SetBinding (() => ViewModel.Collection).WhenSourceChanges (() => {
                 TableView.Source = new TimeEntriesSource (this, ViewModel);
             });
@@ -173,15 +174,22 @@ namespace Toggl.Ross.ViewControllers
 
         private void LoadMoreIfNeeded ()
         {
-            // TODO: Small hack due to the scroll needs more than the
-            // 10 items to work correctly and load more itens.
-            if (ViewModel.Collection.Count > 0 && ViewModel.Collection.Count < 10) {
+            // ATTENTION: Small hack due to the scroll needs more than the
+            // 10 items to work correctly and load more items. With this conditions,
+            // we avoid the scroll spinner to dissapear forcing
+            // an extra load.
+            if (ViewModel.Collection.Count > 0 &&
+                    ViewModel.Collection.Count < 10 &&
+                    ViewModel.LoadInfo.HasMore &&
+                    !ViewModel.LoadInfo.HadErrors &&
+                    !ViewModel.LoadInfo.IsSyncing) {
                 ViewModel.LoadMore ();
             }
         }
 
         private void SetFooterState ()
         {
+
             if (ViewModel.LoadInfo.HasMore && !ViewModel.LoadInfo.HadErrors) {
                 if (defaultFooterView == null) {
                     defaultFooterView = new UIActivityIndicatorView (UIActivityIndicatorViewStyle.Gray);
@@ -234,31 +242,46 @@ namespace Toggl.Ross.ViewControllers
         }
 
         #region TableViewSource
-        class TimeEntriesSource : ObservableCollectionViewSource<IHolder, DateHolder, ITimeEntryHolder>
+        class TimeEntriesSource : PlainObservableCollectionViewSource<IHolder>
         {
             private bool isLoading;
             private readonly LogTimeEntriesVM VM;
             private LogViewController owner;
+            private IDisposable durationSuscriber;
 
             public TimeEntriesSource (LogViewController owner, LogTimeEntriesVM viewModel) : base (owner.TableView, viewModel.Collection)
             {
                 this.owner = owner;
                 VM = viewModel;
+                durationSuscriber = viewModel.TimerObservable.Subscribe (x => UpdateDuration ());
+            }
+
+            private void UpdateDuration ()
+            {
+                foreach (var item in tableView.VisibleCells) {
+                    ((IDurationCell)item).UpdateDuration ();
+                }
             }
 
             public override UITableViewCell GetCell (UITableView tableView, NSIndexPath indexPath)
             {
-                var cell = (TimeEntryCell)tableView.DequeueReusableCell (EntryCellId, indexPath);
-                var holder = (ITimeEntryHolder)collection.ElementAt (GetPlainIndexFromRow (collection, indexPath));
-                cell.Bind (holder, OnContinueTimeEntry);
+                UITableViewCell cell;
+                var holder = collection.ElementAt (indexPath.Row);
+
+                if (holder is ITimeEntryHolder) {
+                    cell = tableView.DequeueReusableCell (EntryCellId, indexPath);
+                    ((TimeEntryCell)cell).Bind ((ITimeEntryHolder)holder, OnContinueTimeEntry);
+                } else {
+                    cell = tableView.DequeueReusableCell (SectionCellId, indexPath);
+                    ((SectionCell)cell).Bind ((DateHolder)holder);
+                }
+
                 return cell;
             }
 
             public override UIView GetViewForHeader (UITableView tableView, nint section)
             {
-                var view = (SectionHeaderView)tableView.DequeueReusableHeaderFooterView (SectionHeaderId);
-                view.Bind (collection.OfType<DateHolder> ().ElementAt ((int)section));
-                return view;
+                return new UIView ().Apply (Style.ProjectList.HeaderBackgroundView);
             }
 
             public override nfloat GetHeightForHeader (UITableView tableView, nint section)
@@ -268,7 +291,7 @@ namespace Toggl.Ross.ViewControllers
 
             public override nfloat EstimatedHeightForHeader (UITableView tableView, nint section)
             {
-                return 42f;
+                return -1f;
             }
 
             public override nfloat EstimatedHeight (UITableView tableView, NSIndexPath indexPath)
@@ -278,27 +301,35 @@ namespace Toggl.Ross.ViewControllers
 
             public override nfloat GetHeightForRow (UITableView tableView, NSIndexPath indexPath)
             {
+                var holder = collection.ElementAt (indexPath.Row);
+                if (holder is DateHolder) {
+                    return 42f;
+                }
                 return EstimatedHeight (tableView, indexPath);
+            }
+
+            public override bool CanFocusRow (UITableView tableView, NSIndexPath indexPath)
+            {
+                return collection.ElementAt (indexPath.Row) is ITimeEntryHolder;
             }
 
             public override bool CanEditRow (UITableView tableView, NSIndexPath indexPath)
             {
-                return true;
+                return collection.ElementAt (indexPath.Row) is ITimeEntryHolder;
             }
 
             public override void CommitEditingStyle (UITableView tableView, UITableViewCellEditingStyle editingStyle, NSIndexPath indexPath)
             {
                 if (editingStyle == UITableViewCellEditingStyle.Delete) {
-                    var rowIndex = GetPlainIndexFromRow (collection, indexPath);
-                    VM.RemoveTimeEntry (rowIndex);
+                    VM.RemoveTimeEntry (indexPath.Row);
                 }
             }
 
             public override void RowSelected (UITableView tableView, NSIndexPath indexPath)
             {
-                var rowIndex = GetPlainIndexFromRow (collection, indexPath);
-                var holder = collection.ElementAt (rowIndex) as ITimeEntryHolder;
+                var holder = collection.ElementAt (indexPath.Row) as ITimeEntryHolder;
                 owner.NavigationController.PushViewController (new EditTimeEntryViewController (holder.Entry.Data.Id), true);
+                tableView.DeselectRow (indexPath, true);
             }
 
             public override void Scrolled (UIScrollView scrollView)
@@ -319,14 +350,30 @@ namespace Toggl.Ross.ViewControllers
             private void OnContinueTimeEntry (TimeEntryCell cell)
             {
                 var indexPath = TableView.IndexPathForCell (cell);
-                var rowIndex = GetPlainIndexFromRow (collection, indexPath);
-                VM.ContinueTimeEntry (rowIndex);
+                VM.ContinueTimeEntry (indexPath.Row);
             }
+
+            protected override void Dispose (bool disposing)
+            {
+                if (disposing) {
+                    if (durationSuscriber != null) {
+                        durationSuscriber.Dispose ();
+                        durationSuscriber = null;
+                    }
+                }
+                base.Dispose (disposing);
+            }
+
         }
         #endregion
 
         #region Cells
-        class TimeEntryCell : SwipableTimeEntryTableViewCell
+        interface IDurationCell
+        {
+            void UpdateDuration ();
+        }
+
+        class TimeEntryCell : SwipableTimeEntryTableViewCell, IDurationCell
         {
             private const float HorizPadding = 15f;
             private readonly UIView textContentView;
@@ -338,10 +385,10 @@ namespace Toggl.Ross.ViewControllers
             private readonly UIImageView billableTagsImageView;
             private readonly UILabel durationLabel;
             private readonly UIImageView runningImageView;
-            private Timer timer;
             private bool isRunning;
             private TimeSpan duration;
             private Action<TimeEntryCell> OnContinueAction;
+            private DateTime startTime;
 
             public TimeEntryCell (IntPtr ptr) : base (ptr)
             {
@@ -442,38 +489,27 @@ namespace Toggl.Ross.ViewControllers
 
                 // Set duration
                 duration = dataSource.GetDuration ();
+                startTime = dataSource.GetStartTime ();
                 isRunning = dataSource.Entry.Data.State == TimeEntryState.Running;
-
                 RebindTags (dataSource);
                 RebindDuration ();
                 LayoutIfNeeded ();
+            }
+
+            public void UpdateDuration ()
+            {
+                if (isRunning) {
+                    duration = Time.UtcNow.Truncate (TimeSpan.TicksPerSecond) - startTime.ToUtc ();
+                }
+                RebindDuration ();
             }
 
             // Rebind duration with the saved state "lastDataSource"
             // TODO: Try to find a stateless method.
             private void RebindDuration ()
             {
-                if (timer != null) {
-                    timer.Stop ();
-                    timer.Elapsed -= OnDurationElapsed;
-                    timer = null;
-                }
-
-                if (isRunning) {
-                    timer = new Timer (1000 - duration.Milliseconds);
-                    timer.Elapsed += OnDurationElapsed;
-                    timer.Start ();
-                }
-
-                durationLabel.Text = TimeEntryData.GetFormattedDuration (null, duration);
                 runningImageView.Hidden = !isRunning;
-            }
-
-            private void OnDurationElapsed (object sender, ElapsedEventArgs e)
-            {
-                // Update duration with new time.
-                duration = duration.Add (TimeSpan.FromMilliseconds (timer.Interval));
-                InvokeOnMainThread (() => RebindDuration ());
+                durationLabel.Text = string.Format ("{0:D2}:{1:mm}:{1:ss}", (int)duration.TotalHours, duration);
             }
 
             private void RebindTags (ITimeEntryHolder dataSource)
@@ -608,7 +644,7 @@ namespace Toggl.Ross.ViewControllers
                     Font = view.Font,
                 };
                 var rect = ((NSString) (view.Text ?? string.Empty)).GetBoundingRect (
-                               new CGSize (Single.MaxValue, Single.MaxValue),
+                               new CGSize (float.MaxValue, float.MaxValue),
                                NSStringDrawingOptions.UsesLineFragmentOrigin,
                                attrs, null);
                 rect.Height = (float)Math.Ceiling (rect.Height);
@@ -616,17 +652,16 @@ namespace Toggl.Ross.ViewControllers
             }
         }
 
-        class SectionHeaderView : UITableViewHeaderFooterView
+        private class SectionCell : UITableViewCell, IDurationCell
         {
             private const float HorizSpacing = 15f;
             private readonly UILabel dateLabel;
             private readonly UILabel totalDurationLabel;
-            private Timer timer;
             private bool isRunning;
             private TimeSpan duration;
             private DateTime date;
 
-            public SectionHeaderView (IntPtr ptr) : base (ptr)
+            public SectionCell (IntPtr handle) : base (handle)
             {
                 dateLabel = new UILabel ().Apply (Style.Log.HeaderDateLabel);
                 ContentView.AddSubview (dateLabel);
@@ -637,24 +672,12 @@ namespace Toggl.Ross.ViewControllers
                 BackgroundView = new UIView ().Apply (Style.Log.HeaderBackgroundView);
             }
 
-            public override void LayoutSubviews ()
+            public void UpdateDuration()
             {
-                base.LayoutSubviews ();
-                var contentFrame = ContentView.Frame;
-
-                dateLabel.Frame = new CGRect (
-                    x: HorizSpacing,
-                    y: 0,
-                    width: (contentFrame.Width - 3 * HorizSpacing) / 2,
-                    height: contentFrame.Height
-                );
-
-                totalDurationLabel.Frame = new CGRect (
-                    x: (contentFrame.Width - 3 * HorizSpacing) / 2 + 2 * HorizSpacing,
-                    y: 0,
-                    width: (contentFrame.Width - 3 * HorizSpacing) / 2,
-                    height: contentFrame.Height
-                );
+                if (isRunning) {
+                    duration = duration.Add (TimeSpan.FromSeconds (1));
+                    SetContentData ();
+                }
             }
 
             public void Bind (DateHolder data)
@@ -667,27 +690,8 @@ namespace Toggl.Ross.ViewControllers
 
             private void SetContentData ()
             {
-                if (timer != null) {
-                    timer.Stop ();
-                    timer.Elapsed -= OnDurationElapsed;
-                    timer = null;
-                }
-
-                if (isRunning) {
-                    timer = new Timer (60000 - duration.Seconds * 1000 - duration.Milliseconds);
-                    timer.Elapsed += OnDurationElapsed;
-                    timer.Start ();
-                }
-
                 dateLabel.Text = date.ToLocalizedDateString ();
                 totalDurationLabel.Text = FormatDuration (duration);
-            }
-
-            private void OnDurationElapsed (object sender, ElapsedEventArgs e)
-            {
-                // Update duration with new time.
-                duration = duration.Add (TimeSpan.FromMilliseconds (timer.Interval));
-                InvokeOnMainThread (() => SetContentData ());
             }
 
             private string FormatDuration (TimeSpan dr)
@@ -708,6 +712,26 @@ namespace Toggl.Ross.ViewControllers
                 }
 
                 return string.Empty;
+            }
+
+            public override void LayoutSubviews ()
+            {
+                base.LayoutSubviews ();
+                var contentFrame = ContentView.Frame;
+
+                dateLabel.Frame = new CGRect (
+                    x: HorizSpacing,
+                    y: 0,
+                    width: (contentFrame.Width - 3 * HorizSpacing) / 2,
+                    height: contentFrame.Height
+                );
+
+                totalDurationLabel.Frame = new CGRect (
+                    x: (contentFrame.Width - 3 * HorizSpacing) / 2 + 2 * HorizSpacing,
+                    y: 0,
+                    width: (contentFrame.Width - 3 * HorizSpacing) / 2,
+                    height: contentFrame.Height
+                );
             }
         }
         #endregion

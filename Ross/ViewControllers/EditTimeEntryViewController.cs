@@ -39,13 +39,10 @@ namespace Toggl.Ross.ViewControllers
 
         // to avoid weak references to be removed
         private Binding<string, string> durationBinding, projectBinding, clientBinding, descriptionBinding, taskBinding, projectColorBinding;
-        private Binding<DateTime, DateTime> startTimeBinding;
-        private Binding<DateTime, DateTime> stopTimeBinding;
+        private Binding<DateTime, DateTime> startTimeBinding, stopTimeBinding;
         private Binding<IReadOnlyList<ITagData>, IReadOnlyList<ITagData>> tagBinding;
-        private Binding<bool, bool> isBillableBinding, billableBinding, isRunningBinding, isPremiumBinding;
+        private Binding<bool, bool> isBillableBinding, isRunningBinding, isPremiumBinding;
 
-        private readonly TimeEntryData data;
-        private readonly List<TagData> tagList;
         protected EditTimeEntryVM ViewModel { get; set; }
 
         public EditTimeEntryViewController (Guid dataId)
@@ -158,7 +155,7 @@ namespace Toggl.Ross.ViewControllers
                     startStopView.StopTime = ViewModel.StopDate;
                 }
             });
-            isBillableBinding = this.SetBinding (() => ViewModel.IsBillable, () => billableSwitch.Switch.On);
+            //isBillableBinding = this.SetBinding (() => ViewModel.IsBillable, () => billableSwitch.Switch.On);
 
             // Events to edit some fields
             descriptionTextField.EditingChanged += (sender, e) => { ViewModel.ChangeDescription (descriptionTextField.Text); };
@@ -176,6 +173,11 @@ namespace Toggl.Ross.ViewControllers
             // considering the property name used.
             // But it works ok.
             if (IsMovingFromParentViewController) {
+                startTimeBinding.Detach ();
+                stopTimeBinding.Detach ();
+                tagBinding.Detach ();
+                isPremiumBinding.Detach ();
+                isRunningBinding.Detach ();
                 ViewModel.Dispose ();
             }
             base.ViewWillDisappear (animated);

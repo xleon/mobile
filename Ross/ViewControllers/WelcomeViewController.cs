@@ -23,13 +23,11 @@ namespace Toggl.Ross.ViewControllers
         private UIButton createButton;
         private UIButton passwordButton;
         private UIButton googleButton;
+
+        private Binding<bool, bool> isAuthenticatingBinding;
+        private Binding<AuthResult, AuthResult> resultBinding;
         private LoginVM viewModel {get; set;}
         private string googleEmail;
-
-        public WelcomeViewController()
-        {
-            viewModel = new LoginVM ();
-        }
 
         public override void LoadView ()
         {
@@ -110,9 +108,6 @@ namespace Toggl.Ross.ViewControllers
             }
         }
 
-        private Binding<bool, bool> isAuthencticatedBinding, isAuthenticatingBinding;
-        private Binding<AuthResult, AuthResult> resultBinding;
-
         public override void ViewWillAppear (bool animated)
         {
             base.ViewWillAppear (animated);
@@ -120,12 +115,12 @@ namespace Toggl.Ross.ViewControllers
             SignIn.SharedInstance.Delegate = this;
             SignIn.SharedInstance.UIDelegate = this;
 
+            viewModel = new LoginVM ();
             isAuthenticatingBinding = this.SetBinding (() => viewModel.IsAuthenticating, () => IsAuthenticating);
             resultBinding = this.SetBinding (() => viewModel.AuthResult).WhenSourceChanges (() => {
                 switch (viewModel.AuthResult) {
                 case AuthResult.None:
                 case AuthResult.Authenticating:
-                    IsAuthenticating = true;
                     break;
 
                 case AuthResult.Success:
@@ -149,14 +144,11 @@ namespace Toggl.Ross.ViewControllers
         public override void ViewDidAppear (bool animated)
         {
             base.ViewDidAppear (animated);
-
             ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Welcome";
         }
 
         public override void ViewWillDisappear (bool animated)
         {
-            base.ViewWillDisappear (animated);
-
             if (navController != null) {
                 navController.SetNavigationBarHidden (false, animated);
                 navController = null;
@@ -166,26 +158,24 @@ namespace Toggl.Ross.ViewControllers
                 SignIn.SharedInstance.Delegate = null;
                 SignIn.SharedInstance.UIDelegate = this;
             }
+
+            isAuthenticatingBinding.Detach ();
+            resultBinding.Detach ();
+            viewModel.Dispose ();
+
+            base.ViewWillDisappear (animated);
         }
 
-        private bool IsAuthenticating
+        public bool IsAuthenticating
         {
             get { return !View.UserInteractionEnabled; }
             set {
-                if (View.UserInteractionEnabled == !value) {
-                    return;
-                }
-
                 View.UserInteractionEnabled = !value;
-                UIView.Animate (0.3, 0,
-                                UIViewAnimationOptions.BeginFromCurrentState | UIViewAnimationOptions.CurveEaseInOut,
-                delegate {
+                UIView.Animate (0.3, 0, UIViewAnimationOptions.BeginFromCurrentState | UIViewAnimationOptions.CurveEaseInOut,
+                () => {
                     createButton.Alpha = value ? 0 : 1;
                     googleButton.Alpha = value ? 0 : 1;
-                },
-                delegate {
-                }
-                               );
+                }, () => {});
                 passwordButton.SetTitle (value ? "WelcomeLoggingIn".Tr () : "WelcomePassword".Tr (), UIControlState.Normal);
             }
         }

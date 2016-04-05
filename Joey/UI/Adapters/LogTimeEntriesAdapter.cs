@@ -346,7 +346,7 @@ namespace Toggl.Joey.UI.Adapters
 
             bool View.IOnTouchListener.OnTouch (View v, MotionEvent e)
             {
-                bool returnValue = true;
+                bool returnValue = false;
                 switch (e.Action) {
                 case MotionEventActions.Down:
                     returnValue = ! (v == ContinueImageButton);

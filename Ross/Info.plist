@@ -50,6 +50,14 @@
 				<string>{CF_BUNDLE_URL_SCHEMES}</string>
 			</array>
 		</dict>
+		<dict>
+			<key>CFBundleURLTypes</key>
+			<string>Editor</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>{REVERSED_CLIENT_ID}</string>
+			</array>
+		</dict>
 	</array>
 	<key>UIAppFonts</key>
 	<array>

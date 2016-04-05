@@ -19,4 +19,5 @@ replacer.replaceSecrets("Ross/GoogleService-Info.plist", {
 replacer.replaceSecrets("Ross/Info.plist", {
 	// "string to replace" : "secret env variable"
 	"{CF_BUNDLE_URL_SCHEMES}" : "CF_BUNDLE_URL_SCHEMES",
+	"{REVERSED_CLIENT_ID}" : "REVERSED_CLIENT_ID",
 });

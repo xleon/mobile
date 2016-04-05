@@ -51,23 +51,25 @@ namespace Toggl.Phoebe.ViewModels
         {
             ServiceContainer.Resolve<ITracker> ().CurrentScreen = "TimeEntryList Screen";
 
-            Duration = TimeSpan.FromSeconds (0).ToString ().Substring (0, 8);
             uiContext = SynchronizationContext.Current;
             ResetCollection (appState.Settings.GroupedEntries);
+
             subscriptionState = StoreManager
                                 .Singleton
                                 .Observe (x => x.State)
-                                .StartWith (appState)
                                 .ObserveOn (uiContext)
-                                .Scan<AppState, Tuple<AppState, DownloadResult>> (
-                                    null, (tuple, state) => Tuple.Create (state, tuple != null ? tuple.Item2 : null))
-                                .Subscribe (tuple => UpdateState (tuple.Item1, tuple.Item2));
+                                .StartWith (appState)
+            .DistinctUntilChanged (state => new { state.ActiveEntry, state.DownloadResult, state.FullSyncResult, state.Settings})
+            .Subscribe (x => UpdateState (x.Settings, x.ActiveEntry, x.DownloadResult, x.FullSyncResult));
+
+            // TODO: Rx find a better solution to force
+            // an inmediate update using Rx code.
+            UpdateState (appState.Settings, appState.ActiveEntry, appState.DownloadResult, appState.FullSyncResult);
 
             TimerObservable = Observable.Timer (TimeSpan.FromMilliseconds (1000 - Time.Now.Millisecond),
                                                 TimeSpan.FromSeconds (1))
                               .ObserveOn (uiContext);
             durationSubscriber = TimerObservable.Subscribe (x => UpdateDuration ());
-
 
             // TODO: RX Review this line.
             // The ViewModel is created and start to load
@@ -175,28 +177,32 @@ namespace Toggl.Phoebe.ViewModels
         }
         #endregion
 
-        private void UpdateState (AppState appState, DownloadResult prevDownloadResult)
+        private void UpdateState (SettingsState settings, RichTimeEntry activeTimeEntry, DownloadResult downloadResults, FullSyncResult fullsyncReturn)
         {
-            if (appState.Settings.GroupedEntries != IsGroupedMode) {
-                ResetCollection (appState.Settings.GroupedEntries);
+            if (settings.GroupedEntries != IsGroupedMode) {
+                ResetCollection (settings.GroupedEntries);
             }
 
             // Check full Sync info
-            HasSyncErrors = appState.FullSyncResult.HadErrors;
-            IsFullSyncing = appState.FullSyncResult.IsSyncing;
+            HasSyncErrors = fullsyncReturn.HadErrors;
+            IsFullSyncing = fullsyncReturn.IsSyncing;
 
             // Check if DownloadResult has changed
-            if (LoadInfo == null || prevDownloadResult != appState.DownloadResult) {
-                LoadInfo = new LoadInfoType (
-                    appState.DownloadResult.IsSyncing,
-                    appState.DownloadResult.HasMore,
-                    appState.DownloadResult.HadErrors
-                );
-            }
+            var newLoadInfo = new LoadInfoType (
+                downloadResults.IsSyncing,
+                downloadResults.HasMore,
+                downloadResults.HadErrors
+            );
 
+            if (LoadInfo == null ||
+                    (LoadInfo.HadErrors != newLoadInfo.HadErrors ||
+                     LoadInfo.HasMore != newLoadInfo.HasMore ||
+                     LoadInfo.IsSyncing != newLoadInfo.IsSyncing)) {
+                LoadInfo = newLoadInfo;
+            }
             // Don't update ActiveEntry if both ActiveEntry and appState.ActiveEntry are empty
-            if (ActiveEntry == null || ! (ActiveEntry.Data.Id == Guid.Empty && appState.ActiveEntry.Data.Id == Guid.Empty)) {
-                ActiveEntry = appState.ActiveEntry;
+            if (ActiveEntry == null || ! (ActiveEntry.Data.Id == Guid.Empty && activeTimeEntry.Data.Id == Guid.Empty)) {
+                ActiveEntry = activeTimeEntry;
                 IsEntryRunning = ActiveEntry.Data.State == TimeEntryState.Running;
             }
 

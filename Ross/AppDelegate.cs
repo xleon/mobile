@@ -183,7 +183,6 @@ namespace Toggl.Ross
 #else
             Insights.Initialize(Build.XamarinInsightsApiKey);
 #endif
-
             return new LogClient();
         }
 

@@ -296,6 +296,7 @@ namespace Toggl.Phoebe.Reactive
         {
             var entryData = (msg as DataMsg.TimeEntryContinue).Data.ForceLeft();
             var dataStore = ServiceContainer.Resolve <ISyncDataStore> ();
+            var isStartedNew = (msg as DataMsg.TimeEntryContinue).StartedByFAB;
 
             var updated = dataStore.Update(ctx =>
             {
@@ -345,7 +346,6 @@ namespace Toggl.Phoebe.Reactive
                 x.State = TimeEntryState.Finished;
                 x.StopTime = Time.UtcNow;
             })));
-
             // TODO: Check updated.Count == 1?
             return DataSyncMsg.Create(updated, state.With(timeEntries: state.UpdateTimeEntries(updated)));
         }
@@ -462,7 +462,6 @@ namespace Toggl.Phoebe.Reactive
             // Build local relationships.
             // Object that comes from server needs to be
             // filled with local Ids.
-
             if (data is TimeEntryData)
             {
                 var te = (TimeEntryData)data;

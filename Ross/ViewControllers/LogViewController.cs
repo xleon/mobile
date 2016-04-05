@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Reactive.Linq;
@@ -156,20 +157,19 @@ namespace Toggl.Ross.ViewControllers
         {
             // Send experiment data.
             ViewModel.ReportExperiment(OBMExperimentManager.StartButtonActionKey,
-                                       OBMExperimentManager.ClickActionValue);
+                                        OBMExperimentManager.ClickActionValue);
             ViewModel.StartStopTimeEntry();
-            /*
-            if (entry.State == TimeEntryState.Running) {
+            if (!ViewModel.IsEntryRunning) {
                 // Show next viewController.
-                var controllers = new List<UIViewController> (NavigationController.ViewControllers);
-                var editController = new EditTimeEntryViewController (entry, tagList);
+                var controllers = new List<UIViewController>(NavigationController.ViewControllers);
+                var editController = new EditTimeEntryViewController(ViewModel.ActiveEntry.Data.Id);
                 controllers.Add (editController);
-                if (ServiceContainer.Resolve<SettingsStore> ().ChooseProjectForNew) {
-                    controllers.Add (new ProjectSelectionViewController (entry.WorkspaceId, editController));
+                if (StoreManager.Singleton.AppState.Settings.ChooseProjectForNew) 
+                {
+                    controllers.Add(new ProjectSelectionViewController(ViewModel.ActiveEntry.Data.WorkspaceId, editController));
                 }
-                NavigationController.SetViewControllers (controllers.ToArray (), true);
+                NavigationController.SetViewControllers (controllers.ToArray(), true);
             }
-            */
         }
 
         private void SetStartStopButtonState()
@@ -225,6 +225,9 @@ namespace Toggl.Ross.ViewControllers
 
         private void SetCollectionState()
         {
+            // ATTENTION Needed condition to keep visible the list
+            // while the first sync is finishing. Why? Because the scroll spinner
+            // is used and we need the TableView visible.
             if (ViewModel.LoadInfo.IsSyncing && ViewModel.Collection.Count == 0)
             {
                 return;
@@ -355,7 +358,8 @@ namespace Toggl.Ross.ViewControllers
             public override void RowSelected(UITableView tableView, NSIndexPath indexPath)
             {
                 var holder = collection.ElementAt(indexPath.Row) as ITimeEntryHolder;
-                owner.NavigationController.PushViewController(new EditTimeEntryViewController(holder.Entry.Data.Id), true);
+                if(holder != null)
+                    owner.NavigationController.PushViewController(new EditTimeEntryViewController(holder.Entry.Data.Id), true);
                 tableView.DeselectRow(indexPath, true);
             }
 
@@ -394,7 +398,6 @@ namespace Toggl.Ross.ViewControllers
                 }
                 base.Dispose(disposing);
             }
-
         }
         #endregion
 
@@ -720,7 +723,8 @@ namespace Toggl.Ross.ViewControllers
 
             public SectionCell(IntPtr handle) : base(handle)
             {
-                dateLabel = new UILabel().Apply(Style.Log.HeaderDateLabel);
+                UserInteractionEnabled = false;
+                dateLabel = new UILabel ().Apply(Style.Log.HeaderDateLabel);
                 ContentView.AddSubview(dateLabel);
 
                 totalDurationLabel = new UILabel().Apply(Style.Log.HeaderDurationLabel);

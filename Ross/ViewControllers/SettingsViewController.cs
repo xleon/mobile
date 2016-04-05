@@ -63,7 +63,6 @@ namespace Toggl.Ross.ViewControllers
                                .WhenSourceChanges(() => mobileTagView.Switch.On = viewModel.UseDefaultTag);
             askProjectBinding = this.SetBinding(() => viewModel.ChooseProjectForNew)
                                 .WhenSourceChanges(() => askProjectView.Switch.On = viewModel.ChooseProjectForNew);
-
         }
 
         public override void ViewWillDisappear(bool animated)

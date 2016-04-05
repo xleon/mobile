@@ -35,7 +35,7 @@ namespace Toggl.Phoebe.ViewModels
         private TimeEntryCollectionVM timeEntryCollection;
         private readonly IDisposable subscriptionState;
         private readonly SynchronizationContext uiContext;
-        private IDisposable durationSuscriber;
+        private IDisposable durationSubscriber;
 
         public bool IsFullSyncing { get; private set; }
         public bool HasSyncErrors { get; private set; }
@@ -45,12 +45,13 @@ namespace Toggl.Phoebe.ViewModels
         public LoadInfoType LoadInfo { get; private set; }
         public RichTimeEntry ActiveEntry { get; private set; }
         public ObservableCollection<IHolder> Collection { get { return timeEntryCollection; } }
-
+        public IObservable<long> TimerObservable { get; private set; }
 
         public LogTimeEntriesVM (AppState appState)
         {
             ServiceContainer.Resolve<ITracker> ().CurrentScreen = "TimeEntryList Screen";
 
+            Duration = TimeSpan.FromSeconds (0).ToString ().Substring (0, 8);
             uiContext = SynchronizationContext.Current;
             ResetCollection (appState.Settings.GroupedEntries);
             subscriptionState = StoreManager
@@ -61,6 +62,12 @@ namespace Toggl.Phoebe.ViewModels
                                 .Scan<AppState, Tuple<AppState, DownloadResult>> (
                                     null, (tuple, state) => Tuple.Create (state, tuple != null ? tuple.Item2 : null))
                                 .Subscribe (tuple => UpdateState (tuple.Item1, tuple.Item2));
+
+            TimerObservable = Observable.Timer (TimeSpan.FromMilliseconds (1000 - Time.Now.Millisecond),
+                                                TimeSpan.FromSeconds (1))
+                              .ObserveOn (uiContext);
+            durationSubscriber = TimerObservable.Subscribe (x => UpdateDuration ());
+
 
             // TODO: RX Review this line.
             // The ViewModel is created and start to load
@@ -79,8 +86,8 @@ namespace Toggl.Phoebe.ViewModels
 
         public void Dispose ()
         {
-            if (durationSuscriber != null) {
-                durationSuscriber.Dispose ();
+            if (durationSubscriber != null) {
+                durationSubscriber.Dispose ();
             }
 
             if (subscriptionState != null) {
@@ -191,24 +198,17 @@ namespace Toggl.Phoebe.ViewModels
             if (ActiveEntry == null || ! (ActiveEntry.Data.Id == Guid.Empty && appState.ActiveEntry.Data.Id == Guid.Empty)) {
                 ActiveEntry = appState.ActiveEntry;
                 IsEntryRunning = ActiveEntry.Data.State == TimeEntryState.Running;
-                // Check if an entry is running.
-                if (IsEntryRunning && durationSuscriber == null) {
+            }
 
-                    Console.WriteLine (1000 - ActiveEntry.Data.GetDuration ().Milliseconds);
+            UpdateDuration ();
+        }
 
-                    durationSuscriber = Observable.Timer (TimeSpan.FromMilliseconds (1000 - ActiveEntry.Data.GetDuration ().Milliseconds),
-                                                          TimeSpan.FromSeconds (1))
-                                        .ObserveOn (uiContext)
-                    .Subscribe (x => {
-                        Duration = string.Format ("{0:D2}:{1:mm}:{1:ss}",
-                                                  (int)ActiveEntry.Data.GetDuration ().TotalHours,
-                                                  ActiveEntry.Data.GetDuration ());
-                    });
-                } else if (!IsEntryRunning && durationSuscriber != null) {
-                    Duration = TimeSpan.FromSeconds (0).ToString ().Substring (0, 8);
-                    durationSuscriber.Dispose ();
-                    durationSuscriber = null;
-                }
+        private void UpdateDuration ()
+        {
+            if (IsEntryRunning) {
+                Duration = string.Format ("{0:D2}:{1:mm}:{1:ss}", (int)ActiveEntry.Data.GetDuration ().TotalHours, ActiveEntry.Data.GetDuration ());
+            } else {
+                Duration = TimeSpan.FromSeconds (0).ToString ().Substring (0, 8);
             }
         }
     }

@@ -406,6 +406,7 @@
       <DependentUpon>Style.cs</DependentUpon>
     </Compile>
     <Compile Include="Views\StatusView.cs" />
+    <Compile Include="DataSources\PlainObservableCollectionViewSource.cs" />
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>

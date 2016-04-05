@@ -321,7 +321,7 @@ namespace Toggl.Phoebe.Reactive
                 ctx.Put (TimeEntryData.Create (draft: draft, transform: x => {
                     x.RemoteId = null;
                     x.State = TimeEntryState.Running;
-                    x.StartTime = Time.UtcNow;
+                    x.StartTime = Time.UtcNow.Truncate (TimeSpan.TicksPerSecond);
                     x.StopTime = null;
                 }));
             });
@@ -423,6 +423,9 @@ namespace Toggl.Phoebe.Reactive
                             newData.Id = oldData.Id;
                             var data = BuildLocalRelationships (state, newData); // Set local Id values.
                             PutOrDelete (ctx, data);
+                        } else {
+                            // No changes, just continue.
+                            continue;
                         }
                     } else {
                         newData.Id = Guid.NewGuid (); // Assign new Id

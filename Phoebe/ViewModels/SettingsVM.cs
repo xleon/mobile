@@ -59,13 +59,11 @@ namespace Toggl.Phoebe.ViewModels
 
         private void stateUpdated (SettingsState settings)
         {
-            ServiceContainer.Resolve<IPlatformUtils> ().DispatchOnUIThread (() => {
-                ShowNotification = settings.ShowNotification;
-                IdleNotification = settings.IdleNotification;
-                ChooseProjectForNew = settings.ChooseProjectForNew;
-                UseDefaultTag = settings.UseDefaultTag;
-                GroupedTimeEntries = settings.GroupedEntries;
-            });
+            ShowNotification = settings.ShowNotification;
+            IdleNotification = settings.IdleNotification;
+            ChooseProjectForNew = settings.ChooseProjectForNew;
+            UseDefaultTag = settings.UseDefaultTag;
+            GroupedTimeEntries = settings.GroupedEntries;
         }
 
         private static void setSetting (string propertyName, object value)

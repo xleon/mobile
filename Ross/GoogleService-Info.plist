@@ -3,11 +3,11 @@
 <plist version="1.0">
 <dict>
 	<key>TRACKING_ID</key>
-	<string>UA-XXXXXXXX-X</string>
+	<string>{GOOGLE_ANALYTICS_ID}</string>
 	<key>CLIENT_ID</key>
-	<string></string>
+	<string>{CLIENT_ID}</string>
 	<key>REVERSED_CLIENT_ID</key>
-	<string></string>
+	<string>{REVERSED_CLIENT_ID}</string>
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>

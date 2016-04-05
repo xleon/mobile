@@ -19,7 +19,7 @@ using XPlatUtils;
 
 namespace Toggl.Joey.UI.Adapters
 {
-    public class LogTimeEntriesAdapter : RecyclerCollectionDataAdapter<IHolder>, IUndoAdapter
+    public class LogTimeEntriesAdapter : RecyclerCollectionDataAdapter<IHolder>, IUndoAdapter, IDisposable
     {
         public const int ViewTypeDateHeader = ViewTypeContent + 1;
         private static readonly int ContinueThreshold = 1;
@@ -181,6 +181,15 @@ namespace Toggl.Joey.UI.Adapters
             return false;
         }
         #endregion
+
+        protected override void Dispose (bool disposing)
+        {
+            Owner.RemoveAllViewsInLayout ();
+            Owner.Dispose ();
+            Collection.Clear ();
+            viewModel.Dispose ();
+            base.Dispose (disposing);
+        }
 
         protected override RecyclerView.ViewHolder GetFooterHolder (ViewGroup parent)
         {
@@ -494,6 +503,11 @@ namespace Toggl.Joey.UI.Adapters
 
             private void OnDurationElapsed (object sender, ElapsedEventArgs e)
             {
+                if (owner.Collection.Count == 0) {
+                    Dispose ();
+                    return;
+                }
+
                 // Update duration with new time.
                 duration = duration.Add (TimeSpan.FromMilliseconds (timer.Interval));
                 BaseActivity.CurrentActivity.RunOnUiThread (() => RebindDuration ());

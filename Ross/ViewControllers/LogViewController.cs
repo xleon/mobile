@@ -32,8 +32,8 @@ namespace Toggl.Ross.ViewControllers
         private UIBarButtonItem navigationButton;
         private UIActivityIndicatorView defaultFooterView;
 
-        private Binding<LogTimeEntriesVM.LoadInfoType, LogTimeEntriesVM.LoadInfoType> loadInfoBinding;
-        private Binding<int, int> hasItemsBinding, loadMoreBinding;
+        private Binding<LogTimeEntriesVM.LoadInfoType, LogTimeEntriesVM.LoadInfoType> loadInfoBinding, loadMoreBinding;
+        private Binding<int, int> hasItemsBinding;
         private Binding<string, string> durationBinding;
         private Binding<bool, bool> syncBinding, hasErrorBinding, isRunningBinding;
         private Binding<ObservableCollection<IHolder>, ObservableCollection<IHolder>> collectionBinding;
@@ -113,7 +113,7 @@ namespace Toggl.Ross.ViewControllers
 
             loadInfoBinding = this.SetBinding (() => ViewModel.LoadInfo).WhenSourceChanges (SetFooterState);
             hasItemsBinding = this.SetBinding (() => ViewModel.Collection.Count).WhenSourceChanges (SetCollectionState);
-            //loadMoreBinding = this.SetBinding (() => ViewModel.Collection.Count).WhenSourceChanges (LoadMoreIfNeeded);
+            loadMoreBinding = this.SetBinding (() => ViewModel.LoadInfo).WhenSourceChanges (LoadMoreIfNeeded);
             collectionBinding = this.SetBinding (() => ViewModel.Collection).WhenSourceChanges (() => {
                 TableView.Source = new TimeEntriesSource (this, ViewModel);
             });
@@ -174,18 +174,22 @@ namespace Toggl.Ross.ViewControllers
 
         private void LoadMoreIfNeeded ()
         {
-            Console.WriteLine ("many updates!!");
-            // TODO: Small hack due to the scroll needs more than the
-            // 10 items to work correctly and load more itens.
-            if (ViewModel.Collection.Count > 0 && ViewModel.Collection.Count < 10) {
-                Console.WriteLine (" cuandooooooo!!");
-                //ViewModel.LoadMore ();
+            // ATTENTION: Small hack due to the scroll needs more than the
+            // 10 items to work correctly and load more items. With this conditions,
+            // we avoid the scroll spinner to dissapear forcing
+            // an extra load.
+            if (ViewModel.Collection.Count > 0 &&
+                    ViewModel.Collection.Count < 10 &&
+                    ViewModel.LoadInfo.HasMore &&
+                    !ViewModel.LoadInfo.HadErrors &&
+                    !ViewModel.LoadInfo.IsSyncing) {
+                ViewModel.LoadMore ();
             }
         }
 
         private void SetFooterState ()
         {
-            Console.WriteLine (ViewModel.LoadInfo.HasMore + " " + ViewModel.LoadInfo.HadErrors);
+
             if (ViewModel.LoadInfo.HasMore && !ViewModel.LoadInfo.HadErrors) {
                 if (defaultFooterView == null) {
                     defaultFooterView = new UIActivityIndicatorView (UIActivityIndicatorViewStyle.Gray);

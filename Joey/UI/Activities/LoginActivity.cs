@@ -135,7 +135,8 @@ namespace Toggl.Joey.UI.Activities
             .AddOnConnectionFailedListener (this)
             .AddApi (Auth.GOOGLE_SIGN_IN_API, gso)
             .Build ();
-            ViewModel = LoginVM.Init ();
+
+            ViewModel = new LoginVM ();
         }
 
         protected override void OnStart ()

@@ -167,7 +167,7 @@ namespace Toggl.Phoebe.Reactive
 
             // Return remote objects
             if (remoteObjects.Count > 0) {
-                RxChain.Send (new DataMsg.ReceivedFromDownload (remoteObjects));
+                RxChain.Send (new DataMsg.ReceivedFromUpdate (remoteObjects));
             }
 
             foreach (var req in syncMsg.ServerRequests) {

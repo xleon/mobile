@@ -8,9 +8,11 @@ namespace Toggl.Ross.Net
 {
     public class NetworkIndicatorManager : IDisposable
     {
+        IDisposable subscription;
+
         public NetworkIndicatorManager ()
         {
-            StoreManager.Singleton
+            subscription = StoreManager.Singleton
                         .Observe (x => x.State.FullSyncResult.IsSyncing)
                         .DistinctUntilChanged ()
                         .ObserveOn (SynchronizationContext.Current)
@@ -26,8 +28,9 @@ namespace Toggl.Ross.Net
 
         public void Dispose()
         {
+            subscription.Dispose();
             setIndicator (false);
-        }
+        }s
 
     }
 }

@@ -105,6 +105,7 @@ namespace Toggl.Phoebe.Data
 
         public sealed class TimeEntryPut : DataMsg
         {
+            public IEnumerable<string> TagNames { get; }
             public Either<ITimeEntryData, Exception> Data
             {
                 get { return RawData.CastLeft<ITimeEntryData> (); }
@@ -114,6 +115,12 @@ namespace Toggl.Phoebe.Data
             public TimeEntryPut(ITimeEntryData data)
             {
                 Data = Either<ITimeEntryData, Exception>.Left(data);
+            }
+
+            public TimeEntryPut (ITimeEntryData data, IEnumerable<string> tagNames)
+            {
+                TagNames = tagNames;
+                Data = Either<ITimeEntryData, Exception>.Left (data);
             }
         }
 

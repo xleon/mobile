@@ -18,14 +18,12 @@ namespace Toggl.Phoebe.ViewModels
         internal static readonly string DefaultTag = "mobile";
 
         private IDisposable subscriptionState, subscriptionTimer;
-        private AppState appState;
         private RichTimeEntry richData;
         private RichTimeEntry previousData;
 
         public EditTimeEntryVM (AppState appState, Guid timeEntryId, bool isManual = false)
         {
             List<Guid> tagList;
-            this.appState = appState;
             IsManual = isManual;
 
             if (timeEntryId == Guid.Empty) {
@@ -131,58 +129,47 @@ namespace Toggl.Phoebe.ViewModels
 
         public void ChangeProjectAndTask(Guid projectId, Guid taskId)
         {
-            long? remoteProjectId = null;
-            long? remoteTaskId = null;
-
-            if (projectId != Guid.Empty)
-            {
-                remoteProjectId = StoreManager.Singleton.AppState.Projects [projectId].RemoteId;
-            }
-            if (taskId != Guid.Empty)
-            {
-                remoteTaskId = StoreManager.Singleton.AppState.Tasks [taskId].RemoteId;
+            if (projectId == richData.Data.ProjectId &&
+                    taskId == richData.Data.TaskId) {
+                return;
             }
 
-            if (projectId != richData.Data.ProjectId || taskId != richData.Data.TaskId)
-            {
-                UpdateView(x =>
-                {
-                    x.TaskRemoteId = remoteTaskId;
-                    x.ProjectRemoteId = remoteProjectId;
-                    x.ProjectId = projectId;
-                    x.TaskId = taskId;
-                }, nameof (ProjectName), nameof (ClientName), nameof (ProjectColorHex));
+            if (projectId != Guid.Empty) {
+                SetNewProject (projectId);
+                SetNewTask (taskId);
+            } else {
+                SetEmptyProject ();
             }
         }
 
         public void ChangeTimeEntryDuration(TimeSpan newDuration)
         {
-            UpdateView(x => x.SetDuration(newDuration), nameof(Duration), nameof(StartDate), nameof(StopDate));
-            ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Change Duration";
+            UpdateView (x => x.SetDuration (newDuration), nameof (Duration), nameof (StartDate), nameof (StopDate));
+            //ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Change Duration";
         }
 
         public void ChangeTimeEntryStart(TimeSpan diffTime)
         {
-            UpdateView(x => x.ChangeStartTime(x.StartTime + diffTime), nameof(Duration), nameof(StartDate), nameof(StopDate));
-            ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Change Start Time";
+            UpdateView (x => x.ChangeStartTime (x.StartTime + diffTime), nameof (Duration), nameof (StartDate), nameof (StopDate));
+            //ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Change Start Time";
         }
 
         public void ChangeTimeEntryStart(DateTime newStartTime)
         {
-            UpdateView(x => x.ChangeStartTime(newStartTime), nameof(Duration), nameof(StartDate), nameof(StopDate));
-            ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Change Start Time";
+            UpdateView (x => x.ChangeStartTime (newStartTime), nameof (Duration), nameof (StartDate), nameof (StopDate));
+            //ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Change Start Time";
         }
 
         public void ChangeTimeEntryStop(TimeSpan diffTime)
         {
-            UpdateView(x => x.ChangeStoptime(x.StopTime + diffTime), nameof(Duration), nameof(StopDate));
-            ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Change Stop Time";
+            UpdateView (x => x.ChangeStoptime (x.StopTime + diffTime),nameof (Duration), nameof (StopDate));
+            //ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Change Stop Time";
         }
 
         public void ChangeTimeEntryStop(DateTime newStopTime)
         {
-            UpdateView(x => x.ChangeStoptime(newStopTime), nameof(Duration), nameof(StopDate));
-            ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Change Stop Time";
+            UpdateView (x => x.ChangeStoptime (newStopTime), nameof (Duration), nameof (StopDate));
+            //ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Change Stop Time";
         }
 
         public void ChangeTagList(IEnumerable<Guid> newTags)
@@ -207,25 +194,17 @@ namespace Toggl.Phoebe.ViewModels
 
         public void Save ()
         {
-            if (!previousData.Data.PublicInstancePropertiesEqual(richData.Data))
-            {
-                RxChain.Send(new DataMsg.TimeEntryPut(richData.Data));
+            if (!previousData.Data.PublicInstancePropertiesEqual (richData.Data)) {
+                RxChain.Send (new DataMsg.TimeEntryPut (richData.Data, TagList.Select (x => x.Name)));
                 previousData = richData;
             }
         }
 
         private void UpdateView (Action<TimeEntryData> updater, params string[] changedProperties)
         {
-            var oldProjectId = richData.Data.ProjectId;
-            richData = new RichTimeEntry (richData.Data.With (updater), appState);
-
-            if (changedProperties.Length == 0) {
-                // TODO: This should update all properties, check
-                RaisePropertyChanged ();
-            } else {
-                foreach (var prop in changedProperties) {
-                    RaisePropertyChanged (prop);
-                }
+            richData = new RichTimeEntry (richData.Data.With (updater), StoreManager.Singleton.AppState);
+            foreach (var prop in changedProperties) {
+                RaisePropertyChanged (prop);
             }
         }
 
@@ -236,15 +215,46 @@ namespace Toggl.Phoebe.ViewModels
             }
         }
 
-        private void DurationTimerCallback(object sender, System.Timers.ElapsedEventArgs e)
+        private void SetNewProject (Guid projectId)
         {
-            // Update on UI Thread
-            ServiceContainer.Resolve<IPlatformUtils> ().DispatchOnUIThread(() =>
-            {
-                var duration = richData.Data.GetDuration();
-                // Hack to ensure the timer triggers every second even if there're some extra milliseconds
-                durationTimer.Interval = 1000 - duration.Milliseconds;
-                RaisePropertyChanged(nameof(Duration));
+            if (richData.Data.ProjectId == projectId) {
+                return;
+            }
+
+            var projectData = StoreManager.Singleton.AppState.Projects [projectId];
+            UpdateView (x => {
+                x.ProjectRemoteId = projectData.RemoteId;
+                x.ProjectId = projectData.Id;
+                x.WorkspaceId = projectData.WorkspaceId;
+                x.WorkspaceRemoteId = projectData.WorkspaceRemoteId;
+                x.IsBillable = projectData.IsBillable;
+            }, nameof (ProjectName), nameof (ClientName), nameof (ProjectColorHex), nameof (IsPremium), nameof (IsBillable));
+        }
+
+        private void SetEmptyProject ()
+        {
+            if (richData.Data.ProjectId == Guid.Empty) {
+                return;
+            }
+
+            UpdateView (x => {
+                x.ProjectRemoteId = null;
+                x.ProjectId = Guid.Empty;
+                x.TaskId = Guid.Empty;
+                x.TaskRemoteId = null;
+            }, nameof (ProjectName), nameof (ClientName), nameof (ProjectColorHex));
+        }
+
+        private void SetNewTask (Guid taskId)
+        {
+            if (richData.Data.ProjectId == taskId) {
+                return;
+            }
+
+            var taskRemoteId = taskId != Guid.Empty ? StoreManager.Singleton.AppState.Tasks [taskId].RemoteId : null;
+            UpdateView (x => {
+                x.TaskId = taskId;
+                x.TaskRemoteId = taskRemoteId;
             });
         }
 
@@ -272,27 +282,6 @@ namespace Toggl.Phoebe.ViewModels
                 RxChain.Send(new DataMsg.TagsPut(defaultTagList));
             }
             return defaultTagList;
-        }
-
-        private static List<ITagData> UpdateTagsWithWorkspace(AppState appState, Guid timeEntryId, Guid workspaceId, IEnumerable<ITagData> oldTagList)
-        {
-            // Get new workspace tag list.
-            var tagList = appState.Tags.Values.Where(r => r.WorkspaceId == workspaceId).ToList();
-
-            // Get new tags to create and existing tags from previous workspace.
-            var tagsToCreate = new List<ITagData> (oldTagList.Where(t => tagList.IndexOf(n => n.Name.Equals(t.Name)) == -1));
-            var commonTags = new List<ITagData> (tagList.Where(t => oldTagList.IndexOf(n => n.Name.Equals(t.Name)) != -1));
-
-            // Create new tags
-            var newTags = tagsToCreate.Select(x => x.With(y =>
-            {
-                y.WorkspaceId = workspaceId;
-                y.Name = x.Name;
-            })).ToList();
-            RxChain.Send(new DataMsg.TagsPut(newTags));
-
-            // Create new tags and concat both lists
-            return commonTags.Concat(tagsToCreate).ToList();
         }
     }
 }

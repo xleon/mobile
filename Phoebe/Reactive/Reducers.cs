@@ -192,12 +192,29 @@ namespace Toggl.Phoebe.Reactive
         {
             var entryData = (msg as DataMsg.TimeEntryPut).Data.ForceLeft();
             var dataStore = ServiceContainer.Resolve<ISyncDataStore>();
+            var tagList = (msg as DataMsg.TimeEntryPut).TagNames;
 
-            // TODO: Entry sanity check
-            var updated = dataStore.Update(ctx => ctx.Put(entryData));
-
-            // TODO: Check updated.Count == 1?
-            return DataSyncMsg.Create(updated, state.With(timeEntries: state.UpdateTimeEntries(updated)));
+            var updated = dataStore.Update (ctx => {
+                // Update time entry tags
+                if (tagList.Any ()) {
+                    var existingTags = state.Tags.Values.Where (x => x.WorkspaceId == entryData.WorkspaceId);
+                    foreach (var item in tagList) {
+                        if (!existingTags.Any (x => x.Name == item)) {
+                            var newTag = TagData.Create (x => {
+                                x.Name = item;
+                                x.WorkspaceId = entryData.WorkspaceId;
+                                x.WorkspaceRemoteId = entryData.WorkspaceRemoteId;
+                            });
+                            ctx.Put (newTag);
+                        }
+                    }
+                }
+                // TODO: Entry sanity check
+                ctx.Put (entryData);
+            });
+            return DataSyncMsg.Create (
+                       state.With (timeEntries: state.UpdateTimeEntries (updated)),
+                       updated);
         }
 
         static DataSyncMsg<AppState> TimeEntryRemove(AppState state, DataMsg msg)

@@ -74,9 +74,9 @@ namespace Toggl.Ross.ViewControllers
             base.ViewWillDisappear(animated);
         }
 
-        private void OnNavigationBarAddClicked(object sender, EventArgs e)
+        private async void OnNavigationBarAddClicked(object sender, EventArgs e)
         {
-            var clientData = ViewModel.SaveClient(NameTextField.Text);
+            var clientData = await ViewModel.SaveClientAsync(NameTextField.Text);
             handler.OnClientSelected(clientData);
         }
 

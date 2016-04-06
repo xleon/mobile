@@ -89,6 +89,13 @@ namespace Toggl.Ross.ViewControllers
             nameTextField.BecomeFirstResponder();
         }
 
+        public override void ViewWillDisappear (bool animated)
+        {
+            clientBinding.Detach ();
+            ViewModel.Dispose ();
+            base.ViewWillDisappear (animated);
+        }
+
         private void OnClientButtonTouchUpInside(object sender, EventArgs e)
         {
             var controller = new ClientSelectionViewController(workspaceId, this);
@@ -112,8 +119,9 @@ namespace Toggl.Ross.ViewControllers
         }
         #endregion
 
-        private void OnSetBtnPressed(object sender, EventArgs e)
+        private async void OnSetBtnPressed(object sender, EventArgs e)
         {
+            // TODO Disable Set button?
             var projectName = nameTextField.Text;
             var existsName = ViewModel.ExistProjectWithName(projectName);
             if (existsName)
@@ -136,7 +144,7 @@ namespace Toggl.Ross.ViewControllers
             }
 
             var random = new Random();
-            var newProjectData = ViewModel.SaveProject(projectName, random.Next(ProjectData.HexColors.Length - 1));
+            var newProjectData = await ViewModel.SaveProjectAsync(projectName, random.Next(ProjectData.HexColors.Length - 1));
             handler.OnProjectSelected(newProjectData.Id, Guid.Empty);
         }
 

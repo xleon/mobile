@@ -47,8 +47,10 @@
 			<string>Editor</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string></string>
+				<string>{CF_BUNDLE_URL_SCHEMES}</string>
 			</array>
+			<key>CFBundleURLName</key>
+			<string>com.toggl.timer</string>
 		</dict>
 	</array>
 	<key>UIAppFonts</key>

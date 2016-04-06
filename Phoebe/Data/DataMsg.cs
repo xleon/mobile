@@ -31,6 +31,25 @@ namespace Toggl.Phoebe.Data
             }
         }
 
+        public sealed class ReceivedFromUpdate : DataMsg
+        {
+            public Either<IEnumerable<CommonData>, Exception> Data
+            {
+                get { return RawData.CastLeft<IEnumerable<CommonData>> (); }
+                set { RawData = value.CastLeft<object> (); }
+            }
+
+            public ReceivedFromUpdate (Exception ex)
+            {
+                Data = Either<IEnumerable<CommonData>, Exception>.Right (ex);
+            }
+
+            public ReceivedFromUpdate (IEnumerable<CommonData> data)
+            {
+                Data = Either<IEnumerable<CommonData>, Exception>.Left (data);
+            }
+        }
+
         public sealed class ReceivedFromDownload : DataMsg
         {
             public Either<IEnumerable<CommonData>, Exception> Data

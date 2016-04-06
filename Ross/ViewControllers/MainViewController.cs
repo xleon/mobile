@@ -38,7 +38,6 @@ namespace Toggl.Ross.ViewControllers
         // deactivate it. This behaviour will change soon.
         public bool MenuEnabled { get; set; }
 
-
         public override void ViewWillAppear (bool animated)
         {
             base.ViewWillAppear (animated);

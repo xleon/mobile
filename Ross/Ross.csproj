@@ -264,6 +264,7 @@
     <BundleResource Include="Resources\logo.png" />
     <BundleResource Include="Resources\logo%402x.png" />
     <BundleResource Include="Resources\profile%402x.png" />
+    <BundleResource Include="GoogleService-Info.plist" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Info.plist" />
@@ -406,6 +407,7 @@
       <DependentUpon>Style.cs</DependentUpon>
     </Compile>
     <Compile Include="Views\StatusView.cs" />
+    <Compile Include="DataSources\PlainObservableCollectionViewSource.cs" />
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>

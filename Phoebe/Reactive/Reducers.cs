@@ -74,6 +74,7 @@ namespace Toggl.Phoebe.Reactive
             return new TagCompositeReducer<AppState> ()
                    .Add (typeof (DataMsg.Request), ServerRequest)
                    .Add (typeof (DataMsg.ReceivedFromSync), ReceivedFromSync)
+                   .Add (typeof (DataMsg.ReceivedFromUpdate), ReceivedFromUpdate)
                    .Add (typeof (DataMsg.ReceivedFromDownload), ReceivedFromDownload)
                    .Add (typeof (DataMsg.FullSync), FullSync)
                    .Add (typeof (DataMsg.TimeEntriesLoad), TimeEntriesLoad)
@@ -173,6 +174,17 @@ namespace Toggl.Phoebe.Reactive
                                settings: state.Settings.With (syncLastRun: serverMsg.FullSyncInfo.Item2)));
             },
             ex => DataSyncMsg.Create (state.With (fullSyncResult: state.FullSyncResult.With (isSyncing: false, hadErrors: true))));
+        }
+
+        static DataSyncMsg<AppState> ReceivedFromUpdate (AppState state, DataMsg msg)
+        {
+            var serverMsg = msg as DataMsg.ReceivedFromUpdate;
+            return serverMsg.Data.Match (receivedData => {
+                // Side effect operation.
+                state = UpdateStateWithNewData (state, receivedData);
+                return DataSyncMsg.Create (state);
+            },
+            ex => DataSyncMsg.Create (state.With (downloadResult: state.DownloadResult.With (isSyncing: false, hadErrors: true))));
         }
 
         static DataSyncMsg<AppState> ReceivedFromDownload (AppState state, DataMsg msg)
@@ -321,7 +333,7 @@ namespace Toggl.Phoebe.Reactive
                 ctx.Put (TimeEntryData.Create (draft: draft, transform: x => {
                     x.RemoteId = null;
                     x.State = TimeEntryState.Running;
-                    x.StartTime = Time.UtcNow;
+                    x.StartTime = Time.UtcNow.Truncate (TimeSpan.TicksPerSecond);
                     x.StopTime = null;
                 }));
             });
@@ -423,6 +435,9 @@ namespace Toggl.Phoebe.Reactive
                             newData.Id = oldData.Id;
                             var data = BuildLocalRelationships (state, newData); // Set local Id values.
                             PutOrDelete (ctx, data);
+                        } else {
+                            // No changes, just continue.
+                            continue;
                         }
                     } else {
                         newData.Id = Guid.NewGuid (); // Assign new Id

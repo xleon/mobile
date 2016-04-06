@@ -1,6 +1,8 @@
 using System;
+using System.Linq;
 using System.Reactive.Linq;
 using System.Threading;
+using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Reactive;
 using UIKit;
 
@@ -13,7 +15,7 @@ namespace Toggl.Ross.Net
         public NetworkIndicatorManager ()
         {
             subscription = StoreManager.Singleton
-                        .Observe (x => x.State.FullSyncResult.IsSyncing)
+                        .Observe (x => x.State.RequestInfo.Running.Any (y => y is ServerRequest.GetChanges))
                         .DistinctUntilChanged ()
                         .ObserveOn (SynchronizationContext.Current)
                         .Subscribe (setIndicator);
@@ -30,7 +32,7 @@ namespace Toggl.Ross.Net
         {
             subscription.Dispose();
             setIndicator (false);
-        }s
+        }
 
     }
 }

@@ -1,11 +1,8 @@
 using System;
-using UIKit;
-using Toggl.Phoebe;
-using Toggl.Phoebe.Net;
-using XPlatUtils;
-using Toggl.Phoebe.Reactive;
 using System.Reactive.Linq;
 using System.Threading;
+using Toggl.Phoebe.Reactive;
+using UIKit;
 
 namespace Toggl.Ross.Net
 {

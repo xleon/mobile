@@ -1,14 +1,11 @@
-using System;
 using System.Collections.Generic;
 using Cirrious.FluentLayouts.Touch;
-using UIKit;
-using Toggl.Phoebe.Analytics;
-using XPlatUtils;
+using GalaSoft.MvvmLight.Helpers;
+using Toggl.Phoebe.Reactive;
+using Toggl.Phoebe.ViewModels;
 using Toggl.Ross.Theme;
 using Toggl.Ross.Views;
-using Toggl.Phoebe.ViewModels;
-using Toggl.Phoebe.Reactive;
-using GalaSoft.MvvmLight.Helpers;
+using UIKit;
 
 namespace Toggl.Ross.ViewControllers
 {
@@ -18,10 +15,10 @@ namespace Toggl.Ross.ViewControllers
 
         private LabelSwitchView askProjectView { get; set; }
         private LabelSwitchView mobileTagView { get; set; }
-        private bool isResuming;
 
         private Binding<bool, bool> askProjectBinding;
         private Binding<bool, bool> mobileTagBinding;
+
 
         public SettingsViewController ()
         {
@@ -29,66 +26,31 @@ namespace Toggl.Ross.ViewControllers
             EdgesForExtendedLayout = UIRectEdge.None;
         }
 
-        protected override void Dispose (bool disposing)
+        public override void LoadView()
         {
-            if (disposing) {
-            }
-            base.Dispose (disposing);
-        }
+            View = new UIView().Apply (Style.Screen);
 
-        public override void LoadView ()
-        {
-            View = new UIView ().Apply (Style.Screen);
-
-            Add (new SeparatorView ().Apply (Style.Settings.Separator));
-            Add (askProjectView = new LabelSwitchView ().Apply (Style.Settings.RowBackground));
+            Add (new SeparatorView().Apply (Style.Settings.Separator));
+            Add (askProjectView = new LabelSwitchView().Apply (Style.Settings.RowBackground));
             askProjectView.Label.Apply (Style.Settings.SettingLabel);
-            askProjectView.Label.Text = "SettingsAskProject".Tr ();
-            askProjectView.Switch.ValueChanged += OnAskProjectViewValueChanged;
+            askProjectView.Label.Text = "SettingsAskProject".Tr();
+            askProjectView.Switch.ValueChanged += (s, e) => viewModel.SetChooseProjectForNew (askProjectView.Switch.On);
 
-            Add (new SeparatorView ().Apply (Style.Settings.Separator));
-            Add (new UILabel () { Text = "SettingsAskProjectDesc".Tr () } .Apply (Style.Settings.DescriptionLabel));
+            Add (new SeparatorView().Apply (Style.Settings.Separator));
+            Add (new UILabel() { Text = "SettingsAskProjectDesc".Tr() } .Apply (Style.Settings.DescriptionLabel));
 
-            Add (new SeparatorView ().Apply (Style.Settings.Separator));
-            Add (mobileTagView = new LabelSwitchView ().Apply (Style.Settings.RowBackground));
+            Add (new SeparatorView().Apply (Style.Settings.Separator));
+            Add (mobileTagView = new LabelSwitchView().Apply (Style.Settings.RowBackground));
             mobileTagView.Label.Apply (Style.Settings.SettingLabel);
-            mobileTagView.Label.Text = "SettingsMobileTag".Tr ();
-            mobileTagView.Switch.ValueChanged += OnMobileTagViewValueChanged;
+            mobileTagView.Label.Text = "SettingsMobileTag".Tr();
+            mobileTagView.Switch.ValueChanged += (s, e) => viewModel.SetUseDefaultTag (mobileTagView.Switch.On);
 
-            Add (new SeparatorView ().Apply (Style.Settings.Separator));
-            Add (new UILabel () { Text = "SettingsMobileTagDesc".Tr () } .Apply (Style.Settings.DescriptionLabel));
+            Add (new SeparatorView().Apply (Style.Settings.Separator));
+            Add (new UILabel() { Text = "SettingsMobileTagDesc".Tr() } .Apply (Style.Settings.DescriptionLabel));
 
             View.SubviewsDoNotTranslateAutoresizingMaskIntoConstraints();
+
             View.AddConstraints (MakeConstraints (View));
-
-            Rebind ();
-        }
-
-        private void BindAskProjectView (LabelSwitchView v)
-        {
-            //v.Switch.On = SettingsStore.ChooseProjectForNew;
-        }
-
-        private void BindMobileTagView (LabelSwitchView v)
-        {
-            //v.Switch.On = SettingsStore.UseDefaultTag;
-        }
-
-        private void Rebind ()
-        {
-            askProjectView.Apply (BindAskProjectView);
-            mobileTagView.Apply (BindMobileTagView);
-        }
-
-        private void OnAskProjectViewValueChanged (object sender, EventArgs e)
-        {
-            viewModel.SetChooseProjectForNew (askProjectView.Switch.On);
-        }
-
-        private void OnMobileTagViewValueChanged (object sender, EventArgs e)
-        {
-            Console.WriteLine ($"send message to switch to: {mobileTagView.Switch.On}");
-            viewModel.SetUseDefaultTag (mobileTagView.Switch.On);
         }
 
         public override void ViewWillAppear (bool animated)
@@ -97,47 +59,20 @@ namespace Toggl.Ross.ViewControllers
 
             viewModel = new SettingsVM (StoreManager.Singleton.AppState);
 
-            // these bindings crash
-            //this.askProjectBinding = this.SetBinding(() => viewModel.ChooseProjectForNew, () => askProjectView.Switch.On);
-            //this.mobileTagBinding  = this.SetBinding(() => viewModel.UseDefaultTag, () => mobileTagView.Switch.On);
-
-            // this binding SEEMS to work, except that the settings state does not appear to be updated
-            this.mobileTagBinding = this.SetBinding (() => viewModel.UseDefaultTag)
-            .WhenSourceChanges (() => {
-                mobileTagView.Switch.On = viewModel.UseDefaultTag;
-                Console.WriteLine ($"switch to: {viewModel.UseDefaultTag}, is now: {mobileTagView.Switch.On}");
-            });
-
-            //if (isResuming) {
-            //    Rebind ();
-            //}
-
-            isResuming = true;
-        }
-
-        public override void ViewDidAppear (bool animated)
-        {
-            base.ViewDidAppear (animated);
-
-
+            mobileTagBinding = this.SetBinding (() => viewModel.UseDefaultTag)
+                               .WhenSourceChanges (() => mobileTagView.Switch.On = viewModel.UseDefaultTag);
+            askProjectBinding = this.SetBinding (() => viewModel.ChooseProjectForNew)
+                                .WhenSourceChanges (() => askProjectView.Switch.On = viewModel.ChooseProjectForNew);
 
         }
 
         public override void ViewWillDisappear (bool animated)
         {
-            //this.askProjectBinding.Detach();
+            this.askProjectBinding.Detach();
             this.mobileTagBinding.Detach();
             viewModel.Dispose();
 
             base.ViewWillDisappear (animated);
-
-            /*
-            if (subscriptionSettingChanged != null) {
-                var bus = ServiceContainer.Resolve<MessageBus> ();
-                bus.Unsubscribe (subscriptionSettingChanged);
-                subscriptionSettingChanged = null;
-            }
-            */
         }
 
         private static IEnumerable<FluentLayout> MakeConstraints (UIView container)

@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Reactive.Linq;
+using System.Threading;
 using GalaSoft.MvvmLight;
 using PropertyChanged;
+using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Reactive;
 using XPlatUtils;
@@ -19,7 +21,10 @@ namespace Toggl.Phoebe.ViewModels
                            .Observe (x => x.State.Settings)
                            .StartWith (state.Settings)
                            .DistinctUntilChanged ()
+                           .ObserveOn (SynchronizationContext.Current)
                            .Subscribe (stateUpdated);
+
+            ServiceContainer.Resolve<ITracker>().CurrentScreen = "Settings";
         }
 
         #region exposed UI properties

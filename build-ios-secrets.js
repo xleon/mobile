@@ -3,7 +3,7 @@ var replacer = require("./node/secret-replace.js");
 
 replacer.replaceSecrets("Phoebe/Build.cs", {
 	// "string to replace" : "secret env variable"
-	"{RAYGUN_API_KEY_IOS}" : "RAYGUN_API_KEY_IOS",
+	"{XAMARIN_INSIGHTS_API_KEY_IOS}" : "XAMARIN_INSIGHTS_API_KEY_IOS",
 	"{TESTFAIRY_API_TOKEN}" : "TESTFAIRY_API_TOKEN",
 	"{GOOGLE_ANALYTICS_ID}" : "GOOGLE_ANALYTICS_ID",
 	"{REVERSED_CLIENT_ID}" : "REVERSED_CLIENT_ID",

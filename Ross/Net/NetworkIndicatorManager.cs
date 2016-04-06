@@ -3,47 +3,39 @@ using UIKit;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
+using Toggl.Phoebe.Reactive;
+using System.Reactive.Linq;
+using System.Threading;
 
 namespace Toggl.Ross.Net
 {
     public class NetworkIndicatorManager : IDisposable
     {
-        //private Subscription<SyncStartedMessage> subscriptionSyncStarted;
-        //private Subscription<SyncFinishedMessage> subscriptionSyncFinished;
-        private bool syncRunning;
-
         public NetworkIndicatorManager ()
         {
-            var bus = ServiceContainer.Resolve<MessageBus> ();
-            //subscriptionSyncStarted = bus.Subscribe<SyncStartedMessage> (OnSyncStarted);
-            //subscriptionSyncFinished = bus.Subscribe<SyncFinishedMessage> (OnSyncFinished);
+            StoreManager.Singleton
+                        .Observe (x => x.State.FullSyncResult.IsSyncing)
+                        .DistinctUntilChanged ()
+                        .ObserveOn (SynchronizationContext.Current)
+                        .Subscribe (stateUpdated);
 
-            //var syncManager = ServiceContainer.Resolve<ISyncManager> ();
-            //syncRunning = syncManager.IsRunning;
-            ResetIndicator ();
-        }
-
-        public void Dispose ()
-        {
-            var bus = ServiceContainer.Resolve<MessageBus> ();
-            UIApplication.SharedApplication.NetworkActivityIndicatorVisible = false;
-        }
-        /*
-        private void OnSyncStarted (SyncStartedMessage msg)
-        {
-            syncRunning = true;
-            ResetIndicator ();
+            setIndicator (false);
         }
 
-        private void OnSyncFinished (SyncFinishedMessage msg)
+        private void stateUpdated(bool isSyncing)
         {
-            syncRunning = false;
-            ResetIndicator ();
+            setIndicator (isSyncing);
         }
-        */
-        private void ResetIndicator ()
+
+        private void setIndicator (bool isSyncing)
         {
-            UIApplication.SharedApplication.NetworkActivityIndicatorVisible = syncRunning;
+            UIApplication.SharedApplication.NetworkActivityIndicatorVisible = isSyncing;
         }
+
+        public void Dispose()
+        {
+            setIndicator (false);
+        }
+
     }
 }

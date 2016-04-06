@@ -740,7 +740,8 @@ namespace Toggl.Phoebe.Reactive
             {
                 // Stop sending messages and wait for state update
                 // TODO RX: Keep a cache to check if the same error is repeating many times?
-                throw new Exception("RemoteId missing");
+                // Publish more info about this bug
+                throw new Exception("RemoteId missing. Type: " + typ.FullName);
             }
             return res.Value;
         }

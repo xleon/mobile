@@ -90,14 +90,16 @@ namespace Toggl.Phoebe.Data.Models
                 {
                     return -1;
                 }
-                else
-                {
-                    return DeletedAt.Value.CompareTo(other.DeletedAt);
+            } else {
+                if (SyncState != other.SyncState) {
+                    return 1;
                 }
-            }
-            else
-            {
-                return ModifiedAt.CompareTo(other.ModifiedAt);
+
+                if (RemoteId != other.RemoteId) {
+                    return 1;
+                }
+
+                return ModifiedAt.CompareTo (other.ModifiedAt);
             }
         }
 

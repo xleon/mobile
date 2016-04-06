@@ -4,6 +4,7 @@ using System.Linq;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Helpers;
+using Toggl.Phoebe.Logging;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
 
@@ -442,8 +443,14 @@ namespace Toggl.Phoebe.Reactive
                         if (newData.CompareTo(oldData) >= 0)
                         {
                             newData.Id = oldData.Id;
-                            var data = BuildLocalRelationships(state, newData);  // Set local Id values.
-                            PutOrDelete(ctx, data);
+                            var data = BuildLocalRelationships (state, newData); // Set local Id values.
+                            PutOrDelete (ctx, data);
+                        } else 
+                        {
+                            // No changes, just continue.
+                            var logger = ServiceContainer.Resolve<ILogger> ();
+                            logger.Info ("UpdateStateWithNewData", "Posible sync error. Object without changes " +  newData);
+                            continue;
                         }
                         else
                         {

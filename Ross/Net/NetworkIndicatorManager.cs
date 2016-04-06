@@ -17,14 +17,9 @@ namespace Toggl.Ross.Net
                         .Observe (x => x.State.FullSyncResult.IsSyncing)
                         .DistinctUntilChanged ()
                         .ObserveOn (SynchronizationContext.Current)
-                        .Subscribe (stateUpdated);
+                        .Subscribe (setIndicator);
 
             setIndicator (false);
-        }
-
-        private void stateUpdated(bool isSyncing)
-        {
-            setIndicator (isSyncing);
         }
 
         private void setIndicator (bool isSyncing)

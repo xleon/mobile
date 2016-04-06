@@ -1,8 +1,11 @@
---style=1tbs
+--style=allman
 --indent=spaces=4
 --indent-namespaces
---indent-preproc-cond
+--indent-switches
 --convert-tabs
 --lineend=linux
 --keep-one-line-blocks
---pad-first-paren-out
+--close-templates
+--unpad-paren
+--pad-header
+--pad-oper

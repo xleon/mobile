@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Reactive.Linq;
 using System.Text.RegularExpressions;
 using GalaSoft.MvvmLight;
@@ -34,14 +35,15 @@ namespace Toggl.Phoebe.ViewModels
             IsAuthenticating = false;
             CurrentLoginMode = LoginMode.Login;
 
-            subscription = StoreManager.Singleton
-                           .Observe (x => x.State.AuthResult)
-                           .DistinctUntilChanged ()
-                           .ObserveOn (SynchronizationContext.Current)
-            .SubscribeSimple (state => {
-                AuthResult = state;
-                IsAuthenticating = state == AuthResult.Authenticating;
-            });
+            subscription = StoreManager
+				.Singleton
+                .Observe (x => x.State.RequestInfo)
+                .DistinctUntilChanged ()
+                .ObserveOn (SynchronizationContext.Current)
+                .SubscribeSimple (reqInfo => {
+                    AuthResult = reqInfo.AuthResult;
+                    IsAuthenticating = reqInfo.Running.Any (x => x is ServerRequest.Authenticate);
+                });
         }
 
         public void Dispose ()
@@ -75,18 +77,18 @@ namespace Toggl.Phoebe.ViewModels
         public void TryLogin (string email, string password)
         {
             if (CurrentLoginMode == LoginMode.Login) {
-                RxChain.Send (new DataMsg.Request (new ServerRequest.Authenticate (email, password)));
+                RxChain.Send (ServerRequest.Authenticate.Login (email, password));
             } else {
-                RxChain.Send (new DataMsg.Request (new ServerRequest.SignUp (email, password)));
+                RxChain.Send (ServerRequest.Authenticate.Signup (email, password));
             }
         }
 
         public void TryLoginWithGoogle (string token)
         {
             if (CurrentLoginMode == LoginMode.Login) {
-                RxChain.Send (new DataMsg.Request (new ServerRequest.AuthenticateWithGoogle (token)));
+                RxChain.Send (ServerRequest.Authenticate.LoginWithGoogle (token));
             } else {
-                RxChain.Send (new DataMsg.Request (new ServerRequest.SignUpWithGoogle (token)));
+                RxChain.Send (ServerRequest.Authenticate.SignupWithGoogle (token));
             }
 
         }

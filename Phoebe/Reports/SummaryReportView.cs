@@ -23,7 +23,7 @@ namespace Toggl.Phoebe.Reports
 
         public ZoomLevel Period { get; set; }
 
-        public async Task Load (UserData userData, int backDate)
+        public async Task Load (IUserData userData, int backDate)
         {
             if (IsLoading) {
                 return;
@@ -46,7 +46,7 @@ namespace Toggl.Phoebe.Reports
             }
         }
 
-        private async Task FetchData (UserData userData, DateTime startDate, DateTime endDate)
+        private async Task FetchData (IUserData userData, DateTime startDate, DateTime endDate)
         {
             dataObject = CreateEmptyReport (startDate);
 

@@ -2,7 +2,6 @@
 {
     public enum AuthResult {
         None,
-        Authenticating,
         Success,
         InvalidCredentials,
         NoGoogleAccount,

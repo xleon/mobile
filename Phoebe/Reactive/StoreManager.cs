@@ -39,7 +39,7 @@ namespace Toggl.Phoebe.Reactive
             Singleton = null;
         }
 
-        readonly Subject<Tuple<DataMsg,SyncTestOptions>> subject1 = new Subject<Tuple<DataMsg,SyncTestOptions>> ();
+        readonly Subject<Tuple<DataMsg, RxChain.Continuation>> subject1 = new Subject<Tuple<DataMsg, RxChain.Continuation>> ();
         readonly Subject<DataSyncMsg<AppState>> subject2 = new Subject<DataSyncMsg<AppState>> ();
 
         StoreManager (AppState initState, Reducer<AppState> reducer)
@@ -59,14 +59,14 @@ namespace Toggl.Phoebe.Reactive
                     msg = DataSyncMsg.Create (acc.State);
                 }
                 AppState = msg.State;
-                return tuple.Item2 == null ? msg : msg.With (tuple.Item2);
+                return tuple.Item2 == null ? msg : new DataSyncMsg<AppState> (msg.State, msg.ServerRequests, tuple.Item2);
             })
             .Subscribe (subject2.OnNext);
         }
 
-        public void Send (DataMsg msg, SyncTestOptions syncTest)
+        public void Send (DataMsg msg, RxChain.Continuation cont)
         {
-            subject1.OnNext (Tuple.Create (msg, syncTest));
+            subject1.OnNext (Tuple.Create (msg, cont));
         }
 
         public IObservable<DataSyncMsg<AppState>> Observe ()

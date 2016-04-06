@@ -19,7 +19,7 @@ namespace Toggl.Phoebe
         public const string StartButtonActionKey = "startButton";
         public const string ClickActionValue = "click";
 
-        public static async void Send (string actionKey, string actionValue, UserData userData)
+        public static async void Send (string actionKey, string actionValue, IUserData userData)
         {
             var experimentAction = new ExperimentAction {
                 ExperimentId = ExperimentNumber,
@@ -29,12 +29,12 @@ namespace Toggl.Phoebe
             await experimentAction.SendAction (userData.ApiToken);
         }
 
-        public static bool IncludedInExperiment (UserData userData)
+        public static bool IncludedInExperiment (IUserData userData)
         {
             return userData.ExperimentIncluded && userData.ExperimentNumber == ExperimentNumber;
         }
 
-        public static bool InExperimentGroups (int experimentNumber, UserData userData)
+        public static bool InExperimentGroups (int experimentNumber, IUserData userData)
         {
             return userData.ExperimentNumber == experimentNumber;
         }

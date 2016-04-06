@@ -26,7 +26,7 @@ namespace Toggl.Phoebe.ViewModels
         {
         }
 
-        public IClientData SaveClient (string clientName, SyncTestOptions testOptions = null)
+        public IClientData SaveClient (string clientName, RxChain.Continuation cont = null)
         {
             model = new ClientData {
                 SyncState = SyncState.CreatePending,
@@ -42,7 +42,7 @@ namespace Toggl.Phoebe.ViewModels
                 .SingleOrDefault (
                     r => r.WorkspaceId == model.WorkspaceId && r.Name == clientName);
             model = existing ?? model;
-            RxChain.Send (new DataMsg.ClientDataPut (model), testOptions);
+            RxChain.Send (new DataMsg.ClientDataPut (model), cont);
             return model;
         }
     }

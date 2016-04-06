@@ -29,6 +29,78 @@ namespace Toggl.Phoebe.Helpers
             return data.Id == ((CommonData)other).Id;
         }
 
+        public static TResult MatchType<T, T1, T2, TResult> (
+            this T item, Func<T1, TResult> f1, Func<T2, TResult> f2)
+        where T1 : T where T2 : T
+        {
+            if (item is T1) {
+                return f1 ((T1)item);
+            }
+            if (item is T2) {
+                return f2 ((T2)item);
+            }
+            throw new Exception ("Unknown type: " + item.GetType ().FullName);
+        }
+
+        public static TResult MatchType<T, T1, T2, T3, TResult> (
+            this T item, Func<T1, TResult> f1, Func<T2, TResult> f2, Func<T3, TResult> f3)
+        where T1 : T where T2 : T where T3 : T
+        {
+            if (item is T1) {
+                return f1 ((T1)item);
+            }
+            if (item is T2) {
+                return f2 ((T2)item);
+            }
+            if (item is T3) {
+                return f3 ((T3)item);
+            }
+            throw new Exception ("Unknown type: " + item.GetType ().FullName);
+        }
+
+        public static TResult MatchType<T, T1, T2, T3, T4, TResult> (
+            this T item, Func<T1, TResult> f1, Func<T2, TResult> f2,
+            Func<T3, TResult> f3, Func<T4, TResult> f4)
+        where T1 : T where T2 : T where T3 : T where T4 : T
+        {
+            if (item is T1) {
+                return f1 ((T1)item);
+            }
+            if (item is T2) {
+                return f2 ((T2)item);
+            }
+            if (item is T3) {
+                return f3 ((T3)item);
+            }
+            if (item is T4) {
+                return f4 ((T4)item);
+            }
+            throw new Exception ("Unknown type: " + item.GetType ().FullName);
+        }
+
+        public static TResult MatchType<T, T1, T2, T3, T4, T5, TResult> (
+            this T item, Func<T1, TResult> f1, Func<T2, TResult> f2,
+            Func<T3, TResult> f3, Func<T4, TResult> f4, Func<T5, TResult> f5)
+        where T1 : T where T2 : T where T3 : T where T4 : T where T5 : T
+        {
+            if (item is T1) {
+                return f1 ((T1)item);
+            }
+            if (item is T2) {
+                return f2 ((T2)item);
+            }
+            if (item is T3) {
+                return f3 ((T3)item);
+            }
+            if (item is T4) {
+                return f4 ((T4)item);
+            }
+            if (item is T5) {
+                return f5 ((T5)item);
+            }
+            throw new Exception ("Unknown type: " + item.GetType ().FullName);
+        }
+
         public static bool UpdateData<T> (this IList<T> list, T data)
         where T : CommonData
         {

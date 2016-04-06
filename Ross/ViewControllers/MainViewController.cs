@@ -194,7 +194,7 @@ namespace Toggl.Ross.ViewControllers
             if (isUserLogged && (emptyStack || ViewControllers [0] is WelcomeViewController)) {
                 // TODO Rx a Fullsync is triggered.
                 // Evaluate if it is the best place or not.
-                RxChain.Send (new DataMsg.FullSync ());
+                RxChain.Send (new ServerRequest.GetChanges ());
                 vc = new LogViewController ();
                 MenuEnabled = true;
             } else if (emptyStack || ! (ViewControllers [0] is WelcomeViewController)) {

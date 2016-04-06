@@ -13,11 +13,9 @@ namespace Toggl.Phoebe.Reactive
     public class AppState
     {
         public SettingsState Settings { get; private set; }
-        public AuthResult AuthResult { get; private set; }
-        public DownloadResult DownloadResult { get; private set; }
-        public FullSyncResult FullSyncResult { get; private set; }
+		public RequestInfo RequestInfo { get; private set; }
 
-        public UserData User { get; private set; }
+        public IUserData User { get; private set; }
         public IReadOnlyDictionary<Guid, IWorkspaceData> Workspaces { get; private set; }
         public IReadOnlyDictionary<Guid, IProjectData> Projects { get; private set; }
         public IReadOnlyDictionary<Guid, IWorkspaceUserData> WorkspaceUsers { get; private set; }
@@ -43,11 +41,9 @@ namespace Toggl.Phoebe.Reactive
         }
 
         AppState (
-            SettingsState settings,
-            AuthResult authResult,
-            DownloadResult downloadResult,
-            FullSyncResult fullSyncResult,
-            UserData user,
+			SettingsState settings,
+            RequestInfo requestInfo,
+            IUserData user,
             IReadOnlyDictionary<Guid, IWorkspaceData> workspaces,
             IReadOnlyDictionary<Guid, IProjectData> projects,
             IReadOnlyDictionary<Guid, IWorkspaceUserData> workspaceUsers,
@@ -58,9 +54,7 @@ namespace Toggl.Phoebe.Reactive
             IReadOnlyDictionary<Guid, RichTimeEntry> timeEntries)
         {
             Settings = settings;
-            AuthResult = authResult;
-            DownloadResult = downloadResult;
-            FullSyncResult = fullSyncResult;
+            RequestInfo = requestInfo;
             User = user;
             Workspaces = workspaces;
             Projects = projects;
@@ -74,10 +68,8 @@ namespace Toggl.Phoebe.Reactive
 
         public AppState With (
             SettingsState settings = null,
-            AuthResult? authResult = null,
-            DownloadResult downloadResult = null,
-            FullSyncResult fullSyncResult = null,
-            UserData user = null,
+            RequestInfo requestInfo = null,
+            IUserData user = null,
             IReadOnlyDictionary<Guid, IWorkspaceData> workspaces = null,
             IReadOnlyDictionary<Guid, IProjectData> projects = null,
             IReadOnlyDictionary<Guid, IWorkspaceUserData> workspaceUsers = null,
@@ -89,9 +81,7 @@ namespace Toggl.Phoebe.Reactive
         {
             return new AppState (
                        settings ?? Settings,
-                       authResult ?? AuthResult,
-                       downloadResult ?? DownloadResult,
-                       fullSyncResult ?? FullSyncResult,
+                       requestInfo ?? RequestInfo,
                        user ?? User,
                        workspaces ?? Workspaces,
                        projects ?? Projects,
@@ -231,19 +221,17 @@ namespace Toggl.Phoebe.Reactive
             }
 
             return new AppState (
-                       settings: settings,
-                       authResult: AuthResult.None,
-                       downloadResult: DownloadResult.Empty,
-                       fullSyncResult:FullSyncResult.Empty,
-                       user: userData,
-                       workspaces: workspaces,
-                       projects: projects,
-                       workspaceUsers: workspaceUserData,
-                       projectUsers: projectUsers,
-                       clients: clients,
-                       tasks: tasks,
-                       tags: tags,
-                       timeEntries: new Dictionary<Guid, RichTimeEntry> ());
+                settings: settings,
+                requestInfo: RequestInfo.Empty,
+                user: userData,
+                workspaces: workspaces,
+                projects: projects,
+                workspaceUsers: workspaceUserData,
+                projectUsers: projectUsers,
+                clients: clients,
+                tasks: tasks,
+                tags: tags,
+                timeEntries: new Dictionary<Guid, RichTimeEntry> ());
         }
     }
 
@@ -283,98 +271,91 @@ namespace Toggl.Phoebe.Reactive
         }
     }
 
-    public class ActiveEntryInfo
+    public class RequestInfo
     {
-        public Guid Id { get; private set; }
+        /// <summary>
+        /// Request types in process
+        /// </summary>
+        public IReadOnlyList<ServerRequest> Running { get; private set; }
 
-        public static ActiveEntryInfo Empty
-        {
-            get { return new ActiveEntryInfo (Guid.Empty); }
-        }
+        /// <summary>
+        /// Are there more entries available to download from the server?
+        /// </summary>
+        public bool HasMoreEntries { get; private set; }
 
-        public ActiveEntryInfo (Guid id)
-        {
-            Id = id;
-        }
-    }
-
-    public class FullSyncResult
-    {
-        public bool IsSyncing { get; private set; }
-        public DateTime SyncLastRun { get; private set; }
+        /// <summary>
+        /// True if last request completed with errors
+        /// </summary>
         public bool HadErrors { get; private set; }
 
-        public static FullSyncResult Empty
-        {
-            get {
-                // Initial Date for full sync.
-                // the last 5 days.
-                var syncLastRun = Time.UtcNow.AddDays (-5);
-                return new FullSyncResult (false, true, syncLastRun);
-            }
-        }
-
-        public FullSyncResult (bool isSyncing, bool hadErrors, DateTime syncLastRun)
-        {
-            IsSyncing = isSyncing;
-            HadErrors = hadErrors;
-            SyncLastRun = syncLastRun;
-        }
-
-        public FullSyncResult With (
-            bool? isSyncing = null,
-            bool? hadErrors = null,
-            DateTime? syncLastRun = null)
-        {
-            return new FullSyncResult (
-                       isSyncing.HasValue ? isSyncing.Value : IsSyncing,
-                       hadErrors.HasValue ? hadErrors.Value : HadErrors,
-                       syncLastRun.HasValue ? syncLastRun.Value : SyncLastRun);
-        }
-    }
-
-    public class DownloadResult
-    {
-        public bool IsSyncing { get; private set; }
-        public bool HasMore { get; private set; }
-        public bool HadErrors { get; private set; }
+        /// <summary>
+        /// Date used by DownloadEntries
+        /// </summary>
         public DateTime DownloadFrom { get; private set; }
+
+        /// <summary>
+        /// What date to use next time DownloadEntries is run
+        /// </summary>
         public DateTime NextDownloadFrom { get; private set; }
 
-        public static DownloadResult Empty
+        /// <summary>
+        /// Last time changes were requested from the server
+        /// </summary>
+        public DateTime GetChangesLastRun { get; private set; }
+
+        /// <summary>
+        /// Result of authentication request
+        /// </summary>
+        public AuthResult AuthResult { get; private set; }
+
+        public static RequestInfo Empty
         {
             get {
-                // Set initial pagination Date to the beginning of the next day.
-                // So, we can include all entries created -Today-.
-                var downloadFrom = Time.UtcNow.Date.AddDays (1);
-                return new DownloadResult (false, true, false, downloadFrom, downloadFrom);
+				// Set initial pagination Date to the beginning of the next day.
+				// So, we can include all entries created -Today-.
+				var downloadFrom = Time.UtcNow.Date.AddDays (1);
+				
+				// Initial Date for GetChanges: the last 5 days.
+				var getChangesLastRun = Time.UtcNow.AddDays (-5);
+
+				return new RequestInfo (
+                    new List<ServerRequest> (), true, false,
+                    downloadFrom, downloadFrom,
+                    getChangesLastRun, AuthResult.None);
             }
         }
 
-        public DownloadResult (
-            bool isSyncing, bool hasMore, bool hadErrors,
-            DateTime downloadFrom, DateTime nextDownloadFrom)
+        public RequestInfo (
+            IReadOnlyList<ServerRequest> running, bool hasMore, bool hadErrors,
+            DateTime downloadFrom, DateTime nextDownloadFrom,
+            DateTime getChangesLastRun, AuthResult authResult)
         {
-            IsSyncing = isSyncing;
-            HasMore = hasMore;
+            Running = running;
+            HasMoreEntries = hasMore;
             HadErrors = hadErrors;
             DownloadFrom = downloadFrom;
             NextDownloadFrom = nextDownloadFrom;
+            GetChangesLastRun = getChangesLastRun;
+            AuthResult = authResult;
         }
 
-        public DownloadResult With (
-            bool? isSyncing = null,
+        public RequestInfo With (
+            IReadOnlyList<ServerRequest> running = null,
             bool? hasMore = null,
             bool? hadErrors = null,
             DateTime? downloadFrom = null,
-            DateTime? nextDownloadFrom = null)
+            DateTime? nextDownloadFrom = null,
+            DateTime? getChangesLastRun = null,
+            AuthResult? authResult = null)
         {
-            return new DownloadResult (
-                       isSyncing.HasValue ? isSyncing.Value : IsSyncing,
-                       hasMore.HasValue ? hasMore.Value : HasMore,
-                       hadErrors.HasValue ? hadErrors.Value : HadErrors,
-                       downloadFrom.HasValue ? downloadFrom.Value : DownloadFrom,
-                       nextDownloadFrom.HasValue ? nextDownloadFrom.Value : NextDownloadFrom);
+            return new RequestInfo (
+                running != null ? running : Running,
+                hasMore.HasValue ? hasMore.Value : HasMoreEntries,
+                hadErrors.HasValue ? hadErrors.Value : HadErrors,
+                downloadFrom.HasValue ? downloadFrom.Value : DownloadFrom,
+                nextDownloadFrom.HasValue ? nextDownloadFrom.Value : NextDownloadFrom,
+                getChangesLastRun.HasValue ? getChangesLastRun.Value : GetChangesLastRun,
+                authResult.HasValue ? authResult.Value : AuthResult);
         }
     }
 
@@ -382,7 +363,7 @@ namespace Toggl.Phoebe.Reactive
     {
         // Common Default values
         private static readonly Guid UserIdDefault = Guid.Empty;
-        private static readonly DateTime SyncLastRunDefault = DateTime.MinValue;
+        private static readonly DateTime GetChangesLastRunDefault = DateTime.MinValue;
         private static readonly bool UseDefaultTagDefault = true;
         private static readonly string LastAppVersionDefault = string.Empty;
         private static readonly int LastReportZoomDefault = (int)ZoomLevel.Week;
@@ -404,7 +385,7 @@ namespace Toggl.Phoebe.Reactive
 
         // Common values
         public Guid UserId {get; private set; }
-        public DateTime SyncLastRun { get; private set; }
+        public DateTime GetChangesLastRun { get; private set; }
         public bool UseDefaultTag { get; private set; }
         public string LastAppVersion { get; private set; }
         public int LastReportZoom { get; private set; }
@@ -430,7 +411,7 @@ namespace Toggl.Phoebe.Reactive
             if (Settings.SerializedSettings == string.Empty) {
                 var settings = new SettingsState();
                 settings.UserId = UserIdDefault;
-                settings.SyncLastRun = SyncLastRunDefault;
+                settings.GetChangesLastRun = GetChangesLastRunDefault;
                 settings.UseDefaultTag = UseDefaultTagDefault;
                 settings.LastAppVersion = LastAppVersionDefault;
                 settings.LastReportZoom = LastReportZoomDefault;
@@ -468,7 +449,7 @@ namespace Toggl.Phoebe.Reactive
 
         public SettingsState With (
             Guid? userId = null,
-            DateTime? syncLastRun = null,
+            DateTime? getChangesLastRun = null,
             bool? useTag = null,
             string lastAppVersion = null,
             int? lastReportZoom = null,
@@ -490,7 +471,7 @@ namespace Toggl.Phoebe.Reactive
         {
             var copy = Init();
             updateNullable (userId, copy.UserId, x => copy.UserId = x);
-            updateNullable (syncLastRun, copy.SyncLastRun, x => copy.SyncLastRun = x);
+            updateNullable (getChangesLastRun, copy.GetChangesLastRun, x => copy.GetChangesLastRun = x);
             updateNullable (useTag, copy.UseDefaultTag, x => copy.UseDefaultTag = x);
             updateReference (lastAppVersion, copy.LastAppVersion, x => copy.LastAppVersion = x);
             updateNullable (lastReportZoom, copy.LastReportZoom, x => copy.LastReportZoom = x);

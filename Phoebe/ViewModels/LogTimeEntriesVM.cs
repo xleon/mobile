@@ -110,7 +110,7 @@ namespace Toggl.Phoebe.ViewModels
         {
             IsFullSyncing = true;
             HasSyncErrors = false;
-            RxChain.Send (new DataMsg.FullSync ());
+            RxChain.Send (new ServerRequest.GetChanges ());
         }
 
         public void LoadMore ()
@@ -177,23 +177,23 @@ namespace Toggl.Phoebe.ViewModels
         }
         #endregion
 
-        private void UpdateState (SettingsState settings, RichTimeEntry activeTimeEntry, DownloadResult downloadResults, FullSyncResult fullsyncReturn)
+        private void UpdateState (SettingsState settings, RichTimeEntry activeTimeEntry, RequestInfo prevRequest)
         {
             if (settings.GroupedEntries != IsGroupedMode) {
                 ResetCollection (settings.GroupedEntries);
             }
 
             // Check full Sync info
-            HasSyncErrors = fullsyncReturn.HadErrors;
-            IsFullSyncing = fullsyncReturn.IsSyncing;
+            HasSyncErrors = appState.RequestInfo.HadErrors;
+            IsFullSyncing = appState.RequestInfo.Running.Any (x => x is ServerRequest.GetChanges);
 
-            // Check if DownloadResult has changed
             var newLoadInfo = new LoadInfoType (
-                downloadResults.IsSyncing,
-                downloadResults.HasMore,
-                downloadResults.HadErrors
+                appState.RequestInfo.Running.Any (x => x is ServerRequest.DownloadEntries),
+                appState.RequestInfo.HasMoreEntries,
+                appState.RequestInfo.HadErrors
             );
 
+            // Check if LoadInfo has changed
             if (LoadInfo == null ||
                     (LoadInfo.HadErrors != newLoadInfo.HadErrors ||
                      LoadInfo.HasMore != newLoadInfo.HasMore ||

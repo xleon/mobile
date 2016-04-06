@@ -72,60 +72,40 @@ namespace Toggl.Phoebe.Reactive
         public static Reducer<AppState> Init ()
         {
             return new TagCompositeReducer<AppState> ()
-                   .Add (typeof (DataMsg.Request), ServerRequest)
-                   .Add (typeof (DataMsg.ReceivedFromSync), ReceivedFromSync)
-                   .Add (typeof (DataMsg.ReceivedFromUpdate), ReceivedFromUpdate)
-                   .Add (typeof (DataMsg.ReceivedFromDownload), ReceivedFromDownload)
-                   .Add (typeof (DataMsg.FullSync), FullSync)
-                   .Add (typeof (DataMsg.TimeEntriesLoad), TimeEntriesLoad)
-                   .Add (typeof (DataMsg.TimeEntryPut), TimeEntryPut)
-                   .Add (typeof (DataMsg.TimeEntriesRemove), TimeEntryRemove)
-                   .Add (typeof (DataMsg.TimeEntryContinue), TimeEntryContinue)
-                   .Add (typeof (DataMsg.TimeEntryStop), TimeEntryStop)
-                   .Add (typeof (DataMsg.TagsPut), TagsPut)
-                   .Add (typeof (DataMsg.ClientDataPut), ClientDataPut)
-                   .Add (typeof (DataMsg.ProjectDataPut), ProjectDataPut)
-                   .Add (typeof (DataMsg.UserDataPut), UserDataPut)
-                   .Add (typeof (DataMsg.ResetState), Reset)
-                   .Add (typeof (DataMsg.UpdateSetting), UpdateSettings);
+                .Add (typeof (DataMsg.ServerRequest), ServerRequest)
+                .Add (typeof (DataMsg.ServerResponse), ServerResponse)
+                .Add (typeof (DataMsg.TimeEntriesLoad), TimeEntriesLoad)
+                .Add (typeof (DataMsg.TimeEntryPut), TimeEntryPut)
+                .Add (typeof (DataMsg.TimeEntriesRemove), TimeEntryRemove)
+                .Add (typeof (DataMsg.TimeEntryContinue), TimeEntryContinue)
+                .Add (typeof (DataMsg.TimeEntryStop), TimeEntryStop)
+                .Add (typeof (DataMsg.TagsPut), TagsPut)
+                .Add (typeof (DataMsg.ClientDataPut), ClientDataPut)
+                .Add (typeof (DataMsg.ProjectDataPut), ProjectDataPut)
+                .Add (typeof (DataMsg.UserDataPut), UserDataPut)
+                .Add (typeof (DataMsg.ResetState), Reset)
+                .Add (typeof (DataMsg.UpdateSetting), UpdateSettings);
         }
 
         static DataSyncMsg<AppState> ServerRequest (AppState state, DataMsg msg)
         {
-            var request = (msg as DataMsg.Request).Data;
-            var newState =
-                request is ServerRequest.DownloadEntries
-                ? state.With (downloadResult: state.DownloadResult.With (isSyncing: true))
-                : state.With (authResult: AuthResult.Authenticating);
-            return DataSyncMsg.Create (newState, request: request);
-        }
+            var req = (msg as DataMsg.ServerRequest).Data;
 
-        static DataSyncMsg<AppState> FullSync (AppState state, DataMsg msg)
-        {
-            var syncDate = state.Settings.SyncLastRun;
-            FullSyncResult syncResult = state.FullSyncResult;
+            var reqInfo = state.RequestInfo.With (running: state.RequestInfo.Running.Append (req).ToList ());
+            if (req is ServerRequest.GetChanges)
+                reqInfo = reqInfo.With (getChangesLastRun: state.Settings.GetChangesLastRun);
 
-            syncResult = syncResult.With (
-                             isSyncing: true,
-                             hadErrors:false,
-                             syncLastRun:syncDate);
-
-            return DataSyncMsg.Create (
-                       state.With (fullSyncResult:syncResult),
-                       request: new ServerRequest.FullSync ());
+            return DataSyncMsg.Create (req, state.With (requestInfo: reqInfo));
         }
 
         static DataSyncMsg<AppState> TimeEntriesLoad (AppState state, DataMsg msg)
         {
-            var dataStore = ServiceContainer.Resolve <ISyncDataStore> ();
-            var endDate = state.DownloadResult.NextDownloadFrom;
-
-            DownloadResult downloadInfo = state.DownloadResult;
-            IList<TimeEntryData> dbEntries = new List<TimeEntryData>();
+            var dataStore = ServiceContainer.Resolve<ISyncDataStore> ();
+            var endDate = state.RequestInfo.NextDownloadFrom;
 
             var startDate = GetDatesByDays (dataStore, endDate, Literals.TimeEntryLoadDays);
-            dbEntries = dataStore
-                        .Table<TimeEntryData>()
+            var dbEntries = dataStore
+                        .Table<TimeEntryData> ()
                         .Where (r =>
                                 r.State != TimeEntryState.New &&
                                 r.StartTime >= startDate && r.StartTime < endDate &&
@@ -134,74 +114,70 @@ namespace Toggl.Phoebe.Reactive
                         //r.UserId == state.User.Id)
                         .Take (Literals.TimeEntryLoadMaxInit)
                         .OrderByDescending (r => r.StartTime)
-                        .ToList();
+                        .ToList ();
 
-            downloadInfo =
-                downloadInfo.With (
-                    isSyncing: true,
-                    downloadFrom: endDate,
-                    nextDownloadFrom: dbEntries.Any()
-                    ? dbEntries.Min (x => x.StartTime)
-                    : endDate);
+            var req = new ServerRequest.DownloadEntries ();
+            var reqInfo = state.RequestInfo.With (
+                running: state.RequestInfo.Running.Append (req).ToList (),
+                downloadFrom: endDate,
+                nextDownloadFrom: dbEntries.Any () ? dbEntries.Min (x => x.StartTime) : endDate);
 
-            return DataSyncMsg.Create (
-                       state.With (
-                           downloadResult: downloadInfo,
-                           timeEntries: state.UpdateTimeEntries (dbEntries)),
-                       request: new ServerRequest.DownloadEntries());
+            return DataSyncMsg.Create (req, state.With (
+                requestInfo: reqInfo,
+                timeEntries: state.UpdateTimeEntries (dbEntries)));
         }
 
-        static DataSyncMsg<AppState> ReceivedFromSync (AppState state, DataMsg msg)
+        static DataSyncMsg<AppState> ServerResponse (AppState state, DataMsg msg)
         {
-            var serverMsg = msg as DataMsg.ReceivedFromSync;
-            return serverMsg.Data.Match (receivedData => {
-                // Side effect operation.
-                // Update state inside.
-                state = UpdateStateWithNewData (state, receivedData);
+            var serverMsg = msg as DataMsg.ServerResponse;
+            return serverMsg.Data.Match (
+                receivedData => serverMsg.Request.MatchType (
+					(ServerRequest.CRUD _) => {
+						state = UpdateStateWithNewData (state, receivedData);
+						return DataSyncMsg.Create (state);
+					},
+                    (ServerRequest.DownloadEntries req) => {
+                        state = UpdateStateWithNewData (state, receivedData);
+                        var reqInfo = state.RequestInfo.With (
+                            running: state.RequestInfo.Running.Where (x => x != req).ToList (),
+                            hasMore: receivedData.OfType<TimeEntryData> ().Any (),
+                            hadErrors: false);
+                        return DataSyncMsg.Create (state.With (requestInfo: reqInfo));
+                    },
+                    (ServerRequest.GetChanges req) => {
+                        state = UpdateStateWithNewData (state, receivedData);
 
-                // Update user
-                var dataStore = ServiceContainer.Resolve<ISyncDataStore>();
-                UserData user = serverMsg.FullSyncInfo.Item1;
-                user.Id = state.User.Id;
-                user.DefaultWorkspaceId = state.Workspaces.Values.Single (x => x.RemoteId == user.DefaultWorkspaceRemoteId).Id;
-                var userUpdated = (UserData)dataStore.Update (ctx => ctx.Put (user)).Single();
+                        // Update user
+                        var dataStore = ServiceContainer.Resolve<ISyncDataStore> ();
+                        UserData user = serverMsg.User;
+                        user.Id = state.User.Id;
+                        user.DefaultWorkspaceId = state.Workspaces.Values.Single (x => x.RemoteId == user.DefaultWorkspaceRemoteId).Id;
+                        var userUpdated = (UserData)dataStore.Update (ctx => ctx.Put (user)).Single ();
 
-                // Modify state.
-                return DataSyncMsg.Create (
-                           state.With (
-                               user: userUpdated,
-                               fullSyncResult: state.FullSyncResult.With (isSyncing: false, hadErrors: false, syncLastRun: serverMsg.FullSyncInfo.Item2),
-                               settings: state.Settings.With (syncLastRun: serverMsg.FullSyncInfo.Item2)));
-            },
-            ex => DataSyncMsg.Create (state.With (fullSyncResult: state.FullSyncResult.With (isSyncing: false, hadErrors: true))));
-        }
-
-        static DataSyncMsg<AppState> ReceivedFromUpdate (AppState state, DataMsg msg)
-        {
-            var serverMsg = msg as DataMsg.ReceivedFromUpdate;
-            return serverMsg.Data.Match (receivedData => {
-                // Side effect operation.
-                state = UpdateStateWithNewData (state, receivedData);
-                return DataSyncMsg.Create (state);
-            },
-            ex => DataSyncMsg.Create (state.With (downloadResult: state.DownloadResult.With (isSyncing: false, hadErrors: true))));
-        }
-
-        static DataSyncMsg<AppState> ReceivedFromDownload (AppState state, DataMsg msg)
-        {
-            var serverMsg = msg as DataMsg.ReceivedFromDownload;
-            return serverMsg.Data.Match (receivedData => {
-                // Side effect operation.
-                // Update state inside.
-                state = UpdateStateWithNewData (state, receivedData);
-
-                // Modify state with download info
-                var hasMore = receivedData.OfType<TimeEntryData>().Any();
-                return DataSyncMsg.Create (
-                           state.With (downloadResult: state.DownloadResult.With (isSyncing: false, hasMore: hasMore, hadErrors: false)
-                                      ));
-            },
-            ex => DataSyncMsg.Create (state.With (downloadResult: state.DownloadResult.With (isSyncing: false, hadErrors: true))));
+                        var reqInfo = state.RequestInfo.With (
+                            hadErrors: false,
+                            running: state.RequestInfo.Running.Where (x => x != req).ToList (),
+                            getChangesLastRun: serverMsg.Timestamp);
+                        
+                        return DataSyncMsg.Create (state.With (
+                            user: userUpdated,
+                            requestInfo: reqInfo,
+                            settings: state.Settings.With (getChangesLastRun: serverMsg.Timestamp)));
+                    },
+                    (ServerRequest.GetCurrentState _) => {
+                        throw new NotImplementedException ();
+                    },
+                    (ServerRequest.Authenticate _) => {
+                        // TODO RX: Right now, Authenticate responses send UserDataPut messages
+                        throw new NotImplementedException ();
+                    }
+                ),
+                ex => {
+                    var reqInfo = state.RequestInfo.With (
+                        running: state.RequestInfo.Running.Where (x => x != serverMsg.Request).ToList (),
+                        hadErrors: true);
+                    return DataSyncMsg.Create (state.With (requestInfo: reqInfo));
+                });
         }
 
         static DataSyncMsg<AppState> TimeEntryPut (AppState state, DataMsg msg)
@@ -213,9 +189,7 @@ namespace Toggl.Phoebe.Reactive
             var updated = dataStore.Update (ctx => ctx.Put (entryData));
 
             // TODO: Check updated.Count == 1?
-            return DataSyncMsg.Create (
-                       state.With (timeEntries: state.UpdateTimeEntries (updated)),
-                       updated);
+            return DataSyncMsg.Create (updated, state.With (timeEntries: state.UpdateTimeEntries (updated)));
         }
 
         static DataSyncMsg<AppState> TimeEntryRemove (AppState state, DataMsg msg)
@@ -230,9 +204,7 @@ namespace Toggl.Phoebe.Reactive
                 }
             });
 
-            return DataSyncMsg.Create (
-                       state.With (timeEntries: state.UpdateTimeEntries (updated)),
-                       updated);
+            return DataSyncMsg.Create (updated, state.With (timeEntries: state.UpdateTimeEntries (updated)));
         }
 
         static DataSyncMsg<AppState> TagsPut (AppState state, DataMsg msg)
@@ -246,7 +218,7 @@ namespace Toggl.Phoebe.Reactive
                 }
             });
 
-            return DataSyncMsg.Create (state.With (tags: state.Update (state.Tags, updated)), updated);
+            return DataSyncMsg.Create (updated, state.With (tags: state.Update (state.Tags, updated)));
         }
 
         static DataSyncMsg<AppState> ClientDataPut (AppState state, DataMsg msg)
@@ -256,7 +228,7 @@ namespace Toggl.Phoebe.Reactive
 
             var updated = dataStore.Update (ctx => ctx.Put (data));
 
-            return DataSyncMsg.Create (state.With (clients: state.Update (state.Clients, updated)), updated);
+            return DataSyncMsg.Create (updated, state.With (clients: state.Update (state.Clients, updated)));
         }
 
         static DataSyncMsg<AppState> ProjectDataPut (AppState state, DataMsg msg)
@@ -266,7 +238,7 @@ namespace Toggl.Phoebe.Reactive
 
             var updated = dataStore.Update (ctx => ctx.Put (data));
 
-            return DataSyncMsg.Create (state.With (projects: state.Update (state.Projects, updated)), updated);
+            return DataSyncMsg.Create (updated, state.With (projects: state.Update (state.Projects, updated)));
         }
 
         static DataSyncMsg<AppState> UserDataPut (AppState state, DataMsg msg)
@@ -283,18 +255,16 @@ namespace Toggl.Phoebe.Reactive
                 // This will throw an exception if user hasn't been correctly updated
                 var userDataInDb = updated.OfType<UserData> ().Single ();
 
-                return DataSyncMsg.Create (
-                           state.With (
-                               user: userDataInDb,
-                               authResult: AuthResult.Success,
-                               workspaces: state.Update (state.Workspaces, updated),
-                               settings: state.Settings.With (userId: userDataInDb.Id)));
+                return DataSyncMsg.Create (state.With (
+                                user: userDataInDb,
+                                requestInfo: state.RequestInfo.With (authResult: AuthResult.Success),
+                                workspaces: state.Update (state.Workspaces, updated),
+                                settings: state.Settings.With (userId: userDataInDb.Id)));
             },
             ex => {
                 return DataSyncMsg.Create (state.With (
-                                               user: new UserData (),
-                                               authResult: ex.AuthResult
-                                           ));
+                                user: new UserData (),
+                                requestInfo: state.RequestInfo.With (authResult: ex.AuthResult)));
             });
         }
 
@@ -338,8 +308,7 @@ namespace Toggl.Phoebe.Reactive
                 }));
             });
 
-            return DataSyncMsg.Create (
-                       state.With (timeEntries: state.UpdateTimeEntries (updated)), updated);
+            return DataSyncMsg.Create (updated, state.With (timeEntries: state.UpdateTimeEntries (updated)));
         }
 
         static DataSyncMsg<AppState> TimeEntryStop (AppState state, DataMsg msg)
@@ -355,8 +324,7 @@ namespace Toggl.Phoebe.Reactive
             })));
 
             // TODO: Check updated.Count == 1?
-            return DataSyncMsg.Create (
-                       state.With (timeEntries: state.UpdateTimeEntries (updated)), updated);
+            return DataSyncMsg.Create (updated, state.With (timeEntries: state.UpdateTimeEntries (updated)));
         }
 
         static DataSyncMsg<AppState> Reset (AppState state, DataMsg msg)

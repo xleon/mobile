@@ -45,7 +45,7 @@ namespace Toggl.Phoebe.ViewModels
             ClientName = clientData.Name;
         }
 
-        public IProjectData SaveProject (string projectName, int projectColor, SyncTestOptions testOptions = null)
+        public IProjectData SaveProject (string projectName, int projectColor, RxChain.Continuation cont = null)
         {
             model = model.With (x => {
                 x.Name = projectName;
@@ -65,7 +65,7 @@ namespace Toggl.Phoebe.ViewModels
             };
             */
             // Save new project and relationship
-            RxChain.Send (new DataMsg.ProjectDataPut (model), testOptions);
+            RxChain.Send (new DataMsg.ProjectDataPut (model), cont);
 
             return model;
         }

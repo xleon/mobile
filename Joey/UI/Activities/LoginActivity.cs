@@ -148,7 +148,7 @@ namespace Toggl.Joey.UI.Activities
             resultBinding = this.SetBinding (() => ViewModel.AuthResult).WhenSourceChanges (() => {
                 switch (ViewModel.AuthResult) {
                 case AuthResult.None:
-                case AuthResult.Authenticating:
+                //case AuthResult.Authenticating: // TODO RX: Do we still need this?
                     SetViewState ();
                     break;
 

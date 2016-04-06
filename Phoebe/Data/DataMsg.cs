@@ -17,78 +17,52 @@ namespace Toggl.Phoebe.Data
             RawData = Either<object, Exception>.Left (null);
         }
 
-        public sealed class Request : DataMsg
+        public sealed class ServerRequest : DataMsg
         {
-            public ServerRequest Data
+            public Data.ServerRequest Data
             {
-                get { return RawData.ForceLeft () as ServerRequest; }
-                private set { RawData = Either<object, Exception>.Left ((object)value); }
+                get { return RawData.ForceLeft () as Data.ServerRequest; }
+                private set { RawData = Either<object, Exception>.Left (value); }
             }
 
-            public Request (ServerRequest req)
+            public ServerRequest (Data.ServerRequest req)
             {
                 Data = req;
             }
         }
 
-        public sealed class ReceivedFromUpdate : DataMsg
+        public sealed class ServerResponse : DataMsg
         {
-            public Either<IEnumerable<CommonData>, Exception> Data
-            {
-                get { return RawData.CastLeft<IEnumerable<CommonData>> (); }
-                set { RawData = value.CastLeft<object> (); }
-            }
+            public Data.ServerRequest Request { get; private set; }
 
-            public ReceivedFromUpdate (Exception ex)
-            {
-                Data = Either<IEnumerable<CommonData>, Exception>.Right (ex);
-            }
+            public UserData User { get; private set; }
 
-            public ReceivedFromUpdate (IEnumerable<CommonData> data)
-            {
-                Data = Either<IEnumerable<CommonData>, Exception>.Left (data);
-            }
-        }
-
-        public sealed class ReceivedFromDownload : DataMsg
-        {
-            public Either<IEnumerable<CommonData>, Exception> Data
-            {
-                get { return RawData.CastLeft<IEnumerable<CommonData>> (); }
-                set { RawData = value.CastLeft<object> (); }
-            }
-
-            public ReceivedFromDownload (Exception ex)
-            {
-                Data = Either<IEnumerable<CommonData>, Exception>.Right (ex);
-            }
-
-            public ReceivedFromDownload (IEnumerable<CommonData> data)
-            {
-                Data = Either<IEnumerable<CommonData>, Exception>.Left (data);
-            }
-        }
-
-        public sealed class ReceivedFromSync : DataMsg
-        {
-            public Tuple<UserData, DateTime> FullSyncInfo { get; private set; }
+            public DateTime Timestamp { get; private set; }
 
             public Either<IEnumerable<CommonData>, Exception> Data
             {
                 get { return RawData.CastLeft<IEnumerable<CommonData>> (); }
-                set { RawData = value.CastLeft<object> (); }
+                private set { RawData = value.CastLeft<object> (); }
             }
 
-            public ReceivedFromSync (Exception ex)
+            public ServerResponse (Data.ServerRequest req, Exception ex)
             {
+                Request = req;
                 Data = Either<IEnumerable<CommonData>, Exception>.Right (ex);
             }
 
-            public ReceivedFromSync (IEnumerable<CommonData> data, Tuple<UserData, DateTime> fullSyncInfo = null)
+            public ServerResponse (
+                Data.ServerRequest req, IEnumerable<CommonData> data,
+                UserData user = null, DateTime? timestamp = null)
             {
-                FullSyncInfo = fullSyncInfo;
+                Request = req;
+                User = user;
+                Timestamp = timestamp.HasValue ? timestamp.Value : DateTime.MinValue;
                 Data = Either<IEnumerable<CommonData>, Exception>.Left (data);
             }
+
+            public static ServerResponse CRUD (IEnumerable<CommonData> data) =>
+                new ServerResponse (new Data.ServerRequest.CRUD (null), data);
         }
 
         public sealed class ResetState : DataMsg
@@ -99,16 +73,12 @@ namespace Toggl.Phoebe.Data
         {
         }
 
-        public sealed class FullSync : DataMsg
-        {
-        }
-
         public sealed class TimeEntryStop : DataMsg
         {
             public Either<ITimeEntryData, Exception> Data
             {
                 get { return RawData.CastLeft<ITimeEntryData> (); }
-                set { RawData = value.CastLeft<object> (); }
+                private set { RawData = value.CastLeft<object> (); }
             }
 
             public TimeEntryStop (ITimeEntryData data)
@@ -123,7 +93,7 @@ namespace Toggl.Phoebe.Data
             public Either<ITimeEntryData, Exception> Data
             {
                 get { return RawData.CastLeft<ITimeEntryData> (); }
-                set { RawData = value.CastLeft<object> (); }
+                private set { RawData = value.CastLeft<object> (); }
             }
 
             public TimeEntryContinue (ITimeEntryData data, bool startedByFAB = false)
@@ -138,7 +108,7 @@ namespace Toggl.Phoebe.Data
             public Either<ITimeEntryData, Exception> Data
             {
                 get { return RawData.CastLeft<ITimeEntryData> (); }
-                set { RawData = value.CastLeft<object> (); }
+                private set { RawData = value.CastLeft<object> (); }
             }
 
             public TimeEntryPut (ITimeEntryData data)
@@ -152,7 +122,7 @@ namespace Toggl.Phoebe.Data
             public Either<IEnumerable<ITimeEntryData>, Exception> Data
             {
                 get { return RawData.CastLeft<IEnumerable<ITimeEntryData>> (); }
-                set { RawData = value.CastLeft<object> (); }
+                private set { RawData = value.CastLeft<object> (); }
             }
 
             public TimeEntriesRemove (ITimeEntryData data)
@@ -171,7 +141,7 @@ namespace Toggl.Phoebe.Data
             public Either<IEnumerable<ITagData>, Exception> Data
             {
                 get { return RawData.CastLeft<IEnumerable<ITagData>> (); }
-                set { RawData = value.CastLeft<object> (); }
+                private set { RawData = value.CastLeft<object> (); }
             }
 
             public TagsPut (IEnumerable<ITagData> tags)
@@ -186,7 +156,7 @@ namespace Toggl.Phoebe.Data
             public Either<DateTime, Exception> Data
             {
                 get { return RawData.CastLeft<DateTime> (); }
-                set { RawData = value.CastLeft<object> (); }
+                private set { RawData = value.CastLeft<object> (); }
             }
 
             public EmptyQueueAndSync (DateTime data)
@@ -200,7 +170,7 @@ namespace Toggl.Phoebe.Data
             public Either<IProjectData, Exception> Data
             {
                 get { return RawData.CastLeft<IProjectData> (); }
-                set { RawData = value.CastLeft<object> (); }
+                private set { RawData = value.CastLeft<object> (); }
             }
 
             public ProjectDataPut (IProjectData project)
@@ -214,7 +184,7 @@ namespace Toggl.Phoebe.Data
             public Either<IClientData, Exception> Data
             {
                 get { return RawData.CastLeft<IClientData> (); }
-                set { RawData = value.CastLeft<object> (); }
+                private set { RawData = value.CastLeft<object> (); }
             }
 
             public ClientDataPut (IClientData data)
@@ -238,7 +208,7 @@ namespace Toggl.Phoebe.Data
             public Either<IUserData, AuthException> Data
             {
                 get { return RawData.Cast<IUserData, AuthException> (); }
-                set { RawData = value.Cast<object, Exception> (); }
+                private set { RawData = value.Cast<object, Exception> (); }
             }
 
             public UserDataPut (AuthResult authResult, IUserData data = null)
@@ -263,7 +233,7 @@ namespace Toggl.Phoebe.Data
             public Either<SettingChangeInfo, Exception> Data
             {
                 get { return RawData.CastLeft<SettingChangeInfo> (); }
-                set { RawData = value.CastLeft<object> (); }
+                private set { RawData = value.CastLeft<object> (); }
             }
 
             public UpdateSetting (string settingName, object value)
@@ -278,7 +248,21 @@ namespace Toggl.Phoebe.Data
     {
         protected ServerRequest () {}
 
-        public sealed class FullSync : ServerRequest
+        public sealed class CRUD : ServerRequest
+        {
+            public IReadOnlyList<ICommonData> Items { get; private set; }
+            
+            public CRUD (IEnumerable<ICommonData> items)
+            {
+                Items = items.ToList ();
+            }
+        }
+
+        public sealed class GetCurrentState : ServerRequest
+        {
+        }
+
+        public sealed class GetChanges : ServerRequest
         {
         }
 
@@ -288,38 +272,53 @@ namespace Toggl.Phoebe.Data
 
         public sealed class Authenticate : ServerRequest
         {
-            public readonly string Username;
-            public readonly string Password;
-            public Authenticate (string username, string password)
+            public enum Op
             {
-                Username = username;
-                Password = password;
+                Login,
+                Signup,
+                LoginWithGoogle,
+                SignupWithGoogle
             }
-        }
-        public sealed class AuthenticateWithGoogle : ServerRequest
-        {
-            public readonly string AccessToken;
-            public AuthenticateWithGoogle (string accessToken)
+
+            public Op Operation { get; private set; } 
+            public string Username { get; private set; }
+            public string Password { get; private set; }
+            public string AccessToken { get; private set; }
+
+            private Authenticate () : base () { }
+
+            public static Authenticate Login (string email, string password)
             {
-                AccessToken = accessToken;
+                return new Authenticate {
+                    Operation = Op.Login,
+                    Username = email,
+                    Password = password
+                };
             }
-        }
-        public sealed class SignUp : ServerRequest
-        {
-            public readonly string Email;
-            public readonly string Password;
-            public SignUp (string email, string password)
+
+            public static Authenticate Signup (string email, string password)
             {
-                Email = email;
-                Password = password;
+                return new Authenticate {
+                    Operation = Op.Signup,
+                    Username = email,
+                    Password = password
+                };
             }
-        }
-        public sealed class SignUpWithGoogle : ServerRequest
-        {
-            public readonly string AccessToken;
-            public SignUpWithGoogle (string accessToken)
+
+            public static Authenticate LoginWithGoogle (string accessToken)
             {
-                AccessToken = accessToken;
+                return new Authenticate {
+                    Operation = Op.LoginWithGoogle,
+                    AccessToken = accessToken
+                };
+            }
+
+            public static Authenticate SignupWithGoogle (string accessToken)
+            {
+                return new Authenticate {
+                    Operation = Op.SignupWithGoogle,
+                    AccessToken = accessToken
+                };
             }
         }
     }
@@ -327,33 +326,19 @@ namespace Toggl.Phoebe.Data
     public class DataSyncMsg<T>
     {
         public T State { get; private set; }
-        public SyncTestOptions SyncTest { get; private set; }
-        public IReadOnlyList<ICommonData> SyncData { get; private set; }
+        public RxChain.Continuation Continuation { get; private set; }
+        public IReadOnlyList<ServerRequest> ServerRequests { get; private set; }
 
-        readonly List<ServerRequest> serverRequests;
-        public IEnumerable<ServerRequest> ServerRequests { get { return serverRequests; } }
-
-        public DataSyncMsg (T state, IEnumerable<ICommonData> syncData = null, IEnumerable<ServerRequest> serverRequests = null, SyncTestOptions syncTest = null)
+        public DataSyncMsg (T state, IEnumerable<ServerRequest> serverRequests, RxChain.Continuation cont = null)
         {
-            if (syncData != null) {
-                DataSyncMsg.CheckSyncDataOrder (syncData);
-            }
-
+            DataSyncMsg.CheckSyncDataOrder (serverRequests);
             State = state;
-            SyncTest = syncTest;
-            SyncData = syncData != null ? syncData.ToList () : new List<ICommonData> ();
-            this.serverRequests = serverRequests != null ? serverRequests.ToList () : new List<ServerRequest> ();
+            ServerRequests = serverRequests.ToList ();
+            Continuation = cont;
         }
 
-        public DataSyncMsg<T> With (SyncTestOptions syncTest)
-        {
-            return new DataSyncMsg<T> (this.State, this.SyncData, this.ServerRequests, syncTest);
-        }
-
-        public DataSyncMsg<U> Cast<U> ()
-        {
-            return new DataSyncMsg<U> ((U) (object)this.State, this.SyncData, this.serverRequests, this.SyncTest);
-        }
+        public DataSyncMsg<U> Cast<U> () =>
+            new DataSyncMsg<U> ((U)(object)State, ServerRequests, Continuation);
     }
 
     public static class DataSyncMsg
@@ -363,35 +348,28 @@ namespace Toggl.Phoebe.Data
             nameof (TaskData), nameof (TagData), nameof (TimeEntryData)
         };
 
-        public static void CheckSyncDataOrder (IEnumerable<ICommonData> syncData)
+        public static void CheckSyncDataOrder (IEnumerable<ServerRequest> serverRequests)
         {
-            int lastIndex = 0;
-            foreach (var data in syncData) {
-                var dataType = data.GetType ().Name;
-                var curIndex = DataOrder.IndexOf (t => t == dataType);
-                if (curIndex < lastIndex) {
-                    throw new Exception (string.Format ("{0} cannot come after {1}", dataType, DataOrder[lastIndex]));
+            foreach (var req in serverRequests.OfType<ServerRequest.CRUD> ()) {
+                int lastIndex = 0;
+                foreach (var data in req.Items) {
+                    var dataType = data.GetType ().Name;
+                    var curIndex = DataOrder.IndexOf (t => t == dataType);
+                    if (curIndex < lastIndex) {
+                        throw new Exception (string.Format ("{0} cannot come after {1}", dataType, DataOrder[lastIndex]));
+                    }
+                    lastIndex = curIndex;
                 }
-                lastIndex = curIndex;
             }
         }
 
-        static public DataSyncMsg<T> Create<T> (T state, IEnumerable<ICommonData> syncData = null, ServerRequest request = null, SyncTestOptions syncTest = null)
-        {
-            var serverRequests = request != null ? new List<ServerRequest> { request } : null;
-            return new DataSyncMsg<T> (state, syncData, serverRequests, syncTest);
-        }
-    }
+        static public DataSyncMsg<T> Create<T> (T state) =>
+            new DataSyncMsg<T> (state, new List<ServerRequest> ());
 
-    public class SyncTestOptions
-    {
-        public bool IsConnectionAvailable { get; private set; }
-        public Action<AppState, List<CommonData>, List<SyncManager.QueueItem>> Continuation { get; private set; }
+        static public DataSyncMsg<T> Create<T> (ServerRequest request, T state) =>
+            new DataSyncMsg<T> (state, new List<ServerRequest> { request });
 
-        public SyncTestOptions (bool isCnnAvailable, Action<AppState, List<CommonData>, List<SyncManager.QueueItem>> continuation)
-        {
-            IsConnectionAvailable = isCnnAvailable;
-            Continuation = continuation;
-        }
-    }
+        static public DataSyncMsg<T> Create<T> (IEnumerable<ICommonData> syncData, T state) =>
+            new DataSyncMsg<T> (state, new List<ServerRequest> { new ServerRequest.CRUD (syncData) });
+	}
 }

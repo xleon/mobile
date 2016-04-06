@@ -85,28 +85,26 @@ namespace Toggl.Phoebe.Reactive
             .Subscribe ();
 
             requestManager
-            // Make sure requests are run one after the other
-            .Synchronize ()
-            // TODO: Use Throttle here?
-            .SelectAsync (async x => {
-                if (x.Item1 is ServerRequest.DownloadEntries) {
-                    await DownloadEntries (x.Item2);
-                } else if (x.Item1 is ServerRequest.FullSync) {
-                    await FullSync (x.Item2);
-                } else if (x.Item1 is ServerRequest.Authenticate) {
-                    var req = x.Item1 as ServerRequest.Authenticate;
-                    await AuthenticateAsync (req.Username, req.Password);
-                } else if (x.Item1 is ServerRequest.AuthenticateWithGoogle) {
-                    var req = x.Item1 as ServerRequest.AuthenticateWithGoogle;
-                    await AuthenticateWithGoogleAsync (req.AccessToken);
-                } else if (x.Item1 is ServerRequest.SignUp) {
-                    var req = x.Item1 as ServerRequest.SignUp;
-                    await SignupAsync (req.Email, req.Password);
-                } else if (x.Item1 is ServerRequest.SignUpWithGoogle) {
-                    var req = x.Item1 as ServerRequest.SignUpWithGoogle;
-                    await SignupWithGoogleAsync (req.AccessToken);
-                }
-            })
+            .Synchronize () // Make sure requests are run one after the other
+            .SelectAsync (async x => await x.Item1.MatchType (
+                    (ServerRequest.DownloadEntries _) =>
+                        DownloadEntries (x.Item1, x.Item2),
+                    (ServerRequest.GetChanges _) =>
+                        GetChanges (x.Item1, x.Item2),
+                    (ServerRequest.Authenticate req) => {
+                        switch (req.Operation) {
+                            case ServerRequest.Authenticate.Op.Login:
+                                return LoginAsync (req.Username, req.Password);
+                            case ServerRequest.Authenticate.Op.Signup:
+                                return SignupAsync (req.Username, req.Password);
+                            case ServerRequest.Authenticate.Op.LoginWithGoogle:
+                                return LoginWithGoogleAsync (req.AccessToken);
+                            case ServerRequest.Authenticate.Op.SignupWithGoogle:
+                                return SignupWithGoogleAsync (req.AccessToken);
+                            default:
+                                throw new Exception ("Unexpected Authenticate operation");
+                        }
+                    }))
             .Subscribe ();
         }
 
@@ -140,15 +138,13 @@ namespace Toggl.Phoebe.Reactive
         {
             var remoteObjects = new List<CommonData> ();
             var enqueuedItems = new List<QueueItem> ();
-            var isConnected = syncMsg.SyncTest != null
-                              ? syncMsg.SyncTest.IsConnectionAvailable
-                              : networkPresence.IsNetworkPresent;
+            var isConnected = networkPresence.IsNetworkPresent;
 
             // Try to empty queue first
             bool queueEmpty = await TryEmptyQueue (remoteObjects, syncMsg.State, isConnected);
 
             // Deal with messages
-            foreach (var data in syncMsg.SyncData) {
+            foreach (var data in syncMsg.ServerRequests.OfType<ServerRequest.CRUD> ().SelectMany (x => x.Items)) {
                 if (queueEmpty && isConnected) {
                     try {
                         await SendData (data, remoteObjects, syncMsg.State);
@@ -167,15 +163,15 @@ namespace Toggl.Phoebe.Reactive
 
             // Return remote objects
             if (remoteObjects.Count > 0) {
-                RxChain.Send (new DataMsg.ReceivedFromUpdate (remoteObjects));
+                RxChain.Send (DataMsg.ServerResponse.CRUD (remoteObjects));
             }
 
-            foreach (var req in syncMsg.ServerRequests) {
+            foreach (var req in syncMsg.ServerRequests.Where (x => x is ServerRequest.CRUD == false)) {
                 requestManager.OnNext (Tuple.Create (req, syncMsg.State));
             }
 
-            if (syncMsg.SyncTest != null) {
-                syncMsg.SyncTest.Continuation (syncMsg.State, remoteObjects, enqueuedItems);
+            if (syncMsg.Continuation != null) {
+                syncMsg.Continuation.Invoke (syncMsg.State, remoteObjects, enqueuedItems);
             }
         }
 
@@ -261,13 +257,13 @@ namespace Toggl.Phoebe.Reactive
             }
         }
 
-        async Task AuthenticateAsync (string username, string password)
+        async Task LoginAsync (string username, string password)
         {
             logInfo (string.Format ("Authenticating with email ({0}).", username));
             await AuthenticateAsync (() => client.GetUser (username, password), AuthChangeReason.Login);
         }
 
-        async Task AuthenticateWithGoogleAsync (string accessToken)
+        async Task LoginWithGoogleAsync (string accessToken)
         {
             logInfo ("Authenticating with Google access token.");
             await AuthenticateAsync (() => client.GetUser (accessToken), AuthChangeReason.LoginGoogle);
@@ -330,14 +326,15 @@ namespace Toggl.Phoebe.Reactive
             //    break;
             //}
 
+            // TODO RX: Send DataMsg.ServerResponse instead
             RxChain.Send (new DataMsg.UserDataPut (
                               authResult, userJson != null ? mapper.Map<UserData> (userJson) : null));
         }
 
-        async Task FullSync (AppState state)
+        async Task GetChanges (ServerRequest request, AppState state)
         {
             string authToken = state.User.ApiToken;
-            DateTime? sinceDate = state.FullSyncResult.SyncLastRun;
+            DateTime? sinceDate = state.RequestInfo.GetChangesLastRun;
             // If Since value is less than two months
             // Use null and let server pick the correct value
             if (sinceDate < DateTime.Now.Date.AddMonths (-2)) {
@@ -346,24 +343,24 @@ namespace Toggl.Phoebe.Reactive
 
             try {
                 var changes = await client.GetChanges (authToken, sinceDate);
-                var jsonEntries = changes.TimeEntries.ToList ();
-                var newWorkspaces = changes.Workspaces.ToList ();
-                var newProjects = changes.Projects.ToList ();
-                var newClients = changes.Clients.ToList ();
-                var newTasks = changes.Tasks.ToList ();
-                var newTags = changes.Tags.ToList ();
-                var fullSyncInfo = Tuple.Create (mapper.Map<UserData> (changes.User), changes.Timestamp);
 
-                RxChain.Send (new DataMsg.ReceivedFromSync (
-                                  newWorkspaces.Select (mapper.Map<WorkspaceData>).Cast<CommonData> ()
-                                  .Concat (newTags.Select (mapper.Map<TagData>).Cast<CommonData> ())
-                                  .Concat (newClients.Select (mapper.Map<ClientData>).Cast<CommonData> ())
-                                  .Concat (newProjects.Select (mapper.Map<ProjectData>).Cast<CommonData> ())
-                                  .Concat (newTasks.Select (mapper.Map<TaskData>).Cast<CommonData> ())
-                                  .Concat (jsonEntries.Select (x => MapEntryWithTags (x, state))).ToList (),
-                                  fullSyncInfo));
+                // ATTENTION: Order is important
+                var data = changes
+                    .Workspaces
+                    .Select (mapper.Map<WorkspaceData>).Cast<CommonData> ()
+                    .Concat (changes.Tags.Select (mapper.Map<TagData>).Cast<CommonData> ())
+                    .Concat (changes.Clients.Select (mapper.Map<ClientData>).Cast<CommonData> ())
+                    .Concat (changes.Projects.Select (mapper.Map<ProjectData>).Cast<CommonData> ())
+                    .Concat (changes.Tasks.Select (mapper.Map<TaskData>).Cast<CommonData> ())
+                    .Concat (changes.TimeEntries.Select (x => MapEntryWithTags (x, state)))
+                    .ToList ();
+
+                RxChain.Send (
+                    new DataMsg.ServerResponse (
+                        request, data, mapper.Map<UserData> (changes.User), changes.Timestamp));
+                              
             } catch (Exception exc) {
-                string errorMsg = string.Format ("Failed to sync data since {0}", state.FullSyncResult.SyncLastRun);
+                string errorMsg = string.Format ("Failed to sync data since {0}", state.RequestInfo.GetChangesLastRun);
 
                 if (exc.IsNetworkFailure () || exc is TaskCanceledException) {
                     logInfo (errorMsg, exc);
@@ -371,15 +368,15 @@ namespace Toggl.Phoebe.Reactive
                     logWarning (errorMsg, exc);
                 }
 
-                RxChain.Send (new DataMsg.ReceivedFromSync (exc));
+                RxChain.Send (new DataMsg.ServerResponse (request, exc));
             }
         }
 
-        async Task DownloadEntries (AppState state)
+        async Task DownloadEntries (ServerRequest request, AppState state)
         {
             long? clientRemoteId = null;
             string authToken = state.User.ApiToken;
-            var startDate = state.DownloadResult.DownloadFrom;
+            var startDate = state.RequestInfo.DownloadFrom;
             const int endDate = Literals.TimeEntryLoadDays;
 
             try {
@@ -432,14 +429,17 @@ namespace Toggl.Phoebe.Reactive
 
                 // ATTENTION: Order is important, containers must come first
                 // E.g. projects come after client, because projects contain a reference to ClientId
-                RxChain.Send (new DataMsg.ReceivedFromDownload (
-                                  newWorkspaces.Select (mapper.Map<WorkspaceData>).Cast<CommonData> ()
-                                  .Concat (newTags.Select (mapper.Map<TagData>).Cast<CommonData> ())
-                                  .Concat (newClients.Select (mapper.Map<ClientData>).Cast<CommonData> ())
-                                  .Concat (newProjects.Select (mapper.Map<ProjectData>).Cast<CommonData> ())
-                                  .Concat (newTasks.Select (mapper.Map<TaskData>).Cast<CommonData> ())
-                                  .Concat (jsonEntries.Select (x => MapEntryWithTags (x, state)))
-                                  .ToList ()));
+                var data = newWorkspaces
+                    .Select (mapper.Map<WorkspaceData>).Cast<CommonData> ()
+                    .Concat (newTags.Select (mapper.Map<TagData>).Cast<CommonData> ())
+                    .Concat (newClients.Select (mapper.Map<ClientData>).Cast<CommonData> ())
+                    .Concat (newProjects.Select (mapper.Map<ProjectData>).Cast<CommonData> ())
+                    .Concat (newTasks.Select (mapper.Map<TaskData>).Cast<CommonData> ())
+                    .Concat (jsonEntries.Select (x => MapEntryWithTags (x, state)))
+                    .ToList ();
+
+
+                RxChain.Send (new DataMsg.ServerResponse (request, data));
 
             } catch (Exception exc) {
                 string errorMsg = string.Format (
@@ -452,7 +452,7 @@ namespace Toggl.Phoebe.Reactive
                     logWarning (errorMsg, exc);
                 }
 
-                RxChain.Send (new DataMsg.ReceivedFromDownload (exc));
+                RxChain.Send (new DataMsg.ServerResponse (request, exc));
             }
         }
 

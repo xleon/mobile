@@ -25,7 +25,7 @@ namespace Toggl.Phoebe.ViewModels
         {
         }
 
-        public ITagData SaveTag (string tagName, SyncTestOptions testOptions = null)
+        public ITagData SaveTag (string tagName, RxChain.Continuation cont = null)
         {
             var existing =
                 appState.Tags.Values.SingleOrDefault (
@@ -38,7 +38,7 @@ namespace Toggl.Phoebe.ViewModels
                 x.WorkspaceRemoteId = workspace.RemoteId.HasValue ? workspace.RemoteId.Value : 0;
             });
 
-            RxChain.Send (new DataMsg.TagsPut (new[] { tag }), testOptions);
+            RxChain.Send (new DataMsg.TagsPut (new[] { tag }), cont);
             return tag;
         }
     }

@@ -118,7 +118,7 @@ namespace Toggl.Joey.UI.Activities
 
             // Make sure that the user will see newest data when they start the activity
             //ServiceContainer.Resolve<ISyncManager> ().Run ();
-            RxChain.Send (new DataMsg.FullSync ());
+            RxChain.Send (new ServerRequest.GetChanges ());
         }
 
         public ToolbarModes ToolbarMode

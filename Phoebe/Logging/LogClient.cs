@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using Mindscape.Raygun4Net;
-using Mindscape.Raygun4Net.Messages;
-using Toggl.Phoebe.Logging;
+using Xamarin;
 
 namespace Toggl.Phoebe.Logging
 {
@@ -12,24 +10,18 @@ namespace Toggl.Phoebe.Logging
 
         public void SetUser (string id, string email = null, string name = null)
         {
-            #if (!DEBUG)
             if (id != null) {
-                RaygunClient.Current.UserInfo = new RaygunIdentifierMessage (id) {
-                    IsAnonymous = false,
-                    Email = email,
-                    FullName = name
+                var traits = new Dictionary<string, string>
+                {
+                    { Insights.Traits.Email, email },
+                    { Insights.Traits.Name, name },
                 };
-            } else {
-                RaygunClient.Current.UserInfo = new RaygunIdentifierMessage ("not_logged") {
-                    IsAnonymous = true
-                };
+                Insights.Identify(id, traits);
             }
-            #endif
         }
 
         public void Notify (Exception e, ErrorSeverity severity = ErrorSeverity.Error, Metadata extraMetadata = null)
         {
-            #if (!DEBUG)
             var extraData = new Dictionary<string, string> ();
             foreach (var item in extraMetadata) {
                 if (item.Value != null) {
@@ -40,9 +32,17 @@ namespace Toggl.Phoebe.Logging
                 }
             }
 
-            var tags = new List<string> { Enum.GetName (typeof (ErrorSeverity), severity) };
-            RaygunClient.Current.SendInBackground (e, tags, extraData);
-            #endif
+            if (severity == ErrorSeverity.Info)
+            {
+                Insights.Track("Info", extraData);
+            }
+            else
+            {
+                var reportSeverity = severity == ErrorSeverity.Warning
+                    ? Insights.Severity.Warning : Insights.Severity.Error;
+                
+                Insights.Report(e, extraData, reportSeverity);
+            }
         }
 
         #endregion

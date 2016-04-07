@@ -95,6 +95,8 @@ namespace Toggl.Joey.UI.Fragments
             SuccessTimerButton.Click += GoToTimerButtonClick;
 
             SyncRegisterButton ();
+
+            ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Register";
             return view;
         }
 

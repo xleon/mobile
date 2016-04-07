@@ -71,6 +71,12 @@ namespace Toggl.Joey.UI.Activities
             StartAuthActivity ();
         }
 
+        protected override void OnStart ()
+        {
+            base.OnStart ();
+            ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Intro";
+        }
+
         protected override bool StartAuthActivity ()
         {
             if (ViewModel == null) {

@@ -15,31 +15,26 @@ namespace Toggl.Phoebe.ViewModels
 {
     public class EditTimeEntryVM : ViewModelBase, IDisposable
     {
-        internal static readonly string DefaultTag = "mobile";
-
         private IDisposable subscriptionState, subscriptionTimer;
         private RichTimeEntry richData;
         private RichTimeEntry previousData;
 
         public EditTimeEntryVM(AppState appState, Guid timeEntryId, bool isManual = false)
         {
-            List<string> tagList;
             IsManual = isManual;
 
             if (timeEntryId == Guid.Empty)
             {
                 richData = isManual ? new RichTimeEntry(appState.GetTimeEntryDraft(), appState) : appState.ActiveEntry;
-                tagList = GetDefaultTagList(appState, richData.Data).Select(x => x.Name).ToList();
             }
             else
             {
                 richData = appState.TimeEntries[timeEntryId];
-                tagList = new List<string> (richData.Data.Tags);
             }
 
             UpdateView(x =>
             {
-                x.Tags = tagList;
+                x.Tags = new List<string> (richData.Data.Tags);
                 if (IsManual)
                 {
                     x.StartTime = Time.UtcNow.AddMinutes(-5);
@@ -272,32 +267,6 @@ namespace Toggl.Phoebe.ViewModels
                 x.TaskId = taskId;
                 x.TaskRemoteId = taskRemoteId;
             });
-        }
-
-        private static List<ITagData> GetDefaultTagList(AppState appState, ITimeEntryData data)
-        {
-            if (!appState.Settings.UseDefaultTag)
-            {
-                return new List<ITagData> ();
-            }
-
-            var defaultTagList =
-                appState.Tags.Values.Where(
-                    r => r.Name == DefaultTag && r.WorkspaceId == data.WorkspaceId).ToList();
-
-            if (defaultTagList.Count == 0)
-            {
-                defaultTagList = new List<ITagData>
-                {
-                    TagData.Create(x => {
-                        x.Name = DefaultTag;
-                        x.WorkspaceId = data.WorkspaceId;
-                        x.WorkspaceRemoteId = data.WorkspaceRemoteId;
-                    })
-                };
-                RxChain.Send(new DataMsg.TagsPut(defaultTagList));
-            }
-            return defaultTagList;
         }
     }
 }

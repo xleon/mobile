@@ -36,6 +36,8 @@ namespace Toggl.Phoebe.Data.Models
     [Table("TimeEntryModel")]
     public class TimeEntryData : CommonData, ITimeEntryData
     {
+        public static readonly List<string> DefaultTags = new List<string> {"mobile"};
+
         public static ITimeEntryData Create(Action<TimeEntryData> transform = null, ITimeEntryData draft = null)
         {
             return CommonData.Create(transform, draft != null ? new TimeEntryData(draft) : null);

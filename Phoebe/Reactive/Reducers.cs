@@ -351,6 +351,7 @@ namespace Toggl.Phoebe.Reactive
                     x.State = TimeEntryState.Running;
                     x.StartTime = Time.UtcNow.Truncate(TimeSpan.TicksPerSecond);
                     x.StopTime = null;
+                    x.Tags = state.Settings.UseDefaultTag ? TimeEntryData.DefaultTags : new List<string> ();
                 }));
             });
 
@@ -470,16 +471,15 @@ namespace Toggl.Phoebe.Reactive
                     }
 
                     // TODO RX Create a single update method for state.
-                    var updatedList = new List<ICommonData> {newData};
                     state = state.With(
-                                workspaces: state.Update(state.Workspaces, updatedList),
-                                projects: state.Update(state.Projects, updatedList),
-                                workspaceUsers: state.Update(state.WorkspaceUsers, updatedList),
-                                projectUsers: state.Update(state.ProjectUsers, updatedList),
-                                clients: state.Update(state.Clients, updatedList),
-                                tasks: state.Update(state.Tasks, updatedList),
-                                tags: state.Update(state.Tags, updatedList),
-                                timeEntries: state.UpdateTimeEntries(updatedList)
+                                workspaces: state.Update(state.Workspaces, ctx.UpdatedItems),
+                                projects: state.Update(state.Projects, ctx.UpdatedItems),
+                                workspaceUsers: state.Update(state.WorkspaceUsers, ctx.UpdatedItems),
+                                projectUsers: state.Update(state.ProjectUsers, ctx.UpdatedItems),
+                                clients: state.Update(state.Clients, ctx.UpdatedItems),
+                                tasks: state.Update(state.Tasks, ctx.UpdatedItems),
+                                tags: state.Update(state.Tags, ctx.UpdatedItems),
+                                timeEntries: state.UpdateTimeEntries(ctx.UpdatedItems)
                             );
                 }
             });
@@ -508,12 +508,17 @@ namespace Toggl.Phoebe.Reactive
                     t.TaskRemoteId = null;
                     t.ProjectId = Guid.Empty;
                     t.ProjectRemoteId = null;
-                })).ForEach(x => ctx.Put(x));
+                })).ForEach(ctx.Put);
             }
 
             if (removedData is ITagData)
             {
-
+                var removedTag = (ITagData)removedData;
+                state.TimeEntries.Values.Where(x => x.Data.Tags.Contains(removedTag.Name))
+                .Select(x => x.Data.With(t =>
+                {
+                    t.Tags = new List<string> (t.Tags.Where(n => n != removedTag.Name));
+                })).ForEach(ctx.Put);
             }
 
             if (removedData is IWorkspaceData)

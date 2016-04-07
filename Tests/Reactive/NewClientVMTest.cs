@@ -46,30 +46,16 @@ namespace Toggl.Phoebe.Tests.Reactive
         public async Task TestSaveClient()
         {
             var name = "MyClient";
-            var tcs = Util.CreateTask<bool> ();
             networkSwitcher.SetNetworkConnection(false);
 
-            viewModel.SaveClient(name, new RxChain.Continuation((state, sent, queued) =>
-            {
-                try
-                {
-                    IClientData client = null;
-                    Assert.That(client = state.Clients.Values.SingleOrDefault(
-                                             x => x.WorkspaceId == Util.WorkspaceId && x.Name == name), Is.Not.Null);
+            IClientData client = await viewModel.SaveClientAsync(name);
 
-                    // Check item has been correctly saved in database
-                    Assert.That(dataStore.Table<ClientData> ().SingleOrDefault(
-                                    x => x.WorkspaceId == Util.WorkspaceId && x.Name == name && x.Id == client.Id), Is.Not.Null);
+            Assert.That(client = StoreManager.Singleton.AppState.Clients.Values.SingleOrDefault(
+                                     x => x.WorkspaceId == Util.WorkspaceId && x.Name == name), Is.Not.Null);
 
-                    tcs.SetResult(true);
-                }
-                catch (Exception ex)
-                {
-                    tcs.SetException(ex);
-                }
-            }));
-
-            await tcs.Task;
+            // Check item has been correctly saved in database
+            Assert.That(dataStore.Table<ClientData> ().SingleOrDefault(
+                            x => x.WorkspaceId == Util.WorkspaceId && x.Name == name && x.Id == client.Id), Is.Not.Null);
         }
     }
 }

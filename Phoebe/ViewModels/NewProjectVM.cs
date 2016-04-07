@@ -40,7 +40,7 @@ namespace Toggl.Phoebe.ViewModels
             Console.WriteLine("bbbeD " + ClientName);
         }
 
-        public Task<IProjectData> SaveProjectAsync(string projectName, int projectColor, SyncTestOptions testOptions = null)
+        public Task<IProjectData> SaveProjectAsync(string projectName, int projectColor, RxChain.Continuation continuationOptions = null)
         {
             var tcs = new TaskCompletionSource<IProjectData> ();
             model = ProjectData.Create(x =>
@@ -57,7 +57,7 @@ namespace Toggl.Phoebe.ViewModels
             // ATTENTION  ProjectUserData is not used
             // because no admin features are implemented.
             // Just save the project and wait for the state update.
-            RxChain.Send(new DataMsg.ProjectDataPut(model), new SyncTestOptions(true, (state, sent, queued) =>
+            RxChain.Send(new DataMsg.ProjectDataPut(model), new RxChain.Continuation((state, sent, queued) =>
             {
                 var projectData = state.Projects.Values.First(x => x.Name == model.Name && x.ClientId == model.ClientId);
                 tcs.SetResult(projectData);

@@ -86,10 +86,13 @@ namespace Toggl.Phoebe.Data.Models
                 {
                     return 1;
                 }
-                else if (DeletedAt == null)
+
+                if (DeletedAt == null)
                 {
                     return -1;
                 }
+
+                return DeletedAt.Value.CompareTo(other.DeletedAt);
             }
             else
             {

@@ -27,7 +27,7 @@ namespace Toggl.Phoebe.ViewModels
         {
         }
 
-        public Task<IClientData> SaveClientAsync(string clientName, SyncTestOptions testOptions = null)
+        public Task<IClientData> SaveClientAsync(string clientName, RxChain.Continuation continuationOptions = null)
         {
             var tcs = new TaskCompletionSource<IClientData> ();
             model = ClientData.Create(x =>
@@ -47,7 +47,7 @@ namespace Toggl.Phoebe.ViewModels
                 return Task.FromResult(existing);
             }
 
-            RxChain.Send(new DataMsg.ClientDataPut(model), new SyncTestOptions(false, (state, sent, queued) =>
+            RxChain.Send(new DataMsg.ClientDataPut(model), new RxChain.Continuation((state, sent, queued) =>
             {
                 var clientData = state.Clients.Values.First(x => x.WorkspaceId == model.WorkspaceId && x.Name == model.Name);
                 tcs.SetResult(clientData);

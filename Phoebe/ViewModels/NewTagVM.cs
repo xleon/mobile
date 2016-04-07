@@ -26,7 +26,7 @@ namespace Toggl.Phoebe.ViewModels
         {
         }
 
-        public Task<ITagData> SaveTagAsync(string tagName, SyncTestOptions testOptions = null)
+        public Task<ITagData> SaveTagAsync(string tagName, RxChain.Continuation continuationOptions = null)
         {
             var tcs = new TaskCompletionSource<ITagData> ();
             var existing =
@@ -45,7 +45,7 @@ namespace Toggl.Phoebe.ViewModels
                 x.WorkspaceRemoteId = workspace.RemoteId.HasValue ? workspace.RemoteId.Value : 0;
             });
 
-            RxChain.Send(new DataMsg.TagsPut(new[] {tag}), new SyncTestOptions(false, (state, sent, queued) =>
+            RxChain.Send(new DataMsg.TagsPut(new[] {tag}), new RxChain.Continuation((state, sent, queued) =>
             {
                 var tagData = state.Tags.Values.First(x => x.WorkspaceId == tag.WorkspaceId && x.Name == tag.Name);
                 tcs.SetResult(tagData);

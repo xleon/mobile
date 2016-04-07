@@ -226,10 +226,8 @@ namespace Toggl.Phoebe.Reactive
                 // TODO: Entry sanity check
                 ctx.Put(entryData);
             });
-            return DataSyncMsg.Create(
-                       state.With(timeEntries: state.UpdateTimeEntries(updated),
-                                  tags: state.Update(state.Tags, updated)),
-                       syncData: updated);
+            return DataSyncMsg.Create(updated, state.With(timeEntries: state.UpdateTimeEntries(updated),
+                                      tags: state.Update(state.Tags, updated)));
         }
 
         static DataSyncMsg<AppState> TimeEntryRemove(AppState state, DataMsg msg)
@@ -466,10 +464,6 @@ namespace Toggl.Phoebe.Reactive
                             var logger = ServiceContainer.Resolve<ILogger> ();
                             logger.Info("UpdateStateWithNewData", "Posible sync error. Object without changes " +  newData);
                             continue;
-                        }
-                        else
-                        {
-                            continue; // No changes, just continue.
                         }
                     }
                     else

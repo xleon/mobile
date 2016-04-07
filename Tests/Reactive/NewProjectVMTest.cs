@@ -50,30 +50,14 @@ namespace Toggl.Phoebe.Tests.Reactive
             var tcs = Util.CreateTask<bool> ();
             networkSwitcher.SetNetworkConnection(false);
 
-            viewModel.SaveProject(pname, pcolor, new RxChain.Continuation((state, sent, queued) =>
-            {
-                try
-                {
-                    IProjectData project = null;
-                    Assert.That(project = state.Projects.Values.SingleOrDefault(
-                                              x => x.WorkspaceId == Util.WorkspaceId && x.Name == pname && x.Color == pcolor), Is.Not.Null);
+            IProjectData project  = await viewModel.SaveProjectAsync(pname, pcolor);
 
-                    // Check project has been correctly saved in database
-                    Assert.That(dataStore.Table<ProjectData> ().SingleOrDefault(
-                                    x => x.WorkspaceId == Util.WorkspaceId && x.Name == pname && x.Color == pcolor && x.Id == project.Id), Is.Not.Null);
+            Assert.That(project = StoreManager.Singleton.AppState.Projects.Values.SingleOrDefault(
+                                      x => x.WorkspaceId == Util.WorkspaceId && x.Name == pname && x.Color == pcolor), Is.Not.Null);
 
-                    // ProjectUserData
-                    //Assert.That (state.ProjectUsers.Values.SingleOrDefault (x => x.ProjectId == project.Id), Is.Not.Null);
-                    //Assert.That (dataStore.Table<ProjectUserData> ().SingleOrDefault (x => x.ProjectId == project.Id), Is.Not.Null);
-
-                    tcs.SetResult(true);
-                }
-                catch (Exception ex)
-                {
-                    tcs.SetException(ex);
-                }
-            }));
-            await tcs.Task;
+            // Check project has been correctly saved in database
+            Assert.That(dataStore.Table<ProjectData> ().SingleOrDefault(
+                            x => x.WorkspaceId == Util.WorkspaceId && x.Name == pname && x.Color == pcolor && x.Id == project.Id), Is.Not.Null);
         }
 
 
@@ -87,22 +71,12 @@ namespace Toggl.Phoebe.Tests.Reactive
             networkSwitcher.SetNetworkConnection(false);
 
             viewModel.SetClient(client);
-            viewModel.SaveProject(pname, pcolor, new RxChain.Continuation((state, sent, queued) =>
-            {
-                try
-                {
-                    Assert.That(state.Projects.Values.SingleOrDefault(
-                                    x => x.Name == pname && x.ClientId == client.Id), Is.Not.Null);
 
-                    tcs.SetResult(true);
-                }
-                catch (Exception ex)
-                {
-                    tcs.SetException(ex);
-                }
-            }));
+            var projectData = await viewModel.SaveProjectAsync(pname, pcolor);
 
-            await tcs.Task;
+            Assert.That(StoreManager.Singleton.AppState.Projects.Values.SingleOrDefault(
+                            x => x.Name == pname && x.ClientId == client.Id), Is.Not.Null);
+
         }
     }
 }

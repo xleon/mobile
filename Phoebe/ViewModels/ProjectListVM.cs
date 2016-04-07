@@ -11,6 +11,7 @@ using Toggl.Phoebe.Helpers;
 using Toggl.Phoebe.Reactive;
 using XPlatUtils;
 using Toggl.Phoebe.Data;
+using System.Threading;
 
 namespace Toggl.Phoebe.ViewModels
 {
@@ -31,7 +32,6 @@ namespace Toggl.Phoebe.ViewModels
             CurrentWorkspaceId = workspaceId;
             var savedSort = Enum.Parse(typeof(ProjectsCollectionVM.SortProjectsBy), appState.Settings.ProjectSort);
             ProjectList = new ProjectsCollectionVM(appState, (ProjectsCollectionVM.SortProjectsBy)savedSort, workspaceId);
-
             WorkspaceList = appState.Workspaces.Values.OrderBy(r => r.Name).ToList();
             CurrentWorkspaceIndex = WorkspaceList.IndexOf(p => p.Id == workspaceId);
 
@@ -39,10 +39,9 @@ namespace Toggl.Phoebe.ViewModels
             searchObservable = Observable.FromEventPattern<string> (ev => onSearch += ev, ev => onSearch -= ev)
                                .Throttle(TimeSpan.FromMilliseconds(300))
                                .DistinctUntilChanged()
-                               .Subscribe(
-                                   p => ServiceContainer.Resolve<IPlatformUtils> ().DispatchOnUIThread(
-            () => { ProjectList.ProjectNameFilter = p.EventArgs; }),
-            ex => ServiceContainer.Resolve<ILogger> ().Error("Search", ex, null));
+                               .ObserveOn(SynchronizationContext.Current)
+                               .Subscribe(p => ProjectList.ProjectNameFilter = p.EventArgs,
+                                          ex => ServiceContainer.Resolve<ILogger> ().Error("Search", ex, null));
         }
 
         public void Dispose()
@@ -53,11 +52,8 @@ namespace Toggl.Phoebe.ViewModels
 
         #region Observable properties
         public List<IWorkspaceData> WorkspaceList { get; private set; }
-
         public ProjectsCollectionVM ProjectList { get; private set; }
-
         public int CurrentWorkspaceIndex { get; private set; }
-
         public Guid CurrentWorkspaceId { get; private set; }
         #endregion
 

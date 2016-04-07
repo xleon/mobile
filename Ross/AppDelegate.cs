@@ -1,5 +1,4 @@
 using System;
-using System.Reactive.Concurrency;
 using System.Threading.Tasks;
 using Foundation;
 using Google.Core;
@@ -183,7 +182,6 @@ namespace Toggl.Ross
 #else
             Insights.Initialize(Build.XamarinInsightsApiKey);
 #endif
-
             return new LogClient();
         }
 

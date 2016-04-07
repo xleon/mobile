@@ -62,7 +62,6 @@ namespace Toggl.Ross.ViewControllers
             {
                 NavigationItem.RightBarButtonItem = addBtn;
             }
-
             TableView.TableFooterView = null;
         }
 
@@ -438,7 +437,7 @@ namespace Toggl.Ross.ViewControllers
                 return new UITableViewCell(UITableViewCellStyle.Default, cellIdentifier);
             }
 
-            private void BindCell(UITableViewCell cell, WorkspaceData workspaceData, NSIndexPath path)
+            private void BindCell(UITableViewCell cell, IWorkspaceData workspaceData, NSIndexPath path)
             {
                 // Set selected tags.
                 cell.Accessory = (path.Row == viewModel.CurrentWorkspaceIndex) ? UITableViewCellAccessory.Checkmark : UITableViewCellAccessory.None;

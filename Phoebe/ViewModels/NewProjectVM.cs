@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Linq;
 using System.Reactive.Linq;
+using System.Threading.Tasks;
+using GalaSoft.MvvmLight;
 using PropertyChanged;
 using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data;
@@ -11,23 +13,17 @@ using XPlatUtils;
 namespace Toggl.Phoebe.ViewModels
 {
     [ImplementPropertyChanged]
-    public class NewProjectVM : IDisposable
+    public class NewProjectVM : ViewModelBase, IDisposable
     {
         private IProjectData model;
         private readonly AppState appState;
         private readonly IWorkspaceData workspace;
+        private IClientData clientData;
 
         public NewProjectVM(AppState appState, Guid workspaceId)
         {
             this.appState = appState;
             workspace = appState.Workspaces[workspaceId];
-            model = ProjectData.Create(x =>
-            {
-                x.WorkspaceId = workspaceId;
-                x.WorkspaceRemoteId = workspace.RemoteId.HasValue ? workspace.RemoteId.Value : 0;
-                x.IsActive = true;
-                x.IsPrivate = true;
-            });
             ServiceContainer.Resolve<ITracker> ().CurrentScreen = "New Project";
         }
 
@@ -35,47 +31,43 @@ namespace Toggl.Phoebe.ViewModels
         {
         }
 
-        public string ClientName { get; set; }
+        public string ClientName { get; private set; }
 
         public void SetClient(IClientData clientData)
         {
-            model = model.With(x =>
-            {
-                x.ClientId = clientData.Id;
-                x.ClientRemoteId = clientData.RemoteId;
-            });
+            this.clientData = clientData;
             ClientName = clientData.Name;
+            Console.WriteLine("bbbeD " + ClientName);
         }
 
-        public IProjectData SaveProject(string projectName, int projectColor, RxChain.Continuation cont = null)
+        public Task<IProjectData> SaveProjectAsync(string projectName, int projectColor, RxChain.Continuation continuationOptions = null)
         {
-            model = model.With(x =>
+            var tcs = new TaskCompletionSource<IProjectData> ();
+            model = ProjectData.Create(x =>
             {
                 x.Name = projectName;
                 x.Color = projectColor;
+                x.WorkspaceId = workspace.Id;
+                x.WorkspaceRemoteId = workspace.RemoteId.HasValue ? workspace.RemoteId.Value : 0;
+                x.IsActive = true;
+                x.IsPrivate = true;
+                x.ClientId = clientData != null ? clientData.Id : Guid.Empty;
+                x.ClientRemoteId = clientData != null ? clientData.RemoteId : null;
             });
-
-            // TODO: RX for the moment, ProjectUserData
-            // is not used in any case.
-            /*
-            var projectUser = new ProjectUserData {
-                Id = Guid.NewGuid (),
-                ProjectId = model.Id,
-                UserId = appState.User.Id,
-                ProjectRemoteId = model.RemoteId.HasValue ? model.RemoteId.Value : 0,
-                UserRemoteId = appState.User.RemoteId.HasValue ? appState.User.RemoteId.Value : 0,
-                SyncPending = true
-            };
-            */
-            // Save new project and relationship
-            RxChain.Send(new DataMsg.ProjectDataPut(model), cont);
-
-            return model;
+            // ATTENTION  ProjectUserData is not used
+            // because no admin features are implemented.
+            // Just save the project and wait for the state update.
+            RxChain.Send(new DataMsg.ProjectDataPut(model), new RxChain.Continuation((state, sent, queued) =>
+            {
+                var projectData = state.Projects.Values.First(x => x.Name == model.Name && x.ClientId == model.ClientId);
+                tcs.SetResult(projectData);
+            }));
+            return tcs.Task;
         }
 
         public bool ExistProjectWithName(string projectName)
         {
-            Guid clientId = model.ClientId;
+            Guid clientId = clientData != null ? clientData.Id : Guid.Empty;
             return appState.Projects.Values.Any(r => r.Name == projectName && r.ClientId == clientId);
         }
 

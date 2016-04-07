@@ -56,7 +56,7 @@ namespace Toggl.Ross.ViewControllers
             return new TagCell(cellIdentifier);
         }
 
-        private void BindCell(UITableViewCell cell, TagData tagData, NSIndexPath path)
+        private void BindCell(UITableViewCell cell, ITagData tagData, NSIndexPath path)
         {
             // Set selected tags.
             var isSelected = previousSelectedTags.Exists(tag => tag.Id == tagData.Id);
@@ -72,7 +72,7 @@ namespace Toggl.Ross.ViewControllers
 
             if (cell.Checked)
             {
-                previousSelectedTags.Add((TagData)item);
+                previousSelectedTags.Add((ITagData)item);
             }
             else
             {

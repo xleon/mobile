@@ -66,7 +66,7 @@ namespace Toggl.Ross.ViewControllers
             return new ClientCell(cellIdentifier);
         }
 
-        private void BindCell(UITableViewCell cell, ClientData clientData, NSIndexPath path)
+        private void BindCell(UITableViewCell cell, IClientData clientData, NSIndexPath path)
         {
             ((ClientCell)cell).Bind(clientData.Name);
         }

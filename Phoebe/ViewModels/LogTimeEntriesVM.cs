@@ -145,19 +145,19 @@ namespace Toggl.Phoebe.ViewModels
             RxChain.Send(new DataMsg.UpdateSetting(nameof(SettingsState.ShowWelcome), false));
         }
 
-        public void StartStopTimeEntry(bool startedByFAB = false)
+        public void StartStopTimeEntry()
         {
             // TODO RX: Protect from requests in short time (double click...)?
             var entry = ActiveEntry.Data;
             if (entry.State == TimeEntryState.Running)
             {
                 RxChain.Send(new DataMsg.TimeEntryStop(entry));
-                ServiceContainer.Resolve<ITracker> ().SendTimerStartEvent(TimerStartSource.AppNew);
+                ServiceContainer.Resolve<ITracker> ().SendTimerStopEvent(TimerStopSource.App);
             }
             else
             {
-                RxChain.Send(new DataMsg.TimeEntryContinue(entry, startedByFAB));
-                ServiceContainer.Resolve<ITracker> ().SendTimerStopEvent(TimerStopSource.App);
+                RxChain.Send(new DataMsg.TimeEntryContinue(entry, true));
+                ServiceContainer.Resolve<ITracker> ().SendTimerStartEvent(TimerStartSource.AppNew);
             }
         }
 
@@ -213,13 +213,9 @@ namespace Toggl.Phoebe.ViewModels
             {
                 LoadInfo = newLoadInfo;
             }
-            // Don't update ActiveEntry if both ActiveEntry and appState.ActiveEntry are empty
-            if (ActiveEntry == null || !(ActiveEntry.Data.Id == Guid.Empty && activeTimeEntry.Data.Id == Guid.Empty))
-            {
-                ActiveEntry = activeTimeEntry;
-                IsEntryRunning = ActiveEntry.Data.State == TimeEntryState.Running;
-            }
 
+            ActiveEntry = activeTimeEntry;
+            IsEntryRunning = activeTimeEntry.Data.State == TimeEntryState.Running;
             UpdateDuration();
         }
 

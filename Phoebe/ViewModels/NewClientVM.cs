@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Reactive.Linq;
+using System.Threading.Tasks;
 using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
@@ -26,25 +27,33 @@ namespace Toggl.Phoebe.ViewModels
         {
         }
 
-        public IClientData SaveClient(string clientName, RxChain.Continuation cont = null)
+        public Task<IClientData> SaveClientAsync(string clientName, RxChain.Continuation continuationOptions = null)
         {
-            model = new ClientData
+            var tcs = new TaskCompletionSource<IClientData> ();
+            model = ClientData.Create(x =>
             {
-                SyncState = SyncState.CreatePending,
-                Id = Guid.NewGuid(),
-                WorkspaceId = workspace.Id,
-                Name = clientName,
-                WorkspaceRemoteId = workspace.RemoteId.HasValue ? workspace.RemoteId.Value : 0
-            };
+                x.Name = clientName;
+                x.WorkspaceId = workspace.Id;
+                x.WorkspaceRemoteId = workspace.RemoteId.HasValue ? workspace.RemoteId.Value : 0;
+            });
 
             // Save client name to make sure it doesn't change while iterating
             var existing =
                 appState.Clients.Values
                 .SingleOrDefault(
                     r => r.WorkspaceId == model.WorkspaceId && r.Name == clientName);
-            model = existing ?? model;
-            RxChain.Send(new DataMsg.ClientDataPut(model), cont);
-            return model;
+            if (existing != null)
+            {
+                return Task.FromResult(existing);
+            }
+
+            RxChain.Send(new DataMsg.ClientDataPut(model), new RxChain.Continuation((state, sent, queued) =>
+            {
+                var clientData = state.Clients.Values.First(x => x.WorkspaceId == model.WorkspaceId && x.Name == model.Name);
+                tcs.SetResult(clientData);
+            }));
+
+            return tcs.Task;
         }
     }
 }

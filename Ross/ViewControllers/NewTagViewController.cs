@@ -56,9 +56,9 @@ namespace Toggl.Ross.ViewControllers
             nameTextField.BecomeFirstResponder();
         }
 
-        private void OnAddTag(object sender, EventArgs e)
+        private async void OnAddTag(object sender, EventArgs e)
         {
-            var newTagData = viewModel.SaveTag(nameTextField.Text);
+            var newTagData = await viewModel.SaveTagAsync(nameTextField.Text);
             handler.OnCreateNewTag(newTagData);
         }
 

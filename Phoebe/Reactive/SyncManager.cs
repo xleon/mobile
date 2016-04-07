@@ -185,7 +185,7 @@ namespace Toggl.Phoebe.Reactive
                 RxChain.Send(DataMsg.ServerResponse.CRUD(remoteObjects));
 
             foreach (var req in syncMsg.ServerRequests.Where(x => x is ServerRequest.CRUD == false))
-                requestManager.OnNext(Tuple.Create(req, syncMsg.State));
+            requestManager.OnNext(Tuple.Create(req, syncMsg.State));
 
             if (syncMsg.Continuation != null)
                 syncMsg.Continuation.Invoke(syncMsg.State, remoteObjects, enqueuedItems);
@@ -535,14 +535,14 @@ namespace Toggl.Phoebe.Reactive
 
         CommonData MapEntryWithTags(TimeEntryJson jsonEntry, AppState state)
         {
-            var tagIds = new List<Guid> ();
+            var tags = new List<string> ();
             foreach (var tag in jsonEntry.Tags)
             {
                 var tagData = state.Tags.Values.SingleOrDefault(
                                   x => x.WorkspaceRemoteId == jsonEntry.WorkspaceRemoteId && x.Name == tag);
                 if (tagData != null)
                 {
-                    tagIds.Add(tagData.Id);
+                    tags.Add(tagData.Name);
                 }
                 else
                 {
@@ -552,7 +552,7 @@ namespace Toggl.Phoebe.Reactive
             }
 
             var te = mapper.Map<TimeEntryData> (jsonEntry);
-            te.TagIds = tagIds;
+            te.Tags = tags;
             return te;
         }
 
@@ -561,17 +561,8 @@ namespace Toggl.Phoebe.Reactive
             CommonJson json;
             data = BuildRemoteRelationships(data, remoteObjects, state);
 
-            if (data is ITimeEntryData)
-            {
-                var timeEntry = (ITimeEntryData)data;
-                var tags = timeEntry.TagIds.Select(id => state.Tags [id].Name).ToList();
-                json = mapper.Map<TimeEntryJson> (timeEntry);
-                ((TimeEntryJson)json).Tags = tags;
-            }
-            else
-            {
-                json = mapper.MapToJson(data);
-            }
+            json = mapper.MapToJson(data);
+
 
             if (data.SyncState == SyncState.UpdatePending && json.RemoteId == null)
             {

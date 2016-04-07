@@ -278,12 +278,12 @@ namespace Toggl.Joey.UI.Fragments
         {
             var newTagList = ViewModel.TagList.ToList();
             newTagList.Add(newTagData);
-            ViewModel.ChangeTagList(newTagList.Select(t => t.Id));
+            ViewModel.ChangeTagList(newTagList.Select(t => t.Name));
         }
 
         public void OnModifyTagList(List<ITagData> newTagList)
         {
-            ViewModel.ChangeTagList(newTagList.Select(t => t.Id));
+            ViewModel.ChangeTagList(newTagList.Select(t => t.Name));
         }
 
         public void OnChangeDuration(TimeSpan newDuration)

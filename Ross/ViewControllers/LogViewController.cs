@@ -557,7 +557,7 @@ namespace Toggl.Ross.ViewControllers
 
             private void RebindTags(ITimeEntryHolder dataSource)
             {
-                var hasTags = dataSource.Entry.Data.TagIds.Count > 0;
+                var hasTags = dataSource.Entry.Data.Tags.Count > 0;
                 var isBillable = dataSource.Entry.Data.IsBillable;
 
                 if (hasTags && isBillable)

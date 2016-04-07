@@ -18,6 +18,7 @@ namespace Toggl.Phoebe.Tests.Reactive
         NewTagVM viewModel;
         SyncSqliteDataStore dataStore;
         readonly ToggleClientMock togglClient = new ToggleClientMock();
+        readonly NetworkSwitcher networkSwitcher = new NetworkSwitcher();
 
         public override void Init()
         {
@@ -28,6 +29,7 @@ namespace Toggl.Phoebe.Tests.Reactive
             ServiceContainer.RegisterScoped<IPlatformUtils> (platformUtils);
             ServiceContainer.RegisterScoped<ITogglClient> (togglClient);
             ServiceContainer.RegisterScoped<ITracker> (new TrackerMock());
+            ServiceContainer.RegisterScoped<INetworkPresence>(networkSwitcher);
 
             RxChain.Init(initState);
             viewModel = new NewTagVM(initState, Util.WorkspaceId);
@@ -45,8 +47,9 @@ namespace Toggl.Phoebe.Tests.Reactive
         {
             var name = "MyTag";
             var tcs = Util.CreateTask<bool> ();
+            networkSwitcher.SetNetworkConnection(false);
 
-            viewModel.SaveTag(name, new SyncTestOptions(false, (state, sent, queued) =>
+            viewModel.SaveTag(name, new RxChain.Continuation((state, sent, queued) =>
             {
                 try
                 {

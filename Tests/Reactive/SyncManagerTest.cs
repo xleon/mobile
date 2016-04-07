@@ -46,15 +46,15 @@ namespace Toggl.Phoebe.Tests.Reactive
         {
             var tcs = Util.CreateTask<bool> ();
             var te = Util.CreateTimeEntryData(DateTime.Now);
+            networkSwitcher.SetNetworkConnection(false);
 
-            RxChain.Send(
-                new DataMsg.TimeEntryPut(te), new SyncTestOptions(false, (_, sent, queued) =>
+            RxChain.Send(new DataMsg.TimeEntryPut(te), new RxChain.Continuation((_, sent, queued) =>
             {
                 try
                 {
                     // As there's no connection, message should have been enqueued
                     Assert.That(queued.Any(x => x.Data.Id == te.Id), Is.True);
-                    Assert.That(0, Is.EqualTo(sent.Count));
+                    Assert.That(0, Is.EqualTo(sent.Count()));
                     tcs.SetResult(true);
                 }
                 catch (Exception ex)
@@ -71,15 +71,16 @@ namespace Toggl.Phoebe.Tests.Reactive
         {
             var tcs = Util.CreateTask<bool> ();
             var te = Util.CreateTimeEntryData(DateTime.Now);
+            networkSwitcher.SetNetworkConnection(true);
 
             RxChain.Send(
-                new DataMsg.TimeEntryPut(te), new SyncTestOptions(true, (_, sent, queued) =>
+                new DataMsg.TimeEntryPut(te), new RxChain.Continuation((_, sent, queued) =>
             {
                 try
                 {
                     // As there's connection, message should have been sent
                     Assert.That(queued.Any(x => x.Data.Id == te.Id), Is.False);
-                    Assert.That(1, Is.EqualTo(sent.Count));
+                    Assert.That(1, Is.EqualTo(sent.Count()));
                     tcs.SetResult(true);
                 }
                 catch (Exception ex)
@@ -98,14 +99,14 @@ namespace Toggl.Phoebe.Tests.Reactive
             var te = Util.CreateTimeEntryData(DateTime.Now);
             var te2 = Util.CreateTimeEntryData(DateTime.Now + TimeSpan.FromMinutes(5));
 
-            RxChain.Send(
-                new DataMsg.TimeEntryPut(te), new SyncTestOptions(false, (_, sent, queued) =>
+            networkSwitcher.SetNetworkConnection(false);
+            RxChain.Send(new DataMsg.TimeEntryPut(te), new RxChain.Continuation((_, sent, queued) =>
             {
                 try
                 {
                     // As there's no connection, message should have been enqueued
                     Assert.That(queued.Any(x => x.Data.Id == te.Id), Is.True);
-                    Assert.That(0, Is.EqualTo(sent.Count));
+                    Assert.That(0, Is.EqualTo(sent.Count()));
                 }
                 catch (Exception ex)
                 {
@@ -113,14 +114,14 @@ namespace Toggl.Phoebe.Tests.Reactive
                 }
             }));
 
-            RxChain.Send(
-                new DataMsg.TimeEntryPut(te2), new SyncTestOptions(true, (_, sent, queued) =>
+            networkSwitcher.SetNetworkConnection(true);
+            RxChain.Send(new DataMsg.TimeEntryPut(te2), new RxChain.Continuation((_, sent, queued) =>
             {
                 try
                 {
                     // As there's connection, messages should have been sent
                     Assert.That(queued.Any(x => x.Data.Id == te.Id || x.Data.Id == te2.Id), Is.False);
-                    Assert.That(sent.Count > 0, Is.True);
+                    Assert.That(sent.Count() > 0, Is.True);
                     tcs.SetResult(true);
                 }
                 catch (Exception ex)
@@ -141,7 +142,8 @@ namespace Toggl.Phoebe.Tests.Reactive
             var tcs = Util.CreateTask<bool> ();
             var te = Util.CreateTimeEntryData(DateTime.Now);
 
-            RxChain.Send(new DataMsg.TimeEntryPut(te), new SyncTestOptions(true, (_, sent, queued) =>
+            networkSwitcher.SetNetworkConnection(true);
+            RxChain.Send(new DataMsg.TimeEntryPut(te), new RxChain.Continuation((_, sent, queued) =>
             {
                 try
                 {
@@ -153,8 +155,8 @@ namespace Toggl.Phoebe.Tests.Reactive
 
                     var dataStore = ServiceContainer.Resolve<ISyncDataStore> ();
                     // Check item has been correctly saved in database
-                    Assert.That(dataStore.Table<TimeEntryData> ().SingleOrDefault(
-                                    x => x.Id == te.Id), Is.Not.Null);
+                    Assert.That(dataStore.Table<TimeEntryData> ()
+                                .SingleOrDefault(x => x.Id == te.Id), Is.Not.Null);
                     tcs.SetResult(true);
                 }
                 catch (Exception ex)

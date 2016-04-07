@@ -18,6 +18,7 @@ namespace Toggl.Phoebe.Tests.Reactive
         NewProjectVM viewModel;
         SyncSqliteDataStore dataStore;
         readonly ToggleClientMock togglClient = new ToggleClientMock();
+        readonly NetworkSwitcher networkSwitcher = new NetworkSwitcher();
 
         public override void Init()
         {
@@ -28,6 +29,7 @@ namespace Toggl.Phoebe.Tests.Reactive
             ServiceContainer.RegisterScoped<IPlatformUtils> (platformUtils);
             ServiceContainer.RegisterScoped<ITogglClient> (togglClient);
             ServiceContainer.RegisterScoped<ITracker> (new TrackerMock());
+            ServiceContainer.RegisterScoped<INetworkPresence>(networkSwitcher);
 
             RxChain.Init(initState);
             viewModel = new NewProjectVM(initState, Util.WorkspaceId);
@@ -46,8 +48,9 @@ namespace Toggl.Phoebe.Tests.Reactive
             var pcolor = 2;
             var pname = "MyProject";
             var tcs = Util.CreateTask<bool> ();
+            networkSwitcher.SetNetworkConnection(false);
 
-            viewModel.SaveProject(pname, pcolor, new SyncTestOptions(false, (state, sent, queued) =>
+            viewModel.SaveProject(pname, pcolor, new RxChain.Continuation((state, sent, queued) =>
             {
                 try
                 {
@@ -81,9 +84,10 @@ namespace Toggl.Phoebe.Tests.Reactive
             var pname = "MyProject2";
             var client = ClientData.Create(x => x.Name = "MyClient");
             var tcs = Util.CreateTask<bool> ();
+            networkSwitcher.SetNetworkConnection(false);
 
             viewModel.SetClient(client);
-            viewModel.SaveProject(pname, pcolor, new SyncTestOptions(false, (state, sent, queued) =>
+            viewModel.SaveProject(pname, pcolor, new RxChain.Continuation((state, sent, queued) =>
             {
                 try
                 {

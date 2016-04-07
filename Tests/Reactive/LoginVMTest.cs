@@ -62,8 +62,7 @@ namespace Toggl.Phoebe.Tests.Reactive
 
             viewModel.PropertyChanged += (sender, e) =>
             {
-                if (e.PropertyName == nameof(viewModel.AuthResult) &&
-                        viewModel.AuthResult != AuthResult.Authenticating)
+                if (e.PropertyName == nameof(viewModel.AuthResult))
                 {
                     // Correct login.
                     Assert.That(viewModel.AuthResult, Is.EqualTo(AuthResult.Success));
@@ -88,8 +87,7 @@ namespace Toggl.Phoebe.Tests.Reactive
 
             viewModel.PropertyChanged += (sender, e) =>
             {
-                if (e.PropertyName == nameof(viewModel.AuthResult) &&
-                        viewModel.AuthResult != AuthResult.Authenticating)
+                if (e.PropertyName == nameof(viewModel.AuthResult))
                 {
                     // Correct login.
                     Assert.That(viewModel.AuthResult, Is.EqualTo(AuthResult.Success));
@@ -113,8 +111,7 @@ namespace Toggl.Phoebe.Tests.Reactive
             networkSwitcher.SetNetworkConnection(true);
             viewModel.PropertyChanged += (sender, e) =>
             {
-                if (e.PropertyName == nameof(viewModel.AuthResult) &&
-                        viewModel.AuthResult != AuthResult.Authenticating)
+                if (e.PropertyName == nameof(viewModel.AuthResult))
                 {
                     // Correct login.
                     Assert.That(viewModel.AuthResult, Is.EqualTo(AuthResult.SystemError));

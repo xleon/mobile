@@ -62,7 +62,7 @@ namespace Toggl.Phoebe.Data
             }
 
             public static ServerResponse CRUD(IEnumerable<CommonData> data) =>
-            new ServerResponse(new Data.ServerRequest.CRUD(null), data);
+            new ServerResponse(new Data.ServerRequest.CRUD(new ICommonData[] { }), data);
         }
 
         public sealed class ResetState : DataMsg

@@ -187,6 +187,8 @@
     <Compile Include="$(MSBuildThisFileDirectory)UpgradeManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Util.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)WidgetSyncManager.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Analytics\UserMode.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Analytics\RegisterSource.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="$(MSBuildThisFileDirectory)Contrib\XPlatUtils\" />

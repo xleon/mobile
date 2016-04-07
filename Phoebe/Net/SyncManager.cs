@@ -222,8 +222,7 @@ namespace Toggl.Phoebe.Net
                 if (!string.IsNullOrWhiteSpace (errors)) {
                     log.Error (Tag, "Server and app user settings differ: " + errors);
                 }
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 log.Error (Tag, e, "Cannot check user data: {0}", e.Message);
             }
         }

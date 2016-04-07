@@ -12,6 +12,7 @@ using Android.Widget;
 using GalaSoft.MvvmLight.Helpers;
 using Toggl.Joey.UI.Utils;
 using Toggl.Joey.UI.Views;
+using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data.ViewModels;
 using Toggl.Phoebe.Logging;
 using Toggl.Phoebe.Net;
@@ -55,17 +56,25 @@ namespace Toggl.Joey.UI.Activities
 
         private void LoginButtonClick (object sender, EventArgs e)
         {
+            ServiceContainer.Resolve<ITracker>().SendIntroModeEvent (UserMode.NormalMode);
             StartActivity (new Intent (this, typeof (LoginActivity)));
         }
 
         private async void StartNowButtonClick (object sender, EventArgs e)
         {
+            ServiceContainer.Resolve<ITracker>().SendIntroModeEvent (UserMode.NoUserMode);
             await ViewModel.SetUpNoUserAccountAsync ();
         }
 
         private void StartAuth ()
         {
             StartAuthActivity ();
+        }
+
+        protected override void OnStart ()
+        {
+            base.OnStart ();
+            ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Intro";
         }
 
         protected override bool StartAuthActivity ()

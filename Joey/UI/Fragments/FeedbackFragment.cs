@@ -59,11 +59,17 @@ namespace Toggl.Joey.UI.Fragments
             disclaimerContainer.Visibility = offline ? ViewStates.Visible : ViewStates.Gone;
             feedbackContainer.Visibility = offline ? ViewStates.Gone : ViewStates.Visible;
 
-            noUserRegisterButton.Click += (sender, e) => ((MainDrawerActivity)Activity).OpenPage (DrawerListAdapter.RegisterUserPageId);
+            noUserRegisterButton.Click += OpenRegisterScreen;
 
             SetRating (userRating);
 
             return view;
+        }
+
+        private void OpenRegisterScreen (object sender, EventArgs e)
+        {
+            ServiceContainer.Resolve<ITracker> ().SendToRegisterScreenEvent (RegisterSource.Feedback);
+            ((MainDrawerActivity)Activity).OpenPage (DrawerListAdapter.RegisterUserPageId);
         }
 
         public override void OnCreate (Bundle state)

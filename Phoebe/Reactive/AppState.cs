@@ -233,6 +233,7 @@ namespace Toggl.Phoebe.Reactive
                     dataStore.Table<ProjectUserData> ().ForEach(x => projectUsers.Add(x.Id, x));
                     dataStore.Table<ClientData> ().ForEach(x => clients.Add(x.Id, x));
                     dataStore.Table<TaskData> ().ForEach(x => tasks.Add(x.Id, x));
+                    dataStore.Table<TagData> ().ForEach (x => tags.Add (x.Id, x));
                 }
             }
             catch (Exception ex)

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Reactive.Linq;
+using System.Threading.Tasks;
 using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
@@ -25,22 +26,29 @@ namespace Toggl.Phoebe.ViewModels
         {
         }
 
-        public ITagData SaveTag(string tagName, RxChain.Continuation cont = null)
+        public Task<ITagData> SaveTagAsync (string tagName, SyncTestOptions testOptions = null)
         {
+            var tcs = new TaskCompletionSource<ITagData> ();
             var existing =
                 appState.Tags.Values.SingleOrDefault(
                     r => r.WorkspaceId == workspace.Id && r.Name == tagName);
 
-            var tag = existing
-                      ?? TagData.Create(x =>
-            {
+            if (existing != null) {
+                return Task.FromResult (existing);
+            }
+
+            var tag = TagData.Create (x => {
                 x.Name = tagName;
                 x.WorkspaceId = workspace.Id;
                 x.WorkspaceRemoteId = workspace.RemoteId.HasValue ? workspace.RemoteId.Value : 0;
             });
 
-            RxChain.Send(new DataMsg.TagsPut(new[] { tag }), cont);
-            return tag;
+            RxChain.Send (new DataMsg.TagsPut (new[] {tag}), new SyncTestOptions (false, (state, sent, queued) => {
+                var tagData = state.Tags.Values.First (x => x.WorkspaceId == tag.WorkspaceId && x.Name == tag.Name);
+                tcs.SetResult (tagData);
+            }));
+
+            return tcs.Task;
         }
     }
 }

@@ -91,8 +91,14 @@ namespace Toggl.Ross.ViewControllers
 
         public override void ViewWillDisappear (bool animated)
         {
-            clientBinding.Detach ();
-            ViewModel.Dispose ();
+            // TODO: Release ViewModel only when the
+            // ViewController is poped. It is a weird behaviour
+            // considering the property name used.
+            // But it works ok.
+            if (IsMovingFromParentViewController) {
+                clientBinding.Detach ();
+                ViewModel.Dispose ();
+            }
             base.ViewWillDisappear (animated);
         }
 

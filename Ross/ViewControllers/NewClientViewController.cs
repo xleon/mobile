@@ -50,28 +50,22 @@ namespace Toggl.Ross.ViewControllers
             NavigationItem.RightBarButtonItem.Enabled = false;
         }
 
-        public override void ViewDidLoad()
-        {
-            base.ViewDidLoad();
-            ViewModel = new NewClientVM(StoreManager.Singleton.AppState, workspaceId);
-        }
-
         public override void ViewDidAppear(bool animated)
         {
             base.ViewDidAppear(animated);
             NameTextField.BecomeFirstResponder();
         }
 
-        public override void ViewWillDisappear(bool animated)
+        public override void ViewWillAppear (bool animated)
         {
-            // Release ViewModel only when the
-            // ViewController is poped.
-            var dispose = !NavigationController.ViewControllers.Contains(this);
-            if (dispose)
-            {
-                ViewModel.Dispose();
-            }
-            base.ViewWillDisappear(animated);
+            base.ViewWillAppear (animated);
+            ViewModel = new NewClientVM (StoreManager.Singleton.AppState, workspaceId);
+        }
+
+        public override void ViewWillDisappear (bool animated)
+        {
+            ViewModel.Dispose ();
+            base.ViewWillDisappear (animated);
         }
 
         private async void OnNavigationBarAddClicked(object sender, EventArgs e)

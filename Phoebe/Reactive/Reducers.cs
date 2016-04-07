@@ -199,6 +199,7 @@ namespace Toggl.Phoebe.Reactive
                 // Update time entry tags
                 if (tagList.Any ()) {
                     var existingTags = state.Tags.Values.Where (x => x.WorkspaceId == entryData.WorkspaceId);
+                    List<Guid> tagIds = new List<Guid> ();
                     foreach (var item in tagList) {
                         if (!existingTags.Any (x => x.Name == item)) {
                             var newTag = TagData.Create (x => {
@@ -207,15 +208,21 @@ namespace Toggl.Phoebe.Reactive
                                 x.WorkspaceRemoteId = entryData.WorkspaceRemoteId;
                             });
                             ctx.Put (newTag);
+                            // Add the last added id
+                            tagIds.Add (ctx.UpdatedItems.Last ().Id);
+                        } else {
+                            tagIds.Add (existingTags.First (x => x.Name == item).Id);
                         }
                     }
+                    entryData.With (x => x.TagIds = tagIds);
                 }
                 // TODO: Entry sanity check
                 ctx.Put (entryData);
             });
             return DataSyncMsg.Create (
-                       state.With (timeEntries: state.UpdateTimeEntries (updated)),
-                       updated);
+                       state.With (timeEntries: state.UpdateTimeEntries (updated),
+                                   tags:state.Update (state.Tags, updated)),
+                       syncData:updated);
         }
 
         static DataSyncMsg<AppState> TimeEntryRemove(AppState state, DataMsg msg)

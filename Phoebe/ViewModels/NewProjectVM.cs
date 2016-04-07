@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Reactive.Linq;
 using System.Threading.Tasks;
+using GalaSoft.MvvmLight;
 using PropertyChanged;
 using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data;
@@ -12,7 +13,7 @@ using XPlatUtils;
 namespace Toggl.Phoebe.ViewModels
 {
     [ImplementPropertyChanged]
-    public class NewProjectVM : IDisposable
+    public class NewProjectVM : ViewModelBase, IDisposable
     {
         private IProjectData model;
         private readonly AppState appState;
@@ -30,12 +31,13 @@ namespace Toggl.Phoebe.ViewModels
         {
         }
 
-        public string ClientName { get; set; }
+        public string ClientName { get; private set; }
 
         public void SetClient(IClientData clientData)
         {
             this.clientData = clientData;
             ClientName = clientData.Name;
+            Console.WriteLine ("bbbeD " + ClientName);
         }
 
         public Task<IProjectData> SaveProjectAsync (string projectName, int projectColor, SyncTestOptions testOptions = null)

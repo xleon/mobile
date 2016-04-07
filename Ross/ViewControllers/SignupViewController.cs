@@ -156,7 +156,6 @@ namespace Toggl.Ross.ViewControllers
             resultBinding = this.SetBinding (() => viewModel.AuthResult).WhenSourceChanges (() => {
                 switch (viewModel.AuthResult) {
                 case AuthResult.None:
-                case AuthResult.Authenticating:
                     break;
 
                 case AuthResult.Success:

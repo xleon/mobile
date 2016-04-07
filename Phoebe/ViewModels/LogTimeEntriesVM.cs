@@ -59,12 +59,12 @@ namespace Toggl.Phoebe.ViewModels
                                 .Observe (x => x.State)
                                 .ObserveOn (uiContext)
                                 .StartWith (appState)
-            .DistinctUntilChanged (state => new { state.ActiveEntry, state.DownloadResult, state.FullSyncResult, state.Settings})
-            .Subscribe (x => UpdateState (x.Settings, x.ActiveEntry, x.DownloadResult, x.FullSyncResult));
+            .DistinctUntilChanged (state => new { state.ActiveEntry, state.RequestInfo, state.Settings})
+            .Subscribe (x => UpdateState (x.Settings, x.ActiveEntry, x.RequestInfo));
 
             // TODO: Rx find a better solution to force
             // an inmediate update using Rx code.
-            UpdateState (appState.Settings, appState.ActiveEntry, appState.DownloadResult, appState.FullSyncResult);
+            UpdateState (appState.Settings, appState.ActiveEntry, appState.RequestInfo);
 
             TimerObservable = Observable.Timer (TimeSpan.FromMilliseconds (1000 - Time.Now.Millisecond),
                                                 TimeSpan.FromSeconds (1))
@@ -177,20 +177,20 @@ namespace Toggl.Phoebe.ViewModels
         }
         #endregion
 
-        private void UpdateState (SettingsState settings, RichTimeEntry activeTimeEntry, RequestInfo prevRequest)
+        private void UpdateState (SettingsState settings, RichTimeEntry activeTimeEntry, RequestInfo reqInfo)
         {
             if (settings.GroupedEntries != IsGroupedMode) {
                 ResetCollection (settings.GroupedEntries);
             }
 
             // Check full Sync info
-            HasSyncErrors = appState.RequestInfo.HadErrors;
-            IsFullSyncing = appState.RequestInfo.Running.Any (x => x is ServerRequest.GetChanges);
+            HasSyncErrors = reqInfo.HadErrors;
+            IsFullSyncing = reqInfo.Running.Any (x => x is ServerRequest.GetChanges);
 
             var newLoadInfo = new LoadInfoType (
-                appState.RequestInfo.Running.Any (x => x is ServerRequest.DownloadEntries),
-                appState.RequestInfo.HasMoreEntries,
-                appState.RequestInfo.HadErrors
+                reqInfo.Running.Any (x => x is ServerRequest.DownloadEntries),
+                reqInfo.HasMoreEntries,
+                reqInfo.HadErrors
             );
 
             // Check if LoadInfo has changed

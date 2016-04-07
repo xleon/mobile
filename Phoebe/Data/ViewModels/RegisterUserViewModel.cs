@@ -48,7 +48,7 @@ namespace Toggl.Phoebe.Data.ViewModels
             if (authRes == AuthResult.Success) {
                 IsSuccesful = true;
                 ServiceContainer.Resolve<ISyncManager> ().RunUpload ();
-                ServiceContainer.Resolve<ITracker>().SendRegisterEvent ();
+                ServiceContainer.Resolve<ITracker>().SendRegisterEvent (AccountCredentials.Password);
             }
             return authRes;
         }
@@ -59,7 +59,7 @@ namespace Toggl.Phoebe.Data.ViewModels
             var authResult = await authManager.RegisterNoUserGoogleAsync (token);
             if (authResult == AuthResult.Success) {
                 ServiceContainer.Resolve<ISyncManager> ().RunUpload ();
-                ServiceContainer.Resolve<ITracker>().SendRegisterEvent ();
+                ServiceContainer.Resolve<ITracker>().SendRegisterEvent (AccountCredentials.Google);
             }
             return authResult;
         }

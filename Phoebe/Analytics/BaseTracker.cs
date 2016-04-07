@@ -212,7 +212,7 @@ namespace Toggl.Phoebe.Analytics
 
         #region no-user-mode events
 
-        public void SendIntroSelectMode (UserMode mode)
+        public void SendIntroModeEvent (UserMode mode)
         {
             string label;
             switch (mode) {

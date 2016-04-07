@@ -243,6 +243,8 @@ namespace Toggl.Joey.UI.Activities
                     !ViewModel.IsAuthenticating &&
                     Regex.IsMatch (EmailEditText.Text ?? "", LoginActivity.ValidateEmailRegexp) &&
                     (PasswordEditText.Text ?? "").Length >= 6;
+            } else {
+                LoginButton.Enabled = true;
             }
         }
 

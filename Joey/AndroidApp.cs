@@ -15,6 +15,7 @@ using Toggl.Phoebe.Reactive;
 using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Logging;
 using XPlatUtils;
+using Xamarin;
 
 namespace Toggl.Joey
 {
@@ -66,12 +67,23 @@ namespace Toggl.Joey
             ServiceContainer.Register<SyncMonitor> ();
             ServiceContainer.Register<GcmRegistrationManager> ();
             ServiceContainer.Register<AndroidNotificationManager> ();
-            ServiceContainer.Register<ILoggerClient> (() => new LogClient());
+            ServiceContainer.Register<ILoggerClient> (initialiseLogClient);
             var tracker = new Tracker(this);
             ServiceContainer.Register<ITracker> (() => tracker);
 
             // This needs some services, like ITimeProvider, so run it at the end
             RxChain.Init(AppState.Init());
+        }
+
+        private ILoggerClient initialiseLogClient()
+        {
+#if DEBUG
+            Insights.Initialize(Insights.DebugModeKey, this);
+#else
+            Insights.Initialize(Build.XamarinInsightsApiKey, this);
+#endif
+
+            return new LogClient();
         }
 
         private void InitializeStartupComponents()

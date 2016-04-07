@@ -126,7 +126,7 @@ namespace Toggl.Phoebe.ViewModels
         public string ProjectName { get { return richData.Info.ProjectData.Name ?? string.Empty; } }
         public string TaskName { get { return richData.Info.TaskData.Name ?? string.Empty; } }
         public string ClientName { get { return richData.Info.ClientData.Name ?? string.Empty; } }
-        public IReadOnlyList<ITagData> TagList { get { return richData.Info.Tags; } }
+        public IReadOnlyList<string> Tags { get { return richData.Data.Tags; } }
 
         #endregion
 
@@ -181,7 +181,7 @@ namespace Toggl.Phoebe.ViewModels
 
         public void ChangeTagList(IEnumerable<string> newTags)
         {
-            UpdateView(x => x.Tags = newTags.ToList(), nameof(TagList));
+            UpdateView(x => x.Tags = newTags.ToList(), nameof(Tags));
         }
 
         public void ChangeDescription(string description)
@@ -203,7 +203,7 @@ namespace Toggl.Phoebe.ViewModels
         {
             if (!previousData.Data.PublicInstancePropertiesEqual(richData.Data))
             {
-                RxChain.Send(new DataMsg.TimeEntryPut(richData.Data, TagList.Select(x => x.Name)));
+                RxChain.Send(new DataMsg.TimeEntryPut(richData.Data, Tags));
                 previousData = richData;
             }
         }

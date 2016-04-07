@@ -197,6 +197,25 @@ namespace Toggl.Phoebe.Reactive
 
             var updated = dataStore.Update(ctx =>
             {
+                // ATTENTION Create tags in a
+                // different workspace if they don't exists.
+                if (tagList.Any())
+                {
+                    var existingTags = state.Tags.Values.Where(x => x.WorkspaceId == entryData.WorkspaceId);
+                    foreach (var item in tagList)
+                    {
+                        if (!existingTags.Any(x => x.Name == item))
+                        {
+                            var newTag = TagData.Create(x =>
+                            {
+                                x.Name = item;
+                                x.WorkspaceId = entryData.WorkspaceId;
+                                x.WorkspaceRemoteId = entryData.WorkspaceRemoteId;
+                            });
+                            ctx.Put(newTag);
+                        }
+                    }
+                }
                 // TODO: Entry sanity check
                 ctx.Put(entryData);
             });

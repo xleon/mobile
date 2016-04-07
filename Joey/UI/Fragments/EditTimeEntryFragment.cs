@@ -179,7 +179,7 @@ namespace Toggl.Joey.UI.Fragments
                               .ConvertSourceToTarget(dateTime => dateTime.ToDeviceTimeString());
             projectBinding = this.SetBinding(() => ViewModel.ProjectName, () => ProjectField.TextField.Text);
             clientBinding = this.SetBinding(() => ViewModel.ClientName, () => ProjectField.AssistViewTitle);
-            tagBinding = this.SetBinding(() => ViewModel.TagList, () => TagsField.TagNames)
+            tagBinding = this.SetBinding(() => ViewModel.Tags, () => TagsField.TagNames)
                          .ConvertSourceToTarget(tagList => tagList.Select(tag => tag.Name).ToList());
             descriptionBinding = this.SetBinding(() => ViewModel.Description, () => DescriptionField.TextField.Text);
             isPremiumBinding = this.SetBinding(() => ViewModel.IsPremium, () => BillableCheckBox.Visibility)
@@ -257,7 +257,7 @@ namespace Toggl.Joey.UI.Fragments
 
         private void OnTagsEditTextClick(object sender, EventArgs e)
         {
-            ChooseTimeEntryTagsDialogFragment.NewInstance(ViewModel.WorkspaceId, ViewModel.TagList.Select(tag => tag.Id).ToList())
+            ChooseTimeEntryTagsDialogFragment.NewInstance(ViewModel.WorkspaceId, ViewModel.Tags.Select(tag => tag.Id).ToList())
             .SetOnModifyTagListHandler(this)
             .Show(FragmentManager, "tags_dialog");
         }
@@ -276,14 +276,14 @@ namespace Toggl.Joey.UI.Fragments
 
         public void OnCreateNewTag(ITagData newTagData)
         {
-            var newTagList = ViewModel.TagList.ToList();
-            newTagList.Add(newTagData);
-            ViewModel.ChangeTagList(newTagList.Select(t => t.Id));
+            var newTagList = ViewModel.Tags.ToList();
+            newTagList.Add(newTagData.Name);
+            ViewModel.ChangeTagList(newTagList);
         }
 
         public void OnModifyTagList(List<ITagData> newTagList)
         {
-            ViewModel.ChangeTagList(newTagList.Select(t => t.Id));
+            ViewModel.ChangeTagList(newTagList.Select(t => t.Name));
         }
 
         public void OnChangeDuration(TimeSpan newDuration)

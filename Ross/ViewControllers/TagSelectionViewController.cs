@@ -16,10 +16,10 @@ namespace Toggl.Ross.ViewControllers
     {
         private TagListVM viewModel;
         private Guid workspaceId;
-        private List<ITagData> previousSelectedTags;
+        private List<string> previousSelectedTags;
         private IOnTagSelectedHandler handler;
 
-        public TagSelectionViewController(Guid workspaceId, IReadOnlyList<ITagData> previousSelectedTags, IOnTagSelectedHandler handler) : base(UITableViewStyle.Plain)
+        public TagSelectionViewController(Guid workspaceId, IReadOnlyList<string> previousSelectedTags, IOnTagSelectedHandler handler) : base(UITableViewStyle.Plain)
         {
             Title = "TagTitle".Tr();
             this.workspaceId = workspaceId;
@@ -34,7 +34,7 @@ namespace Toggl.Ross.ViewControllers
             View.Apply(Style.Screen);
             EdgesForExtendedLayout = UIRectEdge.None;
 
-            viewModel = new TagListVM(StoreManager.Singleton.AppState, workspaceId, previousSelectedTags.Select(t => t.Id).ToList());
+            viewModel = new TagListVM(StoreManager.Singleton.AppState, workspaceId);
 
             // Set ObservableTableViewController settings
             // ObservableTableViewController is a helper class
@@ -59,7 +59,7 @@ namespace Toggl.Ross.ViewControllers
         private void BindCell(UITableViewCell cell, ITagData tagData, NSIndexPath path)
         {
             // Set selected tags.
-            var isSelected = previousSelectedTags.Exists(tag => tag.Id == tagData.Id);
+            var isSelected = previousSelectedTags.Exists(tag => tag == tagData.Name);
             ((TagCell)cell).Bind(tagData.Name, isSelected);
         }
 
@@ -72,11 +72,11 @@ namespace Toggl.Ross.ViewControllers
 
             if (cell.Checked)
             {
-                previousSelectedTags.Add((ITagData)item);
+                previousSelectedTags.Add(((ITagData)item).Name);
             }
             else
             {
-                previousSelectedTags.RemoveAll(t => t.Id == ((TagData)item).Id);
+                previousSelectedTags.RemoveAll(t => t == ((TagData)item).Name);
             }
 
             TableView.DeselectRow(indexPath, true);

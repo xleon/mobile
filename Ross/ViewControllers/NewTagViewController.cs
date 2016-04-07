@@ -62,7 +62,7 @@ namespace Toggl.Ross.ViewControllers
             NavigationItem.RightBarButtonItem.Enabled = false;
 
             var newTagData = await viewModel.SaveTagAsync(nameTextField.Text);
-            handler.OnCreateNewTag(newTagData);
+            handler.OnCreateNewTag(newTagData.Name);
         }
 
         private IEnumerable<FluentLayout> VerticalLinearLayout(UIView container)

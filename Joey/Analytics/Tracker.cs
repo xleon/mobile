@@ -112,6 +112,5 @@ namespace Toggl.Joey.Analytics
                 Android.Runtime.JNIEnv.DeleteLocalRef (dimensionPtr);
             }
         }
-
     }
 }

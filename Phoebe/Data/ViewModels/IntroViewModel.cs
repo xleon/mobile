@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using GalaSoft.MvvmLight;
 using PropertyChanged;
+using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Logging;
 using Toggl.Phoebe.Net;
 using XPlatUtils;

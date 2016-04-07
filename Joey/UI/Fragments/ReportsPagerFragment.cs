@@ -146,7 +146,7 @@ namespace Toggl.Joey.UI.Fragments
             previousPeriod.Click += (sender, e) => NavigatePage (-1);
             nextPeriod.Click += (sender, e) => NavigatePage (1);
             syncRetry.Click += async (sender, e) => await ReloadCurrent ();
-            noUserRegisterButton.Click += (sender, e) => ((MainDrawerActivity)Activity).OpenPage (DrawerListAdapter.RegisterUserPageId);
+            noUserRegisterButton.Click += OpenRegisterScreen;
 
             var activity = (MainDrawerActivity)Activity;
             toolbar = activity.MainToolbar;
@@ -171,6 +171,12 @@ namespace Toggl.Joey.UI.Fragments
             }
 
             return view;
+        }
+
+        private void OpenRegisterScreen (object sender, EventArgs e)
+        {
+            ServiceContainer.Resolve<ITracker> ().SendToRegisterScreenEvent (RegisterSource.Reports);
+            ((MainDrawerActivity)Activity).OpenPage (DrawerListAdapter.RegisterUserPageId);
         }
 
         public override void OnDestroyView ()

@@ -5,6 +5,7 @@ using PropertyChanged;
 using Toggl.Phoebe.Logging;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
+using Toggl.Phoebe.Analytics;
 
 namespace Toggl.Phoebe.Data.ViewModels
 {
@@ -47,6 +48,7 @@ namespace Toggl.Phoebe.Data.ViewModels
             if (authRes == AuthResult.Success) {
                 IsSuccesful = true;
                 ServiceContainer.Resolve<ISyncManager> ().RunUpload ();
+                ServiceContainer.Resolve<ITracker>().SendRegisterEvent ();
             }
             return authRes;
         }
@@ -57,6 +59,7 @@ namespace Toggl.Phoebe.Data.ViewModels
             var authResult = await authManager.RegisterNoUserGoogleAsync (token);
             if (authResult == AuthResult.Success) {
                 ServiceContainer.Resolve<ISyncManager> ().RunUpload ();
+                ServiceContainer.Resolve<ITracker>().SendRegisterEvent ();
             }
             return authResult;
         }

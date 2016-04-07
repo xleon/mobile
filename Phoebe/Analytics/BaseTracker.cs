@@ -210,6 +210,74 @@ namespace Toggl.Phoebe.Analytics
             set { SetCustomDimension (Build.GoogleAnalyticsExperimentIndex, value); }
         }
 
+        #region no-user-mode events
+
+        public void SendIntroSelectMode (UserMode mode)
+        {
+            string label;
+            switch (mode) {
+            case UserMode.NormalMode:
+                label = "Normal";
+                break;
+            case UserMode.NoUserMode:
+                label = "NoUser";
+                break;
+            default:
+                #if DEBUG
+                throw new ArgumentException ("Invalid value", "userMode");
+                #else
+                return;
+                #endif
+            }
+
+            SendEvent ("NoUser", "IntroRegister", label);
+        }
+
+        public void SendToRegisterScreenEvent (RegisterSource source)
+        {
+            string label;
+            switch (source) {
+            case RegisterSource.Feedback:
+                label = "Feedback";
+                break;
+            case RegisterSource.Reports:
+                label = "Reports";
+                break;
+            default:
+                #if DEBUG
+                throw new ArgumentException ("Invalid value", "registerSource");
+                #else
+                return;
+                #endif
+            }
+
+            SendEvent ("NoUser", "ToRegisterScreen", label);
+        }
+
+        public void SendRegisterEvent (AccountCredentials credentialsType)
+        {
+            string label;
+
+            switch (credentialsType) {
+            case AccountCredentials.Password:
+                label = "Password";
+                break;
+            case AccountCredentials.Google:
+                label = "Google";
+                break;
+            default:
+                #if DEBUG
+                throw new ArgumentException ("Invalid value", "credentialsType");
+                #else
+                return;
+                #endif
+            }
+
+            SendEvent ("NoUser", "RegisterNoUser", label);
+        }
+
+        #endregion
+
         private Plan UserPlan
         {
             set {

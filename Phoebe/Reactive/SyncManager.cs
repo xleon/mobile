@@ -273,7 +273,9 @@ namespace Toggl.Phoebe.Reactive
                                 string.Format("Unexpected SyncState ({0}) of enqueued item: {1}",
                                               Enum.GetName(typeof(SyncState), data.SyncState), data.Id));
                     }
-                    remoteObjects = PrepareForLocalSave(response, data, remoteObjects, state);
+                    var resData = mapper.Map(response);
+                    resData.Id = data.Id;
+                    remoteObjects.Add(resData);
                 }
                 else
                 {
@@ -405,7 +407,7 @@ namespace Toggl.Phoebe.Reactive
                            .Concat(changes.Clients.Select(mapper.Map<ClientData>).Cast<CommonData> ())
                            .Concat(changes.Projects.Select(mapper.Map<ProjectData>).Cast<CommonData> ())
                            .Concat(changes.Tasks.Select(mapper.Map<TaskData>).Cast<CommonData> ())
-                           .Concat(changes.TimeEntries.Select(x => MapEntryWithTags(x, state)))
+                           .Concat(changes.TimeEntries.Select(mapper.Map<TimeEntryData>).Cast<CommonData> ())
                            .ToList();
 
                 RxChain.Send(
@@ -505,7 +507,7 @@ namespace Toggl.Phoebe.Reactive
                            .Concat(newClients.Select(mapper.Map<ClientData>).Cast<CommonData> ())
                            .Concat(newProjects.Select(mapper.Map<ProjectData>).Cast<CommonData> ())
                            .Concat(newTasks.Select(mapper.Map<TaskData>).Cast<CommonData> ())
-                           .Concat(jsonEntries.Select(x => MapEntryWithTags(x, state, newTags.Select(mapper.Map<TagData>))))
+                           .Concat(jsonEntries.Select(mapper.Map<TimeEntryData>).Cast<CommonData> ())
                            .ToList();
 
 
@@ -531,73 +533,17 @@ namespace Toggl.Phoebe.Reactive
             }
         }
 
-        List<CommonData> PrepareForLocalSave(CommonJson json, ICommonData previousData, List<CommonData> remoteObjects, AppState state)
-        {
-            CommonData resData;
-            if (json is TimeEntryJson)
-            {
-                resData = MapEntryWithTags((TimeEntryJson)json, state);
-            }
-            else
-            {
-                resData = mapper.Map(json);
-
-            }
-            resData.Id = previousData.Id;
-            remoteObjects.Add(resData);
-            return remoteObjects;
-        }
-
         CommonJson PrepareForSync(ICommonData data, List<CommonData> remoteObjects, AppState state)
         {
             CommonJson json;
             data = BuildRemoteRelationships(data, remoteObjects, state);
-
-            if (data is ITimeEntryData)
-            {
-                var timeEntry = (ITimeEntryData)data;
-                var tags = timeEntry.TagIds.Select(id => state.Tags [id].Name).ToList();
-                json = mapper.Map<TimeEntryJson> (timeEntry);
-                ((TimeEntryJson)json).Tags = tags;
-            }
-            else
-            {
-                json = mapper.MapToJson(data);
-            }
+            json = mapper.MapToJson(data);
 
             if (data.SyncState == SyncState.UpdatePending && json.RemoteId == null)
             {
                 json.RemoteId = GetRemoteId(data.Id, remoteObjects, state, data.GetType());
             }
             return json;
-        }
-
-        // ATTENTION Until a better modification or a re-thinking
-        // for the first load of objects, the tags downloaded in the
-        // first request will be used to get RemoteIds.
-        CommonData MapEntryWithTags(TimeEntryJson jsonEntry, AppState state, IEnumerable<TagData> sameRequestTagList = null)
-        {
-            var tagIds = new List<Guid> ();
-            var tagDataList = (sameRequestTagList != null) ? state.Tags.Values.Concat(sameRequestTagList) : state.Tags.Values;
-
-            foreach (var tag in jsonEntry.Tags)
-            {
-                var tagData = tagDataList.SingleOrDefault(
-                                  x => x.WorkspaceRemoteId == jsonEntry.WorkspaceRemoteId && x.Name == tag);
-                if (tagData != null)
-                {
-                    tagIds.Add(tagData.Id);
-                }
-                else
-                {
-                    // TODO RX: How to retrieve the tag from server without RemoteId?
-                    //newTags.Add (await client.Get<TagJson> (authToken, tagRemoteId));
-                }
-            }
-
-            var te = mapper.Map<TimeEntryData> (jsonEntry);
-            te.TagIds = tagIds;
-            return te;
         }
 
         ICommonData BuildRemoteRelationships(ICommonData data, List<CommonData> remoteObjects, AppState state)

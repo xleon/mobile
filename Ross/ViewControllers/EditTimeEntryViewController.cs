@@ -351,13 +351,13 @@ namespace Toggl.Ross.ViewControllers
         {
             var newTagList = ViewModel.TagList.ToList();
             newTagList.Add(newTagData);
-            ViewModel.ChangeTagList(newTagList.Select(t => t.Id));
+            ViewModel.ChangeTagList(newTagList.Select(t => t.Name));
             NavigationController.PopToViewController(this, true);
         }
 
         public void OnModifyTagList(List<ITagData> newTagList)
         {
-            ViewModel.ChangeTagList(newTagList.Select(t => t.Id));
+            ViewModel.ChangeTagList(newTagList.Select(t => t.Name));
             NavigationController.PopToViewController(this, true);
         }
         #endregion

@@ -301,7 +301,7 @@ namespace Toggl.Phoebe.Tests.Data.Mapper
                 x.DurationOnly = true;
                 x.StartTime = startTime;
                 x.StopTime = stopTime;
-                x.TagIds = tags;
+                x.Taggss = tags;
                 x.TaskRemoteId = null;
                 x.UserRemoteId = 333;
                 x.WorkspaceRemoteId = 222;

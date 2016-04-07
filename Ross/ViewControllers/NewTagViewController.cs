@@ -27,7 +27,7 @@ namespace Toggl.Ross.ViewControllers
         public override void LoadView()
         {
             NavigationItem.RightBarButtonItem = new UIBarButtonItem(
-                "NewTagAdd".Tr(), UIBarButtonItemStyle.Plain, OnAddTag)
+                "NewTagAdd".Tr(), UIBarButtonItemStyle.Plain, OnPressAddTag)
             .Apply(Style.NavLabelButton).Apply(Style.DisableNavLabelButton);
             NavigationItem.RightBarButtonItem.Enabled = false;
 
@@ -56,8 +56,11 @@ namespace Toggl.Ross.ViewControllers
             nameTextField.BecomeFirstResponder();
         }
 
-        private async void OnAddTag(object sender, EventArgs e)
+        private async void OnPressAddTag(object sender, EventArgs e)
         {
+            // Protect againts double touch!
+            NavigationItem.RightBarButtonItem.Enabled = false;
+
             var newTagData = await viewModel.SaveTagAsync(nameTextField.Text);
             handler.OnCreateNewTag(newTagData);
         }

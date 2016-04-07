@@ -197,32 +197,6 @@ namespace Toggl.Phoebe.Reactive
 
             var updated = dataStore.Update(ctx =>
             {
-                // Update time entry tags
-                if (tagList.Any())
-                {
-                    var existingTags = state.Tags.Values.Where(x => x.WorkspaceId == entryData.WorkspaceId);
-                    List<Guid> tagIds = new List<Guid> ();
-                    foreach (var item in tagList)
-                    {
-                        if (!existingTags.Any(x => x.Name == item))
-                        {
-                            var newTag = TagData.Create(x =>
-                            {
-                                x.Name = item;
-                                x.WorkspaceId = entryData.WorkspaceId;
-                                x.WorkspaceRemoteId = entryData.WorkspaceRemoteId;
-                            });
-                            ctx.Put(newTag);
-                            // Add the last added id
-                            tagIds.Add(ctx.UpdatedItems.Last().Id);
-                        }
-                        else
-                        {
-                            tagIds.Add(existingTags.First(x => x.Name == item).Id);
-                        }
-                    }
-                    entryData.With(x => x.TagIds = tagIds);
-                }
                 // TODO: Entry sanity check
                 ctx.Put(entryData);
             });
@@ -455,8 +429,11 @@ namespace Toggl.Phoebe.Reactive
                         if (newData.CompareTo(oldData) >= 0)
                         {
                             newData.Id = oldData.Id;
-                            var data = BuildLocalRelationships(state, newData);  // Set local Id values.
-                            PutOrDelete(ctx, data);
+                            if (newData.DeletedAt != null)
+                                DestroyLocalRelationships(state, newData, ctx);
+                            else
+                                newData = BuildLocalRelationships(state, newData);  // Set local Id values.
+                            PutOrDelete(ctx, newData);
                         }
                         else
                         {
@@ -473,7 +450,7 @@ namespace Toggl.Phoebe.Reactive
                         PutOrDelete(ctx, newData);
                     }
 
-                    // TODO RX Create a single update method
+                    // TODO RX Create a single update method for state.
                     var updatedList = new List<ICommonData> {newData};
                     state = state.With(
                                 workspaces: state.Update(state.Workspaces, updatedList),
@@ -488,6 +465,48 @@ namespace Toggl.Phoebe.Reactive
                 }
             });
             return state;
+        }
+
+        static void DestroyLocalRelationships(AppState state, CommonData removedData, ISyncDataStoreContext ctx)
+        {
+            if (removedData is IClientData)
+            {
+                state.Projects.Values.Where(x => x.ClientRemoteId == removedData.RemoteId)
+                .Select(x => x.With(p =>
+                {
+                    p.ClientRemoteId = null;
+                    p.ClientId = Guid.Empty;
+                }))
+                .ForEach(x => ctx.Put(x));
+            }
+
+            if (removedData is IProjectData)
+            {
+                state.TimeEntries.Values.Where(x => x.Data.ProjectRemoteId == removedData.RemoteId)
+                .Select(x => x.Data.With(t =>
+                {
+                    t.TaskId = Guid.Empty;
+                    t.TaskRemoteId = null;
+                    t.ProjectId = Guid.Empty;
+                    t.ProjectRemoteId = null;
+                })).ForEach(x => ctx.Put(x));
+            }
+
+            if (removedData is ITagData)
+            {
+
+            }
+
+            if (removedData is IWorkspaceData)
+            {
+                // TODO Ask what to do in this cases.
+            }
+
+            if (removedData is ITaskData)
+            {
+                // TODO Ask what to do in this cases.
+            }
+
         }
 
         static CommonData BuildLocalRelationships(AppState state, CommonData data)

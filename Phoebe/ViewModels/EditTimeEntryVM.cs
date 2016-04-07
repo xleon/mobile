@@ -23,23 +23,23 @@ namespace Toggl.Phoebe.ViewModels
 
         public EditTimeEntryVM(AppState appState, Guid timeEntryId, bool isManual = false)
         {
-            List<Guid> tagList;
+            List<string> tagList;
             IsManual = isManual;
 
             if (timeEntryId == Guid.Empty)
             {
                 richData = isManual ? new RichTimeEntry(appState.GetTimeEntryDraft(), appState) : appState.ActiveEntry;
-                tagList = GetDefaultTagList(appState, richData.Data).Select(x => x.Id).ToList();
+                tagList = GetDefaultTagList(appState, richData.Data).Select(x => x.Name).ToList();
             }
             else
             {
                 richData = appState.TimeEntries[timeEntryId];
-                tagList = new List<Guid> (richData.Data.TagIds);
+                tagList = new List<string> (richData.Data.Tags);
             }
 
             UpdateView(x =>
             {
-                x.TagIds = tagList;
+                x.Tags = tagList;
                 if (IsManual)
                 {
                     x.StartTime = Time.UtcNow.AddMinutes(-5);
@@ -51,7 +51,7 @@ namespace Toggl.Phoebe.ViewModels
             // Save previous state.
             previousData = IsManual
                            // Hack to force tag saving even if there're no other changes
-                           ? new RichTimeEntry(richData.Data.With(x => x.TagIds = new List<Guid> ()), appState)
+                           ? new RichTimeEntry(richData.Data.With(x => x.Tags = new List<string> ()), appState)
                            : new RichTimeEntry(richData.Data, richData.Info);
 
             subscriptionState = StoreManager
@@ -179,9 +179,9 @@ namespace Toggl.Phoebe.ViewModels
             //ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Change Stop Time";
         }
 
-        public void ChangeTagList(IEnumerable<Guid> newTags)
+        public void ChangeTagList(IEnumerable<string> newTags)
         {
-            UpdateView(x => x.TagIds = newTags.ToList(), nameof(TagList));
+            UpdateView(x => x.Tags = newTags.ToList(), nameof(TagList));
         }
 
         public void ChangeDescription(string description)

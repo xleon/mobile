@@ -28,6 +28,7 @@ namespace Toggl.Phoebe.ViewModels
 
         public Task<ITagData> SaveTagAsync(string tagName, RxChain.Continuation continuationOptions = null)
         {
+            // ATTENTION protect against double clic in Views
             var tcs = new TaskCompletionSource<ITagData> ();
             var existing =
                 appState.Tags.Values.SingleOrDefault(

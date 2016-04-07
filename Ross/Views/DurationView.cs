@@ -7,8 +7,8 @@ using Toggl.Phoebe.Data;
 
 namespace Toggl.Ross.Views
 {
-    [Adopts ("UIKeyInput")]
-    [Adopts ("UITextInputTraits")]
+    [Adopts("UIKeyInput")]
+    [Adopts("UITextInputTraits")]
     public class DurationView : UILabel
     {
         private const float CursorWidth = 2f;
@@ -18,25 +18,26 @@ namespace Toggl.Ross.Views
         private UIView cursorView;
         private NSTimer cursorTimer;
 
-        public DurationView ()
+        public DurationView()
         {
             KeyboardAppearance = UIKeyboardAppearance.Default;
             UserInteractionEnabled = true;
             LineBreakMode = UILineBreakMode.Clip;
-            UpdateText ();
+            UpdateText();
 
-            Add (cursorView = new UIView () {
+            Add(cursorView = new UIView()
+            {
                 BackgroundColor = UIColor.Blue,
                 Alpha = 0,
             });
         }
 
-        public override void LayoutSubviews ()
+        public override void LayoutSubviews()
         {
-            base.LayoutSubviews ();
+            base.LayoutSubviews();
 
             var cursorHeight = Font.Ascender;
-            cursorView.Frame = new CGRect (
+            cursorView.Frame = new CGRect(
                 Frame.Width - 7f - CursorWidth,
                 (Frame.Height - cursorHeight) / 2,
                 CursorWidth,
@@ -47,12 +48,14 @@ namespace Toggl.Ross.Views
         public Duration Hint
         {
             get { return hintDuration; }
-            set {
-                if (hintDuration == value) {
+            set
+            {
+                if (hintDuration == value)
+                {
                     return;
                 }
                 hintDuration = value;
-                UpdateText ();
+                UpdateText();
             }
         }
 
@@ -63,46 +66,50 @@ namespace Toggl.Ross.Views
 
         public event EventHandler DurationChanged;
 
-        private void UpdateText ()
+        private void UpdateText()
         {
             var durationShown = digitsEntered > 0 ? duration : hintDuration;
-            var durationText = String.Concat (" ", durationShown.ToString (), " ");
+            var durationText = String.Concat(" ", durationShown.ToString(), " ");
 
-            var durationAttributed = new NSMutableAttributedString (durationText);
-            if (digitsEntered > 0) {
+            var durationAttributed = new NSMutableAttributedString(durationText);
+            if (digitsEntered > 0)
+            {
                 // Divider
-                var sepIdx = durationText.IndexOf (":", StringComparison.Ordinal);
-                if (sepIdx >= 0) {
-                    durationAttributed.AddAttributes (
-                    new UIStringAttributes () { ForegroundColor = HighlightedTextColor },
-                    new NSRange (sepIdx, 1)
+                var sepIdx = durationText.IndexOf(":", StringComparison.Ordinal);
+                if (sepIdx >= 0)
+                {
+                    durationAttributed.AddAttributes(
+                    new UIStringAttributes() { ForegroundColor = HighlightedTextColor },
+                    new NSRange(sepIdx, 1)
                     );
                 }
                 // Color entered minutes
-                var minutesLength = Math.Min (digitsEntered, 2);
-                durationAttributed.AddAttributes (
-                new UIStringAttributes () { ForegroundColor = HighlightedTextColor },
-                new NSRange (durationText.Length - 1 - minutesLength, minutesLength)
+                var minutesLength = Math.Min(digitsEntered, 2);
+                durationAttributed.AddAttributes(
+                new UIStringAttributes() { ForegroundColor = HighlightedTextColor },
+                new NSRange(durationText.Length - 1 - minutesLength, minutesLength)
                 );
                 // Color entered hours
-                if (digitsEntered > 2) {
+                if (digitsEntered > 2)
+                {
                     var hoursLength = digitsEntered - 2;
-                    durationAttributed.AddAttributes (
-                    new UIStringAttributes () { ForegroundColor = HighlightedTextColor },
-                    new NSRange (1 + 2 - hoursLength, hoursLength)
+                    durationAttributed.AddAttributes(
+                    new UIStringAttributes() { ForegroundColor = HighlightedTextColor },
+                    new NSRange(1 + 2 - hoursLength, hoursLength)
                     );
                 }
             }
             AttributedText = durationAttributed;
         }
 
-        protected void OnDurationChanged ()
+        protected void OnDurationChanged()
         {
-            UpdateText ();
+            UpdateText();
 
             var cb = DurationChanged;
-            if (cb != null) {
-                cb (this, EventArgs.Empty);
+            if (cb != null)
+            {
+                cb(this, EventArgs.Empty);
             }
         }
 
@@ -111,152 +118,169 @@ namespace Toggl.Ross.Views
             get { return true; }
         }
 
-        [Export ("autocapitalizationType")]
+        [Export("autocapitalizationType")]
         UITextAutocapitalizationType AutocapitalizationType
         {
             get { return UITextAutocapitalizationType.None; }
-            set { throw new InvalidOperationException (); }
+            set { throw new InvalidOperationException(); }
         }
 
-        [Export ("autocorrectionType")]
+        [Export("autocorrectionType")]
         UITextAutocorrectionType AutocorrectionType
         {
             get { return UITextAutocorrectionType.No; }
-            set { throw new InvalidOperationException (); }
+            set { throw new InvalidOperationException(); }
         }
 
-        [Export ("enablesReturnKeyAutomatically")]
+        [Export("enablesReturnKeyAutomatically")]
         bool EnablesReturnKeyAutomatically
         {
             get { return true; }
-            set { throw new InvalidOperationException (); }
+            set { throw new InvalidOperationException(); }
         }
 
-        [Export ("keyboardAppearance")]
+        [Export("keyboardAppearance")]
         UIKeyboardAppearance KeyboardAppearance { get; set; }
 
-        [Export ("keyboardType")]
+        [Export("keyboardType")]
         UIKeyboardType KeyboardType
         {
             get { return UIKeyboardType.NumberPad; }
-            set { throw new InvalidOperationException (); }
+            set { throw new InvalidOperationException(); }
         }
 
-        [Export ("returnKeyType")]
+        [Export("returnKeyType")]
         UIReturnKeyType ReturnKeyType
         {
             get { return UIReturnKeyType.Default; }
-            set { throw new InvalidOperationException (); }
+            set { throw new InvalidOperationException(); }
         }
 
-        [Export ("secureTextEntry")]
+        [Export("secureTextEntry")]
         bool SecureTextEntry
         {
             get { return false; }
-            set { throw new InvalidOperationException (); }
+            set { throw new InvalidOperationException(); }
         }
 
         public bool HasText
         {
-            [Export ("hasText")]
+            [Export("hasText")]
             get { return digitsEntered > 0; }
         }
 
-        [Export ("deleteBackward")]
-        public void DeleteBackward ()
+        [Export("deleteBackward")]
+        public void DeleteBackward()
         {
-            if (digitsEntered < 1) {
+            if (digitsEntered < 1)
+            {
                 return;
             }
-            duration = duration.RemoveDigit ();
-            if (duration == Duration.Zero) {
+            duration = duration.RemoveDigit();
+            if (duration == Duration.Zero)
+            {
                 // Clear all entered digits, is no value remains
                 digitsEntered = 0;
-            } else {
+            }
+            else
+            {
                 digitsEntered -= 1;
             }
 
-            OnDurationChanged ();
+            OnDurationChanged();
         }
 
-        [Export ("insertText:")]
-        public void InsertText (string text)
+        [Export("insertText:")]
+        public void InsertText(string text)
         {
-            if (text == null) {
-                throw new ArgumentNullException ("text");
+            if (text == null)
+            {
+                throw new ArgumentNullException("text");
             }
-            if (digitsEntered > 3) {
+            if (digitsEntered > 3)
+            {
                 return;
             }
 
             int num;
-            if (!Int32.TryParse (text, out num) || num < 0 || num > 9) {
+            if (!Int32.TryParse(text, out num) || num < 0 || num > 9)
+            {
                 return;
             }
 
-            duration = duration.AppendDigit (num);
+            duration = duration.AppendDigit(num);
             digitsEntered += 1;
-            OnDurationChanged ();
+            OnDurationChanged();
         }
 
-        public override void TouchesEnded (NSSet touches, UIEvent evt)
+        public override void TouchesEnded(NSSet touches, UIEvent evt)
         {
-            base.TouchesBegan (touches, evt);
+            base.TouchesBegan(touches, evt);
 
             var touch = touches.AnyObject as UITouch;
-            if (touch != null && touch.View == this) {
-                BecomeFirstResponder ();
+            if (touch != null && touch.View == this)
+            {
+                BecomeFirstResponder();
             }
         }
 
-        public override bool BecomeFirstResponder ()
+        public override bool BecomeFirstResponder()
         {
-            var res = base.BecomeFirstResponder ();
-            if (res) {
+            var res = base.BecomeFirstResponder();
+            if (res)
+            {
                 // Start blinking the cursor
-                if (cursorTimer != null) {
-                    cursorTimer.Invalidate ();
+                if (cursorTimer != null)
+                {
+                    cursorTimer.Invalidate();
                     cursorTimer = null;
                 }
 
                 cursorView.Alpha = 0;
-                UIView.Animate (0.5f, 0,
-                                UIViewAnimationOptions.CurveEaseInOut
-                                | UIViewAnimationOptions.Autoreverse
-                                | UIViewAnimationOptions.AllowUserInteraction,
-                delegate {
+                UIView.Animate(0.5f, 0,
+                               UIViewAnimationOptions.CurveEaseInOut
+                               | UIViewAnimationOptions.Autoreverse
+                               | UIViewAnimationOptions.AllowUserInteraction,
+                               delegate
+                {
                     cursorView.Alpha = 1;
                 },
-                delegate {
+                delegate
+                {
                     cursorView.Alpha = 0;
                 }
-                               );
+                              );
 
-                cursorTimer = NSTimer.CreateRepeatingScheduledTimer (1.75f, delegate {
-                    UIView.Animate (0.5f, 0,
-                                    UIViewAnimationOptions.CurveEaseInOut
-                                    | UIViewAnimationOptions.Autoreverse
-                                    | UIViewAnimationOptions.AllowUserInteraction,
-                    delegate {
+                cursorTimer = NSTimer.CreateRepeatingScheduledTimer(1.75f, delegate
+                {
+                    UIView.Animate(0.5f, 0,
+                                   UIViewAnimationOptions.CurveEaseInOut
+                                   | UIViewAnimationOptions.Autoreverse
+                                   | UIViewAnimationOptions.AllowUserInteraction,
+                                   delegate
+                    {
                         cursorView.Alpha = 1;
                     },
-                    delegate {
+                    delegate
+                    {
                         cursorView.Alpha = 0;
                     }
-                                   );
+                                  );
                 });
 
             }
             return res;
         }
 
-        public override bool ResignFirstResponder ()
+        public override bool ResignFirstResponder()
         {
-            var res = base.ResignFirstResponder ();
-            if (res) {
+            var res = base.ResignFirstResponder();
+            if (res)
+            {
                 // Stop blinking the cursor
-                if (cursorTimer != null) {
-                    cursorTimer.Invalidate ();
+                if (cursorTimer != null)
+                {
+                    cursorTimer.Invalidate();
                     cursorTimer = null;
                 }
             }

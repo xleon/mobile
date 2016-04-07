@@ -7,16 +7,16 @@ namespace Toggl.Ross.Theme
     {
         public static class EmptyView
         {
-            public static void TitleLabel (UILabel v)
+            public static void TitleLabel(UILabel v)
             {
-                v.Font = UIFont.FromName ("HelveticaNeue", 17f);
+                v.Font = UIFont.FromName("HelveticaNeue", 17f);
                 v.TextAlignment = UITextAlignment.Center;
                 v.TextColor = Color.DarkGray;
             }
 
-            public static void MessageLabel (UILabel v)
+            public static void MessageLabel(UILabel v)
             {
-                v.Font = UIFont.FromName ("HelveticaNeue", 14f);
+                v.Font = UIFont.FromName("HelveticaNeue", 14f);
                 v.Lines = 5;
                 v.TextAlignment = UITextAlignment.Center;
                 v.TextColor = Color.DarkGray;

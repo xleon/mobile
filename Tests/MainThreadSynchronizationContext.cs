@@ -7,57 +7,68 @@ namespace Toggl.Phoebe.Tests
     public class MainThreadSynchronizationContext : SynchronizationContext
     {
         private readonly Thread thread;
-        private readonly object syncRoot = new Object ();
+        private readonly object syncRoot = new Object();
         private readonly Queue<Job> jobs = new Queue<Job> ();
 
-        public MainThreadSynchronizationContext ()
+        public MainThreadSynchronizationContext()
         {
             thread = Thread.CurrentThread;
         }
 
-        public bool Run ()
+        public bool Run()
         {
             Job job;
 
-            lock (syncRoot) {
-                if (jobs.Count < 1) {
+            lock (syncRoot)
+            {
+                if (jobs.Count < 1)
+                {
                     return false;
                 }
-                job = jobs.Dequeue ();
+                job = jobs.Dequeue();
             }
 
-            try {
-                job.Callback (job.State);
-            } finally {
-                if (job.OnProcessed != null) {
-                    job.OnProcessed ();
+            try
+            {
+                job.Callback(job.State);
+            }
+            finally
+            {
+                if (job.OnProcessed != null)
+                {
+                    job.OnProcessed();
                 }
             }
 
             return true;
         }
 
-        public override void Post (SendOrPostCallback d, object state)
+        public override void Post(SendOrPostCallback d, object state)
         {
-            Post (d, state, null);
+            Post(d, state, null);
         }
 
-        public override void Send (SendOrPostCallback d, object state)
+        public override void Send(SendOrPostCallback d, object state)
         {
-            if (thread == Thread.CurrentThread) {
-                d (state);
-            } else {
+            if (thread == Thread.CurrentThread)
+            {
+                d(state);
+            }
+            else
+            {
                 // Schedule task and wait for it to complete
-                var reset = new ManualResetEventSlim ();
-                Post (d, state, reset.Set);
-                reset.Wait ();
+                var reset = new ManualResetEventSlim();
+                Post(d, state, reset.Set);
+                reset.Wait();
             }
         }
 
-        private void Post (SendOrPostCallback d, object state, Action completionHandler)
+        private void Post(SendOrPostCallback d, object state, Action completionHandler)
         {
-            lock (syncRoot) {
-                jobs.Enqueue (new Job () {
+            lock (syncRoot)
+            {
+                jobs.Enqueue(new Job()
+                {
                     Callback = d,
                     State = state,
                     OnProcessed = completionHandler,
@@ -65,7 +76,8 @@ namespace Toggl.Phoebe.Tests
             }
         }
 
-        struct Job {
+        struct Job
+        {
             public SendOrPostCallback Callback;
             public object State;
             public Action OnProcessed;

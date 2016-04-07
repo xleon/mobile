@@ -11,45 +11,46 @@ namespace Toggl.Joey.UI.Utils
 
         public T DataSource { get; private set; }
 
-        public BindableViewHolder (View root)
+        public BindableViewHolder(View root)
         {
             this.root = root;
             root.ViewAttachedToWindow += OnRootAttachedToWindow;
             root.ViewDetachedFromWindow += OnRootDetachedFromWindow;
         }
 
-        protected override void Dispose (bool disposing)
+        protected override void Dispose(bool disposing)
         {
-            if (disposing) {
+            if (disposing)
+            {
                 root.ViewAttachedToWindow -= OnRootAttachedToWindow;
                 root.ViewDetachedFromWindow -= OnRootDetachedFromWindow;
 
                 DataSource = default (T);
             }
 
-            base.Dispose (disposing);
+            base.Dispose(disposing);
         }
 
-        protected virtual void OnRootAttachedToWindow (object sender, View.ViewAttachedToWindowEventArgs e)
+        protected virtual void OnRootAttachedToWindow(object sender, View.ViewAttachedToWindowEventArgs e)
         {
-            Rebind ();
+            Rebind();
         }
 
-        protected virtual void OnRootDetachedFromWindow (object sender, View.ViewDetachedFromWindowEventArgs e)
+        protected virtual void OnRootDetachedFromWindow(object sender, View.ViewDetachedFromWindowEventArgs e)
         {
         }
 
-        public void Bind (T dataSource)
+        public void Bind(T dataSource)
         {
             DataSource = dataSource;
-            OnDataSourceChanged ();
+            OnDataSourceChanged();
         }
 
-        protected virtual void OnDataSourceChanged ()
+        protected virtual void OnDataSourceChanged()
         {
-            Rebind ();
+            Rebind();
         }
 
-        protected abstract void Rebind ();
+        protected abstract void Rebind();
     }
 }

@@ -11,26 +11,26 @@ namespace Toggl.Joey.UI.Fragments
     public class SettingsListFragment : ListFragment
     {
 
-        public override View OnCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
+        public override View OnCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
         {
-            return inflater.Inflate (Resource.Layout.SettingsListFragment, container, false);
+            return inflater.Inflate(Resource.Layout.SettingsListFragment, container, false);
         }
 
-        public override void OnViewCreated (View view, Bundle savedInstanceState)
+        public override void OnViewCreated(View view, Bundle savedInstanceState)
         {
-            base.OnViewCreated (view, savedInstanceState);
+            base.OnViewCreated(view, savedInstanceState);
 
-            ListView.SetClipToPadding (false);
+            ListView.SetClipToPadding(false);
         }
 
-        public override void OnListItemClick (ListView lValue, View vValue, int position, long id)
+        public override void OnListItemClick(ListView lValue, View vValue, int position, long id)
         {
             //((SettingsAdapter)ListAdapter).OnItemClicked (position);
         }
 
-        public override void OnStart ()
+        public override void OnStart()
         {
-            base.OnStart ();
+            base.OnStart();
             ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Settings";
         }
     }

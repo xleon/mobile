@@ -7,23 +7,23 @@ namespace Toggl.Ross.Theme
     {
         public static class TagList
         {
-            public static void RowBackground (UIView v)
+            public static void RowBackground(UIView v)
             {
                 v.BackgroundColor = Color.White;
             }
 
-            public static void NameLabel (UILabel v)
+            public static void NameLabel(UILabel v)
             {
-                v.Font = UIFont.FromName ("HelveticaNeue", 17f);
+                v.Font = UIFont.FromName("HelveticaNeue", 17f);
                 v.TextAlignment = UITextAlignment.Left;
                 v.TextColor = Color.Black;
             }
 
-            public static void NewTagButton (UIButton v)
+            public static void NewTagButton(UIButton v)
             {
-                v.Font = UIFont.FromName ("HelveticaNeue", 17f);
-                v.SetTitleColor (Color.Gray, UIControlState.Normal);
-                v.SetTitleColor (Color.Black, UIControlState.Highlighted);
+                v.Font = UIFont.FromName("HelveticaNeue", 17f);
+                v.SetTitleColor(Color.Gray, UIControlState.Normal);
+                v.SetTitleColor(Color.Black, UIControlState.Highlighted);
             }
         }
     }

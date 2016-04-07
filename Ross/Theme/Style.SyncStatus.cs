@@ -7,26 +7,26 @@ namespace Toggl.Ross.Theme
     {
         public static class SyncStatus
         {
-            public static void BarBackground (UIView v)
+            public static void BarBackground(UIView v)
             {
-                v.BackgroundColor = Color.Black.ColorWithAlpha (0.85f);
+                v.BackgroundColor = Color.Black.ColorWithAlpha(0.85f);
             }
 
-            public static void StatusLabel (UILabel v)
+            public static void StatusLabel(UILabel v)
             {
-                v.Font = UIFont.FromName ("HelveticaNeue", 14f);
+                v.Font = UIFont.FromName("HelveticaNeue", 14f);
                 v.TextColor = Color.White;
             }
 
-            public static void RetryButton (UIButton v)
+            public static void RetryButton(UIButton v)
             {
                 v.ContentMode = UIViewContentMode.Center;
-                v.SetImage (Image.IconRetry, UIControlState.Normal);
+                v.SetImage(Image.IconRetry, UIControlState.Normal);
             }
 
-            public static void CancelButton (UIButton v)
+            public static void CancelButton(UIButton v)
             {
-                v.SetImage (Image.IconCancel, UIControlState.Normal);
+                v.SetImage(Image.IconCancel, UIControlState.Normal);
             }
         }
     }

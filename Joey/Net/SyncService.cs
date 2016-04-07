@@ -6,21 +6,21 @@ using Android.OS;
 namespace Toggl.Joey.Net
 {
     // TODO RX restore services correctly.
-    [Service (Exported = false)]
+    [Service(Exported = false)]
     public class SyncService : Service
     {
         //Subscription<SyncFinishedMessage> subscriptionSyncFinished;
 
-        public SyncService () : base ()
+        public SyncService() : base()
         {
         }
 
-        public SyncService (IntPtr javaRef, Android.Runtime.JniHandleOwnership transfer)
-        : base (javaRef, transfer)
+        public SyncService(IntPtr javaRef, Android.Runtime.JniHandleOwnership transfer)
+        : base(javaRef, transfer)
         {
         }
 
-        protected override void Dispose (bool disposing)
+        protected override void Dispose(bool disposing)
         {
             /*
             if (disposing) {
@@ -31,10 +31,10 @@ namespace Toggl.Joey.Net
                 }
             }
             */
-            base.Dispose (disposing);
+            base.Dispose(disposing);
         }
 
-        public override void OnStart (Intent intent, int startId)
+        public override void OnStart(Intent intent, int startId)
         {
             /*
             if (subscriptionSyncFinished != null) {
@@ -59,13 +59,13 @@ namespace Toggl.Joey.Net
             */
         }
 
-        public override StartCommandResult OnStartCommand (Intent intent, StartCommandFlags flags, int startId)
+        public override StartCommandResult OnStartCommand(Intent intent, StartCommandFlags flags, int startId)
         {
-            OnStart (intent, startId);
+            OnStart(intent, startId);
             return StartCommandResult.NotSticky;
         }
 
-        public override IBinder OnBind (Intent intent)
+        public override IBinder OnBind(Intent intent)
         {
             return null;
         }

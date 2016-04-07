@@ -11,42 +11,44 @@ namespace Toggl.Phoebe.Data
     {
         readonly SQLiteConnectionWithLock cnn;
 
-        public SyncSqliteDataStore (string dbPath, ISQLitePlatform platformInfo)
+        public SyncSqliteDataStore(string dbPath, ISQLitePlatform platformInfo)
         {
-            var cnnString = new SQLiteConnectionString (dbPath, true);
-            this.cnn = new SQLiteConnectionWithLock (platformInfo, cnnString);
+            var cnnString = new SQLiteConnectionString(dbPath, true);
+            this.cnn = new SQLiteConnectionWithLock(platformInfo, cnnString);
 
             CreateTables();
-            CleanOldDraftEntry ();
+            CleanOldDraftEntry();
         }
 
-        private void CreateTables ()
+        private void CreateTables()
         {
-            var dataObjects = DiscoverDataModels ();
-            foreach (var t in dataObjects) {
-                cnn.CreateTable (t);
+            var dataObjects = DiscoverDataModels();
+            foreach (var t in dataObjects)
+            {
+                cnn.CreateTable(t);
             }
         }
 
-        private void CleanOldDraftEntry ()
+        private void CleanOldDraftEntry()
         {
             // TODO: temporal method to clear old draft entries from DB.
             // It should be removed in next versions.
-            cnn.Table<TimeEntryData>().Delete (t => t.State == TimeEntryState.New);
+            cnn.Table<TimeEntryData>().Delete(t => t.State == TimeEntryState.New);
         }
 
         internal static List<Type> DiscoverDataModels()
         {
-            return new List<Type>() {
-                typeof (UserData),
-                       typeof (WorkspaceData),
-                       typeof (WorkspaceUserData),
-                       typeof (ProjectData),
-                       typeof (ProjectUserData),
-                       typeof (ClientData),
-                       typeof (TaskData),
-                       typeof (TagData),
-                       typeof (TimeEntryData)
+            return new List<Type>()
+            {
+                typeof(UserData),
+                       typeof(WorkspaceData),
+                       typeof(WorkspaceUserData),
+                       typeof(ProjectData),
+                       typeof(ProjectUserData),
+                       typeof(ClientData),
+                       typeof(TaskData),
+                       typeof(TagData),
+                       typeof(TimeEntryData)
             };
         }
 
@@ -55,27 +57,29 @@ namespace Toggl.Phoebe.Data
             return cnn.Table<T>();
         }
 
-        public IReadOnlyList<ICommonData> Update (Action<ISyncDataStoreContext> worker)
+        public IReadOnlyList<ICommonData> Update(Action<ISyncDataStoreContext> worker)
         {
             IReadOnlyList<ICommonData> updated = null;
 
-            cnn.RunInTransaction (() => {
-                var ctx = new SyncSqliteDataStoreContext (cnn);
-                worker (ctx);
+            cnn.RunInTransaction(() =>
+            {
+                var ctx = new SyncSqliteDataStoreContext(cnn);
+                worker(ctx);
                 updated = ctx.UpdatedItems;
             });
 
             return updated;
         }
 
-        public void WipeTables ()
+        public void WipeTables()
         {
             var dataObjects = DiscoverDataModels();
 
-            foreach (var t in dataObjects) {
-                var map = cnn.GetMapping (t);
-                var query = string.Format ("DELETE FROM \"{0}\"", map.TableName);
-                cnn.Execute (query);
+            foreach (var t in dataObjects)
+            {
+                var map = cnn.GetMapping(t);
+                var query = string.Format("DELETE FROM \"{0}\"", map.TableName);
+                cnn.Execute(query);
             }
         }
 
@@ -89,66 +93,75 @@ namespace Toggl.Phoebe.Data
 
         class QueueItem
         {
-            [SQLite.Net.Attributes.Column ("rowid")]
+            [SQLite.Net.Attributes.Column("rowid")]
             public long RowId { get; set; }
             public string Data { get; set; }
         }
 
-        private void CreateQueueTable (string queueId)
+        private void CreateQueueTable(string queueId)
         {
-            cnn.Execute (string.Format (QueueCreateSql, queueId));
+            cnn.Execute(string.Format(QueueCreateSql, queueId));
         }
 
-        public int ResetQueue (string queueId)
+        public int ResetQueue(string queueId)
         {
-            CreateQueueTable (queueId);
-            return cnn.ExecuteScalar<int> (string.Format (QueueResetSql, queueId));
+            CreateQueueTable(queueId);
+            return cnn.ExecuteScalar<int> (string.Format(QueueResetSql, queueId));
         }
 
-        public int GetQueueSize (string queueId)
+        public int GetQueueSize(string queueId)
         {
-            CreateQueueTable (queueId);
-            return cnn.ExecuteScalar<int> (string.Format (QueueCountSql, queueId));
+            CreateQueueTable(queueId);
+            return cnn.ExecuteScalar<int> (string.Format(QueueCountSql, queueId));
         }
 
-        public bool TryEnqueue (string queueId, string json)
+        public bool TryEnqueue(string queueId, string json)
         {
-            CreateQueueTable (queueId);
-            var res = cnn.Execute (string.Format (QueueInsertSql, queueId), json);
+            CreateQueueTable(queueId);
+            var res = cnn.Execute(string.Format(QueueInsertSql, queueId), json);
             return res == 1;
         }
 
-        public bool TryDequeue (string queueId, out string json)
+        public bool TryDequeue(string queueId, out string json)
         {
             json = null;
-            CreateQueueTable (queueId);
+            CreateQueueTable(queueId);
 
-            var cmd = cnn.CreateCommand (string.Format (QueueSelectFirstSql, queueId));
+            var cmd = cnn.CreateCommand(string.Format(QueueSelectFirstSql, queueId));
             var record = cmd.ExecuteQuery<QueueItem>().SingleOrDefault();
-            if (record != null) {
-                cmd = cnn.CreateCommand (string.Format (QueueDeleteSql, queueId), record.RowId);
+            if (record != null)
+            {
+                cmd = cnn.CreateCommand(string.Format(QueueDeleteSql, queueId), record.RowId);
                 var res = cmd.ExecuteNonQuery();
-                if (res != 1) {
+                if (res != 1)
+                {
                     return false;
-                } else {
+                }
+                else
+                {
                     json = record.Data;
                     return true;
                 }
-            } else {
+            }
+            else
+            {
                 return false;
             }
         }
 
-        public bool TryPeek (string queueId, out string json)
+        public bool TryPeek(string queueId, out string json)
         {
-            CreateQueueTable (queueId);
+            CreateQueueTable(queueId);
 
-            var cmd = cnn.CreateCommand (string.Format (QueueSelectFirstSql, queueId));
+            var cmd = cnn.CreateCommand(string.Format(QueueSelectFirstSql, queueId));
             var record = cmd.ExecuteQuery<QueueItem>().SingleOrDefault();
-            if (record != null) {
+            if (record != null)
+            {
                 json = record.Data;
                 return true;
-            } else {
+            }
+            else
+            {
                 json = null;
                 return false;
             }
@@ -160,7 +173,7 @@ namespace Toggl.Phoebe.Data
             readonly SQLiteConnectionWithLock conn;
             readonly List<ICommonData> updated;
 
-            public SyncSqliteDataStoreContext (SQLiteConnectionWithLock conn)
+            public SyncSqliteDataStoreContext(SQLiteConnectionWithLock conn)
             {
                 this.conn = conn;
                 this.updated = new List<ICommonData>();
@@ -176,50 +189,71 @@ namespace Toggl.Phoebe.Data
                 get { return updated; }
             }
 
-            public void Put (ICommonData obj)
+            public void Put(ICommonData obj)
             {
-                var success = conn.InsertOrReplace (obj) == 1;
-                if (success) {
-                    updated.Add (obj);
+                var success = conn.InsertOrReplace(obj) == 1;
+                if (success)
+                {
+                    updated.Add(obj);
                 }
             }
 
-            public void Delete (ICommonData obj)
+            public void Delete(ICommonData obj)
             {
-                var success = conn.Delete (obj) == 1;
-                if (success) {
-                    updated.Add (obj);
+                var success = conn.Delete(obj) == 1;
+                if (success)
+                {
+                    updated.Add(obj);
                 }
             }
 
             // TODO: RX Find an elegant way to
             // replace this method.
-            public ICommonData GetByColumn (Type type, string colName, object colValue)
+            public ICommonData GetByColumn(Type type, string colName, object colValue)
             {
                 IEnumerable<ICommonData> res;
-                var map = conn.GetMapping (type);
+                var map = conn.GetMapping(type);
                 var query = $"SELECT * FROM [{map.TableName}] WHERE {colName}=?";
 
-                if (type == typeof (ClientData)) {
+                if (type == typeof(ClientData))
+                {
                     res = conn.Query<ClientData> (query, colValue).Cast<ICommonData>();
-                } else if (type == typeof (ProjectData)) {
+                }
+                else if (type == typeof(ProjectData))
+                {
                     res = conn.Query<ProjectData> (query, colValue).Cast<ICommonData>();
-                } else if (type == typeof (TaskData)) {
+                }
+                else if (type == typeof(TaskData))
+                {
                     res = conn.Query<TaskData> (query, colValue).Cast<ICommonData>();
-                } else if (type == typeof (TimeEntryData)) {
+                }
+                else if (type == typeof(TimeEntryData))
+                {
                     res = conn.Query<TimeEntryData> (query, colValue).Cast<ICommonData>();
-                } else if (type == typeof (WorkspaceData)) {
+                }
+                else if (type == typeof(WorkspaceData))
+                {
                     res = conn.Query<WorkspaceData> (query, colValue).Cast<ICommonData>();
-                } else if (type == typeof (UserData)) {
+                }
+                else if (type == typeof(UserData))
+                {
                     res = conn.Query<UserData> (query, colValue).Cast<ICommonData>();
-                } else if (type == typeof (TagData)) {
+                }
+                else if (type == typeof(TagData))
+                {
                     res = conn.Query<TagData> (query, colValue).Cast<ICommonData>();
-                } else if (type == typeof (WorkspaceUserData)) {
+                }
+                else if (type == typeof(WorkspaceUserData))
+                {
                     res = conn.Query<WorkspaceUserData> (query, colValue).Cast<ICommonData>();
-                } else if (type == typeof (ProjectUserData)) {
+                }
+                else if (type == typeof(ProjectUserData))
+                {
                     res = conn.Query<ProjectUserData> (query, colValue).Cast<ICommonData>();
-                } else {
-                    throw new NotSupportedException (string.Format ("Cannot find table for {0}", type.Name));
+                }
+                else
+                {
+                    throw new NotSupportedException(string.Format("Cannot find table for {0}", type.Name));
                 }
 
                 return res.SingleOrDefault();

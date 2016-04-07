@@ -6,23 +6,24 @@ namespace Toggl.Joey.UI.Fragments
 {
     public abstract class BaseDialogFragment : DialogFragment
     {
-        protected BaseDialogFragment ()
+        protected BaseDialogFragment()
         {
         }
 
-        protected BaseDialogFragment (IntPtr jref, Android.Runtime.JniHandleOwnership xfer) : base (jref, xfer)
+        protected BaseDialogFragment(IntPtr jref, Android.Runtime.JniHandleOwnership xfer) : base(jref, xfer)
         {
         }
 
-        public override void Show (FragmentManager manager, string tag)
+        public override void Show(FragmentManager manager, string tag)
         {
             // Make sure we don't show the dialog twice
-            var frag = manager.FindFragmentByTag (tag);
-            if (frag != null) {
+            var frag = manager.FindFragmentByTag(tag);
+            if (frag != null)
+            {
                 return;
             }
 
-            base.Show (manager, tag);
+            base.Show(manager, tag);
         }
     }
 }

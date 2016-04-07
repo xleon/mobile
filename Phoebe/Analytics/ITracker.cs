@@ -7,14 +7,14 @@ namespace Toggl.Phoebe.Analytics
         string CurrentScreen { set; }
 
         // Timing events
-        void SendAppInitTime (TimeSpan duration);
+        void SendAppInitTime(TimeSpan duration);
 
         // Action events
-        void SendSettingsChangeEvent (SettingName settingName);
-        void SendAccountLoginEvent (AccountCredentials credentialsType);
-        void SendAccountCreateEvent (AccountCredentials credentialsType);
-        void SendAccountLogoutEvent ();
-        void SendTimerStartEvent (TimerStartSource startSource);
-        void SendTimerStopEvent (TimerStopSource stopSource);
+        void SendSettingsChangeEvent(SettingName settingName);
+        void SendAccountLoginEvent(AccountCredentials credentialsType);
+        void SendAccountCreateEvent(AccountCredentials credentialsType);
+        void SendAccountLogoutEvent();
+        void SendTimerStartEvent(TimerStartSource startSource);
+        void SendTimerStopEvent(TimerStopSource stopSource);
     }
 }

@@ -13,10 +13,11 @@ namespace Toggl.Joey.UI.Utils
         private readonly Func<T> factory;
         private readonly Action<T> reset;
 
-        public Pool (Func<T> factory, Action<T> reset = null)
+        public Pool(Func<T> factory, Action<T> reset = null)
         {
-            if (factory == null) {
-                throw new ArgumentNullException ("factory");
+            if (factory == null)
+            {
+                throw new ArgumentNullException("factory");
             }
 
             this.factory = factory;
@@ -25,39 +26,48 @@ namespace Toggl.Joey.UI.Utils
 
         public T Obtain()
         {
-            if (instances.Count > 0) {
-                return instances.Dequeue ();
+            if (instances.Count > 0)
+            {
+                return instances.Dequeue();
             }
 
-            return factory ();
+            return factory();
         }
 
-        public void Release (T inst)
+        public void Release(T inst)
         {
-            if (reset != null) {
-                reset (inst);
+            if (reset != null)
+            {
+                reset(inst);
             }
-            instances.Enqueue (inst);
+            instances.Enqueue(inst);
         }
 
         public int Count
         {
             get { return instances.Count; }
-            set {
-                if (value > instances.Count) {
+            set
+            {
+                if (value > instances.Count)
+                {
                     // Increase the size of the pool
                     var count = value - instances.Count;
-                    for (var i = 0; i < count; i++) {
-                        instances.Enqueue (factory ());
+                    for (var i = 0; i < count; i++)
+                    {
+                        instances.Enqueue(factory());
                     }
-                } else if (value < instances.Count) {
+                }
+                else if (value < instances.Count)
+                {
                     // Trim the size of the pool
-                    while (value < instances.Count) {
-                        var inst = instances.Dequeue ();
+                    while (value < instances.Count)
+                    {
+                        var inst = instances.Dequeue();
 
                         var disposable = inst as IDisposable;
-                        if (disposable != null) {
-                            disposable.Dispose ();
+                        if (disposable != null)
+                        {
+                            disposable.Dispose();
                         }
                     }
                 }

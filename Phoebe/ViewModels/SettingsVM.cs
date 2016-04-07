@@ -15,14 +15,14 @@ namespace Toggl.Phoebe.ViewModels
     {
         private readonly IDisposable subscription;
 
-        public SettingsVM (AppState state)
+        public SettingsVM(AppState state)
         {
             subscription = StoreManager.Singleton
-                           .Observe (x => x.State.Settings)
-                           .StartWith (state.Settings)
-                           .DistinctUntilChanged ()
-                           .ObserveOn (SynchronizationContext.Current)
-                           .Subscribe (stateUpdated);
+                           .Observe(x => x.State.Settings)
+                           .StartWith(state.Settings)
+                           .DistinctUntilChanged()
+                           .ObserveOn(SynchronizationContext.Current)
+                           .Subscribe(stateUpdated);
 
             ServiceContainer.Resolve<ITracker>().CurrentScreen = "Settings";
         }
@@ -39,30 +39,30 @@ namespace Toggl.Phoebe.ViewModels
 
         #region public methods
 
-        public void SetShowNotification (bool value)
+        public void SetShowNotification(bool value)
         {
-            setSetting (nameof (SettingsState.ShowNotification), value);
+            setSetting(nameof(SettingsState.ShowNotification), value);
         }
-        public void SetIdleNotification (bool value)
+        public void SetIdleNotification(bool value)
         {
-            setSetting (nameof (SettingsState.IdleNotification), value);
+            setSetting(nameof(SettingsState.IdleNotification), value);
         }
-        public void SetChooseProjectForNew (bool value)
+        public void SetChooseProjectForNew(bool value)
         {
-            setSetting (nameof (SettingsState.ChooseProjectForNew), value);
+            setSetting(nameof(SettingsState.ChooseProjectForNew), value);
         }
-        public void SetUseDefaultTag (bool value)
+        public void SetUseDefaultTag(bool value)
         {
-            setSetting (nameof (SettingsState.UseDefaultTag), value);
+            setSetting(nameof(SettingsState.UseDefaultTag), value);
         }
-        public void SetGroupedTimeEntries (bool value)
+        public void SetGroupedTimeEntries(bool value)
         {
-            setSetting (nameof (SettingsState.GroupedEntries), value);
+            setSetting(nameof(SettingsState.GroupedEntries), value);
         }
 
         #endregion
 
-        private void stateUpdated (SettingsState settings)
+        private void stateUpdated(SettingsState settings)
         {
             ShowNotification = settings.ShowNotification;
             IdleNotification = settings.IdleNotification;
@@ -71,9 +71,9 @@ namespace Toggl.Phoebe.ViewModels
             GroupedTimeEntries = settings.GroupedEntries;
         }
 
-        private static void setSetting (string propertyName, object value)
+        private static void setSetting(string propertyName, object value)
         {
-            RxChain.Send (new DataMsg.UpdateSetting (propertyName, value));
+            RxChain.Send(new DataMsg.UpdateSetting(propertyName, value));
         }
 
         public void Dispose()

@@ -12,9 +12,9 @@ namespace Toggl.Phoebe.Analytics
         private Experiment currentExperiment;
         internal Random rand;
 
-        public ExperimentManager (params Type[] experimentRegistries)
+        public ExperimentManager(params Type[] experimentRegistries)
         {
-            experiments = new List<Experiment> (FindExperiments (experimentRegistries));
+            experiments = new List<Experiment> (FindExperiments(experimentRegistries));
 
             // TODO Rx review experiment code.
             // Restore currentExperiment
@@ -25,14 +25,16 @@ namespace Toggl.Phoebe.Analytics
                 currentExperiment = experiments.FirstOrDefault (e => e.Id == id);
             }
             */
-            currentExperiment = experiments.FirstOrDefault ();
+            currentExperiment = experiments.FirstOrDefault();
         }
 
         public Experiment CurrentExperiment
         {
             get { return currentExperiment; }
-            private set {
-                if (currentExperiment == value) {
+            private set
+            {
+                if (currentExperiment == value)
+                {
                     return;
                 }
 
@@ -40,73 +42,82 @@ namespace Toggl.Phoebe.Analytics
                 // ServiceContainer.Resolve<ISettingsStore> ().ExperimentId = id;
                 currentExperiment = value;
 
-                if (value.SetUp != null) {
-                    value.SetUp ();
+                if (value.SetUp != null)
+                {
+                    value.SetUp();
                 }
 
-                ServiceContainer.Resolve<MessageBus> ().Send (new ExperimentChangedMessage (this));
+                ServiceContainer.Resolve<MessageBus> ().Send(new ExperimentChangedMessage(this));
             }
         }
 
-        internal List<Experiment> GetPossibleNextExperiments (bool isFreshInstall)
+        internal List<Experiment> GetPossibleNextExperiments(bool isFreshInstall)
         {
             return experiments
-                   .Where (e => !e.FreshInstallOnly || isFreshInstall)
-                   .Where (IsValid)
-                   .ToList ();
+                   .Where(e => !e.FreshInstallOnly || isFreshInstall)
+                   .Where(IsValid)
+                   .ToList();
         }
 
-        internal int RandomNumber (int maxExclusive)
+        internal int RandomNumber(int maxExclusive)
         {
-            if (rand == null) {
-                rand = new Random ();
+            if (rand == null)
+            {
+                rand = new Random();
             }
-            return rand.Next (maxExclusive);
+            return rand.Next(maxExclusive);
         }
 
-        public void NextExperiment (bool isFreshInstall)
+        public void NextExperiment(bool isFreshInstall)
         {
             // If the current experiment is still valid, do nothing.
-            if (IsValid (CurrentExperiment)) {
+            if (IsValid(CurrentExperiment))
+            {
                 return;
             }
 
-            var validExperiments = GetPossibleNextExperiments (isFreshInstall);
+            var validExperiments = GetPossibleNextExperiments(isFreshInstall);
 
             // Choose experiment or no experiment. Equal probability of any outcome.
-            var idx = RandomNumber (validExperiments.Count + 1);
-            if (idx < validExperiments.Count) {
+            var idx = RandomNumber(validExperiments.Count + 1);
+            if (idx < validExperiments.Count)
+            {
                 CurrentExperiment = validExperiments [idx];
-            } else {
+            }
+            else
+            {
                 CurrentExperiment = null;
             }
         }
 
-        private static bool IsValid (Experiment e)
+        private static bool IsValid(Experiment e)
         {
-            if (e == null || !e.Enabled) {
+            if (e == null || !e.Enabled)
+            {
                 return false;
             }
 
             var now = Time.UtcNow;
-            if (e.StartTime != null && e.StartTime.ToUtc() > now) {
+            if (e.StartTime != null && e.StartTime.ToUtc() > now)
+            {
                 return false;
             }
-            if (e.EndTime != null && e.EndTime.ToUtc() < now) {
+            if (e.EndTime != null && e.EndTime.ToUtc() < now)
+            {
                 return false;
             }
 
             return true;
         }
 
-        private static IEnumerable<Experiment> FindExperiments (Type[] registries)
+        private static IEnumerable<Experiment> FindExperiments(Type[] registries)
         {
-            return registries.SelectMany (
-                       reg => reg.GetFields (BindingFlags.Static | BindingFlags.Public)
-                       .Where (f => f.FieldType == typeof (Experiment))
-                       .Select (f => (Experiment)f.GetValue (null))
+            return registries.SelectMany(
+                       reg => reg.GetFields(BindingFlags.Static | BindingFlags.Public)
+                       .Where(f => f.FieldType == typeof(Experiment))
+                       .Select(f => (Experiment)f.GetValue(null))
                    )
-                   .Where (e => e.Enabled);
+                   .Where(e => e.Enabled);
         }
     }
 }

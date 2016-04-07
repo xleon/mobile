@@ -11,9 +11,9 @@ namespace Toggl.Joey.Wear
     {
         private const int itemCount = 10;
 
-        public static async Task StartStopTimeEntry (Context ctx)
+        public static async Task StartStopTimeEntry(Context ctx)
         {
-            await Task.Delay (5);
+            await Task.Delay(5);
             /*
             var manager = ServiceContainer.Resolve<ActiveTimeEntryManager> ();
             var active = manager.ActiveTimeEntry;
@@ -28,14 +28,14 @@ namespace Toggl.Joey.Wear
             */
         }
 
-        public static async Task ContinueTimeEntry (Guid timeEntryId)
+        public static async Task ContinueTimeEntry(Guid timeEntryId)
         {
             //var entryModel = new TimeEntryModel (timeEntryId);
             //await TimeEntryModel.StartAsync (entryModel.Data);
-            ServiceContainer.Resolve<ITracker> ().SendTimerStartEvent (TimerStartSource.WatchContinue);
+            ServiceContainer.Resolve<ITracker> ().SendTimerStartEvent(TimerStartSource.WatchContinue);
         }
 
-        public static async Task<List<SimpleTimeEntryData>> GetTimeEntryData ()
+        public static async Task<List<SimpleTimeEntryData>> GetTimeEntryData()
         {
             /*
             var store = ServiceContainer.Resolve<IDataStore> ();

@@ -3,25 +3,25 @@ using Newtonsoft.Json;
 
 namespace Toggl.Phoebe.Data.Json
 {
-    [JsonObject (MemberSerialization.OptIn)]
+    [JsonObject(MemberSerialization.OptIn)]
     public abstract class CommonJson
     {
-        protected CommonJson ()
+        protected CommonJson()
         {
         }
 
-        [JsonProperty ("id", NullValueHandling = NullValueHandling.Ignore)]
+        [JsonProperty("id", NullValueHandling = NullValueHandling.Ignore)]
         public long? RemoteId { get; set; }
 
-        [JsonProperty ("at")]
+        [JsonProperty("at")]
         public DateTime ModifiedAt { get; set; }
 
-        [JsonProperty ("server_deleted_at", NullValueHandling = NullValueHandling.Ignore)]
+        [JsonProperty("server_deleted_at", NullValueHandling = NullValueHandling.Ignore)]
         public DateTime? DeletedAt { get; set; }
 
-        internal string ToIdString ()
+        internal string ToIdString()
         {
-            return String.Concat (GetType ().Name, "#", RemoteId.ToString ());
+            return String.Concat(GetType().Name, "#", RemoteId.ToString());
         }
     }
 }

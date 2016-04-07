@@ -6,7 +6,7 @@ namespace Toggl.Phoebe.Data
     {
         private readonly string name;
 
-        public SettingChangedMessage (ISettingsStore sender, string name) : base (sender)
+        public SettingChangedMessage(ISettingsStore sender, string name) : base(sender)
         {
             this.name = name;
         }

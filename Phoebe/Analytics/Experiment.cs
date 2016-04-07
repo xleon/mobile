@@ -4,7 +4,7 @@ namespace Toggl.Phoebe.Analytics
 {
     public sealed class Experiment
     {
-        public Experiment ()
+        public Experiment()
         {
             Enabled = true;
         }
@@ -16,7 +16,7 @@ namespace Toggl.Phoebe.Analytics
         public bool Enabled { get; set; }
         public Action SetUp { get; set; }
 
-        public override string ToString ()
+        public override string ToString()
         {
             return Id;
         }

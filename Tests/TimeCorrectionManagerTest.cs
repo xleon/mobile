@@ -14,66 +14,76 @@ namespace Toggl.Phoebe.Tests
         }
 
         [Test]
-        public void TestEmpty ()
+        public void TestEmpty()
         {
-            Assert.AreEqual (TimeSpan.Zero, TimeManager.Correction);
+            Assert.AreEqual(TimeSpan.Zero, TimeManager.Correction);
         }
 
         [Test]
-        public void TestSingleCorrection ()
+        public void TestSingleCorrection()
         {
-            var correction = TimeSpan.FromSeconds (1);
-            TimeManager.AddMeasurement (new TimeCorrectionData () {
+            var correction = TimeSpan.FromSeconds(1);
+            TimeManager.AddMeasurement(new TimeCorrectionData()
+            {
                 MeasuredAt = DateTime.UtcNow,
                 Correction = correction.Ticks,
             });
-            Assert.AreEqual (correction, TimeManager.Correction);
+            Assert.AreEqual(correction, TimeManager.Correction);
         }
 
         [Test]
-        public void TestMultipleCorrection ()
+        public void TestMultipleCorrection()
         {
-            TimeManager.AddMeasurement (new TimeCorrectionData () {
+            TimeManager.AddMeasurement(new TimeCorrectionData()
+            {
                 MeasuredAt = DateTime.UtcNow,
-                Correction = TimeSpan.FromSeconds (0.1).Ticks,
+                Correction = TimeSpan.FromSeconds(0.1).Ticks,
             });
-            TimeManager.AddMeasurement (new TimeCorrectionData () {
+            TimeManager.AddMeasurement(new TimeCorrectionData()
+            {
                 MeasuredAt = DateTime.UtcNow,
-                Correction = TimeSpan.FromSeconds (0.2).Ticks,
+                Correction = TimeSpan.FromSeconds(0.2).Ticks,
             });
-            TimeManager.AddMeasurement (new TimeCorrectionData () {
+            TimeManager.AddMeasurement(new TimeCorrectionData()
+            {
                 MeasuredAt = DateTime.UtcNow,
-                Correction = TimeSpan.FromSeconds (0.7).Ticks,
+                Correction = TimeSpan.FromSeconds(0.7).Ticks,
             });
-            TimeManager.AddMeasurement (new TimeCorrectionData () {
+            TimeManager.AddMeasurement(new TimeCorrectionData()
+            {
                 MeasuredAt = DateTime.UtcNow,
-                Correction = TimeSpan.FromSeconds (0.2).Ticks,
+                Correction = TimeSpan.FromSeconds(0.2).Ticks,
             });
-            TimeManager.AddMeasurement (new TimeCorrectionData () {
+            TimeManager.AddMeasurement(new TimeCorrectionData()
+            {
                 MeasuredAt = DateTime.UtcNow,
-                Correction = TimeSpan.FromSeconds (0.2).Ticks,
+                Correction = TimeSpan.FromSeconds(0.2).Ticks,
             });
-            Assert.AreEqual (TimeSpan.FromSeconds (0.2), TimeManager.Correction);
+            Assert.AreEqual(TimeSpan.FromSeconds(0.2), TimeManager.Correction);
         }
 
         [Test]
-        public void TestManyCorrection ()
+        public void TestManyCorrection()
         {
-            for (var i = 0; i < 100; i++) {
-                TimeManager.AddMeasurement (new TimeCorrectionData () {
+            for (var i = 0; i < 100; i++)
+            {
+                TimeManager.AddMeasurement(new TimeCorrectionData()
+                {
                     MeasuredAt = DateTime.UtcNow,
-                    Correction = TimeSpan.FromSeconds (1).Ticks,
+                    Correction = TimeSpan.FromSeconds(1).Ticks,
                 });
             }
-            Assert.AreEqual (TimeSpan.FromSeconds (1), TimeManager.Correction);
+            Assert.AreEqual(TimeSpan.FromSeconds(1), TimeManager.Correction);
 
-            for (var i = 0; i < 20; i++) {
-                TimeManager.AddMeasurement (new TimeCorrectionData () {
+            for (var i = 0; i < 20; i++)
+            {
+                TimeManager.AddMeasurement(new TimeCorrectionData()
+                {
                     MeasuredAt = DateTime.UtcNow,
                     Correction = 0,
                 });
             }
-            Assert.AreEqual (TimeSpan.Zero, TimeManager.Correction);
+            Assert.AreEqual(TimeSpan.Zero, TimeManager.Correction);
         }
     }
 }

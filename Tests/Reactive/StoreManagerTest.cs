@@ -12,97 +12,102 @@ namespace Toggl.Phoebe.Tests.Reactive
     [TestFixture]
     public class AppStateTest : Test
     {
-        public override void Init ()
+        public override void Init()
         {
-            base.Init ();
+            base.Init();
 
-            var platformUtils = new PlatformUtils ();
+            var platformUtils = new PlatformUtils();
             ServiceContainer.RegisterScoped<IPlatformUtils> (platformUtils);
 
-            RxChain.Init (Util.GetInitAppState (), RxChain.InitMode.TestStoreManager);
+            RxChain.Init(Util.GetInitAppState(), RxChain.InitMode.TestStoreManager);
         }
 
-        public override void Cleanup ()
+        public override void Cleanup()
         {
-            base.Cleanup ();
-            RxChain.Cleanup ();
+            base.Cleanup();
+            RxChain.Cleanup();
         }
 
         [Test]
-        public void TestAddEntry ()
+        public void TestAddEntry()
         {
             IDisposable subscription = null;
-            var te = Util.CreateTimeEntryData (DateTime.Now);
+            var te = Util.CreateTimeEntryData(DateTime.Now);
 
             subscription = StoreManager
                            .Singleton
-                           .Observe (x => x.State)
-            .Subscribe (state => {
-                Assert.That (state.TimeEntries.ContainsKey (te.Id), Is.True);
-                subscription.Dispose ();
+                           .Observe(x => x.State)
+                           .Subscribe(state =>
+            {
+                Assert.That(state.TimeEntries.ContainsKey(te.Id), Is.True);
+                subscription.Dispose();
             });
 
-            RxChain.Send (new DataMsg.TimeEntryPut (te));
+            RxChain.Send(new DataMsg.TimeEntryPut(te));
         }
 
         [Test]
-        public void TestStopEntry ()
+        public void TestStopEntry()
         {
             int step = 0;
             IDisposable subscription = null;
-            var te = Util.CreateTimeEntryData (DateTime.Now)
-                     .With (x => x.State = TimeEntryState.Running);
+            var te = Util.CreateTimeEntryData(DateTime.Now)
+                     .With(x => x.State = TimeEntryState.Running);
 
             subscription = StoreManager
                            .Singleton
-                           .Observe (x => x.State)
-            .Subscribe (state => {
-                switch (step) {
-                case 0:
-                    var te2 = state.TimeEntries[te.Id];
-                    Assert.That (te2.Data.State == TimeEntryState.Running, Is.True);
-                    step++;
-                    break;
-                case 1:
-                    var te3 = state.TimeEntries[te.Id];
-                    Assert.That (te3.Data.State == TimeEntryState.Finished, Is.True);
-                    subscription.Dispose ();
-                    break;
+                           .Observe(x => x.State)
+                           .Subscribe(state =>
+            {
+                switch (step)
+                {
+                    case 0:
+                        var te2 = state.TimeEntries[te.Id];
+                        Assert.That(te2.Data.State == TimeEntryState.Running, Is.True);
+                        step++;
+                        break;
+                    case 1:
+                        var te3 = state.TimeEntries[te.Id];
+                        Assert.That(te3.Data.State == TimeEntryState.Finished, Is.True);
+                        subscription.Dispose();
+                        break;
                 }
             });
 
-            RxChain.Send (new DataMsg.TimeEntryPut (te));
-            RxChain.Send (new DataMsg.TimeEntryStop (te));
+            RxChain.Send(new DataMsg.TimeEntryPut(te));
+            RxChain.Send(new DataMsg.TimeEntryStop(te));
         }
 
         [Test]
-        public void TestRemoveEntry ()
+        public void TestRemoveEntry()
         {
             int step = 0;
             IDisposable subscription = null;
-            var te = Util.CreateTimeEntryData (DateTime.Now);
+            var te = Util.CreateTimeEntryData(DateTime.Now);
             var db = ServiceContainer.Resolve<ISyncDataStore> ();
 
             subscription = StoreManager
                            .Singleton
-                           .Observe (x => x.State)
-            .Subscribe (state => {
-                switch (step) {
-                case 0:
-                    Assert.That (state.TimeEntries.ContainsKey (te.Id), Is.True);
-                    step++;
-                    break;
-                case 1:
-                    Assert.That (state.TimeEntries.ContainsKey (te.Id), Is.False);
-                    // The entry should have also been deleted from the db
-                    Assert.That (db.Table<TimeEntryData> ().Any (x => x.Id == te.Id), Is.False);
-                    subscription.Dispose ();
-                    break;
+                           .Observe(x => x.State)
+                           .Subscribe(state =>
+            {
+                switch (step)
+                {
+                    case 0:
+                        Assert.That(state.TimeEntries.ContainsKey(te.Id), Is.True);
+                        step++;
+                        break;
+                    case 1:
+                        Assert.That(state.TimeEntries.ContainsKey(te.Id), Is.False);
+                        // The entry should have also been deleted from the db
+                        Assert.That(db.Table<TimeEntryData> ().Any(x => x.Id == te.Id), Is.False);
+                        subscription.Dispose();
+                        break;
                 }
             });
 
-            RxChain.Send (new DataMsg.TimeEntryPut (te));
-            RxChain.Send (new DataMsg.TimeEntriesRemove (te));
+            RxChain.Send(new DataMsg.TimeEntryPut(te));
+            RxChain.Send(new DataMsg.TimeEntriesRemove(te));
         }
 
 
@@ -130,41 +135,44 @@ namespace Toggl.Phoebe.Tests.Reactive
         //}
 
         [Test]
-        public void TestSeveralSuscriptors ()
+        public void TestSeveralSuscriptors()
         {
             int step = 0;
             IDisposable subscription1 = null, subscription2 = null;
-            var te = Util.CreateTimeEntryData (DateTime.Now);
+            var te = Util.CreateTimeEntryData(DateTime.Now);
             var db = ServiceContainer.Resolve<ISyncDataStore> ();
 
             subscription1 = StoreManager
                             .Singleton
-                            .Observe (x => x.State)
-            .Subscribe (state => {
-                Assert.That (state.TimeEntries.ContainsKey (te.Id), Is.True);
-                subscription1.Dispose ();
+                            .Observe(x => x.State)
+                            .Subscribe(state =>
+            {
+                Assert.That(state.TimeEntries.ContainsKey(te.Id), Is.True);
+                subscription1.Dispose();
             });
 
             subscription2 = StoreManager
                             .Singleton
-                            .Observe (x => x.State)
-            .Subscribe (state => {
-                switch (step) {
-                case 0:
-                    Assert.That (state.TimeEntries.ContainsKey (te.Id), Is.True);
-                    step++;
-                    break;
-                case 1:
-                    Assert.That (state.TimeEntries.ContainsKey (te.Id), Is.False);
-                    // The entry should have also been deleted from the db
-                    Assert.That (db.Table<TimeEntryData> ().Any (x => x.Id == te.Id), Is.False);
-                    subscription2.Dispose ();
-                    break;
+                            .Observe(x => x.State)
+                            .Subscribe(state =>
+            {
+                switch (step)
+                {
+                    case 0:
+                        Assert.That(state.TimeEntries.ContainsKey(te.Id), Is.True);
+                        step++;
+                        break;
+                    case 1:
+                        Assert.That(state.TimeEntries.ContainsKey(te.Id), Is.False);
+                        // The entry should have also been deleted from the db
+                        Assert.That(db.Table<TimeEntryData> ().Any(x => x.Id == te.Id), Is.False);
+                        subscription2.Dispose();
+                        break;
                 }
             });
 
-            RxChain.Send (new DataMsg.TimeEntryPut (te));
-            RxChain.Send (new DataMsg.TimeEntriesRemove ( te ));
+            RxChain.Send(new DataMsg.TimeEntryPut(te));
+            RxChain.Send(new DataMsg.TimeEntriesRemove(te));
         }
 
     }

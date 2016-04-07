@@ -8,8 +8,8 @@ namespace Toggl.Phoebe.Net
     {
         private readonly HttpStatusCode statusCode;
 
-        public UnsuccessfulRequestException (HttpStatusCode statusCode, string reasonPhrase)
-        : base (String.Format ("{0} ({1})", (int)statusCode, reasonPhrase))
+        public UnsuccessfulRequestException(HttpStatusCode statusCode, string reasonPhrase)
+        : base(String.Format("{0} ({1})", (int)statusCode, reasonPhrase))
         {
             this.statusCode = statusCode;
         }

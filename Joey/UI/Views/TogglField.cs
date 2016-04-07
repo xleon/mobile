@@ -12,10 +12,13 @@ namespace Toggl.Joey.UI.Views
 
         public string AssistViewTitle
         {
-            get {
+            get
+            {
                 return assistView.Text;
-            } set {
-                SetAssistViewTitle (value);
+            }
+            set
+            {
+                SetAssistViewTitle(value);
             }
         }
 
@@ -23,78 +26,82 @@ namespace Toggl.Joey.UI.Views
         private TextView assistView;
         private ImageView arrow;
 
-        public TogglField (Context context) : base (context)
+        public TogglField(Context context) : base(context)
         {
-            Initialize ();
+            Initialize();
         }
 
-        public TogglField (Context context, IAttributeSet attrs) : base (context, attrs)
+        public TogglField(Context context, IAttributeSet attrs) : base(context, attrs)
         {
-            Initialize ();
+            Initialize();
         }
 
-        void Initialize ()
+        void Initialize()
         {
-            var inflater = (LayoutInflater)Context.GetSystemService (Context.LayoutInflaterService);
-            inflater.Inflate (Resource.Layout.TogglField, this);
+            var inflater = (LayoutInflater)Context.GetSystemService(Context.LayoutInflaterService);
+            inflater.Inflate(Resource.Layout.TogglField, this);
 
             // Workaround because the duplicated names
             // inside the component breaks the
             // databinding.
             var layout =  FindViewById<RelativeLayout> (Resource.Id.EditTimeEntryBit);
-            for (int i = 0; i < layout.ChildCount; i++) {
-                if (layout.GetChildAt (i) is EditText) {
-                    TextField = (EditText)layout.GetChildAt (i);
+            for (int i = 0; i < layout.ChildCount; i++)
+            {
+                if (layout.GetChildAt(i) is EditText)
+                {
+                    TextField = (EditText)layout.GetChildAt(i);
                 }
             }
 
-            titleText= FindViewById<TextView> (Resource.Id.EditTimeEntryBitTitle);
+            titleText = FindViewById<TextView> (Resource.Id.EditTimeEntryBitTitle);
             assistView = FindViewById<TextView> (Resource.Id.EditTimeEntryBitAssistView);
             arrow = FindViewById<ImageView> (Resource.Id.EditTimeEntryBitArrow);
 
             TextField.EditorAction += OnTextFieldEditorActionListener;
-            TextField.FocusChange += (sender, e) => {
+            TextField.FocusChange += (sender, e) =>
+            {
                 titleText.Selected = TextField.HasFocus;
                 Selected = TextField.HasFocus;
             };
         }
 
-        private void OnTextFieldEditorActionListener (object sender, TextView.EditorActionEventArgs e)
+        private void OnTextFieldEditorActionListener(object sender, TextView.EditorActionEventArgs e)
         {
-            if (e.ActionId == ImeAction.Done) {
-                TextField.ClearFocus ();
+            if (e.ActionId == ImeAction.Done)
+            {
+                TextField.ClearFocus();
             }
         }
 
-        public TogglField SetName (string name)
+        public TogglField SetName(string name)
         {
             titleText.Text = name;
             TextField.Hint = name;
             return this;
         }
 
-        public TogglField SetName (int resourceId)
+        public TogglField SetName(int resourceId)
         {
-            titleText.SetText (resourceId);
-            TextField.SetHint (resourceId);
+            titleText.SetText(resourceId);
+            TextField.SetHint(resourceId);
             return this;
         }
 
-        public TogglField SetHint (string name)
+        public TogglField SetHint(string name)
         {
             TextField.Hint = name;
             return this;
         }
 
-        public TogglField SetHint (int resourceId)
+        public TogglField SetHint(int resourceId)
         {
-            TextField.SetHint (resourceId);
+            TextField.SetHint(resourceId);
             return this;
         }
 
-        public TogglField SetAssistViewTitle (string title)
+        public TogglField SetAssistViewTitle(string title)
         {
-            assistView.Visibility = !string.IsNullOrEmpty (title) ? ViewStates.Visible : ViewStates.Gone;
+            assistView.Visibility = !string.IsNullOrEmpty(title) ? ViewStates.Visible : ViewStates.Gone;
             assistView.Text = title;
             ClipText();
             return this;
@@ -121,7 +128,8 @@ namespace Toggl.Joey.UI.Views
 
         public TogglField SimulateButton()
         {
-            TextField.Touch += (sender, e) => {
+            TextField.Touch += (sender, e) =>
+            {
                 e.Handled = false;
                 titleText.Pressed = e.Event.Action != MotionEventActions.Up;
             };
@@ -132,15 +140,17 @@ namespace Toggl.Joey.UI.Views
         private void ClipText()
         {
             int paddingLeft = 0;
-            if (assistView.Visibility == ViewStates.Visible) {
-                assistView.Measure (0, 0);
+            if (assistView.Visibility == ViewStates.Visible)
+            {
+                assistView.Measure(0, 0);
                 paddingLeft = assistView.MeasuredWidth + 20;
             }
-            if (arrow.Visibility == ViewStates.Visible) {
-                arrow.Measure (0, 0);
+            if (arrow.Visibility == ViewStates.Visible)
+            {
+                arrow.Measure(0, 0);
                 paddingLeft += arrow.MeasuredWidth;
             }
-            TextField.SetPadding (TextField.PaddingLeft, TextField.PaddingTop, paddingLeft, TextField.PaddingBottom);
+            TextField.SetPadding(TextField.PaddingLeft, TextField.PaddingTop, paddingLeft, TextField.PaddingBottom);
         }
     }
 }

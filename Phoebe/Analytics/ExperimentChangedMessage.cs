@@ -4,7 +4,7 @@ namespace Toggl.Phoebe.Analytics
 {
     public class ExperimentChangedMessage : Message
     {
-        public ExperimentChangedMessage (ExperimentManager sender) : base (sender)
+        public ExperimentChangedMessage(ExperimentManager sender) : base(sender)
         {
         }
 

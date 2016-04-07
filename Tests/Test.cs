@@ -15,40 +15,41 @@ namespace Toggl.Phoebe.Tests
         private MainThreadSynchronizationContext syncContext;
 
         [OneTimeSetUp]
-        public virtual void Init ()
+        public virtual void Init()
         {
-            syncContext = new MainThreadSynchronizationContext ();
-            SynchronizationContext.SetSynchronizationContext (syncContext);
+            syncContext = new MainThreadSynchronizationContext();
+            SynchronizationContext.SetSynchronizationContext(syncContext);
 
-            databasePath = Path.GetTempFileName ();
-            ServiceContainer.RegisterScoped<MessageBus> (new MessageBus ());
-            ServiceContainer.RegisterScoped<ITimeProvider> (new DefaultTimeProvider ());
-            ServiceContainer.Register<TimeCorrectionManager> (new TimeCorrectionManager ());
+            databasePath = Path.GetTempFileName();
+            ServiceContainer.RegisterScoped<MessageBus> (new MessageBus());
+            ServiceContainer.RegisterScoped<ITimeProvider> (new DefaultTimeProvider());
+            ServiceContainer.Register<TimeCorrectionManager> (new TimeCorrectionManager());
             ServiceContainer.RegisterScoped<ISyncDataStore> (
-                new SyncSqliteDataStore (databasePath, new SQLitePlatformGeneric ()));
+                new SyncSqliteDataStore(databasePath, new SQLitePlatformGeneric()));
             ServiceContainer.RegisterScoped<LogStore> ((LogStore)null);
             ServiceContainer.RegisterScoped<ILoggerClient> ((ILoggerClient)null);
             ServiceContainer.RegisterScoped<ILogger> (new VoidLogger());
-            ServiceContainer.RegisterScoped<INetworkPresence> (new Reactive.NetWorkPresenceMock ());
+            ServiceContainer.RegisterScoped<INetworkPresence> (new Reactive.NetWorkPresenceMock());
         }
 
         [OneTimeTearDown]
-        public virtual void Cleanup ()
+        public virtual void Cleanup()
         {
-            ServiceContainer.Clear ();
-            if (databasePath != null) {
-                File.Delete (databasePath);
+            ServiceContainer.Clear();
+            if (databasePath != null)
+            {
+                File.Delete(databasePath);
                 databasePath = null;
             }
         }
 
         [SetUp]
-        public virtual void SetUp ()
+        public virtual void SetUp()
         {
         }
 
         [TearDown]
-        public virtual void TearDown ()
+        public virtual void TearDown()
         {
         }
 

@@ -6,224 +6,233 @@ namespace Toggl.Phoebe.Analytics
     {
         private Plan userPlan;
 
-        public BaseTracker ()
+        public BaseTracker()
         {
             //var experiment = ServiceContainer.Resolve<ExperimentManager> ().CurrentExperiment;
             //CurrentExperiment = experiment != null ? experiment.Id : null;
             CurrentExperiment = null;
         }
 
-        ~BaseTracker ()
+        ~BaseTracker()
         {
-            Dispose (false);
+            Dispose(false);
         }
 
         public void Dispose()
         {
-            Dispose (true);
-            GC.SuppressFinalize (this);
+            Dispose(true);
+            GC.SuppressFinalize(this);
         }
 
-        protected virtual void Dispose (bool disposing)
+        protected virtual void Dispose(bool disposing)
         {
-            if (disposing) {
+            if (disposing)
+            {
 
             }
         }
 
-        public void SendAppInitTime (TimeSpan duration)
+        public void SendAppInitTime(TimeSpan duration)
         {
-            SendTiming ((long)duration.TotalMilliseconds, "App", "Init", null);
+            SendTiming((long)duration.TotalMilliseconds, "App", "Init", null);
         }
 
-        public void SendSettingsChangeEvent (SettingName settingName)
+        public void SendSettingsChangeEvent(SettingName settingName)
         {
             string label;
 
-            switch (settingName) {
-            case SettingName.AskForProject:
-                label = "AskForProject";
-                break;
-            case SettingName.IdleNotification:
-                label = "IdleNotification";
-                break;
-            case SettingName.DefaultMobileTag:
-                label = "DefaultMobileTag";
-                break;
-            case SettingName.GroupedTimeEntries:
-                label = "GroupedTimeEntries";
-                break;
-            case SettingName.ShowNotification:
-                label = "ShowNotification";
-                break;
-            default:
-                #if DEBUG
-                throw new ArgumentException ("Invalid value", "settingName");
-                #else
-                return;
-                #endif
+            switch (settingName)
+            {
+                case SettingName.AskForProject:
+                    label = "AskForProject";
+                    break;
+                case SettingName.IdleNotification:
+                    label = "IdleNotification";
+                    break;
+                case SettingName.DefaultMobileTag:
+                    label = "DefaultMobileTag";
+                    break;
+                case SettingName.GroupedTimeEntries:
+                    label = "GroupedTimeEntries";
+                    break;
+                case SettingName.ShowNotification:
+                    label = "ShowNotification";
+                    break;
+                default:
+#if DEBUG
+                    throw new ArgumentException("Invalid value", "settingName");
+#else
+                    return;
+#endif
             }
 
-            SendEvent ("Settings", "Change", label);
+            SendEvent("Settings", "Change", label);
         }
 
-        public void SendAccountLoginEvent (AccountCredentials credentialsType)
+        public void SendAccountLoginEvent(AccountCredentials credentialsType)
         {
             string label;
 
-            switch (credentialsType) {
-            case AccountCredentials.Password:
-                label = "Password";
-                break;
-            case AccountCredentials.Google:
-                label = "Google";
-                break;
-            default:
-                #if DEBUG
-                throw new ArgumentException ("Invalid value", "credentialsType");
-                #else
-                return;
-                #endif
+            switch (credentialsType)
+            {
+                case AccountCredentials.Password:
+                    label = "Password";
+                    break;
+                case AccountCredentials.Google:
+                    label = "Google";
+                    break;
+                default:
+#if DEBUG
+                    throw new ArgumentException("Invalid value", "credentialsType");
+#else
+                    return;
+#endif
             }
 
-            SendEvent ("Account", "Login", label);
+            SendEvent("Account", "Login", label);
         }
 
-        public void SendAccountCreateEvent (AccountCredentials credentialsType)
+        public void SendAccountCreateEvent(AccountCredentials credentialsType)
         {
             string label;
 
-            switch (credentialsType) {
-            case AccountCredentials.Password:
-                label = "Password";
-                break;
-            case AccountCredentials.Google:
-                label = "Google";
-                break;
-            default:
-                #if DEBUG
-                throw new ArgumentException ("Invalid value", "credentialsType");
-                #else
-                return;
-                #endif
+            switch (credentialsType)
+            {
+                case AccountCredentials.Password:
+                    label = "Password";
+                    break;
+                case AccountCredentials.Google:
+                    label = "Google";
+                    break;
+                default:
+#if DEBUG
+                    throw new ArgumentException("Invalid value", "credentialsType");
+#else
+                    return;
+#endif
             }
 
-            SendEvent ("Account", "Signup", label);
+            SendEvent("Account", "Signup", label);
         }
 
         public void SendAccountLogoutEvent()
         {
-            SendEvent ("Account", "Logout");
+            SendEvent("Account", "Logout");
         }
 
-        public void SendTimerStartEvent (TimerStartSource startSource)
+        public void SendTimerStartEvent(TimerStartSource startSource)
         {
             string label;
 
-            switch (startSource) {
-            case TimerStartSource.AppNew:
-                label = "In-app (new)";
-                break;
-            case TimerStartSource.AppContinue:
-                label = "In-app (continue)";
-                break;
-            case TimerStartSource.AppManual:
-                label = "In-app (manual)";
-                break;
-            case TimerStartSource.WidgetStart:
-                label = "Widget (new)";
-                break;
-            case TimerStartSource.WidgetNew:
-                label = "Widget (continue)";
-                break;
-            case TimerStartSource.WatchStart:
-                label = "Watch (new)";
-                break;
-            case TimerStartSource.WatchContinue:
-                label = "Watch (continue)";
-                break;
-            default:
-                #if DEBUG
-                throw new ArgumentException ("Invalid value", "startSource");
-                #else
-                return;
-                #endif
+            switch (startSource)
+            {
+                case TimerStartSource.AppNew:
+                    label = "In-app (new)";
+                    break;
+                case TimerStartSource.AppContinue:
+                    label = "In-app (continue)";
+                    break;
+                case TimerStartSource.AppManual:
+                    label = "In-app (manual)";
+                    break;
+                case TimerStartSource.WidgetStart:
+                    label = "Widget (new)";
+                    break;
+                case TimerStartSource.WidgetNew:
+                    label = "Widget (continue)";
+                    break;
+                case TimerStartSource.WatchStart:
+                    label = "Watch (new)";
+                    break;
+                case TimerStartSource.WatchContinue:
+                    label = "Watch (continue)";
+                    break;
+                default:
+#if DEBUG
+                    throw new ArgumentException("Invalid value", "startSource");
+#else
+                    return;
+#endif
             }
 
-            SendEvent ("Timer", "Start", label);
+            SendEvent("Timer", "Start", label);
         }
 
-        public void SendTimerStopEvent (TimerStopSource stopSource)
+        public void SendTimerStopEvent(TimerStopSource stopSource)
         {
             string label;
 
-            switch (stopSource) {
-            case TimerStopSource.App:
-                label = "In-app";
-                break;
-            case TimerStopSource.Notification:
-                label = "Notification";
-                break;
-            case TimerStopSource.Widget:
-                label = "Widget";
-                break;
-            case TimerStopSource.Watch:
-                label = "Watch";
-                break;
-            default:
-                #if DEBUG
-                throw new ArgumentException ("Invalid value", "stopSource");
-                #else
-                return;
-                #endif
+            switch (stopSource)
+            {
+                case TimerStopSource.App:
+                    label = "In-app";
+                    break;
+                case TimerStopSource.Notification:
+                    label = "Notification";
+                    break;
+                case TimerStopSource.Widget:
+                    label = "Widget";
+                    break;
+                case TimerStopSource.Watch:
+                    label = "Watch";
+                    break;
+                default:
+#if DEBUG
+                    throw new ArgumentException("Invalid value", "stopSource");
+#else
+                    return;
+#endif
             }
 
-            SendEvent ("Timer", "Stop", label);
+            SendEvent("Timer", "Stop", label);
         }
 
         private string CurrentExperiment
         {
-            set { SetCustomDimension (Build.GoogleAnalyticsExperimentIndex, value); }
+            set { SetCustomDimension(Build.GoogleAnalyticsExperimentIndex, value); }
         }
 
         private Plan UserPlan
         {
-            set {
+            set
+            {
                 // Don't set the custom dimensions when it hasn't changed (except for null value)
-                if (value != Plan.None && value == userPlan) {
+                if (value != Plan.None && value == userPlan)
+                {
                     return;
                 }
 
                 string planName;
-                switch (value) {
-                case Plan.None:
-                    planName = null;
-                    break;
-                case Plan.Free:
-                    planName = "Free";
-                    break;
-                case Plan.Pro:
-                    planName = "Pro";
-                    break;
-                default:
-                    #if DEBUG
-                    throw new ArgumentException ("Invalid value", "value");
-                    #else
-                    return;
-                    #endif
+                switch (value)
+                {
+                    case Plan.None:
+                        planName = null;
+                        break;
+                    case Plan.Free:
+                        planName = "Free";
+                        break;
+                    case Plan.Pro:
+                        planName = "Pro";
+                        break;
+                    default:
+#if DEBUG
+                        throw new ArgumentException("Invalid value", "value");
+#else
+                        return;
+#endif
                 }
 
                 userPlan = value;
-                SetCustomDimension (Build.GoogleAnalyticsPlanIndex, planName);
+                SetCustomDimension(Build.GoogleAnalyticsPlanIndex, planName);
             }
         }
 
         public abstract string CurrentScreen { set; }
 
-        protected abstract void StartNewSession ();
-        protected abstract void SendTiming (long elapsedMilliseconds, string category, string variable, string label=null);
-        protected abstract void SendEvent (string category, string action, string label=null, long value=0);
-        protected abstract void SetCustomDimension (int idx, string value);
+        protected abstract void StartNewSession();
+        protected abstract void SendTiming(long elapsedMilliseconds, string category, string variable, string label = null);
+        protected abstract void SendEvent(string category, string action, string label = null, long value = 0);
+        protected abstract void SetCustomDimension(int idx, string value);
 
         // TODO RX restore services correctly.
         /*
@@ -248,13 +257,14 @@ namespace Toggl.Phoebe.Analytics
         }
         */
 
-        private void OnExperimentChanged (ExperimentChangedMessage msg)
+        private void OnExperimentChanged(ExperimentChangedMessage msg)
         {
             var experiment = msg.CurrentExperiment;
             CurrentExperiment = experiment != null ? experiment.Id : null;
         }
 
-        private enum Plan {
+        private enum Plan
+        {
             None,
             Free,
             Pro

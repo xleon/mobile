@@ -17,48 +17,52 @@ namespace Toggl.Phoebe.Tests.Reactive
     {
         NewClientVM viewModel;
         SyncSqliteDataStore dataStore;
-        readonly ToggleClientMock togglClient = new ToggleClientMock ();
+        readonly ToggleClientMock togglClient = new ToggleClientMock();
 
-        public override void Init ()
+        public override void Init()
         {
-            base.Init ();
+            base.Init();
 
-            var initState = Util.GetInitAppState ();
-            var platformUtils = new PlatformUtils ();
+            var initState = Util.GetInitAppState();
+            var platformUtils = new PlatformUtils();
             ServiceContainer.RegisterScoped<IPlatformUtils> (platformUtils);
             ServiceContainer.RegisterScoped<ITogglClient> (togglClient);
             ServiceContainer.RegisterScoped<ITracker> (new TrackerMock());
 
-            RxChain.Init (initState);
-            viewModel = new NewClientVM (initState, Util.WorkspaceId);
-            dataStore = new SyncSqliteDataStore (databasePath, platformUtils.SQLiteInfo);
+            RxChain.Init(initState);
+            viewModel = new NewClientVM(initState, Util.WorkspaceId);
+            dataStore = new SyncSqliteDataStore(databasePath, platformUtils.SQLiteInfo);
         }
 
-        public override void Cleanup ()
+        public override void Cleanup()
         {
-            base.Cleanup ();
-            RxChain.Cleanup ();
+            base.Cleanup();
+            RxChain.Cleanup();
         }
 
         [Test]
-        public async Task TestSaveClient ()
+        public async Task TestSaveClient()
         {
             var name = "MyClient";
             var tcs = Util.CreateTask<bool> ();
 
-            viewModel.SaveClient (name, new SyncTestOptions (false, (state, sent, queued) => {
-                try {
+            viewModel.SaveClient(name, new SyncTestOptions(false, (state, sent, queued) =>
+            {
+                try
+                {
                     IClientData client = null;
-                    Assert.That (client = state.Clients.Values.SingleOrDefault (
-                                              x => x.WorkspaceId == Util.WorkspaceId && x.Name == name), Is.Not.Null);
+                    Assert.That(client = state.Clients.Values.SingleOrDefault(
+                                             x => x.WorkspaceId == Util.WorkspaceId && x.Name == name), Is.Not.Null);
 
                     // Check item has been correctly saved in database
-                    Assert.That (dataStore.Table<ClientData> ().SingleOrDefault (
-                                     x => x.WorkspaceId == Util.WorkspaceId && x.Name == name && x.Id == client.Id), Is.Not.Null);
+                    Assert.That(dataStore.Table<ClientData> ().SingleOrDefault(
+                                    x => x.WorkspaceId == Util.WorkspaceId && x.Name == name && x.Id == client.Id), Is.Not.Null);
 
-                    tcs.SetResult (true);
-                } catch (Exception ex) {
-                    tcs.SetException (ex);
+                    tcs.SetResult(true);
+                }
+                catch (Exception ex)
+                {
+                    tcs.SetException(ex);
                 }
             }));
 

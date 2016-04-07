@@ -16,37 +16,37 @@ namespace Toggl.Joey.UI.Views
 
         private ColorStateList backgroundTintNew;
 
-        public AddProjectFab (IntPtr handle, JniHandleOwnership transfer) : base (handle, transfer)
+        public AddProjectFab(IntPtr handle, JniHandleOwnership transfer) : base(handle, transfer)
         {
         }
 
-        public AddProjectFab (Context context) : this (context, null)
+        public AddProjectFab(Context context) : this(context, null)
         {
-            Initialize (context, null);
+            Initialize(context, null);
         }
 
-        public AddProjectFab (Context context, IAttributeSet attrs) : base (context, attrs)
+        public AddProjectFab(Context context, IAttributeSet attrs) : base(context, attrs)
         {
-            Initialize (context, attrs);
+            Initialize(context, attrs);
         }
 
-        public AddProjectFab (Context context, IAttributeSet attrs, int defStyle) : base (context, attrs, defStyle)
+        public AddProjectFab(Context context, IAttributeSet attrs, int defStyle) : base(context, attrs, defStyle)
         {
-            Initialize (context, attrs);
+            Initialize(context, attrs);
         }
 
-        private void Initialize (Context context, IAttributeSet attrs)
+        private void Initialize(Context context, IAttributeSet attrs)
         {
-            createNewDraw = context.Resources.GetDrawable (Resource.Drawable.IcAdd);
+            createNewDraw = context.Resources.GetDrawable(Resource.Drawable.IcAdd);
 
 
             var states = new int[][] { new int[]{ } };
-            var createNewColor = new int[] {context.Resources.GetColor (Resource.Color.material_red)};
+            var createNewColor = new int[] {context.Resources.GetColor(Resource.Color.material_red)};
 
-            backgroundTintNew = new ColorStateList (states, createNewColor);
+            backgroundTintNew = new ColorStateList(states, createNewColor);
 
             BackgroundTintList = backgroundTintNew;
-            SetImageDrawable (createNewDraw);
+            SetImageDrawable(createNewDraw);
         }
     }
 }

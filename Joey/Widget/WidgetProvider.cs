@@ -11,9 +11,9 @@ using XPlatUtils;
 
 namespace Toggl.Joey.Widget
 {
-    [BroadcastReceiver (Label = "@string/WidgetName")]
-    [IntentFilter (new  [] { "android.appwidget.action.APPWIDGET_UPDATE" })]
-    [MetaData ("android.appwidget.provider", Resource = "@xml/widget_info")]
+    [BroadcastReceiver(Label = "@string/WidgetName")]
+    [IntentFilter(new  [] { "android.appwidget.action.APPWIDGET_UPDATE" })]
+    [MetaData("android.appwidget.provider", Resource = "@xml/widget_info")]
 
     public class WidgetProvider : AppWidgetProvider
     {
@@ -30,24 +30,24 @@ namespace Toggl.Joey.Widget
         public WidgetProvider()
         {
             // Start the worker thread
-            workerThread = new HandlerThread (ThreadWorkerName);
+            workerThread = new HandlerThread(ThreadWorkerName);
             workerThread.Start();
-            workerQueue = new Handler (workerThread.Looper);
+            workerQueue = new Handler(workerThread.Looper);
         }
 
-        public override void OnUpdate (Context context, AppWidgetManager appWidgetManager, int[] appWidgetIds)
+        public override void OnUpdate(Context context, AppWidgetManager appWidgetManager, int[] appWidgetIds)
         {
             // Request widget update.
-            var serviceIntent = new Intent (context, typeof (InitWidgetService));
-            context.StartService (serviceIntent);
+            var serviceIntent = new Intent(context, typeof(InitWidgetService));
+            context.StartService(serviceIntent);
 
             // Setup widget UI.
-            SetupWidget (context);
+            SetupWidget(context);
 
-            base.OnUpdate (context, appWidgetManager, appWidgetIds);
+            base.OnUpdate(context, appWidgetManager, appWidgetIds);
         }
 
-        public override void OnReceive (Context context, Intent intent)
+        public override void OnReceive(Context context, Intent intent)
         {
             String action = intent.Action;
             /*
@@ -59,10 +59,10 @@ namespace Toggl.Joey.Widget
                 ScheduleUpdate (context, action);
             }
             */
-            base.OnReceive (context, intent);
+            base.OnReceive(context, intent);
         }
 
-        private void SetupWidget (Context ctx)
+        private void SetupWidget(Context ctx)
         {
             RemoteViews views;
             /*
@@ -100,7 +100,7 @@ namespace Toggl.Joey.Widget
             */
         }
 
-        private void SetupRunningBtn (Context ctx, RemoteViews views)
+        private void SetupRunningBtn(Context ctx, RemoteViews views)
         {
             /*
             var entry = new WidgetSyncManager.WidgetEntryData();
@@ -145,62 +145,69 @@ namespace Toggl.Joey.Widget
             */
         }
 
-        private PendingIntent StartStopButtonIntent (Context ctx)
+        private PendingIntent StartStopButtonIntent(Context ctx)
         {
-            var intent = new Intent (ctx, typeof (WidgetStartStopService.Receiver));
-            intent.SetAction (WidgetProvider.StartStopAction);
-            return PendingIntent.GetBroadcast (ctx, 0, intent, PendingIntentFlags.UpdateCurrent);
+            var intent = new Intent(ctx, typeof(WidgetStartStopService.Receiver));
+            intent.SetAction(WidgetProvider.StartStopAction);
+            return PendingIntent.GetBroadcast(ctx, 0, intent, PendingIntentFlags.UpdateCurrent);
         }
 
-        private PendingIntent LogInButtonIntent (Context ctx)
+        private PendingIntent LogInButtonIntent(Context ctx)
         {
-            var loginIntent = new Intent (Intent.ActionMain)
-            .AddCategory (Intent.CategoryLauncher)
-            .AddFlags (ActivityFlags.NewTask)
-            .SetComponent (new ComponentName (ctx.PackageName, "toggl.joey.ui.activities.MainDrawerActivity"));
-            return PendingIntent.GetActivity (ctx, 0, loginIntent, PendingIntentFlags.UpdateCurrent);
+            var loginIntent = new Intent(Intent.ActionMain)
+            .AddCategory(Intent.CategoryLauncher)
+            .AddFlags(ActivityFlags.NewTask)
+            .SetComponent(new ComponentName(ctx.PackageName, "toggl.joey.ui.activities.MainDrawerActivity"));
+            return PendingIntent.GetActivity(ctx, 0, loginIntent, PendingIntentFlags.UpdateCurrent);
         }
 
 
-        private void ScheduleUpdate (Context ctx, string action)
+        private void ScheduleUpdate(Context ctx, string action)
         {
             // Adds a runnable to update the widgets in the worker queue.
-            workerQueue.RemoveMessages (0);
-            workerQueue.Post (() => {
+            workerQueue.RemoveMessages(0);
+            workerQueue.Post(() =>
+            {
 
-                var wm = AppWidgetManager.GetInstance (ctx);
-                var cn = new ComponentName (ctx, Java.Lang.Class.FromType (typeof (WidgetProvider)));
-                var ids = wm.GetAppWidgetIds (cn);
+                var wm = AppWidgetManager.GetInstance(ctx);
+                var cn = new ComponentName(ctx, Java.Lang.Class.FromType(typeof(WidgetProvider)));
+                var ids = wm.GetAppWidgetIds(cn);
 
-                if (action == RefreshCompleteAction) {
-                    OnUpdate (ctx, wm, ids);
-                } else {
-                    var views = new RemoteViews (ctx.PackageName, Resource.Layout.keyguard_widget);
-                    SetupRunningBtn (ctx, views);
-                    wm.PartiallyUpdateAppWidget (ids, views);
-                    wm.NotifyAppWidgetViewDataChanged (ids, Resource.Id.WidgetRecentEntriesListView);
+                if (action == RefreshCompleteAction)
+                {
+                    OnUpdate(ctx, wm, ids);
+                }
+                else
+                {
+                    var views = new RemoteViews(ctx.PackageName, Resource.Layout.keyguard_widget);
+                    SetupRunningBtn(ctx, views);
+                    wm.PartiallyUpdateAppWidget(ids, views);
+                    wm.NotifyAppWidgetViewDataChanged(ids, Resource.Id.WidgetRecentEntriesListView);
                 }
             });
         }
 
-        public static void RefreshWidget (Context ctx, string action)
+        public static void RefreshWidget(Context ctx, string action)
         {
             // Sends a request to the rich push message to refresh.
-            RefreshWidget (ctx, action, 0);
+            RefreshWidget(ctx, action, 0);
         }
 
-        public static void RefreshWidget (Context ctx, string action, long delayInMs)
+        public static void RefreshWidget(Context ctx, string action, long delayInMs)
         {
             //Sends a request to the rich push message to refresh with a delay.
-            var refreshIntent = new Intent (ctx, typeof (WidgetProvider));
-            refreshIntent.SetAction (action);
+            var refreshIntent = new Intent(ctx, typeof(WidgetProvider));
+            refreshIntent.SetAction(action);
 
-            if (delayInMs > 0) {
-                PendingIntent pendingIntent = PendingIntent.GetBroadcast (ctx, 0, refreshIntent, 0);
-                var am = (AlarmManager) ctx.GetSystemService (Context.AlarmService);
-                am.Set (AlarmType.RtcWakeup, (long) new TimeSpan (DateTime.Now.Ticks).TotalMilliseconds + delayInMs, pendingIntent);
-            } else {
-                ctx.SendBroadcast (refreshIntent);
+            if (delayInMs > 0)
+            {
+                PendingIntent pendingIntent = PendingIntent.GetBroadcast(ctx, 0, refreshIntent, 0);
+                var am = (AlarmManager) ctx.GetSystemService(Context.AlarmService);
+                am.Set(AlarmType.RtcWakeup, (long) new TimeSpan(DateTime.Now.Ticks).TotalMilliseconds + delayInMs, pendingIntent);
+            }
+            else
+            {
+                ctx.SendBroadcast(refreshIntent);
             }
         }
     }

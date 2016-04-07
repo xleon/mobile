@@ -20,7 +20,7 @@ namespace Toggl.Phoebe.ViewModels
             public IList<IHolder> Holders { get; }
             public IList<DiffSection<IHolder>> Diffs { get; }
 
-            public InnerState (IList<IHolder> holders = null, IList<DiffSection<IHolder>> diffs = null)
+            public InnerState(IList<IHolder> holders = null, IList<DiffSection<IHolder>> diffs = null)
             {
                 Holders = holders ?? new List<IHolder> ();
                 Diffs = diffs ?? new List<DiffSection<IHolder>> ();
@@ -31,80 +31,86 @@ namespace Toggl.Phoebe.ViewModels
         IDisposable disposable;
         readonly TimeEntryGrouper grouper;
 
-        public TimeEntryCollectionVM (TimeEntryGroupMethod groupMethod, SynchronizationContext uiContext)
+        public TimeEntryCollectionVM(TimeEntryGroupMethod groupMethod, SynchronizationContext uiContext)
         {
-            grouper = new TimeEntryGrouper (groupMethod);
+            grouper = new TimeEntryGrouper(groupMethod);
             disposable = StoreManager
                          .Singleton
-                         .Observe (x => x.State.TimeEntries)
-                         .DistinctUntilChanged ()
-                         .ObserveOn (uiContext)
-                         .Select (x => x.Values)
-                         .Scan (new InnerState (), GetDiffsFromNewValues)
-                         .Subscribe (state => UpdateCollection (state.Diffs));
+                         .Observe(x => x.State.TimeEntries)
+                         .DistinctUntilChanged()
+                         .ObserveOn(uiContext)
+                         .Select(x => x.Values)
+                         .Scan(new InnerState(), GetDiffsFromNewValues)
+                         .Subscribe(state => UpdateCollection(state.Diffs));
         }
 
-        public void Dispose ()
+        public void Dispose()
         {
-            if (disposable != null) {
-                disposable.Dispose ();
+            if (disposable != null)
+            {
+                disposable.Dispose();
                 disposable = null;
             }
         }
 
-        private InnerState GetDiffsFromNewValues (InnerState state, IEnumerable<RichTimeEntry> entries)
+        private InnerState GetDiffsFromNewValues(InnerState state, IEnumerable<RichTimeEntry> entries)
         {
-            try {
-                var timeHolders = entries.Select (x => new TimeEntryHolder (x)).ToList ();
+            try
+            {
+                var timeHolders = entries.Select(x => new TimeEntryHolder(x)).ToList();
 
                 // Create the new item collection from holders (sort and add headers...)
-                var newItemCollection = CreateItemCollection (timeHolders);
+                var newItemCollection = CreateItemCollection(timeHolders);
 
                 // Check diffs, modify ItemCollection and notify changes
-                var diffs = Diff.Calculate (state.Holders, newItemCollection);
+                var diffs = Diff.Calculate(state.Holders, newItemCollection);
 
                 // Swap remove events to delete normal items before headers.
                 // iOS requierement.
-                diffs = Diff.SortRemoveEvents<IHolder,DateHolder> (diffs);
+                diffs = Diff.SortRemoveEvents<IHolder, DateHolder> (diffs);
 
-                return new InnerState (newItemCollection, diffs);
+                return new InnerState(newItemCollection, diffs);
 
-            } catch (Exception ex) {
+            }
+            catch (Exception ex)
+            {
                 var log = ServiceContainer.Resolve<ILogger> ();
-                log.Error (GetType ().Name, ex, "Failed to update collection");
-                return new InnerState (state.Holders);
+                log.Error(GetType().Name, ex, "Failed to update collection");
+                return new InnerState(state.Holders);
             }
         }
 
-        private void UpdateCollection (IList<DiffSection<IHolder>> diffs)
+        private void UpdateCollection(IList<DiffSection<IHolder>> diffs)
         {
-            Console.WriteLine ("updates: " + diffs.Count);
+            Console.WriteLine("updates: " + diffs.Count);
 
-            foreach (var diff in diffs) {
-                switch (diff.Type) {
-                case DiffType.Add:
-                    Insert (diff.NewIndex, diff.NewItem);
-                    break;
-                case DiffType.Remove:
-                    RemoveAt (diff.NewIndex);
-                    break;
-                case DiffType.Replace:
-                    this[diff.NewIndex] = diff.NewItem;
-                    break;
-                case DiffType.Move:
-                    Move (diff.OldIndex, diff.NewIndex, diff.NewItem);
-                    break;
+            foreach (var diff in diffs)
+            {
+                switch (diff.Type)
+                {
+                    case DiffType.Add:
+                        Insert(diff.NewIndex, diff.NewItem);
+                        break;
+                    case DiffType.Remove:
+                        RemoveAt(diff.NewIndex);
+                        break;
+                    case DiffType.Replace:
+                        this[diff.NewIndex] = diff.NewItem;
+                        break;
+                    case DiffType.Move:
+                        Move(diff.OldIndex, diff.NewIndex, diff.NewItem);
+                        break;
                 }
             }
         }
 
-        private List<IHolder> CreateItemCollection (IEnumerable<TimeEntryHolder> timeHolders)
+        private List<IHolder> CreateItemCollection(IEnumerable<TimeEntryHolder> timeHolders)
         {
-            return grouper.Group (timeHolders)
-                   .OrderByDescending (x => x.GetStartTime ())
-                   .GroupBy (x => x.GetStartTime ().ToLocalTime ().Date)
-                   .SelectMany (gr => gr.Cast<IHolder>().Prepend (new DateHolder (gr.Key, gr.Cast<ITimeEntryHolder> ())))
-                   .ToList ();
+            return grouper.Group(timeHolders)
+                   .OrderByDescending(x => x.GetStartTime())
+                   .GroupBy(x => x.GetStartTime().ToLocalTime().Date)
+                   .SelectMany(gr => gr.Cast<IHolder>().Prepend(new DateHolder(gr.Key, gr.Cast<ITimeEntryHolder> ())))
+                   .ToList();
         }
     }
 }

@@ -45,222 +45,250 @@ namespace Toggl.Ross.ViewControllers
 
         protected EditTimeEntryVM ViewModel { get; set; }
 
-        public EditTimeEntryViewController (Guid dataId)
+        public EditTimeEntryViewController(Guid dataId)
         {
-            ViewModel = new EditTimeEntryVM (StoreManager.Singleton.AppState, dataId);
+            ViewModel = new EditTimeEntryVM(StoreManager.Singleton.AppState, dataId);
         }
 
-        public override void LoadView ()
+        public override void LoadView()
         {
-            durationButton = new UIButton ().Apply (Style.NavTimer.DurationButton);
-            durationButton.SetTitle (DefaultDurationText, UIControlState.Normal); // Dummy content to use for sizing of the label
-            durationButton.SizeToFit ();
+            durationButton = new UIButton().Apply(Style.NavTimer.DurationButton);
+            durationButton.SetTitle(DefaultDurationText, UIControlState.Normal);  // Dummy content to use for sizing of the label
+            durationButton.SizeToFit();
             durationButton.TouchUpInside += OnDurationButtonTouchUpInside;
             NavigationItem.TitleView = durationButton;
 
-            var scrollView = new UIScrollView ().Apply (Style.Screen);
+            var scrollView = new UIScrollView().Apply(Style.Screen);
 
-            scrollView.Add (wrapper = new UIView () {
+            scrollView.Add(wrapper = new UIView()
+            {
                 TranslatesAutoresizingMaskIntoConstraints = false,
             });
 
-            wrapper.Add (startStopView = new StartStopView {
+            wrapper.Add(startStopView = new StartStopView
+            {
                 TranslatesAutoresizingMaskIntoConstraints = false,
                 StartTime = ViewModel.StartDate,
                 StopTime = ViewModel.StopDate,
             });
             startStopView.SelectedChanged += OnStartStopViewSelectedChanged;
 
-            wrapper.Add (datePicker = new UIDatePicker {
+            wrapper.Add(datePicker = new UIDatePicker
+            {
                 TranslatesAutoresizingMaskIntoConstraints = false,
                 Hidden = DatePickerHidden,
                 Alpha = 0,
-            } .Apply (Style.EditTimeEntry.DatePicker));
+            } .Apply(Style.EditTimeEntry.DatePicker));
             datePicker.ValueChanged += OnDatePickerValueChanged;
 
-            wrapper.Add (projectButton = new ProjectClientTaskButton {
+            wrapper.Add(projectButton = new ProjectClientTaskButton
+            {
                 TranslatesAutoresizingMaskIntoConstraints = false,
             });
             projectButton.TouchUpInside += OnProjectButtonTouchUpInside;
 
-            wrapper.Add (descriptionTextField = new TextField {
+            wrapper.Add(descriptionTextField = new TextField
+            {
                 TranslatesAutoresizingMaskIntoConstraints = false,
-                AttributedPlaceholder = new NSAttributedString (
-                    "EditEntryDesciptionTimerHint".Tr (),
+                AttributedPlaceholder = new NSAttributedString(
+                    "EditEntryDesciptionTimerHint".Tr(),
                     foregroundColor: Color.Gray
                 ),
-                ShouldReturn = tf => tf.ResignFirstResponder (),
-            } .Apply (Style.EditTimeEntry.DescriptionField));
+                ShouldReturn = tf => tf.ResignFirstResponder(),
+            } .Apply(Style.EditTimeEntry.DescriptionField));
 
-            descriptionTextField.ShouldBeginEditing += (s) => {
+            descriptionTextField.ShouldBeginEditing += (s) =>
+            {
                 ForceDimissDatePicker();
                 return true;
             };
-            descriptionTextField.ShouldEndEditing += s => {
+            descriptionTextField.ShouldEndEditing += s =>
+            {
                 return true;
             };
 
-            wrapper.Add (tagsButton = new UIButton () {
+            wrapper.Add(tagsButton = new UIButton()
+            {
                 TranslatesAutoresizingMaskIntoConstraints = false,
-            } .Apply (Style.EditTimeEntry.TagsButton));
+            } .Apply(Style.EditTimeEntry.TagsButton));
             tagsButton.TouchUpInside += OnTagsButtonTouchUpInside;
 
-            wrapper.Add (billableSwitch = new LabelSwitchView () {
+            wrapper.Add(billableSwitch = new LabelSwitchView()
+            {
                 TranslatesAutoresizingMaskIntoConstraints = false,
-                Text = "EditEntryBillable".Tr (),
-            } .Apply (Style.EditTimeEntry.BillableContainer));
-            billableSwitch.Label.Apply (Style.EditTimeEntry.BillableLabel);
+                Text = "EditEntryBillable".Tr(),
+            } .Apply(Style.EditTimeEntry.BillableContainer));
+            billableSwitch.Label.Apply(Style.EditTimeEntry.BillableLabel);
 
-            wrapper.Add (deleteButton = new UIButton () {
+            wrapper.Add(deleteButton = new UIButton()
+            {
                 TranslatesAutoresizingMaskIntoConstraints = false,
-            } .Apply (Style.EditTimeEntry.DeleteButton));
-            deleteButton.SetTitle ("EditEntryDelete".Tr (), UIControlState.Normal);
+            } .Apply(Style.EditTimeEntry.DeleteButton));
+            deleteButton.SetTitle("EditEntryDelete".Tr(), UIControlState.Normal);
             deleteButton.TouchUpInside += OnDeleteButtonTouchUpInside;
 
-            ResetWrapperConstraints ();
-            scrollView.AddConstraints (
-                wrapper.AtTopOf (scrollView),
-                wrapper.AtBottomOf (scrollView),
-                wrapper.AtLeftOf (scrollView),
-                wrapper.AtRightOf (scrollView),
-                wrapper.WithSameWidth (scrollView),
-                wrapper.Height ().GreaterThanOrEqualTo ().HeightOf (scrollView).Minus (64f),
+            ResetWrapperConstraints();
+            scrollView.AddConstraints(
+                wrapper.AtTopOf(scrollView),
+                wrapper.AtBottomOf(scrollView),
+                wrapper.AtLeftOf(scrollView),
+                wrapper.AtRightOf(scrollView),
+                wrapper.WithSameWidth(scrollView),
+                wrapper.Height().GreaterThanOrEqualTo().HeightOf(scrollView).Minus(64f),
                 null
             );
 
             View = scrollView;
         }
 
-        public override void ViewDidLoad ()
+        public override void ViewDidLoad()
         {
-            base.ViewDidLoad ();
+            base.ViewDidLoad();
 
             // Bindings
-            durationBinding = this.SetBinding (() => ViewModel.Duration).WhenSourceChanges (() => durationButton.SetTitle (ViewModel.Duration, UIControlState.Normal));
-            startTimeBinding = this.SetBinding (() => ViewModel.StartDate, () => startStopView.StartTime);
-            stopTimeBinding = this.SetBinding (() => ViewModel.StopDate, () => startStopView.StopTime);
-            projectBinding = this.SetBinding (() => ViewModel.ProjectName, () => projectButton.ProjectName);
-            projectColorBinding = this.SetBinding (() => ViewModel.ProjectColorHex, () => projectButton.ProjectColorHex);
-            taskBinding = this.SetBinding (() => ViewModel.TaskName, () => projectButton.TaskName);
-            clientBinding = this.SetBinding (() => ViewModel.ClientName, () => projectButton.ClientName);
-            tagBinding = this.SetBinding (() => ViewModel.TagList).WhenSourceChanges (() => {
-                FeedTags (ViewModel.TagList.Select (tag => tag.Name).ToList (), tagsButton);
+            durationBinding = this.SetBinding(() => ViewModel.Duration).WhenSourceChanges(() => durationButton.SetTitle(ViewModel.Duration, UIControlState.Normal));
+            startTimeBinding = this.SetBinding(() => ViewModel.StartDate, () => startStopView.StartTime);
+            stopTimeBinding = this.SetBinding(() => ViewModel.StopDate, () => startStopView.StopTime);
+            projectBinding = this.SetBinding(() => ViewModel.ProjectName, () => projectButton.ProjectName);
+            projectColorBinding = this.SetBinding(() => ViewModel.ProjectColorHex, () => projectButton.ProjectColorHex);
+            taskBinding = this.SetBinding(() => ViewModel.TaskName, () => projectButton.TaskName);
+            clientBinding = this.SetBinding(() => ViewModel.ClientName, () => projectButton.ClientName);
+            tagBinding = this.SetBinding(() => ViewModel.TagList).WhenSourceChanges(() =>
+            {
+                FeedTags(ViewModel.TagList.Select(tag => tag.Name).ToList(), tagsButton);
             });
-            descriptionBinding = this.SetBinding (() => ViewModel.Description, () => descriptionTextField.Text);
-            isPremiumBinding = this.SetBinding (() => ViewModel.IsPremium, () => billableSwitch.Hidden).ConvertSourceToTarget (isPremium => !isPremium);
-            isRunningBinding = this.SetBinding (() => ViewModel.IsRunning).WhenSourceChanges (() => {
-                if (ViewModel.IsRunning) {
+            descriptionBinding = this.SetBinding(() => ViewModel.Description, () => descriptionTextField.Text);
+            isPremiumBinding = this.SetBinding(() => ViewModel.IsPremium, () => billableSwitch.Hidden).ConvertSourceToTarget(isPremium => !isPremium);
+            isRunningBinding = this.SetBinding(() => ViewModel.IsRunning).WhenSourceChanges(() =>
+            {
+                if (ViewModel.IsRunning)
+                {
                     startStopView.StopTime = DateTime.MaxValue;
-                } else {
+                }
+                else
+                {
                     startStopView.StopTime = ViewModel.StopDate;
                 }
             });
             //isBillableBinding = this.SetBinding (() => ViewModel.IsBillable, () => billableSwitch.Switch.On);
 
             // Events to edit some fields
-            descriptionTextField.EditingChanged += (sender, e) => { ViewModel.ChangeDescription (descriptionTextField.Text); };
-            billableSwitch.Switch.ValueChanged += (sender, e) => { ViewModel.ChangeBillable (billableSwitch.Switch.On); };
+            descriptionTextField.EditingChanged += (sender, e) => { ViewModel.ChangeDescription(descriptionTextField.Text); };
+            billableSwitch.Switch.ValueChanged += (sender, e) => { ViewModel.ChangeBillable(billableSwitch.Switch.On); };
         }
 
-        public override void ViewWillDisappear (bool animated)
+        public override void ViewWillDisappear(bool animated)
         {
-            NSNotificationCenter.DefaultCenter.RemoveObservers (notificationObjects);
-            notificationObjects.Clear ();
-            ViewModel.Save ();
+            NSNotificationCenter.DefaultCenter.RemoveObservers(notificationObjects);
+            notificationObjects.Clear();
+            ViewModel.Save();
 
             // TODO: Release ViewModel only when the
             // ViewController is poped. It is a weird behaviour
             // considering the property name used.
             // But it works ok.
-            if (IsMovingFromParentViewController) {
-                startTimeBinding.Detach ();
-                stopTimeBinding.Detach ();
-                tagBinding.Detach ();
-                isPremiumBinding.Detach ();
-                isRunningBinding.Detach ();
-                ViewModel.Dispose ();
+            if (IsMovingFromParentViewController)
+            {
+                startTimeBinding.Detach();
+                stopTimeBinding.Detach();
+                tagBinding.Detach();
+                isPremiumBinding.Detach();
+                isRunningBinding.Detach();
+                ViewModel.Dispose();
             }
-            base.ViewWillDisappear (animated);
+            base.ViewWillDisappear(animated);
         }
 
-        private void FeedTags (List<string> tagNames, UIButton btn)
+        private void FeedTags(List<string> tagNames, UIButton btn)
         {
             // Construct tags attributed strings:
             NSMutableAttributedString text = null;
-            foreach (var tag in tagNames) {
+            foreach (var tag in tagNames)
+            {
 
-                var chip = NSAttributedString.CreateFrom (new NSTextAttachment {
-                    Image = ServiceContainer.Resolve<TagChipCache> ().Get (tag, btn),
+                var chip = NSAttributedString.CreateFrom(new NSTextAttachment
+                {
+                    Image = ServiceContainer.Resolve<TagChipCache> ().Get(tag, btn),
                 });
 
-                if (text == null) {
-                    text = new NSMutableAttributedString (chip);
-                } else {
-                    text.Append (new NSAttributedString (" ", Style.EditTimeEntry.WithTags));
-                    text.Append (chip);
+                if (text == null)
+                {
+                    text = new NSMutableAttributedString(chip);
+                }
+                else
+                {
+                    text.Append(new NSAttributedString(" ", Style.EditTimeEntry.WithTags));
+                    text.Append(chip);
                 }
             }
 
-            if (text == null) {
-                btn.SetAttributedTitle (new NSAttributedString ("EditEntryTagsHint".Tr (), Style.EditTimeEntry.NoTags), UIControlState.Normal);
-            } else {
-                btn.SetAttributedTitle (text, UIControlState.Normal);
+            if (text == null)
+            {
+                btn.SetAttributedTitle(new NSAttributedString("EditEntryTagsHint".Tr(), Style.EditTimeEntry.NoTags), UIControlState.Normal);
+            }
+            else
+            {
+                btn.SetAttributedTitle(text, UIControlState.Normal);
             }
         }
 
-        private void OnDatePickerValueChanged (object sender, EventArgs e)
+        private void OnDatePickerValueChanged(object sender, EventArgs e)
         {
-            switch (startStopView.Selected) {
-            case TimeKind.Start:
-                ViewModel.ChangeTimeEntryStart (datePicker.Date.ToDateTime ());
-                break;
-            case TimeKind.Stop:
-                ViewModel.ChangeTimeEntryStop (datePicker.Date.ToDateTime ());
-                break;
+            switch (startStopView.Selected)
+            {
+                case TimeKind.Start:
+                    ViewModel.ChangeTimeEntryStart(datePicker.Date.ToDateTime());
+                    break;
+                case TimeKind.Stop:
+                    ViewModel.ChangeTimeEntryStop(datePicker.Date.ToDateTime());
+                    break;
             }
         }
 
-        private void OnProjectButtonTouchUpInside (object sender, EventArgs e)
+        private void OnProjectButtonTouchUpInside(object sender, EventArgs e)
         {
-            var controller = new ProjectSelectionViewController (ViewModel.WorkspaceId, this);
-            NavigationController.PushViewController (controller, true);
+            var controller = new ProjectSelectionViewController(ViewModel.WorkspaceId, this);
+            NavigationController.PushViewController(controller, true);
         }
 
-        private void OnDurationButtonTouchUpInside (object sender, EventArgs e)
+        private void OnDurationButtonTouchUpInside(object sender, EventArgs e)
         {
             // TODO: This condition is valid or not?
-            if (ViewModel.IsRunning) {
+            if (ViewModel.IsRunning)
+            {
                 return;
             }
 
-            var controller = new DurationChangeViewController (ViewModel.StopDate, ViewModel.StartDate, this);
-            NavigationController.PushViewController (controller, true);
+            var controller = new DurationChangeViewController(ViewModel.StopDate, ViewModel.StartDate, this);
+            NavigationController.PushViewController(controller, true);
         }
 
-        private void OnTagsButtonTouchUpInside (object sender, EventArgs e)
+        private void OnTagsButtonTouchUpInside(object sender, EventArgs e)
         {
-            var controller = new TagSelectionViewController (ViewModel.WorkspaceId, ViewModel.TagList, this);
-            NavigationController.PushViewController (controller, true);
+            var controller = new TagSelectionViewController(ViewModel.WorkspaceId, ViewModel.TagList, this);
+            NavigationController.PushViewController(controller, true);
         }
 
-        private void OnDeleteButtonTouchUpInside (object sender, EventArgs e)
+        private void OnDeleteButtonTouchUpInside(object sender, EventArgs e)
         {
-            var alert = new UIAlertView (
-                "EditEntryConfirmTitle".Tr (),
-                "EditEntryConfirmMessage".Tr (),
+            var alert = new UIAlertView(
+                "EditEntryConfirmTitle".Tr(),
+                "EditEntryConfirmMessage".Tr(),
                 null,
-                "EditEntryConfirmCancel".Tr (),
-                "EditEntryConfirmDelete".Tr ());
-            alert.Clicked += (s, ev) => {
-                if (ev.ButtonIndex == 1) {
-                    ViewModel.Delete ();
-                    NavigationController.PopToRootViewController (true);
+                "EditEntryConfirmCancel".Tr(),
+                "EditEntryConfirmDelete".Tr());
+            alert.Clicked += (s, ev) =>
+            {
+                if (ev.ButtonIndex == 1)
+                {
+                    ViewModel.Delete();
+                    NavigationController.PopToRootViewController(true);
                 }
             };
-            alert.Show ();
+            alert.Show();
         }
 
-        private void OnKeyboardHeightChanged (int height)
+        private void OnKeyboardHeightChanged(int height)
         {
             var scrollView = (UIScrollView)View;
 
@@ -273,22 +301,25 @@ namespace Toggl.Ross.ViewControllers
             scrollView.ScrollIndicatorInsets = inset;
         }
 
-        private void OnStartStopViewSelectedChanged (object sender, EventArgs e)
+        private void OnStartStopViewSelectedChanged(object sender, EventArgs e)
         {
-            var currentValue = datePicker.Date.ToDateTime ().ToUtc ();
-            switch (startStopView.Selected) {
-            case TimeKind.Start:
-                datePicker.Mode = ViewModel.IsRunning ? UIDatePickerMode.Time : UIDatePickerMode.DateAndTime;
-                if (currentValue != ViewModel.StartDate) {
-                    datePicker.SetDate (ViewModel.StartDate.ToNSDate (), !datePicker.Hidden);
-                }
-                break;
-            case TimeKind.Stop:
-                datePicker.Mode = UIDatePickerMode.DateAndTime;
-                if (currentValue != ViewModel.StopDate) {
-                    datePicker.SetDate (ViewModel.StopDate.ToNSDate (), !datePicker.Hidden);
-                }
-                break;
+            var currentValue = datePicker.Date.ToDateTime().ToUtc();
+            switch (startStopView.Selected)
+            {
+                case TimeKind.Start:
+                    datePicker.Mode = ViewModel.IsRunning ? UIDatePickerMode.Time : UIDatePickerMode.DateAndTime;
+                    if (currentValue != ViewModel.StartDate)
+                    {
+                        datePicker.SetDate(ViewModel.StartDate.ToNSDate(), !datePicker.Hidden);
+                    }
+                    break;
+                case TimeKind.Stop:
+                    datePicker.Mode = UIDatePickerMode.DateAndTime;
+                    if (currentValue != ViewModel.StopDate)
+                    {
+                        datePicker.SetDate(ViewModel.StopDate.ToNSDate(), !datePicker.Hidden);
+                    }
+                    break;
             }
             DatePickerHidden = startStopView.Selected == TimeKind.None;
         }
@@ -300,34 +331,34 @@ namespace Toggl.Ross.ViewControllers
         }
 
         #region IProjectSelected implementation
-        public void OnProjectSelected (Guid projectId, Guid taskId)
+        public void OnProjectSelected(Guid projectId, Guid taskId)
         {
-            ViewModel.ChangeProjectAndTask (projectId, taskId);
-            NavigationController.PopToViewController (this, true);
+            ViewModel.ChangeProjectAndTask(projectId, taskId);
+            NavigationController.PopToViewController(this, true);
         }
         #endregion
 
         #region IChangeDuration implementation
-        public void OnChangeDuration (TimeSpan newDuration)
+        public void OnChangeDuration(TimeSpan newDuration)
         {
-            ViewModel.ChangeTimeEntryDuration (newDuration);
-            NavigationController.PopViewController (true);
+            ViewModel.ChangeTimeEntryDuration(newDuration);
+            NavigationController.PopViewController(true);
         }
         #endregion
 
         #region IUpdateTagList implementation
-        public void OnCreateNewTag (ITagData newTagData)
+        public void OnCreateNewTag(ITagData newTagData)
         {
-            var newTagList = ViewModel.TagList.ToList ();
-            newTagList.Add (newTagData);
-            ViewModel.ChangeTagList (newTagList.Select (t => t.Id));
-            NavigationController.PopToViewController (this, true);
+            var newTagList = ViewModel.TagList.ToList();
+            newTagList.Add(newTagData);
+            ViewModel.ChangeTagList(newTagList.Select(t => t.Id));
+            NavigationController.PopToViewController(this, true);
         }
 
-        public void OnModifyTagList (List<ITagData> newTagList)
+        public void OnModifyTagList(List<ITagData> newTagList)
         {
-            ViewModel.ChangeTagList (newTagList.Select (t => t.Id));
-            NavigationController.PopToViewController (this, true);
+            ViewModel.ChangeTagList(newTagList.Select(t => t.Id));
+            NavigationController.PopToViewController(this, true);
         }
         #endregion
 
@@ -335,45 +366,59 @@ namespace Toggl.Ross.ViewControllers
         private bool DatePickerHidden
         {
             get { return hideDatePicker; }
-            set {
-                if (hideDatePicker == value) {
+            set
+            {
+                if (hideDatePicker == value)
+                {
                     return;
                 }
                 hideDatePicker = value;
 
-                if (hideDatePicker) {
-                    UIView.AnimateKeyframes (
+                if (hideDatePicker)
+                {
+                    UIView.AnimateKeyframes(
                         0.4, 0, 0,
-                    delegate {
-                        UIView.AddKeyframeWithRelativeStartTime (0, 0.4, delegate {
+                        delegate
+                    {
+                        UIView.AddKeyframeWithRelativeStartTime(0, 0.4, delegate
+                        {
                             datePicker.Alpha = 0;
                         });
-                        UIView.AddKeyframeWithRelativeStartTime (0.2, 0.8, delegate {
+                        UIView.AddKeyframeWithRelativeStartTime(0.2, 0.8, delegate
+                        {
                             ResetWrapperConstraints();
-                            View.LayoutIfNeeded ();
+                            View.LayoutIfNeeded();
                         });
                     },
-                    delegate {
-                        if (hideDatePicker) {
+                    delegate
+                    {
+                        if (hideDatePicker)
+                        {
                             datePicker.Hidden = true;
                         }
                     }
                     );
-                } else {
-                    descriptionTextField.ResignFirstResponder ();
+                }
+                else
+                {
+                    descriptionTextField.ResignFirstResponder();
                     datePicker.Hidden = false;
-                    UIView.AnimateKeyframes (
+                    UIView.AnimateKeyframes(
                         0.4, 0, 0,
-                    delegate {
-                        UIView.AddKeyframeWithRelativeStartTime (0, 0.6, delegate {
+                        delegate
+                    {
+                        UIView.AddKeyframeWithRelativeStartTime(0, 0.6, delegate
+                        {
                             ResetWrapperConstraints();
-                            View.LayoutIfNeeded ();
+                            View.LayoutIfNeeded();
                         });
-                        UIView.AddKeyframeWithRelativeStartTime (0.4, 0.8, delegate {
+                        UIView.AddKeyframeWithRelativeStartTime(0.4, 0.8, delegate
+                        {
                             datePicker.Alpha = 1;
                         });
                     },
-                    delegate {
+                    delegate
+                    {
                     }
                     );
                 }
@@ -382,41 +427,49 @@ namespace Toggl.Ross.ViewControllers
 
         private void ResetWrapperConstraints()
         {
-            if (trackedWrapperConstraints != null) {
-                wrapper.RemoveConstraints (trackedWrapperConstraints);
+            if (trackedWrapperConstraints != null)
+            {
+                wrapper.RemoveConstraints(trackedWrapperConstraints);
                 trackedWrapperConstraints = null;
             }
 
-            trackedWrapperConstraints = VerticalLinearLayout (wrapper).ToLayoutConstraints ();
-            wrapper.AddConstraints (trackedWrapperConstraints);
+            trackedWrapperConstraints = VerticalLinearLayout(wrapper).ToLayoutConstraints();
+            wrapper.AddConstraints(trackedWrapperConstraints);
         }
 
 
-        private IEnumerable<FluentLayout> VerticalLinearLayout (UIView container)
+        private IEnumerable<FluentLayout> VerticalLinearLayout(UIView container)
         {
             UIView prev = null;
 
-            var subviews = container.Subviews.Where (v => !v.Hidden && ! (v == datePicker && DatePickerHidden)).ToList ();
-            foreach (var v in subviews) {
+            var subviews = container.Subviews.Where(v => !v.Hidden && !(v == datePicker && DatePickerHidden)).ToList();
+            foreach (var v in subviews)
+            {
                 var isLast = subviews [subviews.Count - 1] == v;
 
-                if (prev == null) {
-                    yield return v.AtTopOf (container);
-                } else if (isLast) {
-                    yield return v.Top ().GreaterThanOrEqualTo ().BottomOf (prev).Plus (5f);
-                } else {
-                    yield return v.Below (prev, 5f);
+                if (prev == null)
+                {
+                    yield return v.AtTopOf(container);
                 }
-                yield return v.Height ().EqualTo (60f).SetPriority (UILayoutPriority.DefaultLow);
-                yield return v.Height ().GreaterThanOrEqualTo (60f);
-                yield return v.AtLeftOf (container);
-                yield return v.AtRightOf (container);
+                else if (isLast)
+                {
+                    yield return v.Top().GreaterThanOrEqualTo().BottomOf(prev).Plus(5f);
+                }
+                else
+                {
+                    yield return v.Below(prev, 5f);
+                }
+                yield return v.Height().EqualTo(60f).SetPriority(UILayoutPriority.DefaultLow);
+                yield return v.Height().GreaterThanOrEqualTo(60f);
+                yield return v.AtLeftOf(container);
+                yield return v.AtRightOf(container);
 
                 prev = v;
             }
 
-            if (prev != null) {
-                yield return prev.AtBottomOf (container);
+            if (prev != null)
+            {
+                yield return prev.AtBottomOf(container);
             }
         }
         #endregion
@@ -438,35 +491,38 @@ namespace Toggl.Ross.ViewControllers
             private DateTime stopTime;
             private TimeKind selectedTime;
 
-            public StartStopView ()
+            public StartStopView()
             {
-                startDateTimeButton = new UIButton () {
+                startDateTimeButton = new UIButton()
+                {
                     TranslatesAutoresizingMaskIntoConstraints = false,
                 };
                 startDateTimeButton.TouchUpInside += OnStartDateTimeButtonTouchUpInside;
-                arrowImageView = new UIImageView () {
+                arrowImageView = new UIImageView()
+                {
                     TranslatesAutoresizingMaskIntoConstraints = false,
                     Image = Image.IconDurationArrow,
                 };
-                stopDateTimeButton = new UIButton () {
+                stopDateTimeButton = new UIButton()
+                {
                     TranslatesAutoresizingMaskIntoConstraints = false,
                 };
                 stopDateTimeButton.TouchUpInside += OnStopDateTimeButtonTouchUpInside;
 
-                ConstructDateTimeView (startDateTimeButton, ref startDateLabel, ref startTimeLabel);
-                ConstructDateTimeView (stopDateTimeButton, ref stopDateLabel, ref stopTimeLabel);
+                ConstructDateTimeView(startDateTimeButton, ref startDateLabel, ref startTimeLabel);
+                ConstructDateTimeView(stopDateTimeButton, ref stopDateLabel, ref stopTimeLabel);
 
-                Add (startDateTimeButton);
+                Add(startDateTimeButton);
 
-                StartTime = DateTime.Now - TimeSpan.FromHours (4);
+                StartTime = DateTime.Now - TimeSpan.FromHours(4);
             }
 
-            private void OnStartDateTimeButtonTouchUpInside (object sender, EventArgs e)
+            private void OnStartDateTimeButtonTouchUpInside(object sender, EventArgs e)
             {
                 Selected = Selected == TimeKind.Start ? TimeKind.None : TimeKind.Start;
             }
 
-            private void OnStopDateTimeButtonTouchUpInside (object sender, EventArgs e)
+            private void OnStopDateTimeButtonTouchUpInside(object sender, EventArgs e)
             {
                 Selected = Selected == TimeKind.Stop ? TimeKind.None : TimeKind.Stop;
             }
@@ -474,36 +530,42 @@ namespace Toggl.Ross.ViewControllers
             public DateTime StartTime
             {
                 get { return startTime; }
-                set {
-                    if (startTime == value) {
+                set
+                {
+                    if (startTime == value)
+                    {
                         return;
                     }
 
                     startTime = value;
-                    var time = startTime.ToLocalTime ();
-                    startDateLabel.Text = time.ToLocalizedDateString ();
-                    startTimeLabel.Text = time.ToLocalizedTimeString ();
+                    var time = startTime.ToLocalTime();
+                    startDateLabel.Text = time.ToLocalizedDateString();
+                    startTimeLabel.Text = time.ToLocalizedTimeString();
                 }
             }
 
             public DateTime StopTime
             {
                 get { return stopTime; }
-                set {
+                set
+                {
 
-                    if (stopTime == value) {
+                    if (stopTime == value)
+                    {
                         return;
                     }
                     stopTime = value;
 
-                    if (stopTime != DateTime.MaxValue) {
-                        var time = stopTime.ToLocalTime ();
-                        stopDateLabel.Text = time.ToLocalizedDateString ();
-                        stopTimeLabel.Text = time.ToLocalizedTimeString ();
+                    if (stopTime != DateTime.MaxValue)
+                    {
+                        var time = stopTime.ToLocalTime();
+                        stopDateLabel.Text = time.ToLocalizedDateString();
+                        stopTimeLabel.Text = time.ToLocalizedTimeString();
                     }
-                    SetStopTimeHidden (stopTime == DateTime.MaxValue, Superview != null);
+                    SetStopTimeHidden(stopTime == DateTime.MaxValue, Superview != null);
 
-                    if (stopTime == DateTime.MaxValue && Selected == TimeKind.Stop) {
+                    if (stopTime == DateTime.MaxValue && Selected == TimeKind.Stop)
+                    {
                         Selected = TimeKind.None;
                     }
                 }
@@ -512,201 +574,234 @@ namespace Toggl.Ross.ViewControllers
             public TimeKind Selected
             {
                 get { return selectedTime; }
-                set {
-                    if (selectedTime == value) {
+                set
+                {
+                    if (selectedTime == value)
+                    {
                         return;
                     }
 
                     selectedTime = value;
 
-                    if (selectedTime == TimeKind.Start) {
-                        startDateLabel.Apply (Style.EditTimeEntry.DateLabelActive);
-                        startTimeLabel.Apply (Style.EditTimeEntry.TimeLabelActive);
-                    } else {
-                        startDateLabel.Apply (Style.EditTimeEntry.DateLabel);
-                        startTimeLabel.Apply (Style.EditTimeEntry.TimeLabel);
+                    if (selectedTime == TimeKind.Start)
+                    {
+                        startDateLabel.Apply(Style.EditTimeEntry.DateLabelActive);
+                        startTimeLabel.Apply(Style.EditTimeEntry.TimeLabelActive);
+                    }
+                    else
+                    {
+                        startDateLabel.Apply(Style.EditTimeEntry.DateLabel);
+                        startTimeLabel.Apply(Style.EditTimeEntry.TimeLabel);
                     }
 
-                    if (selectedTime == TimeKind.Stop) {
-                        stopDateLabel.Apply (Style.EditTimeEntry.DateLabelActive);
-                        stopTimeLabel.Apply (Style.EditTimeEntry.TimeLabelActive);
-                    } else {
-                        stopDateLabel.Apply (Style.EditTimeEntry.DateLabel);
-                        stopTimeLabel.Apply (Style.EditTimeEntry.TimeLabel);
+                    if (selectedTime == TimeKind.Stop)
+                    {
+                        stopDateLabel.Apply(Style.EditTimeEntry.DateLabelActive);
+                        stopTimeLabel.Apply(Style.EditTimeEntry.TimeLabelActive);
+                    }
+                    else
+                    {
+                        stopDateLabel.Apply(Style.EditTimeEntry.DateLabel);
+                        stopTimeLabel.Apply(Style.EditTimeEntry.TimeLabel);
                     }
 
                     var handler = SelectedChanged;
-                    if (handler != null) {
-                        handler (this, EventArgs.Empty);
+                    if (handler != null)
+                    {
+                        handler(this, EventArgs.Empty);
                     }
                 }
             }
 
             public event EventHandler SelectedChanged;
 
-            private void SetStopTimeHidden (bool hidden, bool animate)
+            private void SetStopTimeHidden(bool hidden, bool animate)
             {
-                if (stopTimeHidden == hidden) {
+                if (stopTimeHidden == hidden)
+                {
                     return;
                 }
                 stopTimeHidden = hidden;
 
-                if (!animate) {
+                if (!animate)
+                {
                     ViewLayout = hidden ? LayoutVariant.StartOnly : LayoutVariant.BothCenterAll;
-                } else if (hidden) {
+                }
+                else if (hidden)
+                {
                     ViewLayout = LayoutVariant.BothCenterAll;
                     stopDateTimeButton.Alpha = 1;
                     arrowImageView.Alpha = 1;
-                    LayoutIfNeeded ();
+                    LayoutIfNeeded();
 
-                    UIView.AnimateKeyframes (
+                    UIView.AnimateKeyframes(
                         0.4, 0,
                         UIViewKeyframeAnimationOptions.CalculationModeCubic | UIViewKeyframeAnimationOptions.BeginFromCurrentState,
-                    delegate {
-                        UIView.AddKeyframeWithRelativeStartTime (0, 1, delegate {
+                        delegate
+                    {
+                        UIView.AddKeyframeWithRelativeStartTime(0, 1, delegate
+                        {
                             ViewLayout = LayoutVariant.BothCenterStart;
-                            LayoutIfNeeded ();
+                            LayoutIfNeeded();
                         });
-                        UIView.AddKeyframeWithRelativeStartTime (0, 0.8, delegate {
+                        UIView.AddKeyframeWithRelativeStartTime(0, 0.8, delegate
+                        {
                             stopDateTimeButton.Alpha = 0;
                             arrowImageView.Alpha = 0;
                         });
                     },
-                    delegate {
-                        if (ViewLayout == LayoutVariant.BothCenterStart) {
+                    delegate
+                    {
+                        if (ViewLayout == LayoutVariant.BothCenterStart)
+                        {
                             ViewLayout = LayoutVariant.StartOnly;
-                            LayoutIfNeeded ();
+                            LayoutIfNeeded();
                         }
                     });
-                } else {
+                }
+                else
+                {
                     ViewLayout = LayoutVariant.BothCenterStart;
                     stopDateTimeButton.Alpha = 0;
                     arrowImageView.Alpha = 0;
-                    LayoutIfNeeded ();
+                    LayoutIfNeeded();
 
-                    UIView.AnimateKeyframes (
+                    UIView.AnimateKeyframes(
                         0.4, 0,
                         UIViewKeyframeAnimationOptions.CalculationModeCubic | UIViewKeyframeAnimationOptions.BeginFromCurrentState,
-                    delegate {
-                        UIView.AddKeyframeWithRelativeStartTime (0, 1, delegate {
+                        delegate
+                    {
+                        UIView.AddKeyframeWithRelativeStartTime(0, 1, delegate
+                        {
                             ViewLayout = LayoutVariant.BothCenterAll;
-                            LayoutIfNeeded ();
+                            LayoutIfNeeded();
                         });
-                        UIView.AddKeyframeWithRelativeStartTime (0.2, 1, delegate {
+                        UIView.AddKeyframeWithRelativeStartTime(0.2, 1, delegate
+                        {
                             stopDateTimeButton.Alpha = 1;
                             arrowImageView.Alpha = 1;
                         });
                     },
-                    delegate {
+                    delegate
+                    {
                     });
                 }
             }
 
-            private static void ConstructDateTimeView (UIView view, ref UILabel dateLabel, ref UILabel timeLabel)
+            private static void ConstructDateTimeView(UIView view, ref UILabel dateLabel, ref UILabel timeLabel)
             {
-                view.Add (dateLabel = new UILabel ().Apply (Style.EditTimeEntry.DateLabel));
-                view.Add (timeLabel = new UILabel ().Apply (Style.EditTimeEntry.TimeLabel));
-                view.AddConstraints (
-                    dateLabel.AtTopOf (view, 10f),
-                    dateLabel.AtLeftOf (view, 10f),
-                    dateLabel.AtRightOf (view, 10f),
+                view.Add(dateLabel = new UILabel().Apply(Style.EditTimeEntry.DateLabel));
+                view.Add(timeLabel = new UILabel().Apply(Style.EditTimeEntry.TimeLabel));
+                view.AddConstraints(
+                    dateLabel.AtTopOf(view, 10f),
+                    dateLabel.AtLeftOf(view, 10f),
+                    dateLabel.AtRightOf(view, 10f),
 
-                    timeLabel.Below (dateLabel, 2f),
-                    timeLabel.AtBottomOf (view, 10f),
-                    timeLabel.AtLeftOf (view, 10f),
-                    timeLabel.AtRightOf (view, 10f)
+                    timeLabel.Below(dateLabel, 2f),
+                    timeLabel.AtBottomOf(view, 10f),
+                    timeLabel.AtLeftOf(view, 10f),
+                    timeLabel.AtRightOf(view, 10f)
                 );
-                view.SubviewsDoNotTranslateAutoresizingMaskIntoConstraints ();
+                view.SubviewsDoNotTranslateAutoresizingMaskIntoConstraints();
             }
 
-            public override void UpdateConstraints ()
+            public override void UpdateConstraints()
             {
-                if (trackedConstraints.Count > 0) {
-                    RemoveConstraints (trackedConstraints.ToArray());
-                    trackedConstraints.Clear ();
+                if (trackedConstraints.Count > 0)
+                {
+                    RemoveConstraints(trackedConstraints.ToArray());
+                    trackedConstraints.Clear();
                 }
 
-                switch (viewLayout) {
-                case LayoutVariant.StartOnly:
-                    arrowImageView.RemoveFromSuperview ();
-                    stopDateTimeButton.RemoveFromSuperview ();
+                switch (viewLayout)
+                {
+                    case LayoutVariant.StartOnly:
+                        arrowImageView.RemoveFromSuperview();
+                        stopDateTimeButton.RemoveFromSuperview();
 
-                    trackedConstraints.AddRange (new [] {
-                        startDateTimeButton.WithSameCenterX (this),
-                        startDateTimeButton.WithSameCenterY (this),
-                        startDateTimeButton.AtTopOf (this, 10f),
-                        startDateTimeButton.AtBottomOf (this, 10f)
-                    } .ToLayoutConstraints());
-                    break;
-                case LayoutVariant.BothCenterStart:
-                    AddSubview (arrowImageView);
-                    AddSubview (stopDateTimeButton);
+                        trackedConstraints.AddRange(new []
+                        {
+                            startDateTimeButton.WithSameCenterX(this),
+                            startDateTimeButton.WithSameCenterY(this),
+                            startDateTimeButton.AtTopOf(this, 10f),
+                            startDateTimeButton.AtBottomOf(this, 10f)
+                        } .ToLayoutConstraints());
+                        break;
+                    case LayoutVariant.BothCenterStart:
+                        AddSubview(arrowImageView);
+                        AddSubview(stopDateTimeButton);
 
-                    trackedConstraints.AddRange (new [] {
-                        startDateTimeButton.WithSameCenterX (this),
-                        startDateTimeButton.WithSameCenterY (this),
-                        startDateTimeButton.AtTopOf (this, 10f),
-                        startDateTimeButton.AtBottomOf (this, 10f),
+                        trackedConstraints.AddRange(new []
+                        {
+                            startDateTimeButton.WithSameCenterX(this),
+                            startDateTimeButton.WithSameCenterY(this),
+                            startDateTimeButton.AtTopOf(this, 10f),
+                            startDateTimeButton.AtBottomOf(this, 10f),
 
-                        arrowImageView.WithSameCenterY (startDateTimeButton),
-                        arrowImageView.ToRightOf (startDateTimeButton, 10f),
-                        arrowImageView.ToLeftOf (stopDateTimeButton, 10f),
+                            arrowImageView.WithSameCenterY(startDateTimeButton),
+                            arrowImageView.ToRightOf(startDateTimeButton, 10f),
+                            arrowImageView.ToLeftOf(stopDateTimeButton, 10f),
 
-                        stopDateTimeButton.AtTopOf (this, 10f),
-                        stopDateTimeButton.AtBottomOf (this, 10f)
-                    } .ToLayoutConstraints());
-                    break;
-                default:
-                    AddSubview (arrowImageView);
-                    AddSubview (stopDateTimeButton);
+                            stopDateTimeButton.AtTopOf(this, 10f),
+                            stopDateTimeButton.AtBottomOf(this, 10f)
+                        } .ToLayoutConstraints());
+                        break;
+                    default:
+                        AddSubview(arrowImageView);
+                        AddSubview(stopDateTimeButton);
 
-                    trackedConstraints.AddRange (new [] {
-                        startDateTimeButton.AtTopOf (this, 10f),
-                        startDateTimeButton.AtBottomOf (this, 10f),
+                        trackedConstraints.AddRange(new []
+                        {
+                            startDateTimeButton.AtTopOf(this, 10f),
+                            startDateTimeButton.AtBottomOf(this, 10f),
 
-                        arrowImageView.WithSameCenterX (this),
-                        arrowImageView.WithSameCenterY (this),
-                        arrowImageView.ToRightOf (startDateTimeButton, 10f),
-                        arrowImageView.ToLeftOf (stopDateTimeButton, 10f),
+                            arrowImageView.WithSameCenterX(this),
+                            arrowImageView.WithSameCenterY(this),
+                            arrowImageView.ToRightOf(startDateTimeButton, 10f),
+                            arrowImageView.ToLeftOf(stopDateTimeButton, 10f),
 
-                        stopDateTimeButton.AtTopOf (this, 10f),
-                        stopDateTimeButton.AtBottomOf (this, 10f)
-                    } .ToLayoutConstraints());
-                    break;
+                            stopDateTimeButton.AtTopOf(this, 10f),
+                            stopDateTimeButton.AtBottomOf(this, 10f)
+                        } .ToLayoutConstraints());
+                        break;
                 }
 
-                AddConstraints (trackedConstraints.ToArray ());
+                AddConstraints(trackedConstraints.ToArray());
 
-                base.UpdateConstraints ();
+                base.UpdateConstraints();
             }
 
             private LayoutVariant ViewLayout
             {
                 get { return viewLayout; }
-                set {
-                    if (viewLayout == value) {
+                set
+                {
+                    if (viewLayout == value)
+                    {
                         return;
                     }
                     viewLayout = value;
-                    SetNeedsUpdateConstraints ();
-                    SetNeedsLayout ();
+                    SetNeedsUpdateConstraints();
+                    SetNeedsLayout();
                 }
             }
 
-            private enum LayoutVariant {
+            private enum LayoutVariant
+            {
                 StartOnly,
                 BothCenterStart,
                 BothCenterAll
             }
 
-            [Export ("requiresConstraintBasedLayout")]
-            public static new bool RequiresConstraintBasedLayout ()
+            [Export("requiresConstraintBasedLayout")]
+            public static new bool RequiresConstraintBasedLayout()
             {
                 return true;
             }
         }
 
-        private enum TimeKind {
+        private enum TimeKind
+        {
             None,
             Start,
             Stop
@@ -720,96 +815,115 @@ namespace Toggl.Ross.ViewControllers
             private readonly UILabel clientLabel;
             private readonly UILabel taskLabel;
 
-            public ProjectClientTaskButton ()
+            public ProjectClientTaskButton()
             {
-                Add (container = new UIView () {
+                Add(container = new UIView()
+                {
                     TranslatesAutoresizingMaskIntoConstraints = false,
                     UserInteractionEnabled = false,
                 });
 
-                var maskLayer = new CAGradientLayer () {
+                var maskLayer = new CAGradientLayer()
+                {
                     AnchorPoint = CGPoint.Empty,
-                    StartPoint = new CGPoint (0.0f, 0.0f),
-                    EndPoint = new CGPoint (1.0f, 0.0f),
-                    Colors = new [] {
-                        UIColor.FromWhiteAlpha (1, 1).CGColor,
-                        UIColor.FromWhiteAlpha (1, 1).CGColor,
-                        UIColor.FromWhiteAlpha (1, 0).CGColor,
+                    StartPoint = new CGPoint(0.0f, 0.0f),
+                    EndPoint = new CGPoint(1.0f, 0.0f),
+                    Colors = new []
+                    {
+                        UIColor.FromWhiteAlpha(1, 1).CGColor,
+                        UIColor.FromWhiteAlpha(1, 1).CGColor,
+                        UIColor.FromWhiteAlpha(1, 0).CGColor,
                     },
-                    Locations = new [] {
-                        NSNumber.FromFloat (0f),
-                        NSNumber.FromFloat (0.9f),
-                        NSNumber.FromFloat (1f),
+                    Locations = new []
+                    {
+                        NSNumber.FromFloat(0f),
+                        NSNumber.FromFloat(0.9f),
+                        NSNumber.FromFloat(1f),
                     },
                 };
                 container.Layer.Mask = maskLayer;
 
-                container.Add (projectLabel = new UILabel () {
+                container.Add(projectLabel = new UILabel()
+                {
                     TranslatesAutoresizingMaskIntoConstraints = false,
-                } .Apply (Style.EditTimeEntry.ProjectLabel));
-                container.Add (clientLabel = new UILabel () {
+                } .Apply(Style.EditTimeEntry.ProjectLabel));
+                container.Add(clientLabel = new UILabel()
+                {
                     TranslatesAutoresizingMaskIntoConstraints = false,
-                } .Apply (Style.EditTimeEntry.ClientLabel));
-                container.Add (taskLabel = new UILabel () {
+                } .Apply(Style.EditTimeEntry.ClientLabel));
+                container.Add(taskLabel = new UILabel()
+                {
                     TranslatesAutoresizingMaskIntoConstraints = false,
-                } .Apply (Style.EditTimeEntry.TaskLabel));
+                } .Apply(Style.EditTimeEntry.TaskLabel));
             }
 
-            public override void UpdateConstraints ()
+            public override void UpdateConstraints()
             {
-                if (trackedConstraints.Count > 0) {
-                    RemoveConstraints (trackedConstraints.ToArray());
-                    trackedConstraints.Clear ();
+                if (trackedConstraints.Count > 0)
+                {
+                    RemoveConstraints(trackedConstraints.ToArray());
+                    trackedConstraints.Clear();
                 }
 
-                trackedConstraints.AddRange (new FluentLayout[] {
-                    container.AtLeftOf (this, 15f),
-                    container.WithSameCenterY (this),
+                trackedConstraints.AddRange(new FluentLayout[]
+                {
+                    container.AtLeftOf(this, 15f),
+                    container.WithSameCenterY(this),
 
-                    projectLabel.AtTopOf (container),
-                    projectLabel.AtLeftOf (container),
+                    projectLabel.AtTopOf(container),
+                    projectLabel.AtLeftOf(container),
                     null
                 } .ToLayoutConstraints());
 
-                if (!clientLabel.Hidden) {
-                    var baselineOffset = (float)Math.Floor (projectLabel.Font.Descender - clientLabel.Font.Descender);
-                    trackedConstraints.AddRange (new FluentLayout[] {
-                        clientLabel.AtTopOf (container, -baselineOffset),
-                        clientLabel.AtRightOf (container),
-                        clientLabel.ToRightOf (projectLabel, 5f),
-                        clientLabel.AtBottomOf (projectLabel, baselineOffset),
+                if (!clientLabel.Hidden)
+                {
+                    var baselineOffset = (float)Math.Floor(projectLabel.Font.Descender - clientLabel.Font.Descender);
+                    trackedConstraints.AddRange(new FluentLayout[]
+                    {
+                        clientLabel.AtTopOf(container, -baselineOffset),
+                        clientLabel.AtRightOf(container),
+                        clientLabel.ToRightOf(projectLabel, 5f),
+                        clientLabel.AtBottomOf(projectLabel, baselineOffset),
                         null
                     } .ToLayoutConstraints());
-                } else {
-                    trackedConstraints.AddRange (new FluentLayout[] {
-                        projectLabel.AtRightOf (container),
+                }
+                else
+                {
+                    trackedConstraints.AddRange(new FluentLayout[]
+                    {
+                        projectLabel.AtRightOf(container),
                         null
                     } .ToLayoutConstraints());
                 }
 
-                if (!taskLabel.Hidden) {
-                    trackedConstraints.AddRange (new FluentLayout[] {
-                        taskLabel.Below (projectLabel, 3f),
-                        taskLabel.AtLeftOf (container),
-                        taskLabel.AtRightOf (container),
-                        taskLabel.AtBottomOf (container),
+                if (!taskLabel.Hidden)
+                {
+                    trackedConstraints.AddRange(new FluentLayout[]
+                    {
+                        taskLabel.Below(projectLabel, 3f),
+                        taskLabel.AtLeftOf(container),
+                        taskLabel.AtRightOf(container),
+                        taskLabel.AtBottomOf(container),
                         null
                     } .ToLayoutConstraints());
-                } else {
-                    trackedConstraints.AddRange (new FluentLayout[] {
-                        projectLabel.AtBottomOf (container),
+                }
+                else
+                {
+                    trackedConstraints.AddRange(new FluentLayout[]
+                    {
+                        projectLabel.AtBottomOf(container),
                         null
                     } .ToLayoutConstraints());
                 }
 
-                AddConstraints (trackedConstraints.ToArray ());
+                AddConstraints(trackedConstraints.ToArray());
 
-                base.UpdateConstraints ();
+                base.UpdateConstraints();
             }
 
-            public override void LayoutSubviews ()
+            public override void LayoutSubviews()
             {
-                base.LayoutSubviews ();
+                base.LayoutSubviews();
 
                 // Update fade mask position:
                 var bounds = container.Frame;
@@ -820,8 +934,9 @@ namespace Toggl.Ross.ViewControllers
             public string ProjectName
             {
                 get { return projectLabel.Text; }
-                set {
-                    var projectName = string.IsNullOrEmpty (value) ? "EditEntryProjectHint".Tr () : value;
+                set
+                {
+                    var projectName = string.IsNullOrEmpty(value) ? "EditEntryProjectHint".Tr() : value;
                     projectLabel.Text = projectName;
                 }
             }
@@ -829,17 +944,20 @@ namespace Toggl.Ross.ViewControllers
             public string ClientName
             {
                 get { return clientLabel.Text; }
-                set {
-                    if (clientLabel.Text == value) {
+                set
+                {
+                    if (clientLabel.Text == value)
+                    {
                         return;
                     }
 
-                    var visibilityChanged = string.IsNullOrWhiteSpace (clientLabel.Text) != string.IsNullOrWhiteSpace (value);
+                    var visibilityChanged = string.IsNullOrWhiteSpace(clientLabel.Text) != string.IsNullOrWhiteSpace(value);
                     clientLabel.Text = value;
 
-                    if (visibilityChanged) {
-                        SetNeedsUpdateConstraints ();
-                        clientLabel.Hidden = string.IsNullOrWhiteSpace (value);
+                    if (visibilityChanged)
+                    {
+                        SetNeedsUpdateConstraints();
+                        clientLabel.Hidden = string.IsNullOrWhiteSpace(value);
                     }
                 }
             }
@@ -847,17 +965,20 @@ namespace Toggl.Ross.ViewControllers
             public string TaskName
             {
                 get { return taskLabel.Text; }
-                set {
-                    if (taskLabel.Text == value) {
+                set
+                {
+                    if (taskLabel.Text == value)
+                    {
                         return;
                     }
 
-                    var visibilityChanged = string.IsNullOrWhiteSpace (taskLabel.Text) != string.IsNullOrWhiteSpace (value);
+                    var visibilityChanged = string.IsNullOrWhiteSpace(taskLabel.Text) != string.IsNullOrWhiteSpace(value);
                     taskLabel.Text = value;
 
-                    if (visibilityChanged) {
-                        SetNeedsUpdateConstraints ();
-                        taskLabel.Hidden = string.IsNullOrWhiteSpace (value);
+                    if (visibilityChanged)
+                    {
+                        SetNeedsUpdateConstraints();
+                        taskLabel.Hidden = string.IsNullOrWhiteSpace(value);
                     }
                 }
             }
@@ -865,22 +986,26 @@ namespace Toggl.Ross.ViewControllers
             public string ProjectColorHex
             {
                 get { return "#ffffff"; }
-                set {
+                set
+                {
                     // If string Hex color is default or null:
-                    if (value == ProjectData.HexColors [ProjectData.DefaultColor] || string.IsNullOrEmpty (value)) {
-                        projectLabel.Apply (Style.EditTimeEntry.ProjectHintLabel);
-                        SetBackgroundImage (Color.White.ToImage (), UIControlState.Normal);
-                        SetBackgroundImage (Color.LightestGray.ToImage (), UIControlState.Highlighted);
-                    } else {
-                        projectLabel.Apply (Style.EditTimeEntry.ProjectLabel);
-                        SetBackgroundImage (UIColor.Clear.FromHex (value).ToImage (), UIControlState.Normal);
-                        SetBackgroundImage (null, UIControlState.Highlighted);
+                    if (value == ProjectData.HexColors [ProjectData.DefaultColor] || string.IsNullOrEmpty(value))
+                    {
+                        projectLabel.Apply(Style.EditTimeEntry.ProjectHintLabel);
+                        SetBackgroundImage(Color.White.ToImage(), UIControlState.Normal);
+                        SetBackgroundImage(Color.LightestGray.ToImage(), UIControlState.Highlighted);
+                    }
+                    else
+                    {
+                        projectLabel.Apply(Style.EditTimeEntry.ProjectLabel);
+                        SetBackgroundImage(UIColor.Clear.FromHex(value).ToImage(), UIControlState.Normal);
+                        SetBackgroundImage(null, UIControlState.Highlighted);
                     }
                 }
             }
 
-            [Export ("requiresConstraintBasedLayout")]
-            public static new bool RequiresConstraintBasedLayout ()
+            [Export("requiresConstraintBasedLayout")]
+            public static new bool RequiresConstraintBasedLayout()
             {
                 return true;
             }

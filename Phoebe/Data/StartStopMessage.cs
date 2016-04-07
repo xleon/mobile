@@ -6,12 +6,13 @@ namespace Toggl.Phoebe.Data
     {
         public TimeEntryData TimeEntry
         {
-            get {
+            get
+            {
                 return (TimeEntryData)Sender;
             }
         }
 
-        public StartStopMessage (TimeEntryData sender) : base (sender)
+        public StartStopMessage(TimeEntryData sender) : base(sender)
         {
         }
     }

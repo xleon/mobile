@@ -23,115 +23,120 @@ namespace Toggl.Joey.UI.Fragments
 
         private Guid WorkspaceId
         {
-            get {
+            get
+            {
                 var id = Guid.Empty;
-                if (Arguments != null) {
-                    Guid.TryParse (Arguments.GetString (WorkspaceIdArgument), out id);
+                if (Arguments != null)
+                {
+                    Guid.TryParse(Arguments.GetString(WorkspaceIdArgument), out id);
                 }
                 return id;
             }
         }
 
-        public ClientListDialogFragment ()
+        public ClientListDialogFragment()
         {
         }
 
-        public ClientListDialogFragment (IntPtr jref, Android.Runtime.JniHandleOwnership xfer) : base (jref, xfer)
+        public ClientListDialogFragment(IntPtr jref, Android.Runtime.JniHandleOwnership xfer) : base(jref, xfer)
         {
         }
 
-        public static ClientListDialogFragment NewInstance (Guid workspaceId)
+        public static ClientListDialogFragment NewInstance(Guid workspaceId)
         {
-            var fragment = new ClientListDialogFragment ();
+            var fragment = new ClientListDialogFragment();
 
             var args = new Bundle();
-            args.PutString (WorkspaceIdArgument, workspaceId.ToString ());
+            args.PutString(WorkspaceIdArgument, workspaceId.ToString());
             fragment.Arguments = args;
 
             return fragment;
         }
 
-        public override void OnCreate (Bundle savedInstanceState)
+        public override void OnCreate(Bundle savedInstanceState)
         {
-            base.OnCreate (savedInstanceState);
-            viewModel = new ClientListVM (Phoebe.Reactive.StoreManager.Singleton.AppState, WorkspaceId);
+            base.OnCreate(savedInstanceState);
+            viewModel = new ClientListVM(Phoebe.Reactive.StoreManager.Singleton.AppState, WorkspaceId);
         }
 
-        public override void OnDestroy ()
+        public override void OnDestroy()
         {
-            viewModel.Dispose ();
+            viewModel.Dispose();
             viewModel = null;
-            base.OnDestroy ();
+            base.OnDestroy();
         }
 
-        public ClientListDialogFragment SetClientSelectListener (IOnClientSelectedHandler handler)
+        public ClientListDialogFragment SetClientSelectListener(IOnClientSelectedHandler handler)
         {
             clientSelectedHandler = handler;
             return this;
         }
 
-        public override Dialog OnCreateDialog (Bundle savedInstanceState)
+        public override Dialog OnCreateDialog(Bundle savedInstanceState)
         {
             // Mvvm ligth utility to generate an adapter from
             // an Observable collection.
-            var clientsAdapter = new ObservableCollection <ClientData> ().GetAdapter (GetClientView);
+            var clientsAdapter = new ObservableCollection <ClientData> ().GetAdapter(GetClientView);
 
-            var dia = new AlertDialog.Builder (Activity)
-            .SetTitle (Resource.String.SelectClientTitle)
-            .SetAdapter (clientsAdapter, (IDialogInterfaceOnClickListener)null)
-            .SetPositiveButton (Resource.String.ClientsNewClient, OnCreateButtonClicked)
-            .Create ();
+            var dia = new AlertDialog.Builder(Activity)
+            .SetTitle(Resource.String.SelectClientTitle)
+            .SetAdapter(clientsAdapter, (IDialogInterfaceOnClickListener)null)
+            .SetPositiveButton(Resource.String.ClientsNewClient, OnCreateButtonClicked)
+            .Create();
 
             listView = dia.ListView;
             listView.Clickable = true;
             listView.ItemClick += OnItemClick;
-            listView.ViewAttachedToWindow += (sender, e) => SetDialogContent ();
+            listView.ViewAttachedToWindow += (sender, e) => SetDialogContent();
 
             return dia;
         }
 
-        public override void OnActivityResult (int requestCode, int resultCode, Intent data)
+        public override void OnActivityResult(int requestCode, int resultCode, Intent data)
         {
-            base.OnActivityResult (requestCode, resultCode, data);
-            if (requestCode == NewProjectFragment.ClientSelectedRequestCode) {
-                if (resultCode == (int)Result.Ok) {
+            base.OnActivityResult(requestCode, resultCode, data);
+            if (requestCode == NewProjectFragment.ClientSelectedRequestCode)
+            {
+                if (resultCode == (int)Result.Ok)
+                {
                     Activity.Finish();
                 }
             }
         }
 
-        private void SetDialogContent ()
+        private void SetDialogContent()
         {
-            if (listView == null || listView.Adapter == null || viewModel == null) {
+            if (listView == null || listView.Adapter == null || viewModel == null)
+            {
                 return;
             }
 
             // Set the correct adapter here. Because the Dialog is created
             // in a sync way and ViewModel in an async way, we need to
             // call this method twice
-            listView.Adapter = viewModel.ClientDataCollection.GetAdapter (GetClientView);
+            listView.Adapter = viewModel.ClientDataCollection.GetAdapter(GetClientView);
         }
 
-        private View GetClientView (int position, IClientData clientData, View convertView)
+        private View GetClientView(int position, IClientData clientData, View convertView)
         {
-            View view = convertView ?? LayoutInflater.FromContext (Activity).Inflate (Resource.Layout.TagListItem, null);
-            var nameCheckedTextView = view.FindViewById<CheckedTextView> (Resource.Id.NameCheckedTextView).SetFont (Font.Roboto);
+            View view = convertView ?? LayoutInflater.FromContext(Activity).Inflate(Resource.Layout.TagListItem, null);
+            var nameCheckedTextView = view.FindViewById<CheckedTextView> (Resource.Id.NameCheckedTextView).SetFont(Font.Roboto);
             nameCheckedTextView.Text = clientData.Name;
             return view;
         }
 
-        private void OnItemClick (object sender, AdapterView.ItemClickEventArgs e)
+        private void OnItemClick(object sender, AdapterView.ItemClickEventArgs e)
         {
-            clientSelectedHandler.OnClientSelected (viewModel.ClientDataCollection [e.Position]);
-            Dismiss ();
+            clientSelectedHandler.OnClientSelected(viewModel.ClientDataCollection [e.Position]);
+            Dismiss();
         }
 
-        private void OnCreateButtonClicked (object sender, DialogClickEventArgs args)
+        private void OnCreateButtonClicked(object sender, DialogClickEventArgs args)
         {
-            CreateClientDialogFragment.NewInstance (WorkspaceId)
-            .SetOnClientSelectedListener (clientSelectedHandler)
-            .Show (FragmentManager, "new_client_dialog");
-            Dismiss ();
+            CreateClientDialogFragment.NewInstance(WorkspaceId)
+            .SetOnClientSelectedListener(clientSelectedHandler)
+            .Show(FragmentManager, "new_client_dialog");
+            Dismiss();
         }
     }
 }

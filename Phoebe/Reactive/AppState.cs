@@ -13,7 +13,7 @@ namespace Toggl.Phoebe.Reactive
     public class AppState
     {
         public SettingsState Settings { get; private set; }
-		public RequestInfo RequestInfo { get; private set; }
+        public RequestInfo RequestInfo { get; private set; }
 
         public IUserData User { get; private set; }
         public IReadOnlyDictionary<Guid, IWorkspaceData> Workspaces { get; private set; }
@@ -29,19 +29,21 @@ namespace Toggl.Phoebe.Reactive
         private RichTimeEntry _activeEntryCache = null;
         public RichTimeEntry ActiveEntry
         {
-            get {
-                if (_activeEntryCache == null) {
-                    _activeEntryCache = new RichTimeEntry (new TimeEntryData (), this);
+            get
+            {
+                if (_activeEntryCache == null)
+                {
+                    _activeEntryCache = new RichTimeEntry(new TimeEntryData(), this);
                     if (TimeEntries.Count > 0)
-                        _activeEntryCache = TimeEntries.Values.SingleOrDefault (
+                        _activeEntryCache = TimeEntries.Values.SingleOrDefault(
                                                 x => x.Data.State == TimeEntryState.Running) ?? _activeEntryCache;
                 }
                 return _activeEntryCache;
             }
         }
 
-        AppState (
-			SettingsState settings,
+        AppState(
+            SettingsState settings,
             RequestInfo requestInfo,
             IUserData user,
             IReadOnlyDictionary<Guid, IWorkspaceData> workspaces,
@@ -66,7 +68,7 @@ namespace Toggl.Phoebe.Reactive
             TimeEntries = timeEntries;
         }
 
-        public AppState With (
+        public AppState With(
             SettingsState settings = null,
             RequestInfo requestInfo = null,
             IUserData user = null,
@@ -79,7 +81,7 @@ namespace Toggl.Phoebe.Reactive
             IReadOnlyDictionary<Guid, ITagData> tags = null,
             IReadOnlyDictionary<Guid, RichTimeEntry> timeEntries = null)
         {
-            return new AppState (
+            return new AppState(
                        settings ?? Settings,
                        requestInfo ?? RequestInfo,
                        user ?? User,
@@ -101,17 +103,25 @@ namespace Toggl.Phoebe.Reactive
             IReadOnlyDictionary<Guid, T> oldItems, IEnumerable<ICommonData> newItems)
         where T : ICommonData
         {
-            var dic = oldItems.ToDictionary (x => x.Key, x => x.Value);
-            foreach (var newItem in newItems.OfType<T> ()) {
-                if (newItem.DeletedAt == null) {
-                    if (dic.ContainsKey (newItem.Id)) {
+            var dic = oldItems.ToDictionary(x => x.Key, x => x.Value);
+            foreach (var newItem in newItems.OfType<T> ())
+            {
+                if (newItem.DeletedAt == null)
+                {
+                    if (dic.ContainsKey(newItem.Id))
+                    {
                         dic [newItem.Id] = newItem;
-                    } else {
-                        dic.Add (newItem.Id, newItem);
                     }
-                } else {
-                    if (dic.ContainsKey (newItem.Id)) {
-                        dic.Remove (newItem.Id);
+                    else
+                    {
+                        dic.Add(newItem.Id, newItem);
+                    }
+                }
+                else
+                {
+                    if (dic.ContainsKey(newItem.Id))
+                    {
+                        dic.Remove(newItem.Id);
                     }
                 }
             }
@@ -122,42 +132,50 @@ namespace Toggl.Phoebe.Reactive
         /// This doesn't check ModifiedAt or DeletedAt, so call it
         /// always after putting items first in the database
         /// </summary>
-        public IReadOnlyDictionary<Guid, RichTimeEntry> UpdateTimeEntries (
+        public IReadOnlyDictionary<Guid, RichTimeEntry> UpdateTimeEntries(
             IEnumerable<ICommonData> newItems)
         {
-            var dic = TimeEntries.ToDictionary (x => x.Key, x => x.Value);
-            foreach (var newItem in newItems.OfType<ITimeEntryData> ()) {
-                if (newItem.DeletedAt == null) {
-                    if (dic.ContainsKey (newItem.Id)) {
-                        dic [newItem.Id] = new RichTimeEntry (
-                            newItem, LoadTimeEntryInfo (newItem));
-                    } else {
-                        dic.Add (newItem.Id, new RichTimeEntry (
-                                     newItem, LoadTimeEntryInfo (newItem)));
+            var dic = TimeEntries.ToDictionary(x => x.Key, x => x.Value);
+            foreach (var newItem in newItems.OfType<ITimeEntryData> ())
+            {
+                if (newItem.DeletedAt == null)
+                {
+                    if (dic.ContainsKey(newItem.Id))
+                    {
+                        dic [newItem.Id] = new RichTimeEntry(
+                            newItem, LoadTimeEntryInfo(newItem));
                     }
-                } else {
-                    if (dic.ContainsKey (newItem.Id)) {
-                        dic.Remove (newItem.Id);
+                    else
+                    {
+                        dic.Add(newItem.Id, new RichTimeEntry(
+                                    newItem, LoadTimeEntryInfo(newItem)));
+                    }
+                }
+                else
+                {
+                    if (dic.ContainsKey(newItem.Id))
+                    {
+                        dic.Remove(newItem.Id);
                     }
                 }
             }
             return dic;
         }
 
-        public TimeEntryInfo LoadTimeEntryInfo (ITimeEntryData teData)
+        public TimeEntryInfo LoadTimeEntryInfo(ITimeEntryData teData)
         {
-            var workspaceData = teData.WorkspaceId != Guid.Empty ? Workspaces[teData.WorkspaceId] : new WorkspaceData ();
-            var projectData = teData.ProjectId != Guid.Empty ? Projects[teData.ProjectId] : new ProjectData ();
-            var clientData = projectData.ClientId != Guid.Empty ? Clients[projectData.ClientId] : new ClientData ();
-            var taskData = teData.TaskId != Guid.Empty ? Tasks[teData.TaskId] : new TaskData ();
+            var workspaceData = teData.WorkspaceId != Guid.Empty ? Workspaces[teData.WorkspaceId] : new WorkspaceData();
+            var projectData = teData.ProjectId != Guid.Empty ? Projects[teData.ProjectId] : new ProjectData();
+            var clientData = projectData.ClientId != Guid.Empty ? Clients[projectData.ClientId] : new ClientData();
+            var taskData = teData.TaskId != Guid.Empty ? Tasks[teData.TaskId] : new TaskData();
             var color = (projectData.Id != Guid.Empty) ? projectData.Color : -1;
             var tagsData =
-                teData.TagIds.Select (x => Tags.Values.SingleOrDefault (y => y.Id == x))
+                teData.TagIds.Select(x => Tags.Values.SingleOrDefault(y => y.Id == x))
                 // TODO: Throw exception if tag was not found?
-                .Where (x => x != null)
-                .ToList ();
+                .Where(x => x != null)
+                .ToList();
 
-            return new TimeEntryInfo (
+            return new TimeEntryInfo(
                        workspaceData,
                        projectData,
                        clientData,
@@ -166,15 +184,15 @@ namespace Toggl.Phoebe.Reactive
                        color);
         }
 
-        public IEnumerable<IProjectData> GetUserAccessibleProjects (Guid userId)
+        public IEnumerable<IProjectData> GetUserAccessibleProjects(Guid userId)
         {
-            return Projects.Values.Where (
+            return Projects.Values.Where(
                        p => p.IsActive &&
-                       (p.IsPrivate || ProjectUsers.Values.Any (x => x.ProjectId == p.Id && x.UserId == userId)))
-                   .OrderBy (p => p.Name);
+                       (p.IsPrivate || ProjectUsers.Values.Any(x => x.ProjectId == p.Id && x.UserId == userId)))
+                   .OrderBy(p => p.Name);
         }
 
-        public ITimeEntryData GetTimeEntryDraft ()
+        public ITimeEntryData GetTimeEntryDraft()
         {
             var userId = User.Id;
             var workspaceId = User.DefaultWorkspaceId;
@@ -182,7 +200,8 @@ namespace Toggl.Phoebe.Reactive
             var durationOnly = User.TrackingMode == TrackingMode.Continue;
 
             // Create new draft object
-            return TimeEntryData.Create (x => {
+            return TimeEntryData.Create(x =>
+            {
                 x.UserId = userId;
                 x.WorkspaceId = workspaceId;
                 x.WorkspaceRemoteId = remoteWorkspaceId;
@@ -190,10 +209,10 @@ namespace Toggl.Phoebe.Reactive
             });
         }
 
-        public static AppState Init ()
+        public static AppState Init()
         {
-            var userData = new UserData ();
-            var settings = SettingsState.Init ();
+            var userData = new UserData();
+            var settings = SettingsState.Init();
             var projects = new Dictionary<Guid, IProjectData> ();
             var projectUsers = new Dictionary<Guid, IProjectUserData> ();
             var workspaces = new Dictionary<Guid, IWorkspaceData> ();
@@ -202,36 +221,40 @@ namespace Toggl.Phoebe.Reactive
             var tasks = new Dictionary<Guid, ITaskData> ();
             var tags = new Dictionary<Guid, ITagData> ();
 
-            try {
-                if (settings.UserId != Guid.Empty) {
+            try
+            {
+                if (settings.UserId != Guid.Empty)
+                {
                     var dataStore = ServiceContainer.Resolve<ISyncDataStore> ();
-                    userData = dataStore.Table<UserData> ().Single (x => x.Id == settings.UserId);
-                    dataStore.Table<WorkspaceData> ().ForEach (x => workspaces.Add (x.Id, x));
-                    dataStore.Table<WorkspaceUserData> ().ForEach (x => workspaceUserData.Add (x.Id, x));
-                    dataStore.Table<ProjectData> ().ForEach (x => projects.Add (x.Id, x));
-                    dataStore.Table<ProjectUserData> ().ForEach (x => projectUsers.Add (x.Id, x));
-                    dataStore.Table<ClientData> ().ForEach (x => clients.Add (x.Id, x));
-                    dataStore.Table<TaskData> ().ForEach (x => tasks.Add (x.Id, x));
+                    userData = dataStore.Table<UserData> ().Single(x => x.Id == settings.UserId);
+                    dataStore.Table<WorkspaceData> ().ForEach(x => workspaces.Add(x.Id, x));
+                    dataStore.Table<WorkspaceUserData> ().ForEach(x => workspaceUserData.Add(x.Id, x));
+                    dataStore.Table<ProjectData> ().ForEach(x => projects.Add(x.Id, x));
+                    dataStore.Table<ProjectUserData> ().ForEach(x => projectUsers.Add(x.Id, x));
+                    dataStore.Table<ClientData> ().ForEach(x => clients.Add(x.Id, x));
+                    dataStore.Table<TaskData> ().ForEach(x => tasks.Add(x.Id, x));
                 }
-            } catch (Exception ex) {
+            }
+            catch (Exception ex)
+            {
                 var logger = ServiceContainer.Resolve<ILogger> ();
-                logger.Error (typeof (AppState).Name, ex, "UserId in settings not found in db: {0}", ex.Message);
+                logger.Error(typeof(AppState).Name, ex, "UserId in settings not found in db: {0}", ex.Message);
                 // When data is corrupt and cannot find user
-                settings = settings.With (userId: Guid.Empty);
+                settings = settings.With(userId: Guid.Empty);
             }
 
-            return new AppState (
-                settings: settings,
-                requestInfo: RequestInfo.Empty,
-                user: userData,
-                workspaces: workspaces,
-                projects: projects,
-                workspaceUsers: workspaceUserData,
-                projectUsers: projectUsers,
-                clients: clients,
-                tasks: tasks,
-                tags: tags,
-                timeEntries: new Dictionary<Guid, RichTimeEntry> ());
+            return new AppState(
+                       settings: settings,
+                       requestInfo: RequestInfo.Empty,
+                       user: userData,
+                       workspaces: workspaces,
+                       projects: projects,
+                       workspaceUsers: workspaceUserData,
+                       projectUsers: projectUsers,
+                       clients: clients,
+                       tasks: tasks,
+                       tags: tags,
+                       timeEntries: new Dictionary<Guid, RichTimeEntry> ());
         }
     }
 
@@ -240,27 +263,30 @@ namespace Toggl.Phoebe.Reactive
         public TimeEntryInfo Info { get; private set; }
         public ITimeEntryData Data { get; private set; }
 
-        public RichTimeEntry (ITimeEntryData data, TimeEntryInfo info)
+        public RichTimeEntry(ITimeEntryData data, TimeEntryInfo info)
         {
             Data = data;
             Info = info;
         }
 
-        public RichTimeEntry (ITimeEntryData data, AppState appState)
-        : this (data, appState.LoadTimeEntryInfo (data))
+        public RichTimeEntry(ITimeEntryData data, AppState appState)
+        : this(data, appState.LoadTimeEntryInfo(data))
         {
         }
 
-        public override int GetHashCode ()
+        public override int GetHashCode()
         {
-            return Data.GetHashCode ();
+            return Data.GetHashCode();
         }
 
-        public override bool Equals (object obj)
+        public override bool Equals(object obj)
         {
-            if (ReferenceEquals (this, obj)) {
+            if (ReferenceEquals(this, obj))
+            {
                 return true;
-            } else {
+            }
+            else
+            {
                 // Quick way to compare time entries
                 var other = obj as RichTimeEntry;
                 return other != null &&
@@ -310,22 +336,23 @@ namespace Toggl.Phoebe.Reactive
 
         public static RequestInfo Empty
         {
-            get {
-				// Set initial pagination Date to the beginning of the next day.
-				// So, we can include all entries created -Today-.
-				var downloadFrom = Time.UtcNow.Date.AddDays (1);
-				
-				// Initial Date for GetChanges: the last 5 days.
-				var getChangesLastRun = Time.UtcNow.AddDays (-5);
+            get
+            {
+                // Set initial pagination Date to the beginning of the next day.
+                // So, we can include all entries created -Today-.
+                var downloadFrom = Time.UtcNow.Date.AddDays(1);
 
-				return new RequestInfo (
-                    new List<ServerRequest> (), true, false,
-                    downloadFrom, downloadFrom,
-                    getChangesLastRun, AuthResult.None);
+                // Initial Date for GetChanges: the last 5 days.
+                var getChangesLastRun = Time.UtcNow.AddDays(-5);
+
+                return new RequestInfo(
+                           new List<ServerRequest> (), true, false,
+                           downloadFrom, downloadFrom,
+                           getChangesLastRun, AuthResult.None);
             }
         }
 
-        public RequestInfo (
+        public RequestInfo(
             IReadOnlyList<ServerRequest> running, bool hasMore, bool hadErrors,
             DateTime downloadFrom, DateTime nextDownloadFrom,
             DateTime getChangesLastRun, AuthResult authResult)
@@ -339,7 +366,7 @@ namespace Toggl.Phoebe.Reactive
             AuthResult = authResult;
         }
 
-        public RequestInfo With (
+        public RequestInfo With(
             IReadOnlyList<ServerRequest> running = null,
             bool? hasMore = null,
             bool? hadErrors = null,
@@ -348,14 +375,14 @@ namespace Toggl.Phoebe.Reactive
             DateTime? getChangesLastRun = null,
             AuthResult? authResult = null)
         {
-            return new RequestInfo (
-                running != null ? running : Running,
-                hasMore.HasValue ? hasMore.Value : HasMoreEntries,
-                hadErrors.HasValue ? hadErrors.Value : HadErrors,
-                downloadFrom.HasValue ? downloadFrom.Value : DownloadFrom,
-                nextDownloadFrom.HasValue ? nextDownloadFrom.Value : NextDownloadFrom,
-                getChangesLastRun.HasValue ? getChangesLastRun.Value : GetChangesLastRun,
-                authResult.HasValue ? authResult.Value : AuthResult);
+            return new RequestInfo(
+                       running != null ? running : Running,
+                       hasMore.HasValue ? hasMore.Value : HasMoreEntries,
+                       hadErrors.HasValue ? hadErrors.Value : HadErrors,
+                       downloadFrom.HasValue ? downloadFrom.Value : DownloadFrom,
+                       nextDownloadFrom.HasValue ? nextDownloadFrom.Value : NextDownloadFrom,
+                       getChangesLastRun.HasValue ? getChangesLastRun.Value : GetChangesLastRun,
+                       authResult.HasValue ? authResult.Value : AuthResult);
         }
     }
 
@@ -405,10 +432,11 @@ namespace Toggl.Phoebe.Reactive
         public bool ShowNotification { get; private set; }
         public bool ShowWelcome { get; private set; }
 
-        public static SettingsState Init ()
+        public static SettingsState Init()
         {
             // If saved is empty, return default.
-            if (Settings.SerializedSettings == string.Empty) {
+            if (Settings.SerializedSettings == string.Empty)
+            {
                 var settings = new SettingsState();
                 settings.UserId = UserIdDefault;
                 settings.GetChangesLastRun = GetChangesLastRunDefault;
@@ -433,21 +461,22 @@ namespace Toggl.Phoebe.Reactive
                 return settings;
             }
             return Newtonsoft.Json.JsonConvert.DeserializeObject<SettingsState> (Settings.SerializedSettings,
-                    Settings.GetNonPublicPropertiesResolverSettings ());
+                    Settings.GetNonPublicPropertiesResolverSettings());
         }
 
-        private T updateNullable<T> (T? value, T @default, Func<T,T> update)
-        where T : struct {
-            return value.HasValue ? update (value.Value) : @default;
+        private T updateNullable<T> (T? value, T @default, Func<T, T> update)
+        where T : struct
+        {
+            return value.HasValue ? update(value.Value) : @default;
         }
 
-        private T updateReference<T> (T value, T @default, Func<T,T> update)
+        private T updateReference<T> (T value, T @default, Func<T, T> update)
         where T : class
         {
-            return value != null ? update (value) : @default;
+            return value != null ? update(value) : @default;
         }
 
-        public SettingsState With (
+        public SettingsState With(
             Guid? userId = null,
             DateTime? getChangesLastRun = null,
             bool? useTag = null,
@@ -470,29 +499,29 @@ namespace Toggl.Phoebe.Reactive
             bool? showWelcome = null)
         {
             var copy = Init();
-            updateNullable (userId, copy.UserId, x => copy.UserId = x);
-            updateNullable (getChangesLastRun, copy.GetChangesLastRun, x => copy.GetChangesLastRun = x);
-            updateNullable (useTag, copy.UseDefaultTag, x => copy.UseDefaultTag = x);
-            updateReference (lastAppVersion, copy.LastAppVersion, x => copy.LastAppVersion = x);
-            updateNullable (lastReportZoom, copy.LastReportZoom, x => copy.LastReportZoom = x);
-            updateNullable (groupedEntries, copy.GroupedEntries, x => copy.GroupedEntries = x);
-            updateNullable (chooseProjectForNew, copy.ChooseProjectForNew, x => copy.ChooseProjectForNew = x);
-            updateNullable (reportsCurrentItem, copy.ReportsCurrentItem, x => copy.ReportsCurrentItem = x);
-            updateReference (projectSort, copy.ProjectSort, x => copy.ProjectSort = x);
-            updateReference (installId, copy.InstallId, x => copy.InstallId = x);
+            updateNullable(userId, copy.UserId, x => copy.UserId = x);
+            updateNullable(getChangesLastRun, copy.GetChangesLastRun, x => copy.GetChangesLastRun = x);
+            updateNullable(useTag, copy.UseDefaultTag, x => copy.UseDefaultTag = x);
+            updateReference(lastAppVersion, copy.LastAppVersion, x => copy.LastAppVersion = x);
+            updateNullable(lastReportZoom, copy.LastReportZoom, x => copy.LastReportZoom = x);
+            updateNullable(groupedEntries, copy.GroupedEntries, x => copy.GroupedEntries = x);
+            updateNullable(chooseProjectForNew, copy.ChooseProjectForNew, x => copy.ChooseProjectForNew = x);
+            updateNullable(reportsCurrentItem, copy.ReportsCurrentItem, x => copy.ReportsCurrentItem = x);
+            updateReference(projectSort, copy.ProjectSort, x => copy.ProjectSort = x);
+            updateReference(installId, copy.InstallId, x => copy.InstallId = x);
             // iOS only  values
-            updateReference (rossPreferredStartView, copy.RossPreferredStartView, x => copy.RossPreferredStartView = x);
-            updateNullable (rossReadDurOnlyNotice, copy.RossReadDurOnlyNotice, x => copy.RossReadDurOnlyNotice = x);
-            updateNullable (rossIgnoreSyncErrorsUntil, copy.RossIgnoreSyncErrorsUntil, x => copy.RossIgnoreSyncErrorsUntil = x);
+            updateReference(rossPreferredStartView, copy.RossPreferredStartView, x => copy.RossPreferredStartView = x);
+            updateNullable(rossReadDurOnlyNotice, copy.RossReadDurOnlyNotice, x => copy.RossReadDurOnlyNotice = x);
+            updateNullable(rossIgnoreSyncErrorsUntil, copy.RossIgnoreSyncErrorsUntil, x => copy.RossIgnoreSyncErrorsUntil = x);
             // Android only  values
-            updateReference (gcmRegistrationId, copy.GcmRegistrationId, x => copy.GcmRegistrationId = x);
-            updateReference (gcmAppVersion, copy.GcmAppVersion, x => copy.GcmAppVersion = x);
-            updateNullable (idleNotification, copy.IdleNotification, x => copy.IdleNotification = x);
-            updateNullable (showNotification, copy.ShowNotification, x => copy.ShowNotification = x);
-            updateNullable (showWelcome, copy.ShowWelcome, x => copy.ShowWelcome = x);
+            updateReference(gcmRegistrationId, copy.GcmRegistrationId, x => copy.GcmRegistrationId = x);
+            updateReference(gcmAppVersion, copy.GcmAppVersion, x => copy.GcmAppVersion = x);
+            updateNullable(idleNotification, copy.IdleNotification, x => copy.IdleNotification = x);
+            updateNullable(showNotification, copy.ShowNotification, x => copy.ShowNotification = x);
+            updateNullable(showWelcome, copy.ShowWelcome, x => copy.ShowWelcome = x);
 
             // Save new copy serialized
-            Settings.SerializedSettings = Newtonsoft.Json.JsonConvert.SerializeObject (copy);
+            Settings.SerializedSettings = Newtonsoft.Json.JsonConvert.SerializeObject(copy);
             return copy;
         }
     }

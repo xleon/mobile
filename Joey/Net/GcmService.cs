@@ -8,17 +8,17 @@ using XPlatUtils;
 namespace Toggl.Joey.Net
 {
     // TODO RX restore services correctly.
-    [Service (Exported = false)]
+    [Service(Exported = false)]
     public class GcmService : Service
     {
         private static readonly string Tag = "GcmService";
 
-        public GcmService () : base ()
+        public GcmService() : base()
         {
         }
 
-        public GcmService (IntPtr javaRef, Android.Runtime.JniHandleOwnership transfer)
-        : base (javaRef, transfer)
+        public GcmService(IntPtr javaRef, Android.Runtime.JniHandleOwnership transfer)
+        : base(javaRef, transfer)
         {
         }
 
@@ -28,43 +28,46 @@ namespace Toggl.Joey.Net
         private DateTime? lastSyncTime;
         private bool needsResync;
 
-        private void UpdateWakelockIntent (Intent intent)
+        private void UpdateWakelockIntent(Intent intent)
         {
-            if (intent == null) {
+            if (intent == null)
+            {
                 return;
             }
-            ClearWakelockIntent ();
+            ClearWakelockIntent();
             wakelockIntent = intent;
         }
 
-        private void UpdateLastStartId (int startId)
+        private void UpdateLastStartId(int startId)
         {
-            ClearLastStartId ();
+            ClearLastStartId();
             lastStartId = startId;
         }
 
-        private void ClearWakelockIntent ()
+        private void ClearWakelockIntent()
         {
-            if (wakelockIntent != null) {
-                GcmBroadcastReceiver.CompleteWakefulIntent (wakelockIntent);
+            if (wakelockIntent != null)
+            {
+                GcmBroadcastReceiver.CompleteWakefulIntent(wakelockIntent);
                 wakelockIntent = null;
             }
         }
 
-        private void ClearLastStartId ()
+        private void ClearLastStartId()
         {
-            if (lastStartId.HasValue) {
-                StopSelfResult (lastStartId.Value);
+            if (lastStartId.HasValue)
+            {
+                StopSelfResult(lastStartId.Value);
                 lastStartId = null;
             }
         }
 
-        private void ScheduleSync ()
+        private void ScheduleSync()
         {
             needsResync = true;
         }
 
-        private void SyncOrStop (bool checkRunning = true)
+        private void SyncOrStop(bool checkRunning = true)
         {
             /*
             var syncManager = ServiceContainer.Resolve<ISyncManager> ();
@@ -85,16 +88,17 @@ namespace Toggl.Joey.Net
             }
             */
             // Stop the service:
-            ClearLastStartId ();
-            ClearWakelockIntent ();
+            ClearLastStartId();
+            ClearWakelockIntent();
         }
 
-        public override void OnStart (Intent intent, int startId)
+        public override void OnStart(Intent intent, int startId)
         {
-            UpdateWakelockIntent (intent);
-            UpdateLastStartId (startId);
+            UpdateWakelockIntent(intent);
+            UpdateLastStartId(startId);
 
-            try {
+            try
+            {
                 // Check if we need can skip sync
                 /*
                 if (intent != null && intent.Extras != null) {
@@ -117,38 +121,42 @@ namespace Toggl.Joey.Net
                     }
                 }
                 */
-                ScheduleSync ();
-            } catch (Exception exc) {
+                ScheduleSync();
+            }
+            catch (Exception exc)
+            {
                 // Log errors
                 var log = ServiceContainer.Resolve<ILogger> ();
-                log.Error (Tag, exc, "Failed to process pushed message.");
-            } finally {
-                SyncOrStop ();
+                log.Error(Tag, exc, "Failed to process pushed message.");
+            }
+            finally
+            {
+                SyncOrStop();
             }
         }
 
-        public override StartCommandResult OnStartCommand (Intent intent, StartCommandFlags flags, int startId)
+        public override StartCommandResult OnStartCommand(Intent intent, StartCommandFlags flags, int startId)
         {
-            OnStart (intent, startId);
+            OnStart(intent, startId);
             return StartCommandResult.Sticky;
         }
 
-        public override Android.OS.IBinder OnBind (Intent intent)
+        public override Android.OS.IBinder OnBind(Intent intent)
         {
             return null;
         }
 
-        public override void OnCreate ()
+        public override void OnCreate()
         {
-            base.OnCreate ();
+            base.OnCreate();
 
-            ((AndroidApp)Application).InitializeComponents ();
+            ((AndroidApp)Application).InitializeComponents();
 
             //var bus = ServiceContainer.Resolve<MessageBus> ();
             //subscriptionSyncFinishedMessage = bus.Subscribe<SyncFinishedMessage> (OnSyncFinishedMessage);
         }
 
-        public override void OnDestroy ()
+        public override void OnDestroy()
         {
             /*
             if (subscriptionSyncFinishedMessage != null) {
@@ -157,7 +165,7 @@ namespace Toggl.Joey.Net
                 subscriptionSyncFinishedMessage = null;
             }
             */
-            base.OnDestroy ();
+            base.OnDestroy();
         }
 
         /*
@@ -166,11 +174,11 @@ namespace Toggl.Joey.Net
             SyncOrStop (checkRunning: false);
         }
         */
-        private static DateTime ParseDate (string value)
+        private static DateTime ParseDate(string value)
         {
             DateTime dt;
-            DateTime.TryParse (value, out dt);
-            return dt.ToUtc ();
+            DateTime.TryParse(value, out dt);
+            return dt.ToUtc();
         }
     }
 }

@@ -12,26 +12,26 @@ namespace Toggl.Phoebe.Data.Models
         long UserRemoteId { get; }
         Guid WorkspaceId { get; }
         Guid UserId { get; }
-        IWorkspaceUserData With (Action<WorkspaceUserData> transform);
+        IWorkspaceUserData With(Action<WorkspaceUserData> transform);
     }
 
-    [Table ("WorkspaceUserModel")]
+    [Table("WorkspaceUserModel")]
     public class WorkspaceUserData : CommonData, IWorkspaceUserData
     {
-        public static IWorkspaceUserData Create (Action<WorkspaceUserData> transform = null)
+        public static IWorkspaceUserData Create(Action<WorkspaceUserData> transform = null)
         {
-            return CommonData.Create (transform);
+            return CommonData.Create(transform);
         }
 
         /// <summary>
         /// ATTENTION: This constructor should only be used by SQL and JSON serializers
         /// To create new objects, use the static Create method instead
         /// </summary>
-        public WorkspaceUserData ()
+        public WorkspaceUserData()
         {
         }
 
-        WorkspaceUserData (WorkspaceUserData other) : base (other)
+        WorkspaceUserData(WorkspaceUserData other) : base(other)
         {
             IsAdmin = other.IsAdmin;
             IsActive = other.IsActive;
@@ -42,14 +42,14 @@ namespace Toggl.Phoebe.Data.Models
             UserRemoteId = other.UserRemoteId;
         }
 
-        public override object Clone ()
+        public override object Clone()
         {
-            return new WorkspaceUserData (this);
+            return new WorkspaceUserData(this);
         }
 
-        public IWorkspaceUserData With (Action<WorkspaceUserData> transform)
+        public IWorkspaceUserData With(Action<WorkspaceUserData> transform)
         {
-            return base.With (transform);
+            return base.With(transform);
         }
 
         public bool IsAdmin { get; set; }

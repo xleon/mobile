@@ -9,22 +9,23 @@ namespace Toggl.Phoebe.Tests.Data.Merge
     public class TaskMergerTest : MergeTest
     {
         [Test]
-        public void TestDefault ()
+        public void TestDefault()
         {
-            var taskId = Guid.NewGuid ();
-            var workspace1Id = Guid.NewGuid ();
-            var project1Id = Guid.NewGuid ();
-            var workspace2Id = Guid.NewGuid ();
-            var project2Id = Guid.NewGuid ();
+            var taskId = Guid.NewGuid();
+            var workspace1Id = Guid.NewGuid();
+            var project1Id = Guid.NewGuid();
+            var workspace2Id = Guid.NewGuid();
+            var project2Id = Guid.NewGuid();
 
             // Data before server push
-            var merger = new TaskMerger (new TaskData () {
+            var merger = new TaskMerger(new TaskData()
+            {
                 Id = taskId,
                 RemoteId = null,
                 RemoteRejected = false,
                 DeletedAt = null,
                 IsDirty = true,
-                ModifiedAt = new DateTime (2014, 1, 10, 10, 0, 0, DateTimeKind.Utc),
+                ModifiedAt = new DateTime(2014, 1, 10, 10, 0, 0, DateTimeKind.Utc),
                 Name = "Initial",
                 IsActive = true,
                 Estimate = 0,
@@ -33,13 +34,14 @@ namespace Toggl.Phoebe.Tests.Data.Merge
             });
 
             // Data from server
-            merger.Add (new TaskData () {
+            merger.Add(new TaskData()
+            {
                 Id = taskId,
                 RemoteId = 1,
                 RemoteRejected = false,
                 DeletedAt = null,
                 IsDirty = false,
-                ModifiedAt = new DateTime (2014, 1, 10, 10, 0, 1, DateTimeKind.Utc),
+                ModifiedAt = new DateTime(2014, 1, 10, 10, 0, 1, DateTimeKind.Utc),
                 Name = "Initial",
                 IsActive = true,
                 Estimate = 0,
@@ -48,28 +50,30 @@ namespace Toggl.Phoebe.Tests.Data.Merge
             });
 
             // Data changed by user in the mean time
-            merger.Add (new TaskData () {
+            merger.Add(new TaskData()
+            {
                 Id = taskId,
                 RemoteId = null,
                 RemoteRejected = false,
                 DeletedAt = null,
                 IsDirty = true,
-                ModifiedAt = new DateTime (2014, 1, 10, 10, 0, 2, DateTimeKind.Utc),
+                ModifiedAt = new DateTime(2014, 1, 10, 10, 0, 2, DateTimeKind.Utc),
                 Name = "Changed",
                 IsActive = true,
                 Estimate = 10,
                 ProjectId = project1Id,
-                WorkspaceId = Guid.NewGuid (),
+                WorkspaceId = Guid.NewGuid(),
             });
 
             // Merged version
-            AssertPropertiesEqual (new TaskData () {
+            AssertPropertiesEqual(new TaskData()
+            {
                 Id = taskId,
                 RemoteId = 1,
                 RemoteRejected = false,
                 DeletedAt = null,
                 IsDirty = true,
-                ModifiedAt = new DateTime (2014, 1, 10, 10, 0, 2, DateTimeKind.Utc),
+                ModifiedAt = new DateTime(2014, 1, 10, 10, 0, 2, DateTimeKind.Utc),
                 Name = "Changed",
                 IsActive = true,
                 Estimate = 10,

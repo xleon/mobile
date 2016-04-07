@@ -1,6 +1,7 @@
 ﻿namespace Toggl.Phoebe.Net
 {
-    public enum AuthResult {
+    public enum AuthResult
+    {
         None,
         Success,
         InvalidCredentials,

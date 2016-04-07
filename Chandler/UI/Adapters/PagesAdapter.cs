@@ -12,40 +12,43 @@ namespace Toggl.Chandler.UI.Adapters
         private readonly OpenAppFragment openFragment = new OpenAppFragment();
 
 
-        public PagesAdapter (Context ctx, FragmentManager fm) : base (fm)
+        public PagesAdapter(Context ctx, FragmentManager fm) : base(fm)
         {
         }
 
         #region implemented abstract members of GridPagerAdapter
 
-        public override int GetColumnCount (int p0)
+        public override int GetColumnCount(int p0)
         {
             return 3;
         }
 
         public override int RowCount
         {
-            get {
+            get
+            {
                 return 1;
             }
         }
 
         public TimerFragment Timer
         {
-            get {
+            get
+            {
                 return timerFragment;
             }
         }
 
-        public override Fragment GetFragment (int row, int col)
+        public override Fragment GetFragment(int row, int col)
         {
-            switch (col) {
-            case 0:
-                return timerFragment;
-            case 1:
-                return listFragment;
-            default:
-                return openFragment;
+            switch (col)
+            {
+                case 0:
+                    return timerFragment;
+                case 1:
+                    return listFragment;
+                default:
+                    return openFragment;
             }
         }
 

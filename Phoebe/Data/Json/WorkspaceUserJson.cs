@@ -5,22 +5,22 @@ namespace Toggl.Phoebe.Data.Json
 {
     public class WorkspaceUserJson : CommonJson
     {
-        [JsonProperty ("admin")]
+        [JsonProperty("admin")]
         public bool IsAdmin { get; set; }
 
-        [JsonProperty ("active")]
+        [JsonProperty("active")]
         public bool IsActive { get; set; }
 
-        [JsonProperty ("name")]
+        [JsonProperty("name")]
         public string Name { get; set; }
 
-        [JsonProperty ("email")]
+        [JsonProperty("email")]
         public string Email { get; set; }
 
-        [JsonProperty ("wid")]
+        [JsonProperty("wid")]
         public long WorkspaceRemoteId { get; set; }
 
-        [JsonProperty ("uid")]
+        [JsonProperty("uid")]
         public long UserRemoteId { get; set; }
     }
 }

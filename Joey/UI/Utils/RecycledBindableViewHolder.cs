@@ -11,34 +11,35 @@ namespace Toggl.Joey.UI.Utils
     {
         public T DataSource { get; private set; }
 
-        protected RecycledBindableViewHolder (IntPtr a, Android.Runtime.JniHandleOwnership b) : base (a, b)
+        protected RecycledBindableViewHolder(IntPtr a, Android.Runtime.JniHandleOwnership b) : base(a, b)
         {
         }
 
-        protected RecycledBindableViewHolder (View root) : base (root)
+        protected RecycledBindableViewHolder(View root) : base(root)
         {
         }
 
-        protected override void Dispose (bool disposing)
+        protected override void Dispose(bool disposing)
         {
-            if (disposing) {
+            if (disposing)
+            {
                 DataSource = default (T);
             }
 
-            base.Dispose (disposing);
+            base.Dispose(disposing);
         }
 
-        public void Bind (T dataSource)
+        public void Bind(T dataSource)
         {
             DataSource = dataSource;
-            Rebind ();
+            Rebind();
         }
 
-        public void DisposeDataSource ()
+        public void DisposeDataSource()
         {
             DataSource = default (T);
         }
 
-        protected abstract void Rebind ();
+        protected abstract void Rebind();
     }
 }

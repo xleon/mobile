@@ -2,7 +2,8 @@
 
 namespace Toggl.Phoebe.Analytics
 {
-    public enum TimerStartSource {
+    public enum TimerStartSource
+    {
         AppNew,
         AppContinue,
         AppManual,

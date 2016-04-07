@@ -11,26 +11,26 @@ namespace Toggl.Phoebe.Data.Models
         long ProjectRemoteId { get; }
         Guid ProjectId { get; }
         Guid UserId { get; }
-        IProjectUserData With (Action<ProjectUserData> transform);
+        IProjectUserData With(Action<ProjectUserData> transform);
     }
 
-    [Table ("ProjectUserModel")]
+    [Table("ProjectUserModel")]
     public class ProjectUserData : CommonData, IProjectUserData
     {
-        public static IProjectUserData Create (Action<ProjectUserData> transform = null)
+        public static IProjectUserData Create(Action<ProjectUserData> transform = null)
         {
-            return CommonData.Create (transform);
+            return CommonData.Create(transform);
         }
 
         /// <summary>
         /// ATTENTION: This constructor should only be used by SQL and JSON serializers
         /// To create new objects, use the static Create method instead
         /// </summary>
-        public ProjectUserData ()
+        public ProjectUserData()
         {
         }
 
-        public ProjectUserData (ProjectUserData other) : base (other)
+        public ProjectUserData(ProjectUserData other) : base(other)
         {
             IsManager = other.IsManager;
             HourlyRate = other.HourlyRate;
@@ -40,14 +40,14 @@ namespace Toggl.Phoebe.Data.Models
             ProjectRemoteId = other.ProjectRemoteId;
         }
 
-        public override object Clone ()
+        public override object Clone()
         {
-            return new ProjectUserData (this);
+            return new ProjectUserData(this);
         }
 
-        public IProjectUserData With (Action<ProjectUserData> transform)
+        public IProjectUserData With(Action<ProjectUserData> transform)
         {
-            return base.With (transform);
+            return base.With(transform);
         }
 
         public bool IsManager { get; set; }

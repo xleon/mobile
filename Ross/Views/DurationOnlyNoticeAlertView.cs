@@ -7,29 +7,32 @@ namespace Toggl.Ross.Views
 {
     public class DurationOnlyNoticeAlertView : UIAlertView
     {
-        public DurationOnlyNoticeAlertView () : base (
-            "DurationOnlyNoticeTitle".Tr (),
-            "DurationOnlyNoticeMessage".Tr (),
+        public DurationOnlyNoticeAlertView() : base(
+            "DurationOnlyNoticeTitle".Tr(),
+            "DurationOnlyNoticeMessage".Tr(),
             null,
-            "DurationOnlyNoticeOk".Tr ())
+            "DurationOnlyNoticeOk".Tr())
         {
         }
 
-        public static bool TryShow (AppState state)
+        public static bool TryShow(AppState state)
         {
-            if (state.User == null || state.User.TrackingMode == TrackingMode.StartNew) {
+            if (state.User == null || state.User.TrackingMode == TrackingMode.StartNew)
+            {
                 return false;
             }
 
-            if (state.Settings.RossReadDurOnlyNotice) {
+            if (state.Settings.RossReadDurOnlyNotice)
+            {
                 return false;
             }
 
-            var dia = new DurationOnlyNoticeAlertView ();
-            dia.Clicked += delegate {
-                RxChain.Send (new DataMsg.UpdateSetting (nameof (SettingsState.RossReadDurOnlyNotice), true));
+            var dia = new DurationOnlyNoticeAlertView();
+            dia.Clicked += delegate
+            {
+                RxChain.Send(new DataMsg.UpdateSetting(nameof(SettingsState.RossReadDurOnlyNotice), true));
             };
-            dia.Show ();
+            dia.Show();
             return true;
         }
     }

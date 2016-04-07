@@ -31,34 +31,34 @@ namespace Toggl.Phoebe.Net
 
         #endregion
 
-        Task<UserJson> GetUser (string username, string password);
+        Task<UserJson> GetUser(string username, string password);
 
-        Task<UserJson> GetUser (string googleAccessToken);
+        Task<UserJson> GetUser(string googleAccessToken);
 
-        Task<List<ClientJson>> ListWorkspaceClients (string authToken, long workspaceId);
+        Task<List<ClientJson>> ListWorkspaceClients(string authToken, long workspaceId);
 
-        Task<List<ProjectJson>> ListWorkspaceProjects (string authToken, long workspaceId);
+        Task<List<ProjectJson>> ListWorkspaceProjects(string authToken, long workspaceId);
 
-        Task<List<WorkspaceUserJson>> ListWorkspaceUsers (string authToken, long workspaceId);
+        Task<List<WorkspaceUserJson>> ListWorkspaceUsers(string authToken, long workspaceId);
 
-        Task<List<TaskJson>> ListWorkspaceTasks (string authToken, long workspaceId);
+        Task<List<TaskJson>> ListWorkspaceTasks(string authToken, long workspaceId);
 
-        Task<List<TaskJson>> ListProjectTasks (string authToken, long projectId);
+        Task<List<TaskJson>> ListProjectTasks(string authToken, long projectId);
 
-        Task<List<ProjectUserJson>> ListProjectUsers (string authToken, long projectId);
+        Task<List<ProjectUserJson>> ListProjectUsers(string authToken, long projectId);
 
-        Task<List<TimeEntryJson>> ListTimeEntries (string authToken, DateTime start, DateTime end, CancellationToken cancellationToken);
+        Task<List<TimeEntryJson>> ListTimeEntries(string authToken, DateTime start, DateTime end, CancellationToken cancellationToken);
 
-        Task<List<TimeEntryJson>> ListTimeEntries (string authToken, DateTime start, DateTime end);
+        Task<List<TimeEntryJson>> ListTimeEntries(string authToken, DateTime start, DateTime end);
 
-        Task<List<TimeEntryJson>> ListTimeEntries (string authToken, DateTime end, int days, CancellationToken cancellationToken);
+        Task<List<TimeEntryJson>> ListTimeEntries(string authToken, DateTime end, int days, CancellationToken cancellationToken);
 
-        Task<List<TimeEntryJson>> ListTimeEntries (string authToken, DateTime end, int days);
+        Task<List<TimeEntryJson>> ListTimeEntries(string authToken, DateTime end, int days);
 
-        Task<UserRelatedJson> GetChanges (string authToken, DateTime? since);
+        Task<UserRelatedJson> GetChanges(string authToken, DateTime? since);
 
-        Task CreateFeedback (string authToken, FeedbackJson jsonObject);
+        Task CreateFeedback(string authToken, FeedbackJson jsonObject);
 
-        Task CreateExperimentAction (string authToken, ActionJson jsonObject);
+        Task CreateExperimentAction(string authToken, ActionJson jsonObject);
     }
 }

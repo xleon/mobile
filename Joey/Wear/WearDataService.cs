@@ -17,7 +17,7 @@ namespace Toggl.Joey.Wear
     /// <summary>
     /// Listens to DataItems and Messages from the local node
     /// </summary>
-    [Service, IntentFilter (new [] { "com.google.android.gms.wearable.BIND_LISTENER" }) ]
+    [Service, IntentFilter(new [] { "com.google.android.gms.wearable.BIND_LISTENER" }) ]
     public class WearDataService : WearableListenerService,  GoogleApiClient.IConnectionCallbacks
     {
         public const string Tag = "WearableTag";
@@ -31,28 +31,28 @@ namespace Toggl.Joey.Wear
         {
         }
 
-        public WearDataService (Context ctx)
+        public WearDataService(Context ctx)
         {
-            Init (ctx);
+            Init(ctx);
         }
 
-        private void Init (Context ctx)
+        private void Init(Context ctx)
         {
-            googleApiClient = new GoogleApiClient.Builder (ctx)
-            .AddApi (WearableClass.API)
-            .Build ();
-            googleApiClient.Connect ();
+            googleApiClient = new GoogleApiClient.Builder(ctx)
+            .AddApi(WearableClass.API)
+            .Build();
+            googleApiClient.Connect();
         }
 
-        public override void OnCreate ()
+        public override void OnCreate()
         {
-            base.OnCreate ();
-            Init (this);
+            base.OnCreate();
+            Init(this);
             //var manager = ServiceContainer.Resolve<ActiveTimeEntryManager> ();
             //manager.PropertyChanged += OnActiveTimeEntryManagerPropertyChanged;
         }
 
-        private void OnActiveTimeEntryManagerPropertyChanged (object sender, PropertyChangedEventArgs args)
+        private void OnActiveTimeEntryManagerPropertyChanged(object sender, PropertyChangedEventArgs args)
         {
             /*
             if (args.PropertyName == ActiveTimeEntryManager.PropertyActiveTimeEntry) {
@@ -61,52 +61,56 @@ namespace Toggl.Joey.Wear
             */
         }
 
-        public override void OnDataChanged (DataEventBuffer dataEvents)
+        public override void OnDataChanged(DataEventBuffer dataEvents)
         {
-            if (!googleApiClient.IsConnected) {
-                ConnectionResult connectionResult = googleApiClient.BlockingConnect (30, TimeUnit.Seconds);
-                if (!connectionResult.IsSuccess) {
-                    Log.Error (Tag, "DataLayerListenerService failed to connect to GoogleApiClient");
+            if (!googleApiClient.IsConnected)
+            {
+                ConnectionResult connectionResult = googleApiClient.BlockingConnect(30, TimeUnit.Seconds);
+                if (!connectionResult.IsSuccess)
+                {
+                    Log.Error(Tag, "DataLayerListenerService failed to connect to GoogleApiClient");
                     return;
                 }
             }
         }
 
-        public async void OnConnected (Android.OS.Bundle connectionHint)
+        public async void OnConnected(Android.OS.Bundle connectionHint)
         {
-            Log.Info ("WearIntegration", "Connected");
+            Log.Info("WearIntegration", "Connected");
             await UpdateSharedTimeEntryList();
         }
 
-        public void OnConnectionSuspended (int cause)
+        public void OnConnectionSuspended(int cause)
         {
         }
 
-        public async override void OnMessageReceived (IMessageEvent messageEvent)
+        public async override void OnMessageReceived(IMessageEvent messageEvent)
         {
-            LOGD (Tag, "OnMessageReceived: " + messageEvent);
-            await HandleMessage (messageEvent);
-            base.OnMessageReceived (messageEvent);
+            LOGD(Tag, "OnMessageReceived: " + messageEvent);
+            await HandleMessage(messageEvent);
+            base.OnMessageReceived(messageEvent);
         }
 
-        public override void OnPeerConnected (INode peer)
+        public override void OnPeerConnected(INode peer)
         {
-            LOGD (Tag, "OnPeerConnected: " + peer);
+            LOGD(Tag, "OnPeerConnected: " + peer);
         }
 
-        public override void OnPeerDisconnected (INode peer)
+        public override void OnPeerDisconnected(INode peer)
         {
-            LOGD (Tag, "OnPeerDisconnected: " + peer);
+            LOGD(Tag, "OnPeerDisconnected: " + peer);
         }
 
-        private async Task HandleMessage (IMessageEvent message)
+        private async Task HandleMessage(IMessageEvent message)
         {
-            try {
-                Log.Info ("WearIntegration", "Received Message");
+            try
+            {
+                Log.Info("WearIntegration", "Received Message");
 
                 googleApiClient.Connect();
-                if (!googleApiClient.IsConnected) {
-                    Log.Info ("WearIntegration", "Connecting");
+                if (!googleApiClient.IsConnected)
+                {
+                    Log.Info("WearIntegration", "Connecting");
                 }
 
                 /*
@@ -120,99 +124,118 @@ namespace Toggl.Joey.Wear
 
                 var path = message.Path;
 
-                try {
-                    if (path == Common.StartStopTimeEntryPath) {
+                try
+                {
+                    if (path == Common.StartStopTimeEntryPath)
+                    {
 
-                        await WearDataProvider.StartStopTimeEntry (BaseContext);
-                        await UpdateSharedTimeEntryList ();
-                    } else if (path == Common.ContinueTimeEntryPath) {
-
-                        var guid = Guid.Parse (Common.GetString (message.GetData()));
-                        await StartEntry (guid);
-                        await UpdateSharedTimeEntryList ();
-                    } else if (path == Common.RequestSyncPath) {
-                        Log.Info ("WearIntegration", "Sending sync data!");
-
-                        await UpdateSharedTimeEntryList ();
-                    } else if (path == Common.OpenHandheldPath) {
-
-                        StartMainActivity ();
+                        await WearDataProvider.StartStopTimeEntry(BaseContext);
+                        await UpdateSharedTimeEntryList();
                     }
-                } catch (Exception e) {
-                    Log.Error ("WearIntegration", e.ToString ());
+                    else if (path == Common.ContinueTimeEntryPath)
+                    {
+
+                        var guid = Guid.Parse(Common.GetString(message.GetData()));
+                        await StartEntry(guid);
+                        await UpdateSharedTimeEntryList();
+                    }
+                    else if (path == Common.RequestSyncPath)
+                    {
+                        Log.Info("WearIntegration", "Sending sync data!");
+
+                        await UpdateSharedTimeEntryList();
+                    }
+                    else if (path == Common.OpenHandheldPath)
+                    {
+
+                        StartMainActivity();
+                    }
                 }
-            } catch (Exception e) {
-                Log.Error ("WearIntegration", e.ToString ());
+                catch (Exception e)
+                {
+                    Log.Error("WearIntegration", e.ToString());
+                }
+            }
+            catch (Exception e)
+            {
+                Log.Error("WearIntegration", e.ToString());
             }
         }
 
         private void NotifyNotLoggedIn()
         {
-            Task.Run (() => {
-                var apiResult = WearableClass.NodeApi.GetConnectedNodes (googleApiClient) .Await ().JavaCast<INodeApiGetConnectedNodesResult> ();
+            Task.Run(() =>
+            {
+                var apiResult = WearableClass.NodeApi.GetConnectedNodes(googleApiClient) .Await().JavaCast<INodeApiGetConnectedNodesResult> ();
                 var nodes = apiResult.Nodes;
-                foreach (var node in nodes) {
-                    WearableClass.MessageApi.SendMessage (googleApiClient, node.Id,
-                                                          Common.UserNotLoggedInPath,
-                                                          new byte[0]);
+                foreach (var node in nodes)
+                {
+                    WearableClass.MessageApi.SendMessage(googleApiClient, node.Id,
+                                                         Common.UserNotLoggedInPath,
+                                                         new byte[0]);
                 }
             });
         }
 
-        private void StartMainActivity ()
+        private void StartMainActivity()
         {
-            var intent = new Intent (this, typeof (MainDrawerActivity));
-            intent.AddFlags (ActivityFlags.NewTask);
-            StartActivity (intent);
+            var intent = new Intent(this, typeof(MainDrawerActivity));
+            intent.AddFlags(ActivityFlags.NewTask);
+            StartActivity(intent);
         }
 
-        private async Task StartEntry (Guid id)
+        private async Task StartEntry(Guid id)
         {
             //var model = new TimeEntryModel (id);
             //await model.LoadAsync();
             //await TimeEntryModel.ContinueAsync (model.Data);
         }
 
-        public async Task UpdateSharedTimeEntryList ()
+        public async Task UpdateSharedTimeEntryList()
         {
-            entryData = await WearDataProvider.GetTimeEntryData ();
+            entryData = await WearDataProvider.GetTimeEntryData();
 
-            mapReq = PutDataMapRequest.Create (Common.TimeEntryListPath);
+            mapReq = PutDataMapRequest.Create(Common.TimeEntryListPath);
 
             currentDataMap = new List<DataMap> ();
 
-            foreach (var entry in entryData) {
-                currentDataMap.Add (entry.DataMap);
+            foreach (var entry in entryData)
+            {
+                currentDataMap.Add(entry.DataMap);
             }
-            mapReq.DataMap.PutDataMapArrayList (Common.TimeEntryListKey, currentDataMap);
-            await SendData (mapReq);
+            mapReq.DataMap.PutDataMapArrayList(Common.TimeEntryListKey, currentDataMap);
+            await SendData(mapReq);
         }
 
-        private Task SendData (PutDataMapRequest mapReq)
+        private Task SendData(PutDataMapRequest mapReq)
         {
-            return Task.Run (() => {
-                foreach (var node in clientNodes) {
-                    WearableClass.DataApi.PutDataItem (googleApiClient, mapReq.AsPutDataRequest());
+            return Task.Run(() =>
+            {
+                foreach (var node in clientNodes)
+                {
+                    WearableClass.DataApi.PutDataItem(googleApiClient, mapReq.AsPutDataRequest());
                 }
             });
         }
 
         private IList<INode> clientNodes
         {
-            get {
+            get
+            {
                 return WearableClass
                        .NodeApi
-                       .GetConnectedNodes (googleApiClient)
-                       .Await ()
+                       .GetConnectedNodes(googleApiClient)
+                       .Await()
                        .JavaCast<INodeApiGetConnectedNodesResult> ()
                        .Nodes;
             }
         }
 
-        public static void LOGD (string tag, string message)
+        public static void LOGD(string tag, string message)
         {
-            if (Log.IsLoggable (tag, LogPriority.Debug)) {
-                Log.Debug (tag, message);
+            if (Log.IsLoggable(tag, LogPriority.Debug))
+            {
+                Log.Debug(tag, message);
             }
         }
     }

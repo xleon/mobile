@@ -16,14 +16,15 @@ namespace Toggl.Phoebe.Data.Models
         long? ClientRemoteId { get; }
         Guid WorkspaceId { get; }
         Guid ClientId { get; }
-        IProjectData With (Action<ProjectData> transform);
+        IProjectData With(Action<ProjectData> transform);
     }
 
-    [Table ("ProjectModel")]
+    [Table("ProjectModel")]
     public class ProjectData : CommonData, IProjectData
     {
 
-        public static readonly string[] HexColors = {
+        public static readonly string[] HexColors =
+        {
             "#4dc3ff", "#bc85e6", "#df7baa", "#f68d38", "#b27636",
             "#8ab734", "#14a88e", "#268bb5", "#6668b4", "#a4506c",
             "#67412c", "#3c6526", "#094558", "#bc2d07", "#999999"
@@ -35,20 +36,20 @@ namespace Toggl.Phoebe.Data.Models
 
         public static readonly string GroupedProjectColor = "#dddddd";
 
-        public static IProjectData Create (Action<ProjectData> transform = null)
+        public static IProjectData Create(Action<ProjectData> transform = null)
         {
-            return CommonData.Create (transform);
+            return CommonData.Create(transform);
         }
 
         /// <summary>
         /// ATTENTION: This constructor should only be used by SQL and JSON serializers
         /// To create new objects, use the static Create method instead
         /// </summary>
-        public ProjectData ()
+        public ProjectData()
         {
         }
 
-        protected ProjectData (ProjectData other) : base (other)
+        protected ProjectData(ProjectData other) : base(other)
         {
             Name = other.Name;
             Color = other.Color;
@@ -63,14 +64,14 @@ namespace Toggl.Phoebe.Data.Models
             WorkspaceRemoteId = other.WorkspaceRemoteId;
         }
 
-        public override object Clone ()
+        public override object Clone()
         {
-            return new ProjectData (this);
+            return new ProjectData(this);
         }
 
-        public IProjectData With (Action<ProjectData> transform)
+        public IProjectData With(Action<ProjectData> transform)
         {
-            return base.With (transform);
+            return base.With(transform);
         }
 
         public string Name { get; set; }

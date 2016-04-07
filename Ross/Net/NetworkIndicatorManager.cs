@@ -12,18 +12,18 @@ namespace Toggl.Ross.Net
     {
         IDisposable subscription;
 
-        public NetworkIndicatorManager ()
+        public NetworkIndicatorManager()
         {
             subscription = StoreManager.Singleton
-                        .Observe (x => x.State.RequestInfo.Running.Any (y => y is ServerRequest.GetChanges))
-                        .DistinctUntilChanged ()
-                        .ObserveOn (SynchronizationContext.Current)
-                        .Subscribe (setIndicator);
+                           .Observe(x => x.State.RequestInfo.Running.Any(y => y is ServerRequest.GetChanges))
+                           .DistinctUntilChanged()
+                           .ObserveOn(SynchronizationContext.Current)
+                           .Subscribe(setIndicator);
 
-            setIndicator (false);
+            setIndicator(false);
         }
 
-        private void setIndicator (bool isSyncing)
+        private void setIndicator(bool isSyncing)
         {
             UIApplication.SharedApplication.NetworkActivityIndicatorVisible = isSyncing;
         }
@@ -31,7 +31,7 @@ namespace Toggl.Ross.Net
         public void Dispose()
         {
             subscription.Dispose();
-            setIndicator (false);
+            setIndicator(false);
         }
 
     }

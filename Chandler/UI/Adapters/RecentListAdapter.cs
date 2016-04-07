@@ -17,16 +17,16 @@ namespace Toggl.Chandler.UI.Adapters
         private LayoutInflater Inflater;
         private MainActivity Activity;
         private Context Context;
-        public RecentListAdapter (Context ctx, Activity activity)
+        public RecentListAdapter(Context ctx, Activity activity)
         {
-            Inflater = LayoutInflater.FromContext (ctx);
+            Inflater = LayoutInflater.FromContext(ctx);
             Activity = (MainActivity)activity;
             Context = ctx;
 
             Activity.CollectionChanged += OnCollectionChanged;
         }
 
-        private void OnCollectionChanged (object sender, EventArgs e)
+        private void OnCollectionChanged(object sender, EventArgs e)
         {
             data = Activity.Data;
             NotifyDataSetChanged();
@@ -38,48 +38,50 @@ namespace Toggl.Chandler.UI.Adapters
             public TextView ProjectTextView;
             public View ColorView;
 
-            public ItemViewHolder (View view) : base (view)
+            public ItemViewHolder(View view) : base(view)
             {
                 DescriptionTextView = view.FindViewById<TextView> (Resource.Id.RecentListDescription);
                 ProjectTextView = view.FindViewById<TextView> (Resource.Id.RecentListProject);
-                ColorView = view.FindViewById (Resource.Id.ColorView);
+                ColorView = view.FindViewById(Resource.Id.ColorView);
             }
 
-            public void Bind (SimpleTimeEntryData data, Context ctx)
+            public void Bind(SimpleTimeEntryData data, Context ctx)
             {
-                DescriptionTextView.Text = String.IsNullOrEmpty (data.Description)
-                                           ? ctx.Resources.GetString (Resource.String.TimeEntryNoDescription)
+                DescriptionTextView.Text = String.IsNullOrEmpty(data.Description)
+                                           ? ctx.Resources.GetString(Resource.String.TimeEntryNoDescription)
                                            : data.Description;
 
-                ProjectTextView.Text = String.IsNullOrEmpty (data.Project)
-                                       ? ctx.Resources.GetString (Resource.String.TimeEntryNoProject)
+                ProjectTextView.Text = String.IsNullOrEmpty(data.Project)
+                                       ? ctx.Resources.GetString(Resource.String.TimeEntryNoProject)
                                        : data.Project;
 
-                var color = Color.ParseColor (data.ProjectColor);
+                var color = Color.ParseColor(data.ProjectColor);
                 var shape = ColorView.Background as GradientDrawable;
-                if (shape != null) {
-                    shape.SetColor (color);
+                if (shape != null)
+                {
+                    shape.SetColor(color);
                 }
             }
         }
 
         #region implemented abstract members of Adapter
 
-        public override void OnBindViewHolder (Android.Support.V7.Widget.RecyclerView.ViewHolder holder, int position)
+        public override void OnBindViewHolder(Android.Support.V7.Widget.RecyclerView.ViewHolder holder, int position)
         {
             var viewHolder = (ItemViewHolder) holder;
-            viewHolder.Bind (data[position], Context);
+            viewHolder.Bind(data[position], Context);
             holder.ItemView.Tag = data[position].Id.ToString();
         }
 
-        public override Android.Support.V7.Widget.RecyclerView.ViewHolder OnCreateViewHolder (Android.Views.ViewGroup parent, int viewType)
+        public override Android.Support.V7.Widget.RecyclerView.ViewHolder OnCreateViewHolder(Android.Views.ViewGroup parent, int viewType)
         {
-            return new ItemViewHolder (Inflater.Inflate (Resource.Layout.RecentListItem, null));
+            return new ItemViewHolder(Inflater.Inflate(Resource.Layout.RecentListItem, null));
         }
 
         public override int ItemCount
         {
-            get {
+            get
+            {
                 return data.Count;
             }
         }

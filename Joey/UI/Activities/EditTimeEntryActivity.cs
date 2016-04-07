@@ -7,7 +7,7 @@ using Toggl.Joey.UI.Fragments;
 
 namespace Toggl.Joey.UI.Activities
 {
-    [Activity (
+    [Activity(
          Exported = false,
          WindowSoftInputMode = SoftInput.StateHidden,
          ScreenOrientation = ScreenOrientation.Portrait,
@@ -22,42 +22,52 @@ namespace Toggl.Joey.UI.Activities
         public static readonly string ExtraTimeEntryId = "com.toggl.timer.time_entry_id";
         public static readonly string ExtraGroupedTimeEntriesGuids = "com.toggl.timer.grouped_time_entry_id";
 
-        protected override void OnCreateActivity (Bundle state)
+        protected override void OnCreateActivity(Bundle state)
         {
-            base.OnCreateActivity (state);
+            base.OnCreateActivity(state);
 
-            SetContentView (Resource.Layout.EditTimeEntryActivity);
+            SetContentView(Resource.Layout.EditTimeEntryActivity);
 
-            var isGrouped = Intent.Extras.GetBoolean (IsGrouped, false);
-            var fragment = FragmentManager.FindFragmentByTag (fragmentTag);
-            var groupedFragment = FragmentManager.FindFragmentByTag (groupfragmentTag);
+            var isGrouped = Intent.Extras.GetBoolean(IsGrouped, false);
+            var fragment = FragmentManager.FindFragmentByTag(fragmentTag);
+            var groupedFragment = FragmentManager.FindFragmentByTag(groupfragmentTag);
 
-            var guids = Intent.GetStringArrayListExtra (ExtraGroupedTimeEntriesGuids);
-            if (guids == null) {
-                Finish ();
+            var guids = Intent.GetStringArrayListExtra(ExtraGroupedTimeEntriesGuids);
+            if (guids == null)
+            {
+                Finish();
             }
 
-            if (isGrouped) {
-                if (groupedFragment == null) {
-                    groupedFragment = EditGroupedTimeEntryFragment.NewInstance (guids);
-                    FragmentManager.BeginTransaction ()
-                    .Add (Resource.Id.FrameLayout, groupedFragment, groupfragmentTag)
-                    .Commit ();
-                } else {
-                    FragmentManager.BeginTransaction ()
-                    .Attach (groupedFragment)
-                    .Commit ();
+            if (isGrouped)
+            {
+                if (groupedFragment == null)
+                {
+                    groupedFragment = EditGroupedTimeEntryFragment.NewInstance(guids);
+                    FragmentManager.BeginTransaction()
+                    .Add(Resource.Id.FrameLayout, groupedFragment, groupfragmentTag)
+                    .Commit();
                 }
-            } else {
-                if (fragment == null) {
-                    fragment = EditTimeEntryFragment.NewInstance (guids[0]);
-                    FragmentManager.BeginTransaction ()
-                    .Add (Resource.Id.FrameLayout, fragment, fragmentTag)
-                    .Commit ();
-                } else {
-                    FragmentManager.BeginTransaction ()
-                    .Attach (fragment)
-                    .Commit ();
+                else
+                {
+                    FragmentManager.BeginTransaction()
+                    .Attach(groupedFragment)
+                    .Commit();
+                }
+            }
+            else
+            {
+                if (fragment == null)
+                {
+                    fragment = EditTimeEntryFragment.NewInstance(guids[0]);
+                    FragmentManager.BeginTransaction()
+                    .Add(Resource.Id.FrameLayout, fragment, fragmentTag)
+                    .Commit();
+                }
+                else
+                {
+                    FragmentManager.BeginTransaction()
+                    .Attach(fragment)
+                    .Commit();
                 }
             }
         }

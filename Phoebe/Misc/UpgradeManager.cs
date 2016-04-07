@@ -7,7 +7,7 @@ namespace Toggl.Phoebe
     {
         private const string Tag = "UpgradeManager";
 
-        public void TryUpgrade ()
+        public void TryUpgrade()
         {
             // TODO Rx find a replacement or check how to improve it.
             //var settingsStore = ServiceContainer.Resolve<ISettingsStore> ();
@@ -33,7 +33,7 @@ namespace Toggl.Phoebe
             */
         }
 
-        private void UpgradeAlways ()
+        private void UpgradeAlways()
         {
             // TODO RX find a replacement for this method.
             //var settingsStore = ServiceContainer.Resolve<ISettingsStore> ();
@@ -46,10 +46,10 @@ namespace Toggl.Phoebe
             //settingsStore.SyncLastRun = null;
         }
 
-        private void ChooseExperiment (bool isFreshInstall)
+        private void ChooseExperiment(bool isFreshInstall)
         {
             var experimentManager = ServiceContainer.Resolve<ExperimentManager> ();
-            experimentManager.NextExperiment (isFreshInstall);
+            experimentManager.NextExperiment(isFreshInstall);
         }
     }
 }

@@ -28,7 +28,7 @@ using Toggl.Phoebe.Helpers;
 
 namespace Toggl.Joey.UI.Activities
 {
-    [Activity (
+    [Activity(
          Exported = false,
          ScreenOrientation = ScreenOrientation.Portrait,
          WindowSoftInputMode = SoftInput.StateHidden,
@@ -68,49 +68,50 @@ namespace Toggl.Joey.UI.Activities
         private Binding<LoginVM.LoginMode, LoginVM.LoginMode> modeBinding;
         private Binding<AuthResult, AuthResult> resultBinding;
 
-        private ArrayAdapter<string> MakeEmailsAdapter ()
+        private ArrayAdapter<string> MakeEmailsAdapter()
         {
-            var am = AccountManager.Get (this);
-            var emails = am.GetAccounts ()
-                         .Select (a => a.Name)
-                         .Where (a => a.Contains ("@"))
-                         .Distinct ()
-                         .ToList ();
+            var am = AccountManager.Get(this);
+            var emails = am.GetAccounts()
+                         .Select(a => a.Name)
+                         .Where(a => a.Contains("@"))
+                         .Distinct()
+                         .ToList();
             return new ArrayAdapter<string> (this, Android.Resource.Layout.SelectDialogItem, emails);
         }
 
-        void ViewTreeObserver.IOnGlobalLayoutListener.OnGlobalLayout ()
+        void ViewTreeObserver.IOnGlobalLayoutListener.OnGlobalLayout()
         {
             // Move scroll and let the logo visible.
             var position = new int[2];
-            bigLogo.GetLocationInWindow (position);
-            if (topLogoPosition == 0 && position[1] != 0) {
-                topLogoPosition = position[1] + Convert.ToInt32 (bigLogo.Height * 0.2);
+            bigLogo.GetLocationInWindow(position);
+            if (topLogoPosition == 0 && position[1] != 0)
+            {
+                topLogoPosition = position[1] + Convert.ToInt32(bigLogo.Height * 0.2);
             }
-            ScrollView.SmoothScrollTo (0, topLogoPosition);
+            ScrollView.SmoothScrollTo(0, topLogoPosition);
         }
 
-        protected override void OnCreate (Bundle savedInstanceState)
+        protected override void OnCreate(Bundle savedInstanceState)
         {
-            base.OnCreate (savedInstanceState);
+            base.OnCreate(savedInstanceState);
 
-            SetContentView (Resource.Layout.LoginActivity);
+            SetContentView(Resource.Layout.LoginActivity);
             ScrollView = FindViewById<ScrollView> (Resource.Id.ScrollView);
-            FindViewById<TextView> (Resource.Id.SwitchViewText).SetFont (Font.RobotoLight);
+            FindViewById<TextView> (Resource.Id.SwitchViewText).SetFont(Font.RobotoLight);
             bigLogo = FindViewById<ImageView> (Resource.Id.MainLogoLoginScreen);
             SwitchModeButton = FindViewById<Button> (Resource.Id.SwitchViewButton);
-            EmailEditText = FindViewById<AutoCompleteTextView> (Resource.Id.EmailAutoCompleteTextView).SetFont (Font.RobotoLight);
-            PasswordEditText = FindViewById<EditText> (Resource.Id.PasswordEditText).SetFont (Font.RobotoLight);
-            PasswordToggleButton = FindViewById<Button> (Resource.Id.PasswordToggleButton).SetFont (Font.Roboto);
-            LoginButton = FindViewById<Button> (Resource.Id.LoginButton).SetFont (Font.Roboto);
-            LegalTextView = FindViewById<TextView> (Resource.Id.LegalTextView).SetFont (Font.RobotoLight);
-            GoogleLoginButton = FindViewById<Button> (Resource.Id.GoogleLoginButton).SetFont (Font.Roboto);
+            EmailEditText = FindViewById<AutoCompleteTextView> (Resource.Id.EmailAutoCompleteTextView).SetFont(Font.RobotoLight);
+            PasswordEditText = FindViewById<EditText> (Resource.Id.PasswordEditText).SetFont(Font.RobotoLight);
+            PasswordToggleButton = FindViewById<Button> (Resource.Id.PasswordToggleButton).SetFont(Font.Roboto);
+            LoginButton = FindViewById<Button> (Resource.Id.LoginButton).SetFont(Font.Roboto);
+            LegalTextView = FindViewById<TextView> (Resource.Id.LegalTextView).SetFont(Font.RobotoLight);
+            GoogleLoginButton = FindViewById<Button> (Resource.Id.GoogleLoginButton).SetFont(Font.Roboto);
 
-            ScrollView.ViewTreeObserver.AddOnGlobalLayoutListener (this);
+            ScrollView.ViewTreeObserver.AddOnGlobalLayoutListener(this);
 
             LoginButton.Click += OnLoginButtonClick;
             GoogleLoginButton.Click += OnGoogleLoginButtonClick;
-            EmailEditText.Adapter = MakeEmailsAdapter ();
+            EmailEditText.Adapter = MakeEmailsAdapter();
             EmailEditText.Threshold = 1;
             EmailEditText.TextChanged += OnEmailEditTextTextChanged;
             PasswordEditText.TextChanged += OnPasswordEditTextTextChanged;
@@ -119,384 +120,426 @@ namespace Toggl.Joey.UI.Activities
             hasGoogleAccounts = GoogleAccounts.Count > 0;
             GoogleLoginButton.Visibility = hasGoogleAccounts ? ViewStates.Visible : ViewStates.Gone;
 
-            if (savedInstanceState != null) {
-                showPassword = savedInstanceState.GetBoolean (ExtraShowPassword);
-                mIsResolving = savedInstanceState.GetBoolean (KEY_IS_RESOLVING);
-                mShouldResolve = savedInstanceState.GetBoolean (KEY_SHOULD_RESOLVE);
+            if (savedInstanceState != null)
+            {
+                showPassword = savedInstanceState.GetBoolean(ExtraShowPassword);
+                mIsResolving = savedInstanceState.GetBoolean(KEY_IS_RESOLVING);
+                mShouldResolve = savedInstanceState.GetBoolean(KEY_SHOULD_RESOLVE);
             }
 
             // Google API client
-            GoogleSignInOptions gso = new GoogleSignInOptions.Builder (GoogleSignInOptions.DefaultSignIn)
-            .RequestEmail ()
-            .Build ();
-            mGoogleApiClient = new GoogleApiClient.Builder (this)
-            .EnableAutoManage (this, this)
-            .AddConnectionCallbacks (this)
-            .AddOnConnectionFailedListener (this)
-            .AddApi (Auth.GOOGLE_SIGN_IN_API, gso)
-            .Build ();
+            GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DefaultSignIn)
+            .RequestEmail()
+            .Build();
+            mGoogleApiClient = new GoogleApiClient.Builder(this)
+            .EnableAutoManage(this, this)
+            .AddConnectionCallbacks(this)
+            .AddOnConnectionFailedListener(this)
+            .AddApi(Auth.GOOGLE_SIGN_IN_API, gso)
+            .Build();
 
-            ViewModel = new LoginVM ();
+            ViewModel = new LoginVM();
         }
 
-        protected override void OnStart ()
+        protected override void OnStart()
         {
-            base.OnStart ();
+            base.OnStart();
 
-            isAuthenticatingBinding = this.SetBinding (() => ViewModel.IsAuthenticating).WhenSourceChanges (SetViewState);
-            modeBinding = this.SetBinding (() => ViewModel.CurrentLoginMode).WhenSourceChanges (SetViewState);
-            resultBinding = this.SetBinding (() => ViewModel.AuthResult).WhenSourceChanges (() => {
-                switch (ViewModel.AuthResult) {
-                case AuthResult.None:
-                //case AuthResult.Authenticating: // TODO RX: Do we still need this?
-                    SetViewState ();
-                    break;
+            isAuthenticatingBinding = this.SetBinding(() => ViewModel.IsAuthenticating).WhenSourceChanges(SetViewState);
+            modeBinding = this.SetBinding(() => ViewModel.CurrentLoginMode).WhenSourceChanges(SetViewState);
+            resultBinding = this.SetBinding(() => ViewModel.AuthResult).WhenSourceChanges(() =>
+            {
+                switch (ViewModel.AuthResult)
+                {
+                    case AuthResult.None:
+                        //case AuthResult.Authenticating: // TODO RX: Do we still need this?
+                        SetViewState();
+                        break;
 
-                case AuthResult.Success:
-                    // TODO RX: Start the initial sync for the user
-                    //ServiceContainer.Resolve<ISyncManager> ().Run ();
-                    var intent = new Intent (this, typeof (MainDrawerActivity));
-                    intent.AddFlags (ActivityFlags.ClearTop);
-                    StartActivity (intent);
-                    Finish ();
-                    break;
+                    case AuthResult.Success:
+                        // TODO RX: Start the initial sync for the user
+                        //ServiceContainer.Resolve<ISyncManager> ().Run ();
+                        var intent = new Intent(this, typeof(MainDrawerActivity));
+                        intent.AddFlags(ActivityFlags.ClearTop);
+                        StartActivity(intent);
+                        Finish();
+                        break;
 
-                // Error cases
-                default:
-                    if (ViewModel.CurrentLoginMode == LoginVM.LoginMode.Login) {
-                        if (ViewModel.AuthResult == AuthResult.InvalidCredentials) {
-                            PasswordEditText.Text = string.Empty;
+                    // Error cases
+                    default:
+                        if (ViewModel.CurrentLoginMode == LoginVM.LoginMode.Login)
+                        {
+                            if (ViewModel.AuthResult == AuthResult.InvalidCredentials)
+                            {
+                                PasswordEditText.Text = string.Empty;
+                            }
+                            PasswordEditText.RequestFocus();
                         }
-                        PasswordEditText.RequestFocus ();
-                    } else {
-                        EmailEditText.RequestFocus ();
-                    }
-                    ShowAuthError (EmailEditText.Text, ViewModel.AuthResult, ViewModel.CurrentLoginMode);
-                    break;
+                        else
+                        {
+                            EmailEditText.RequestFocus();
+                        }
+                        ShowAuthError(EmailEditText.Text, ViewModel.AuthResult, ViewModel.CurrentLoginMode);
+                        break;
                 }
             });
         }
 
-        protected override void OnSaveInstanceState (Bundle outState)
+        protected override void OnSaveInstanceState(Bundle outState)
         {
-            base.OnSaveInstanceState (outState);
-            outState.PutBoolean (ExtraShowPassword, showPassword);
-            outState.PutBoolean (KEY_IS_RESOLVING, mIsResolving);
-            outState.PutBoolean (KEY_SHOULD_RESOLVE, mIsResolving);
+            base.OnSaveInstanceState(outState);
+            outState.PutBoolean(ExtraShowPassword, showPassword);
+            outState.PutBoolean(KEY_IS_RESOLVING, mIsResolving);
+            outState.PutBoolean(KEY_SHOULD_RESOLVE, mIsResolving);
         }
 
         #region View state utils
-        private void SetViewState ()
+        private void SetViewState()
         {
             // Views not loaded yet/anymore?
-            if (LoginButton == null) {
+            if (LoginButton == null)
+            {
                 return;
             }
 
-            if (ViewModel.CurrentLoginMode == LoginVM.LoginMode.Login) {
-                LoginButton.SetText (ViewModel.IsAuthenticating ? Resource.String.LoginButtonProgressText : Resource.String.LoginButtonText);
+            if (ViewModel.CurrentLoginMode == LoginVM.LoginMode.Login)
+            {
+                LoginButton.SetText(ViewModel.IsAuthenticating ? Resource.String.LoginButtonProgressText : Resource.String.LoginButtonText);
                 LegalTextView.Visibility = ViewStates.Gone;
-                GoogleLoginButton.SetText (Resource.String.LoginGoogleButtonText);
-                SwitchModeButton.SetText (Resource.String.SignupViewButtonText);
-            } else {
-                LoginButton.SetText (ViewModel.IsAuthenticating ? Resource.String.LoginButtonSignupProgressText : Resource.String.LoginSignupButtonText);
-                LegalTextView.SetText (FormattedLegalText, TextView.BufferType.Spannable);
+                GoogleLoginButton.SetText(Resource.String.LoginGoogleButtonText);
+                SwitchModeButton.SetText(Resource.String.SignupViewButtonText);
+            }
+            else
+            {
+                LoginButton.SetText(ViewModel.IsAuthenticating ? Resource.String.LoginButtonSignupProgressText : Resource.String.LoginSignupButtonText);
+                LegalTextView.SetText(FormattedLegalText, TextView.BufferType.Spannable);
                 LegalTextView.MovementMethod = Android.Text.Method.LinkMovementMethod.Instance;
                 LegalTextView.Visibility = ViewStates.Visible;
-                GoogleLoginButton.SetText (Resource.String.LoginSignupGoogleButtonText);
-                SwitchModeButton.SetText (Resource.String.LoginViewButtonText);
+                GoogleLoginButton.SetText(Resource.String.LoginSignupGoogleButtonText);
+                SwitchModeButton.SetText(Resource.String.LoginViewButtonText);
             }
 
             EmailEditText.Enabled = !ViewModel.IsAuthenticating;
             PasswordEditText.Enabled = !ViewModel.IsAuthenticating;
             GoogleLoginButton.Enabled = !ViewModel.IsAuthenticating;
 
-            SetLoginBtnState ();
-            SetPasswordVisibility ();
+            SetLoginBtnState();
+            SetPasswordVisibility();
         }
 
-        private void SetLoginBtnState ()
+        private void SetLoginBtnState()
         {
             LoginButton.Enabled = !ViewModel.IsAuthenticating &&
-                                  ViewModel.IsEmailValid (EmailEditText.Text) &&
-                                  ViewModel.IsPassValid (PasswordEditText.Text);
+                                  ViewModel.IsEmailValid(EmailEditText.Text) &&
+                                  ViewModel.IsPassValid(PasswordEditText.Text);
         }
 
-        private void SetPasswordVisibility ()
+        private void SetPasswordVisibility()
         {
-            if (PasswordEditText.Text.Length == 0) {
+            if (PasswordEditText.Text.Length == 0)
+            {
                 PasswordToggleButton.Visibility = ViewStates.Gone;
                 showPassword = false;
-            } else if (showPassword) {
-                PasswordToggleButton.SetText (Resource.String.LoginHideButtonText);
+            }
+            else if (showPassword)
+            {
+                PasswordToggleButton.SetText(Resource.String.LoginHideButtonText);
                 PasswordToggleButton.Visibility = ViewStates.Visible;
-            } else {
-                PasswordToggleButton.SetText (Resource.String.LoginShowButtonText);
+            }
+            else
+            {
+                PasswordToggleButton.SetText(Resource.String.LoginShowButtonText);
                 PasswordToggleButton.Visibility = ViewStates.Visible;
             }
 
             int selectionStart = PasswordEditText.SelectionStart;
             int selectionEnd = PasswordEditText.SelectionEnd;
             var passwordInputType = PasswordEditText.InputType;
-            if (showPassword) {
+            if (showPassword)
+            {
                 passwordInputType = (passwordInputType & ~InputTypes.TextVariationPassword) | InputTypes.TextVariationVisiblePassword;
-            } else {
+            }
+            else
+            {
                 passwordInputType = (passwordInputType & ~InputTypes.TextVariationVisiblePassword) | InputTypes.TextVariationPassword;
             }
 
-            if (PasswordEditText.InputType != passwordInputType) {
+            if (PasswordEditText.InputType != passwordInputType)
+            {
                 PasswordEditText.InputType = passwordInputType;
-                PasswordEditText.SetFont (Font.RobotoLight);
-                PasswordEditText.SetSelection (selectionStart, selectionEnd);
+                PasswordEditText.SetFont(Font.RobotoLight);
+                PasswordEditText.SetSelection(selectionStart, selectionEnd);
             }
         }
         #endregion
 
         #region Btn events
-        private void OnLoginButtonClick (object sender, EventArgs e)
+        private void OnLoginButtonClick(object sender, EventArgs e)
         {
             // Small UI trick to permit OBM testers
             // interact with the staging API
-            if (EmailEditText.Text == "staging") {
+            if (EmailEditText.Text == "staging")
+            {
                 var isStaging = !Settings.IsStaging;
                 Settings.IsStaging = isStaging;
                 var msg = !isStaging ? "You're in Normal Mode" : "You're in Staging Mode";
-                new AlertDialog.Builder (this)
-                .SetTitle ("Staging Mode")
-                .SetMessage (msg + "\nRestart the app to continue.")
-                .SetPositiveButton ("Ok", (EventHandler<DialogClickEventArgs>)null)
-                .Show ();
+                new AlertDialog.Builder(this)
+                .SetTitle("Staging Mode")
+                .SetMessage(msg + "\nRestart the app to continue.")
+                .SetPositiveButton("Ok", (EventHandler<DialogClickEventArgs>)null)
+                .Show();
                 return;
             }
 
-            ViewModel.TryLogin (EmailEditText.Text, PasswordEditText.Text);
+            ViewModel.TryLogin(EmailEditText.Text, PasswordEditText.Text);
         }
 
-        private void OnGoogleLoginButtonClick (object sender, EventArgs e)
+        private void OnGoogleLoginButtonClick(object sender, EventArgs e)
         {
             mShouldResolve = true;
-            Intent signInIntent = Auth.GoogleSignInApi.GetSignInIntent (mGoogleApiClient);
-            StartActivityForResult (signInIntent, RC_SIGN_IN);
+            Intent signInIntent = Auth.GoogleSignInApi.GetSignInIntent(mGoogleApiClient);
+            StartActivityForResult(signInIntent, RC_SIGN_IN);
         }
 
-        private void OnModeToggleButtonClick (object sender, EventArgs e)
+        private void OnModeToggleButtonClick(object sender, EventArgs e)
         {
-            ViewModel.ChangeLoginMode ();
+            ViewModel.ChangeLoginMode();
         }
 
-        private void OnEmailEditTextTextChanged (object sender, TextChangedEventArgs e)
+        private void OnEmailEditTextTextChanged(object sender, TextChangedEventArgs e)
         {
-            SetLoginBtnState ();
+            SetLoginBtnState();
         }
 
-        private void OnPasswordEditTextTextChanged (object sender, TextChangedEventArgs e)
+        private void OnPasswordEditTextTextChanged(object sender, TextChangedEventArgs e)
         {
-            SetPasswordVisibility ();
-            SetLoginBtnState ();
+            SetPasswordVisibility();
+            SetLoginBtnState();
         }
 
-        private void OnPasswordToggleButtonClick (object sender, EventArgs e)
+        private void OnPasswordToggleButtonClick(object sender, EventArgs e)
         {
             showPassword = !showPassword;
-            SetPasswordVisibility ();
+            SetPasswordVisibility();
         }
         #endregion
 
         #region Google Login methods
-        protected override void OnActivityResult (int requestCode, Result resultCode, Intent data)
+        protected override void OnActivityResult(int requestCode, Result resultCode, Intent data)
         {
-            base.OnActivityResult (requestCode, resultCode, data);
+            base.OnActivityResult(requestCode, resultCode, data);
 
-            if (requestCode == RC_SIGN_IN) {
+            if (requestCode == RC_SIGN_IN)
+            {
                 mIsResolving = false;
-                GoogleSignInResult result = Auth.GoogleSignInApi.GetSignInResultFromIntent (data);
-                if (result.IsSuccess) {
+                GoogleSignInResult result = Auth.GoogleSignInApi.GetSignInResultFromIntent(data);
+                if (result.IsSuccess)
+                {
                     GoogleSignInAccount acct = result.SignInAccount;
-                    ViewModel.TryLoginWithGoogle (acct.Id);
-                } else {
-                    ShowAuthError (string.Empty, AuthResult.GoogleError, LoginVM.LoginMode.Login);
+                    ViewModel.TryLoginWithGoogle(acct.Id);
+                }
+                else
+                {
+                    ShowAuthError(string.Empty, AuthResult.GoogleError, LoginVM.LoginMode.Login);
                 }
             }
         }
 
-        public void OnConnected (Bundle connectionHint)
+        public void OnConnected(Bundle connectionHint)
         {
             var log = ServiceContainer.Resolve<ILogger> ();
-            log.Info (LogTag, "Login with Google. Success : " + connectionHint);
+            log.Info(LogTag, "Login with Google. Success : " + connectionHint);
         }
 
-        public void OnConnectionSuspended (int cause)
+        public void OnConnectionSuspended(int cause)
         {
             var log = ServiceContainer.Resolve<ILogger> ();
-            log.Info (LogTag, new Exception (), "Failed to login with Google. onConnectionSuspended:" + cause);
+            log.Info(LogTag, new Exception(), "Failed to login with Google. onConnectionSuspended:" + cause);
         }
 
-        public void OnConnectionFailed (ConnectionResult result)
+        public void OnConnectionFailed(ConnectionResult result)
         {
             var log = ServiceContainer.Resolve<ILogger> ();
-            log.Info (LogTag, "OnConnectionFailed:" + result);
+            log.Info(LogTag, "OnConnectionFailed:" + result);
 
-            if (!mIsResolving && mShouldResolve) {
-                if (result.HasResolution) {
-                    try {
-                        result.StartResolutionForResult (this, RC_SIGN_IN);
+            if (!mIsResolving && mShouldResolve)
+            {
+                if (result.HasResolution)
+                {
+                    try
+                    {
+                        result.StartResolutionForResult(this, RC_SIGN_IN);
                         mIsResolving = true;
-                    } catch (IntentSender.SendIntentException e) {
-                        log.Error (LogTag, e, "Could not resolve ConnectionResult.");
-                        mIsResolving = false;
-                        mGoogleApiClient.Connect ();
                     }
-                } else {
-                    ShowAuthError (string.Empty, AuthResult.GoogleError, LoginVM.LoginMode.Login);
+                    catch (IntentSender.SendIntentException e)
+                    {
+                        log.Error(LogTag, e, "Could not resolve ConnectionResult.");
+                        mIsResolving = false;
+                        mGoogleApiClient.Connect();
+                    }
+                }
+                else
+                {
+                    ShowAuthError(string.Empty, AuthResult.GoogleError, LoginVM.LoginMode.Login);
                 }
             }
         }
 
         private List<string> GoogleAccounts
         {
-            get {
-                var am = AccountManager.Get (this);
-                return am.GetAccounts ()
-                       .Where (a => a.Type == GoogleAuthUtil.GoogleAccountType)
-                       .Select (a => a.Name)
-                       .Distinct ()
-                       .ToList ();
+            get
+            {
+                var am = AccountManager.Get(this);
+                return am.GetAccounts()
+                       .Where(a => a.Type == GoogleAuthUtil.GoogleAccountType)
+                       .Select(a => a.Name)
+                       .Distinct()
+                       .ToList();
             }
         }
         #endregion
 
-        private void ShowAuthError (string email, AuthResult res, LoginVM.LoginMode mode)
+        private void ShowAuthError(string email, AuthResult res, LoginVM.LoginMode mode)
         {
             DialogFragment dia = null;
 
-            switch (res) {
-            case AuthResult.InvalidCredentials:
-                if (mode == LoginVM.LoginMode.Login) {
-                    ShowMsgDialog (Resource.String.LoginInvalidCredentialsDialogTitle, Resource.String.LoginInvalidCredentialsDialogText);
-                } else if (mode == LoginVM.LoginMode.Signup) {
-                    ShowMsgDialog (Resource.String.LoginSignupFailedDialogTitle, Resource.String.LoginSignupFailedDialogText);
-                }
-                break;
-            case AuthResult.NoGoogleAccount:
-                ShowMsgDialog (Resource.String.LoginNoAccountDialogTitle, Resource.String.LoginNoAccountDialogText);
-                break;
-            case AuthResult.GoogleError:
-                ShowMsgDialog (Resource.String.LoginGoogleErrorTitle, Resource.String.LoginGoogleErrorText);
-                break;
-            case AuthResult.NoDefaultWorkspace:
-                dia = new NoWorkspaceDialogFragment (email);
-                break;
-            case AuthResult.NetworkError:
-                ShowMsgDialog (Resource.String.LoginNetworkErrorDialogTitle, Resource.String.LoginNetworkErrorDialogText);
-                break;
-            default:
-                ShowMsgDialog (Resource.String.LoginSystemErrorDialogTitle, Resource.String.LoginSystemErrorDialogText);
-                break;
+            switch (res)
+            {
+                case AuthResult.InvalidCredentials:
+                    if (mode == LoginVM.LoginMode.Login)
+                    {
+                        ShowMsgDialog(Resource.String.LoginInvalidCredentialsDialogTitle, Resource.String.LoginInvalidCredentialsDialogText);
+                    }
+                    else if (mode == LoginVM.LoginMode.Signup)
+                    {
+                        ShowMsgDialog(Resource.String.LoginSignupFailedDialogTitle, Resource.String.LoginSignupFailedDialogText);
+                    }
+                    break;
+                case AuthResult.NoGoogleAccount:
+                    ShowMsgDialog(Resource.String.LoginNoAccountDialogTitle, Resource.String.LoginNoAccountDialogText);
+                    break;
+                case AuthResult.GoogleError:
+                    ShowMsgDialog(Resource.String.LoginGoogleErrorTitle, Resource.String.LoginGoogleErrorText);
+                    break;
+                case AuthResult.NoDefaultWorkspace:
+                    dia = new NoWorkspaceDialogFragment(email);
+                    break;
+                case AuthResult.NetworkError:
+                    ShowMsgDialog(Resource.String.LoginNetworkErrorDialogTitle, Resource.String.LoginNetworkErrorDialogText);
+                    break;
+                default:
+                    ShowMsgDialog(Resource.String.LoginSystemErrorDialogTitle, Resource.String.LoginSystemErrorDialogText);
+                    break;
             }
 
-            if (dia != null) {
-                dia.Show (SupportFragmentManager, "auth_result_dialog");
+            if (dia != null)
+            {
+                dia.Show(SupportFragmentManager, "auth_result_dialog");
             }
         }
 
-        private void ShowMsgDialog (int title, int message)
+        private void ShowMsgDialog(int title, int message)
         {
-            var dialog = new AlertDialog.Builder (this)
-            .SetTitle (title)
-            .SetMessage (message)
-            .SetPositiveButton (Resource.String.LoginInvalidCredentialsDialogOk, delegate {})
-            .Create ();
-            dialog.Show ();
+            var dialog = new AlertDialog.Builder(this)
+            .SetTitle(title)
+            .SetMessage(message)
+            .SetPositiveButton(Resource.String.LoginInvalidCredentialsDialogOk, delegate {})
+            .Create();
+            dialog.Show();
         }
 
         public class NoWorkspaceDialogFragment : DialogFragment
         {
             private const string EmailKey = "com.toggl.timer.email";
 
-            public NoWorkspaceDialogFragment ()
+            public NoWorkspaceDialogFragment()
             {
             }
 
-            public NoWorkspaceDialogFragment (string email)
+            public NoWorkspaceDialogFragment(string email)
             {
                 var args = new Bundle();
-                args.PutString (EmailKey, email);
+                args.PutString(EmailKey, email);
 
                 Arguments = args;
             }
 
             private string Email
             {
-                get {
-                    if (Arguments == null) {
+                get
+                {
+                    if (Arguments == null)
+                    {
                         return String.Empty;
                     }
-                    return Arguments.GetString (EmailKey);
+                    return Arguments.GetString(EmailKey);
                 }
             }
 
-            public override Dialog OnCreateDialog (Bundle savedInstanceState)
+            public override Dialog OnCreateDialog(Bundle savedInstanceState)
             {
-                return new AlertDialog.Builder (Activity)
-                       .SetTitle (Resource.String.LoginNoWorkspaceDialogTitle)
-                       .SetMessage (Resource.String.LoginNoWorkspaceDialogText)
-                       .SetPositiveButton (Resource.String.LoginNoWorkspaceDialogOk, OnOkButtonClicked)
-                       .SetNegativeButton (Resource.String.LoginNoWorkspaceDialogCancel, OnCancelButtonClicked)
-                       .Create ();
+                return new AlertDialog.Builder(Activity)
+                       .SetTitle(Resource.String.LoginNoWorkspaceDialogTitle)
+                       .SetMessage(Resource.String.LoginNoWorkspaceDialogText)
+                       .SetPositiveButton(Resource.String.LoginNoWorkspaceDialogOk, OnOkButtonClicked)
+                       .SetNegativeButton(Resource.String.LoginNoWorkspaceDialogCancel, OnCancelButtonClicked)
+                       .Create();
             }
 
-            private void OnOkButtonClicked (object sender, DialogClickEventArgs args)
+            private void OnOkButtonClicked(object sender, DialogClickEventArgs args)
             {
-                var intent = new Intent (Intent.ActionSend);
-                intent.SetType ("message/rfc822");
-                intent.PutExtra (Intent.ExtraEmail, new[] { Resources.GetString (Resource.String.LoginNoWorkspaceDialogEmail) });
-                intent.PutExtra (Intent.ExtraSubject, Resources.GetString (Resource.String.LoginNoWorkspaceDialogSubject));
-                intent.PutExtra (Intent.ExtraText, string.Format (Resources.GetString (Resource.String.LoginNoWorkspaceDialogBody), Email));
-                StartActivity (Intent.CreateChooser (intent, (string)null));
+                var intent = new Intent(Intent.ActionSend);
+                intent.SetType("message/rfc822");
+                intent.PutExtra(Intent.ExtraEmail, new[] { Resources.GetString(Resource.String.LoginNoWorkspaceDialogEmail) });
+                intent.PutExtra(Intent.ExtraSubject, Resources.GetString(Resource.String.LoginNoWorkspaceDialogSubject));
+                intent.PutExtra(Intent.ExtraText, string.Format(Resources.GetString(Resource.String.LoginNoWorkspaceDialogBody), Email));
+                StartActivity(Intent.CreateChooser(intent, (string)null));
             }
 
-            private void OnCancelButtonClicked (object sender, DialogClickEventArgs args)
+            private void OnCancelButtonClicked(object sender, DialogClickEventArgs args)
             {
             }
         }
 
         private class TogglURLSPan : URLSpan
         {
-            public TogglURLSPan (String url) : base (url)
+            public TogglURLSPan(String url) : base(url)
             {
             }
 
-            public override void UpdateDrawState (TextPaint ds)
+            public override void UpdateDrawState(TextPaint ds)
             {
-                base.UpdateDrawState (ds);
+                base.UpdateDrawState(ds);
                 ds.UnderlineText = false;
-                ds.SetTypeface (Android.Graphics.Typeface.DefaultBold);
+                ds.SetTypeface(Android.Graphics.Typeface.DefaultBold);
             }
         }
 
 
         private ISpannable FormattedLegalText
         {
-            get {
-                if (formattedLegalText == null) {
-                    var template = Resources.GetText (Resource.String.LoginSignupLegalText);
-                    var arg0 = Resources.GetText (Resource.String.LoginSignupLegalTermsText);
-                    var arg1 = Resources.GetText (Resource.String.LoginSignupLegalPrivacyText);
+            get
+            {
+                if (formattedLegalText == null)
+                {
+                    var template = Resources.GetText(Resource.String.LoginSignupLegalText);
+                    var arg0 = Resources.GetText(Resource.String.LoginSignupLegalTermsText);
+                    var arg1 = Resources.GetText(Resource.String.LoginSignupLegalPrivacyText);
 
-                    var arg0idx = string.Format (template, "{0}", arg1).IndexOf ("{0}", StringComparison.Ordinal);
-                    var arg1idx = string.Format (template, arg0, "{1}").IndexOf ("{1}", StringComparison.Ordinal);
+                    var arg0idx = string.Format(template, "{0}", arg1).IndexOf("{0}", StringComparison.Ordinal);
+                    var arg1idx = string.Format(template, arg0, "{1}").IndexOf("{1}", StringComparison.Ordinal);
 
-                    var s = formattedLegalText = new SpannableString (string.Format (template, arg0, arg1));
+                    var s = formattedLegalText = new SpannableString(string.Format(template, arg0, arg1));
                     var mode = SpanTypes.InclusiveExclusive;
-                    s.SetSpan (
-                        new TogglURLSPan (Phoebe.Build.TermsOfServiceUrl.ToString ()),
+                    s.SetSpan(
+                        new TogglURLSPan(Phoebe.Build.TermsOfServiceUrl.ToString()),
                         arg0idx,
                         arg0idx + arg0.Length,
                         mode
                     );
 
-                    s.SetSpan (
-                        new TogglURLSPan (Phoebe.Build.PrivacyPolicyUrl.ToString ()),
+                    s.SetSpan(
+                        new TogglURLSPan(Phoebe.Build.PrivacyPolicyUrl.ToString()),
                         arg1idx,
                         arg1idx + arg1.Length,
                         mode

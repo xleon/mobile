@@ -12,26 +12,26 @@ namespace Toggl.Phoebe.Data.Models
         long ProjectRemoteId { get; }
         Guid WorkspaceId { get; }
         Guid ProjectId { get; }
-        ITaskData With (Action<TaskData> transform);
+        ITaskData With(Action<TaskData> transform);
     }
 
-    [Table ("TaskModel")]
+    [Table("TaskModel")]
     public class TaskData : CommonData, ITaskData
     {
-        public static ITaskData Create (Action<TaskData> transform = null)
+        public static ITaskData Create(Action<TaskData> transform = null)
         {
-            return CommonData.Create (transform);
+            return CommonData.Create(transform);
         }
 
         /// <summary>
         /// ATTENTION: This constructor should only be used by SQL and JSON serializers
         /// To create new objects, use the static Create method instead
         /// </summary>
-        public TaskData ()
+        public TaskData()
         {
         }
 
-        TaskData (TaskData other) : base (other)
+        TaskData(TaskData other) : base(other)
         {
             Name = other.Name;
             IsActive = other.IsActive;
@@ -42,14 +42,14 @@ namespace Toggl.Phoebe.Data.Models
             ProjectRemoteId = other.ProjectRemoteId;
         }
 
-        public override object Clone ()
+        public override object Clone()
         {
-            return new TaskData (this);
+            return new TaskData(this);
         }
 
-        public ITaskData With (Action<TaskData> transform)
+        public ITaskData With(Action<TaskData> transform)
         {
-            return base.With (transform);
+            return base.With(transform);
         }
 
         public string Name { get; set; }

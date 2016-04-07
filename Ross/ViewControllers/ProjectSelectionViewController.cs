@@ -15,83 +15,90 @@ namespace Toggl.Ross.ViewControllers
 {
     public class ProjectSelectionViewController : UITableViewController
     {
-        private readonly static NSString ClientHeaderId = new NSString ("ClientHeaderId");
-        private readonly static NSString ProjectCellId = new NSString ("ProjectCellId");
-        private readonly static NSString TaskCellId = new NSString ("TaskCellId");
+        private readonly static NSString ClientHeaderId = new NSString("ClientHeaderId");
+        private readonly static NSString ProjectCellId = new NSString("ProjectCellId");
+        private readonly static NSString TaskCellId = new NSString("TaskCellId");
 
         private const float CellSpacing = 4f;
         private Guid workspaceId;
         private ProjectListVM viewModel;
         private readonly IOnProjectSelectedHandler handler;
 
-        public ProjectSelectionViewController (Guid workspaceId, IOnProjectSelectedHandler handler) : base (UITableViewStyle.Plain)
+        public ProjectSelectionViewController(Guid workspaceId, IOnProjectSelectedHandler handler) : base(UITableViewStyle.Plain)
         {
-            Title = "ProjectTitle".Tr ();
+            Title = "ProjectTitle".Tr();
             this.workspaceId = workspaceId;
             this.handler = handler;
         }
 
-        public override void ViewDidLoad ()
+        public override void ViewDidLoad()
         {
-            base.ViewDidLoad ();
+            base.ViewDidLoad();
 
-            View.Apply (Style.Screen);
+            View.Apply(Style.Screen);
             EdgesForExtendedLayout = UIRectEdge.None;
 
             TableView.RowHeight = 60f;
-            TableView.RegisterClassForHeaderFooterViewReuse (typeof (SectionHeaderView), ClientHeaderId);
-            TableView.RegisterClassForCellReuse (typeof (ProjectCell), ProjectCellId);
-            TableView.RegisterClassForCellReuse (typeof (TaskCell), TaskCellId);
+            TableView.RegisterClassForHeaderFooterViewReuse(typeof(SectionHeaderView), ClientHeaderId);
+            TableView.RegisterClassForCellReuse(typeof(ProjectCell), ProjectCellId);
+            TableView.RegisterClassForCellReuse(typeof(TaskCell), TaskCellId);
             TableView.SeparatorStyle = UITableViewCellSeparatorStyle.None;
 
-            var defaultFooterView = new UIActivityIndicatorView (UIActivityIndicatorViewStyle.Gray);
-            defaultFooterView.Frame = new CGRect (0, 0, 50, 50);
-            defaultFooterView.StartAnimating ();
+            var defaultFooterView = new UIActivityIndicatorView(UIActivityIndicatorViewStyle.Gray);
+            defaultFooterView.Frame = new CGRect(0, 0, 50, 50);
+            defaultFooterView.StartAnimating();
             TableView.TableFooterView = defaultFooterView;
 
-            viewModel = new ProjectListVM (StoreManager.Singleton.AppState, workspaceId);
-            TableView.Source = new Source (this, viewModel);
+            viewModel = new ProjectListVM(StoreManager.Singleton.AppState, workspaceId);
+            TableView.Source = new Source(this, viewModel);
 
-            var addBtn = new UIBarButtonItem (UIBarButtonSystemItem.Add, OnAddNewProject);
-            if (viewModel.WorkspaceList.Count > 1) {
-                var filterBtn = new UIBarButtonItem (UIImage.FromFile ("filter_icon.png"), UIBarButtonItemStyle.Plain, OnShowWorkspaceFilter);
+            var addBtn = new UIBarButtonItem(UIBarButtonSystemItem.Add, OnAddNewProject);
+            if (viewModel.WorkspaceList.Count > 1)
+            {
+                var filterBtn = new UIBarButtonItem(UIImage.FromFile("filter_icon.png"), UIBarButtonItemStyle.Plain, OnShowWorkspaceFilter);
                 NavigationItem.RightBarButtonItems = new [] { filterBtn, addBtn};
-            } else {
+            }
+            else
+            {
                 NavigationItem.RightBarButtonItem = addBtn;
             }
 
             TableView.TableFooterView = null;
         }
 
-        protected void OnItemSelected (ICommonData m)
+        protected void OnItemSelected(ICommonData m)
         {
             Guid projectId = Guid.Empty;
             Guid taskId = Guid.Empty;
 
-            if (m is ProjectData) {
-                if (! ((ProjectsCollectionVM.SuperProjectData)m).IsEmpty) {
+            if (m is ProjectData)
+            {
+                if (!((ProjectsCollectionVM.SuperProjectData)m).IsEmpty)
+                {
                     projectId = m.Id;
                 }
-            } else if (m is TaskData) {
+            }
+            else if (m is TaskData)
+            {
                 var task = (TaskData)m;
                 projectId = task.ProjectId;
                 taskId = task.Id;
             }
 
-            handler.OnProjectSelected (projectId, taskId);
+            handler.OnProjectSelected(projectId, taskId);
         }
 
-        private void OnAddNewProject (object sender, EventArgs evt)
+        private void OnAddNewProject(object sender, EventArgs evt)
         {
-            var newProjectController = new NewProjectViewController (viewModel.CurrentWorkspaceId, handler);
-            NavigationController.PushViewController (newProjectController, true);
+            var newProjectController = new NewProjectViewController(viewModel.CurrentWorkspaceId, handler);
+            NavigationController.PushViewController(newProjectController, true);
         }
 
-        private void OnShowWorkspaceFilter (object sender, EventArgs evt)
+        private void OnShowWorkspaceFilter(object sender, EventArgs evt)
         {
-            var sourceRect = new CGRect (NavigationController.Toolbar.Bounds.Width - 45, NavigationController.Toolbar.Bounds.Height, 1, 1);
-            var popoverController = new WorkspaceSelectorPopover (viewModel, sourceRect);
-            PresentViewController (popoverController, true, null);
+            var sourceRect = new CGRect(NavigationController.Toolbar.Bounds.Width - 45, NavigationController.Toolbar.Bounds.Height, 1, 1);
+            var popoverController = new WorkspaceSelectorPopover(viewModel, sourceRect);
+            PresentViewController(popoverController, true, null);
         }
 
         class Source : ObservableCollectionViewSource<ICommonData, IClientData, IProjectData>
@@ -99,65 +106,68 @@ namespace Toggl.Ross.ViewControllers
             private readonly ProjectSelectionViewController owner;
             private readonly ProjectListVM viewModel;
 
-            public Source (ProjectSelectionViewController owner, ProjectListVM viewModel)  : base (owner.TableView, viewModel.ProjectList)
+            public Source(ProjectSelectionViewController owner, ProjectListVM viewModel)  : base(owner.TableView, viewModel.ProjectList)
             {
                 this.owner = owner;
                 this.viewModel = viewModel;
             }
 
-            public override UITableViewCell GetCell (UITableView tableView, NSIndexPath indexPath)
+            public override UITableViewCell GetCell(UITableView tableView, NSIndexPath indexPath)
             {
-                var index = GetPlainIndexFromRow (collection, indexPath);
+                var index = GetPlainIndexFromRow(collection, indexPath);
                 var data = collection [index];
 
-                if (data is ProjectData) {
-                    var cell = (ProjectCell)tableView.DequeueReusableCell (ProjectCellId, indexPath);
-                    cell.Bind ((ProjectsCollectionVM.SuperProjectData)data, viewModel.ProjectList.AddTasks);
+                if (data is ProjectData)
+                {
+                    var cell = (ProjectCell)tableView.DequeueReusableCell(ProjectCellId, indexPath);
+                    cell.Bind((ProjectsCollectionVM.SuperProjectData)data, viewModel.ProjectList.AddTasks);
                     return cell;
-                } else {
-                    var cell = (TaskCell)tableView.DequeueReusableCell (TaskCellId, indexPath);
-                    cell.Bind ((TaskData)data);
+                }
+                else
+                {
+                    var cell = (TaskCell)tableView.DequeueReusableCell(TaskCellId, indexPath);
+                    cell.Bind((TaskData)data);
                     return cell;
                 }
             }
 
-            public override UIView GetViewForHeader (UITableView tableView, nint section)
+            public override UIView GetViewForHeader(UITableView tableView, nint section)
             {
-                var index = GetPlainIndexFromSection (collection, section);
+                var index = GetPlainIndexFromSection(collection, section);
                 var data = (ClientData)collection [index];
 
-                var view = (SectionHeaderView)tableView.DequeueReusableHeaderFooterView (ClientHeaderId);
-                view.Bind (data);
+                var view = (SectionHeaderView)tableView.DequeueReusableHeaderFooterView(ClientHeaderId);
+                view.Bind(data);
                 return view;
             }
 
-            public override nfloat GetHeightForHeader (UITableView tableView, nint section)
+            public override nfloat GetHeightForHeader(UITableView tableView, nint section)
             {
-                return EstimatedHeightForHeader (tableView, section);
+                return EstimatedHeightForHeader(tableView, section);
             }
 
-            public override nfloat EstimatedHeight (UITableView tableView, NSIndexPath indexPath)
+            public override nfloat EstimatedHeight(UITableView tableView, NSIndexPath indexPath)
             {
                 return 60f;
             }
 
-            public override nfloat EstimatedHeightForHeader (UITableView tableView, nint section)
+            public override nfloat EstimatedHeightForHeader(UITableView tableView, nint section)
             {
                 return 42f;
             }
 
-            public override bool CanEditRow (UITableView tableView, NSIndexPath indexPath)
+            public override bool CanEditRow(UITableView tableView, NSIndexPath indexPath)
             {
                 return false;
             }
 
-            public override void RowSelected (UITableView tableView, NSIndexPath indexPath)
+            public override void RowSelected(UITableView tableView, NSIndexPath indexPath)
             {
-                var index = GetPlainIndexFromRow (collection, indexPath);
+                var index = GetPlainIndexFromRow(collection, indexPath);
                 var data = collection [index];
-                owner.OnItemSelected (data);
+                owner.OnItemSelected(data);
 
-                tableView.DeselectRow (indexPath, true);
+                tableView.DeselectRow(indexPath, true);
             }
         }
 
@@ -170,29 +180,32 @@ namespace Toggl.Ross.ViewControllers
             private ProjectsCollectionVM.SuperProjectData projectData;
             private Action<ProjectData> onPressedTagBtn;
 
-            public ProjectCell (IntPtr handle) : base (handle)
+            public ProjectCell(IntPtr handle) : base(handle)
             {
-                this.Apply (Style.Screen);
-                BackgroundView = new UIView ();
+                this.Apply(Style.Screen);
+                BackgroundView = new UIView();
 
-                ContentView.Add (textContentView = new UIView ());
-                ContentView.Add (tasksButton = new UIButton ().Apply (Style.ProjectList.TasksButtons));
-                textContentView.Add (projectLabel = new UILabel ().Apply (Style.ProjectList.ProjectLabel));
-                textContentView.Add (clientLabel = new UILabel ().Apply (Style.ProjectList.ClientLabel));
+                ContentView.Add(textContentView = new UIView());
+                ContentView.Add(tasksButton = new UIButton().Apply(Style.ProjectList.TasksButtons));
+                textContentView.Add(projectLabel = new UILabel().Apply(Style.ProjectList.ProjectLabel));
+                textContentView.Add(clientLabel = new UILabel().Apply(Style.ProjectList.ClientLabel));
 
-                var maskLayer = new CAGradientLayer () {
+                var maskLayer = new CAGradientLayer()
+                {
                     AnchorPoint = CGPoint.Empty,
-                    StartPoint = new CGPoint (0.0f, 0.0f),
-                    EndPoint = new CGPoint (1.0f, 0.0f),
-                    Colors = new [] {
-                        UIColor.FromWhiteAlpha (1, 1).CGColor,
-                        UIColor.FromWhiteAlpha (1, 1).CGColor,
-                        UIColor.FromWhiteAlpha (1, 0).CGColor,
+                    StartPoint = new CGPoint(0.0f, 0.0f),
+                    EndPoint = new CGPoint(1.0f, 0.0f),
+                    Colors = new []
+                    {
+                        UIColor.FromWhiteAlpha(1, 1).CGColor,
+                        UIColor.FromWhiteAlpha(1, 1).CGColor,
+                        UIColor.FromWhiteAlpha(1, 0).CGColor,
                     },
-                    Locations = new [] {
-                        NSNumber.FromFloat (0f),
-                        NSNumber.FromFloat (0.9f),
-                        NSNumber.FromFloat (1f),
+                    Locations = new []
+                    {
+                        NSNumber.FromFloat(0f),
+                        NSNumber.FromFloat(0.9f),
+                        NSNumber.FromFloat(1f),
                     },
                 };
 
@@ -200,18 +213,19 @@ namespace Toggl.Ross.ViewControllers
                 tasksButton.TouchUpInside += OnTasksButtonTouchUpInside;
             }
 
-            public override void LayoutSubviews ()
+            public override void LayoutSubviews()
             {
-                base.LayoutSubviews ();
+                base.LayoutSubviews();
 
-                var contentFrame = new CGRect (0, CellSpacing / 2, Frame.Width, Frame.Height - CellSpacing);
+                var contentFrame = new CGRect(0, CellSpacing / 2, Frame.Width, Frame.Height - CellSpacing);
                 SelectedBackgroundView.Frame = BackgroundView.Frame = ContentView.Frame = contentFrame;
 
-                if (!tasksButton.Hidden) {
+                if (!tasksButton.Hidden)
+                {
                     var virtualWidth = contentFrame.Height;
                     var buttonWidth = tasksButton.CurrentBackgroundImage.Size.Width;
                     var extraPadding = (virtualWidth - buttonWidth) / 2f;
-                    tasksButton.Frame = new CGRect (
+                    tasksButton.Frame = new CGRect(
                         contentFrame.Width - virtualWidth + extraPadding, extraPadding,
                         buttonWidth, buttonWidth);
                     contentFrame.Width -= virtualWidth;
@@ -222,21 +236,24 @@ namespace Toggl.Ross.ViewControllers
                 textContentView.Frame = contentFrame;
                 textContentView.Layer.Mask.Bounds = contentFrame;
 
-                contentFrame = new CGRect (CGPoint.Empty, contentFrame.Size);
+                contentFrame = new CGRect(CGPoint.Empty, contentFrame.Size);
 
-                if (clientLabel.Hidden) {
+                if (clientLabel.Hidden)
+                {
                     // Only display single item, so make it fill the whole text frame
-                    var bounds = GetBoundingRect (projectLabel);
-                    projectLabel.Frame = new CGRect (
+                    var bounds = GetBoundingRect(projectLabel);
+                    projectLabel.Frame = new CGRect(
                         x: 0,
                         y: (contentFrame.Height - bounds.Height + projectLabel.Font.Descender) / 2f,
                         width: contentFrame.Width,
                         height: bounds.Height
                     );
-                } else {
+                }
+                else
+                {
                     // Carefully craft the layout
-                    var bounds = GetBoundingRect (projectLabel);
-                    projectLabel.Frame = new CGRect (
+                    var bounds = GetBoundingRect(projectLabel);
+                    projectLabel.Frame = new CGRect(
                         x: 0,
                         y: (contentFrame.Height - bounds.Height + projectLabel.Font.Descender) / 2f,
                         width: bounds.Width,
@@ -244,31 +261,32 @@ namespace Toggl.Ross.ViewControllers
                     );
 
                     const float clientLeftMargin = 7.5f;
-                    bounds = GetBoundingRect (clientLabel);
-                    clientLabel.Frame = new CGRect (
+                    bounds = GetBoundingRect(clientLabel);
+                    clientLabel.Frame = new CGRect(
                         x: projectLabel.Frame.X + projectLabel.Frame.Width + clientLeftMargin,
-                        y: (float)Math.Floor (projectLabel.Frame.Y + projectLabel.Font.Ascender - clientLabel.Font.Ascender),
+                        y: (float)Math.Floor(projectLabel.Frame.Y + projectLabel.Font.Ascender - clientLabel.Font.Ascender),
                         width: bounds.Width,
                         height: bounds.Height
                     );
                 }
             }
 
-            public void Bind (ProjectsCollectionVM.SuperProjectData projectData, Action<ProjectData> onPressedTagBtn, bool showClient = false)
+            public void Bind(ProjectsCollectionVM.SuperProjectData projectData, Action<ProjectData> onPressedTagBtn, bool showClient = false)
             {
                 this.projectData = projectData;
                 this.onPressedTagBtn = onPressedTagBtn;
 
-                if (projectData.IsEmpty) {
-                    projectLabel.Text = "ProjectNoProject".Tr ();
+                if (projectData.IsEmpty)
+                {
+                    projectLabel.Text = "ProjectNoProject".Tr();
                     clientLabel.Hidden = true;
                     tasksButton.Hidden = true;
                     BackgroundView.BackgroundColor = Color.Gray;
-                    projectLabel.Apply (Style.ProjectList.NoProjectLabel);
+                    projectLabel.Apply(Style.ProjectList.NoProjectLabel);
                     return;
                 }
 
-                var color = UIColor.Clear.FromHex (ProjectData.HexColors [projectData.Color % ProjectData.HexColors.Length]);
+                var color = UIColor.Clear.FromHex(ProjectData.HexColors [projectData.Color % ProjectData.HexColors.Length]);
                 BackgroundView.BackgroundColor = color;
 
                 projectLabel.Text = projectData.Name;
@@ -276,30 +294,32 @@ namespace Toggl.Ross.ViewControllers
                 clientLabel.Hidden = !showClient;
                 tasksButton.Hidden = projectData.TaskNumber == 0;
                 tasksButton.Selected = false;
-                tasksButton.SetTitleColor (color, UIControlState.Normal);
-                tasksButton.SetTitle (projectData.TaskNumber.ToString (), UIControlState.Normal);
+                tasksButton.SetTitleColor(color, UIControlState.Normal);
+                tasksButton.SetTitle(projectData.TaskNumber.ToString(), UIControlState.Normal);
 
                 // Layout content.
-                LayoutSubviews ();
+                LayoutSubviews();
             }
 
-            private void OnTasksButtonTouchUpInside (object sender, EventArgs e)
+            private void OnTasksButtonTouchUpInside(object sender, EventArgs e)
             {
-                if (onPressedTagBtn != null && projectData != null) {
-                    onPressedTagBtn.Invoke (projectData);
+                if (onPressedTagBtn != null && projectData != null)
+                {
+                    onPressedTagBtn.Invoke(projectData);
                 }
             }
 
-            private static CGRect GetBoundingRect (UILabel view)
+            private static CGRect GetBoundingRect(UILabel view)
             {
-                var attrs = new UIStringAttributes () {
+                var attrs = new UIStringAttributes()
+                {
                     Font = view.Font,
                 };
-                var rect = ((NSString) (view.Text ?? string.Empty)).GetBoundingRect (
-                               new CGSize (float.MaxValue, float.MaxValue),
+                var rect = ((NSString)(view.Text ?? string.Empty)).GetBoundingRect(
+                               new CGSize(float.MaxValue, float.MaxValue),
                                NSStringDrawingOptions.UsesLineFragmentOrigin,
                                attrs, null);
-                rect.Height = (float)Math.Ceiling (rect.Height);
+                rect.Height = (float)Math.Ceiling(rect.Height);
                 return rect;
             }
         }
@@ -309,19 +329,19 @@ namespace Toggl.Ross.ViewControllers
             private readonly UILabel nameLabel;
             private readonly UIView separatorView;
 
-            public TaskCell (IntPtr handle) : base (handle)
+            public TaskCell(IntPtr handle) : base(handle)
             {
-                this.Apply (Style.Screen);
-                ContentView.Add (nameLabel = new UILabel ().Apply (Style.ProjectList.TaskLabel));
-                ContentView.Add (separatorView = new UIView ().Apply (Style.ProjectList.TaskSeparator));
-                BackgroundView = new UIView ().Apply (Style.ProjectList.TaskBackground);
+                this.Apply(Style.Screen);
+                ContentView.Add(nameLabel = new UILabel().Apply(Style.ProjectList.TaskLabel));
+                ContentView.Add(separatorView = new UIView().Apply(Style.ProjectList.TaskSeparator));
+                BackgroundView = new UIView().Apply(Style.ProjectList.TaskBackground);
             }
 
-            public override void LayoutSubviews ()
+            public override void LayoutSubviews()
             {
-                base.LayoutSubviews ();
+                base.LayoutSubviews();
 
-                var contentFrame = new CGRect (0, 0, Frame.Width, Frame.Height);
+                var contentFrame = new CGRect(0, 0, Frame.Width, Frame.Height);
                 SelectedBackgroundView.Frame = BackgroundView.Frame = ContentView.Frame = contentFrame;
 
                 // Add padding
@@ -330,16 +350,17 @@ namespace Toggl.Ross.ViewControllers
                 contentFrame.Width -= 15f;
 
                 nameLabel.Frame = contentFrame;
-                separatorView.Frame = new CGRect (
+                separatorView.Frame = new CGRect(
                     contentFrame.X, contentFrame.Y + contentFrame.Height - 1f,
                     contentFrame.Width, 1f);
             }
 
-            public void Bind (TaskData data)
+            public void Bind(TaskData data)
             {
                 var taskName = data.Name;
-                if (string.IsNullOrWhiteSpace (taskName)) {
-                    taskName = "ProjectNoNameTask".Tr ();
+                if (string.IsNullOrWhiteSpace(taskName))
+                {
+                    taskName = "ProjectNoNameTask".Tr();
                 }
                 nameLabel.Text = taskName;
             }
@@ -350,19 +371,19 @@ namespace Toggl.Ross.ViewControllers
             private const float HorizSpacing = 15f;
             private readonly UILabel nameLabel;
 
-            public SectionHeaderView (IntPtr ptr) : base (ptr)
+            public SectionHeaderView(IntPtr ptr) : base(ptr)
             {
-                nameLabel = new UILabel ().Apply (Style.Log.HeaderDateLabel);
-                ContentView.AddSubview (nameLabel);
-                BackgroundView = new UIView ().Apply (Style.Log.HeaderBackgroundView);
+                nameLabel = new UILabel().Apply(Style.Log.HeaderDateLabel);
+                ContentView.AddSubview(nameLabel);
+                BackgroundView = new UIView().Apply(Style.Log.HeaderBackgroundView);
             }
 
-            public override void LayoutSubviews ()
+            public override void LayoutSubviews()
             {
-                base.LayoutSubviews ();
+                base.LayoutSubviews();
                 var contentFrame = ContentView.Frame;
 
-                nameLabel.Frame = new CGRect (
+                nameLabel.Frame = new CGRect(
                     x: HorizSpacing,
                     y: 0,
                     width: (contentFrame.Width - 3 * HorizSpacing) / 2,
@@ -370,9 +391,9 @@ namespace Toggl.Ross.ViewControllers
                 );
             }
 
-            public void Bind (ClientData data)
+            public void Bind(ClientData data)
             {
-                nameLabel.Text = string.IsNullOrEmpty (data.Name) ? "ProjectNoClient".Tr () : data.Name;
+                nameLabel.Text = string.IsNullOrEmpty(data.Name) ? "ProjectNoClient".Tr() : data.Name;
             }
         }
 
@@ -381,7 +402,7 @@ namespace Toggl.Ross.ViewControllers
             private readonly ProjectListVM viewModel;
             private const int cellHeight = 45;
 
-            public WorkspaceSelectorPopover (ProjectListVM viewModel, CGRect sourceRect)
+            public WorkspaceSelectorPopover(ProjectListVM viewModel, CGRect sourceRect)
             {
                 this.viewModel = viewModel;
                 ModalPresentationStyle = UIModalPresentationStyle.Popover;
@@ -392,17 +413,17 @@ namespace Toggl.Ross.ViewControllers
                 PopoverPresentationController.Delegate = this;
 
                 var height = (viewModel.WorkspaceList.Count < 5) ? (viewModel.WorkspaceList.Count + 1) : 5;
-                PreferredContentSize = new CGSize (200, height * cellHeight);
+                PreferredContentSize = new CGSize(200, height * cellHeight);
             }
 
             public override void ViewDidLoad()
             {
                 base.ViewDidLoad();
 
-                UILabel headerLabel = new UILabel ();
+                UILabel headerLabel = new UILabel();
                 headerLabel.Text = "Workspaces";
-                headerLabel.Bounds = new CGRect (0, 10, 200, 40);
-                headerLabel.Apply (Style.ProjectList.WorkspaceHeader);
+                headerLabel.Bounds = new CGRect(0, 10, 200, 40);
+                headerLabel.Apply(Style.ProjectList.WorkspaceHeader);
                 TableView.TableHeaderView = headerLabel;
 
                 TableView.RowHeight = cellHeight;
@@ -412,38 +433,40 @@ namespace Toggl.Ross.ViewControllers
                 PopoverPresentationController.SourceView = TableView;
             }
 
-            private UITableViewCell CreateWorkspaceCell (NSString cellIdentifier)
+            private UITableViewCell CreateWorkspaceCell(NSString cellIdentifier)
             {
-                return new UITableViewCell (UITableViewCellStyle.Default, cellIdentifier);
+                return new UITableViewCell(UITableViewCellStyle.Default, cellIdentifier);
             }
 
-            private void BindCell (UITableViewCell cell, WorkspaceData workspaceData, NSIndexPath path)
+            private void BindCell(UITableViewCell cell, WorkspaceData workspaceData, NSIndexPath path)
             {
                 // Set selected tags.
                 cell.Accessory = (path.Row == viewModel.CurrentWorkspaceIndex) ? UITableViewCellAccessory.Checkmark : UITableViewCellAccessory.None;
                 cell.TextLabel.Text  = workspaceData.Name;
-                cell.TextLabel.Apply (Style.ProjectList.WorkspaceLabel);
+                cell.TextLabel.Apply(Style.ProjectList.WorkspaceLabel);
             }
 
-            protected override void OnRowSelected (object item, NSIndexPath indexPath)
+            protected override void OnRowSelected(object item, NSIndexPath indexPath)
             {
-                base.OnRowSelected (item, indexPath);
-                TableView.DeselectRow (indexPath, true);
-                if (indexPath.Row == viewModel.CurrentWorkspaceIndex) {
+                base.OnRowSelected(item, indexPath);
+                TableView.DeselectRow(indexPath, true);
+                if (indexPath.Row == viewModel.CurrentWorkspaceIndex)
+                {
                     return;
                 }
 
-                viewModel.ChangeWorkspaceByIndex (indexPath.Row);
+                viewModel.ChangeWorkspaceByIndex(indexPath.Row);
                 // Set cell unselected
-                foreach (var cell in TableView.VisibleCells) {
+                foreach (var cell in TableView.VisibleCells)
+                {
                     cell.Accessory = UITableViewCellAccessory.None;
                 }
-                TableView.CellAt (indexPath).Accessory = UITableViewCellAccessory.Checkmark;
+                TableView.CellAt(indexPath).Accessory = UITableViewCellAccessory.Checkmark;
 
             }
 
-            [Export ("adaptivePresentationStyleForPresentationController:")]
-            public UIModalPresentationStyle GetAdaptivePresentationStyle (UIPresentationController controller)
+            [Export("adaptivePresentationStyleForPresentationController:")]
+            public UIModalPresentationStyle GetAdaptivePresentationStyle(UIPresentationController controller)
             {
                 return UIModalPresentationStyle.None;
             }

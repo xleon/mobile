@@ -12,29 +12,33 @@ namespace Toggl.Phoebe.Reactive
     {
         public static StoreManager Singleton { get; private set; }
 
-        public static void Init (AppState initState, Reducer<AppState> reducer)
+        public static void Init(AppState initState, Reducer<AppState> reducer)
         {
-            Singleton = Singleton ?? new StoreManager (initState, reducer);
+            Singleton = Singleton ?? new StoreManager(initState, reducer);
         }
 
         private AppState appStateUnsafe;
-        private readonly object appStateLock = new object ();
+        private readonly object appStateLock = new object();
 
         public AppState AppState
         {
-            get {
-                lock (appStateLock) {
+            get
+            {
+                lock (appStateLock)
+                {
                     return appStateUnsafe;
                 }
             }
-            private set {
-                lock (appStateLock) {
+            private set
+            {
+                lock (appStateLock)
+                {
                     appStateUnsafe = value;
                 }
             }
         }
 
-        public static void Cleanup ()
+        public static void Cleanup()
         {
             Singleton = null;
         }
@@ -42,41 +46,45 @@ namespace Toggl.Phoebe.Reactive
         readonly Subject<Tuple<DataMsg, RxChain.Continuation>> subject1 = new Subject<Tuple<DataMsg, RxChain.Continuation>> ();
         readonly Subject<DataSyncMsg<AppState>> subject2 = new Subject<DataSyncMsg<AppState>> ();
 
-        StoreManager (AppState initState, Reducer<AppState> reducer)
+        StoreManager(AppState initState, Reducer<AppState> reducer)
         {
             AppState = initState;
-            var initSyncMsg = DataSyncMsg.Create (initState);
+            var initSyncMsg = DataSyncMsg.Create(initState);
 
             subject1
-            .Synchronize (Scheduler.Default)
-            .Scan (initSyncMsg, (acc, tuple) => {
+            .Synchronize(Scheduler.Default)
+            .Scan(initSyncMsg, (acc, tuple) =>
+            {
                 DataSyncMsg<AppState> msg;
-                try {
-                    msg = reducer.Reduce (acc.State, tuple.Item1);
-                } catch (Exception ex) {
+                try
+                {
+                    msg = reducer.Reduce(acc.State, tuple.Item1);
+                }
+                catch (Exception ex)
+                {
                     var log = ServiceContainer.Resolve<ILogger> ();
-                    log.Error (GetType ().Name, ex, "Failed to handle DataMsg: {0}", tuple.Item1.GetType ().Name);
-                    msg = DataSyncMsg.Create (acc.State);
+                    log.Error(GetType().Name, ex, "Failed to handle DataMsg: {0}", tuple.Item1.GetType().Name);
+                    msg = DataSyncMsg.Create(acc.State);
                 }
                 AppState = msg.State;
                 return tuple.Item2 == null ? msg : new DataSyncMsg<AppState> (msg.State, msg.ServerRequests, tuple.Item2);
             })
-            .Subscribe (subject2.OnNext);
+            .Subscribe(subject2.OnNext);
         }
 
-        public void Send (DataMsg msg, RxChain.Continuation cont)
+        public void Send(DataMsg msg, RxChain.Continuation cont)
         {
-            subject1.OnNext (Tuple.Create (msg, cont));
+            subject1.OnNext(Tuple.Create(msg, cont));
         }
 
-        public IObservable<DataSyncMsg<AppState>> Observe ()
+        public IObservable<DataSyncMsg<AppState>> Observe()
         {
             return subject2;
         }
 
         public IObservable<T> Observe<T> (Func<DataSyncMsg<AppState>, T> selector)
         {
-            return subject2.Select (syncMsg => selector (syncMsg));
+            return subject2.Select(syncMsg => selector(syncMsg));
         }
     }
 }

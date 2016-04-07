@@ -22,12 +22,13 @@ namespace Toggl.Phoebe.ViewModels
 
         IDisposable subscription;
 
-        public enum LoginMode {
+        public enum LoginMode
+        {
             Login,
             Signup
         }
 
-        public LoginVM ()
+        public LoginVM()
         {
             // Set initia state.
             AuthResult = AuthResult.None;
@@ -36,19 +37,20 @@ namespace Toggl.Phoebe.ViewModels
             CurrentLoginMode = LoginMode.Login;
 
             subscription = StoreManager
-				.Singleton
-                .Observe (x => x.State.RequestInfo)
-                .DistinctUntilChanged ()
-                .ObserveOn (SynchronizationContext.Current)
-                .SubscribeSimple (reqInfo => {
-                    AuthResult = reqInfo.AuthResult;
-                    IsAuthenticating = reqInfo.Running.Any (x => x is ServerRequest.Authenticate);
-                });
+                           .Singleton
+                           .Observe(x => x.State.RequestInfo)
+                           .DistinctUntilChanged()
+                           .ObserveOn(SynchronizationContext.Current)
+                           .SubscribeSimple(reqInfo =>
+            {
+                AuthResult = reqInfo.AuthResult;
+                IsAuthenticating = reqInfo.Running.Any(x => x is ServerRequest.Authenticate);
+            });
         }
 
-        public void Dispose ()
+        public void Dispose()
         {
-            subscription.Dispose ();
+            subscription.Dispose();
             subscription = null;
         }
 
@@ -67,38 +69,44 @@ namespace Toggl.Phoebe.ViewModels
 
         #region public ViewModel methods
 
-        public void ChangeLoginMode ()
+        public void ChangeLoginMode()
         {
             CurrentLoginMode = (CurrentLoginMode == LoginMode.Login) ? LoginMode.Signup : LoginMode.Login;
             var screenStr = (CurrentLoginMode == LoginMode.Login) ? "Login" : "Signup";
             ServiceContainer.Resolve<ITracker> ().CurrentScreen = screenStr;
         }
 
-        public void TryLogin (string email, string password)
+        public void TryLogin(string email, string password)
         {
-            if (CurrentLoginMode == LoginMode.Login) {
-                RxChain.Send (ServerRequest.Authenticate.Login (email, password));
-            } else {
-                RxChain.Send (ServerRequest.Authenticate.Signup (email, password));
+            if (CurrentLoginMode == LoginMode.Login)
+            {
+                RxChain.Send(ServerRequest.Authenticate.Login(email, password));
+            }
+            else
+            {
+                RxChain.Send(ServerRequest.Authenticate.Signup(email, password));
             }
         }
 
-        public void TryLoginWithGoogle (string token)
+        public void TryLoginWithGoogle(string token)
         {
-            if (CurrentLoginMode == LoginMode.Login) {
-                RxChain.Send (ServerRequest.Authenticate.LoginWithGoogle (token));
-            } else {
-                RxChain.Send (ServerRequest.Authenticate.SignupWithGoogle (token));
+            if (CurrentLoginMode == LoginMode.Login)
+            {
+                RxChain.Send(ServerRequest.Authenticate.LoginWithGoogle(token));
+            }
+            else
+            {
+                RxChain.Send(ServerRequest.Authenticate.SignupWithGoogle(token));
             }
 
         }
 
-        public bool IsEmailValid (string email)
+        public bool IsEmailValid(string email)
         {
-            return Regex.IsMatch (email ?? "", ValidateEmailRegexp);
+            return Regex.IsMatch(email ?? "", ValidateEmailRegexp);
         }
 
-        public bool IsPassValid (string pass)
+        public bool IsPassValid(string pass)
         {
             return (pass ?? "").Length >= 6;
         }

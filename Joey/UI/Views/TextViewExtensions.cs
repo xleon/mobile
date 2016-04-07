@@ -11,7 +11,7 @@ namespace Toggl.Joey.UI.Views
         public static T SetFont<T> (this T view, Font font)
         where T : TextView
         {
-            view.SetTypeface (font.Typeface, font.Style);
+            view.SetTypeface(font.Typeface, font.Style);
             return view;
         }
     }

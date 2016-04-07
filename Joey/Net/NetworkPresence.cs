@@ -13,7 +13,7 @@ namespace Toggl.Joey.Net
         private readonly Context context;
         private readonly ConnectivityManager connectivityManager;
 
-        public NetworkPresence (Context context, ConnectivityManager connectivityManager)
+        public NetworkPresence(Context context, ConnectivityManager connectivityManager)
         {
             this.context = context;
             this.connectivityManager = connectivityManager;
@@ -21,53 +21,61 @@ namespace Toggl.Joey.Net
 
         public bool IsNetworkPresent
         {
-            get {
-                return IsNetworkConnected (connectivityManager.ActiveNetworkInfo);
+            get
+            {
+                return IsNetworkConnected(connectivityManager.ActiveNetworkInfo);
             }
         }
 
-        public void RegisterSyncWhenNetworkPresent ()
+        public void RegisterSyncWhenNetworkPresent()
         {
-            SetSyncWhenNetworkPresent (true);
+            SetSyncWhenNetworkPresent(true);
         }
 
-        public void UnregisterSyncWhenNetworkPresent ()
+        public void UnregisterSyncWhenNetworkPresent()
         {
-            SetSyncWhenNetworkPresent (false);
+            SetSyncWhenNetworkPresent(false);
         }
 
-        private void SetSyncWhenNetworkPresent (bool enable)
+        private void SetSyncWhenNetworkPresent(bool enable)
         {
-            var receiver = new ComponentName (context, Java.Lang.Class.FromType (typeof (SyncOnNetworkPresentChangeReceiver)));
-            var setting = context.PackageManager.GetComponentEnabledSetting (receiver);
+            var receiver = new ComponentName(context, Java.Lang.Class.FromType(typeof(SyncOnNetworkPresentChangeReceiver)));
+            var setting = context.PackageManager.GetComponentEnabledSetting(receiver);
 
-            if (enable) {
-                if (setting != ComponentEnabledState.Enabled) {
-                    context.PackageManager.SetComponentEnabledSetting (receiver, ComponentEnabledState.Enabled, ComponentEnableOption.DontKillApp);
+            if (enable)
+            {
+                if (setting != ComponentEnabledState.Enabled)
+                {
+                    context.PackageManager.SetComponentEnabledSetting(receiver, ComponentEnabledState.Enabled, ComponentEnableOption.DontKillApp);
                 }
-            } else {
-                if (setting == ComponentEnabledState.Enabled) {
-                    context.PackageManager.SetComponentEnabledSetting (receiver, ComponentEnabledState.Disabled, ComponentEnableOption.DontKillApp);
+            }
+            else
+            {
+                if (setting == ComponentEnabledState.Enabled)
+                {
+                    context.PackageManager.SetComponentEnabledSetting(receiver, ComponentEnabledState.Disabled, ComponentEnableOption.DontKillApp);
                 }
             }
         }
 
-        private static bool IsNetworkConnected (NetworkInfo networkInfo)
+        private static bool IsNetworkConnected(NetworkInfo networkInfo)
         {
             return networkInfo != null && networkInfo.IsConnected;
         }
 
-        [BroadcastReceiver (Enabled = false),
-         IntentFilter (new[] { ConnectivityManager.ConnectivityAction },
-                       Categories = new[] { "com.toggl.timer" })]
+        [BroadcastReceiver(Enabled = false),
+         IntentFilter(new[] { ConnectivityManager.ConnectivityAction },
+                      Categories = new[] { "com.toggl.timer" })]
         public class SyncOnNetworkPresentChangeReceiver : BroadcastReceiver
         {
-            public override void OnReceive (Context context, Intent intent)
+            public override void OnReceive(Context context, Intent intent)
             {
-                if (intent.Extras != null) {
-                    var info = intent.Extras.Get (ConnectivityManager.ExtraNetworkInfo) as NetworkInfo;
-                    if (info != null && IsNetworkConnected (info)) {
-                        RxChain.Send (new ServerRequest.GetChanges ());
+                if (intent.Extras != null)
+                {
+                    var info = intent.Extras.Get(ConnectivityManager.ExtraNetworkInfo) as NetworkInfo;
+                    if (info != null && IsNetworkConnected(info))
+                    {
+                        RxChain.Send(new ServerRequest.GetChanges());
                     }
                 }
             }

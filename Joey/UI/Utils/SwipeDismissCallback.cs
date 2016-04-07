@@ -7,70 +7,73 @@ namespace Toggl.Joey.UI.Utils
 {
     public interface IUndoAdapter
     {
-        void DeleteSelectedItem ();
+        void DeleteSelectedItem();
 
-        void SetItemToUndoPosition (RecyclerView.ViewHolder item);
+        void SetItemToUndoPosition(RecyclerView.ViewHolder item);
 
-        bool IsUndo (int position);
+        bool IsUndo(int position);
     }
 
     public class SwipeDismissCallback : ItemTouchHelper.SimpleCallback
     {
         public interface IDismissListener
         {
-            bool CanDismiss (RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder);
+            bool CanDismiss(RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder);
         }
 
         private const float minThreshold = 20;
         private IDismissListener listener;
 
-        public SwipeDismissCallback (IntPtr a, Android.Runtime.JniHandleOwnership b) : base (a, b)
+        public SwipeDismissCallback(IntPtr a, Android.Runtime.JniHandleOwnership b) : base(a, b)
         {
         }
 
-        public SwipeDismissCallback (int p0, int p1, IDismissListener listener) : base (p0, p1)
+        public SwipeDismissCallback(int p0, int p1, IDismissListener listener) : base(p0, p1)
         {
             this.listener = listener;
         }
 
-        public override bool OnMove (RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder, RecyclerView.ViewHolder target)
+        public override bool OnMove(RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder, RecyclerView.ViewHolder target)
         {
             return false;
         }
 
-        public override int GetSwipeDirs (RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder)
+        public override int GetSwipeDirs(RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder)
         {
-            if (listener.CanDismiss (recyclerView, viewHolder)) {
+            if (listener.CanDismiss(recyclerView, viewHolder))
+            {
                 return ItemTouchHelper.Right;
             }
             return 0;
         }
 
-        public override void OnSwiped (RecyclerView.ViewHolder viewHolder, int direction)
+        public override void OnSwiped(RecyclerView.ViewHolder viewHolder, int direction)
         {
-            var adapter = (IUndoAdapter)recycler.GetAdapter ();
-            adapter.SetItemToUndoPosition (viewHolder);
+            var adapter = (IUndoAdapter)recycler.GetAdapter();
+            adapter.SetItemToUndoPosition(viewHolder);
         }
 
-        public override float GetSwipeThreshold (RecyclerView.ViewHolder viewHolder)
+        public override float GetSwipeThreshold(RecyclerView.ViewHolder viewHolder)
         {
             return minThreshold;
         }
 
         private RecyclerView recycler;
 
-        public override void OnChildDraw (Canvas cValue, RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder, float dX, float dY, int actionState, bool isCurrentlyActive)
+        public override void OnChildDraw(Canvas cValue, RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder, float dX, float dY, int actionState, bool isCurrentlyActive)
         {
-            if (viewHolder != null && actionState == 1) {
-                var view = viewHolder.ItemView.FindViewById (Resource.Id.swipe_layout);
-                view.SetX (dX);
+            if (viewHolder != null && actionState == 1)
+            {
+                var view = viewHolder.ItemView.FindViewById(Resource.Id.swipe_layout);
+                view.SetX(dX);
             }
-            if (recycler == null) {
+            if (recycler == null)
+            {
                 recycler = recyclerView;
             }
         }
 
-        public override void ClearView (RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder)
+        public override void ClearView(RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder)
         {
             // Let ClearView clean and don't
             // cal; native ClearView. This operation

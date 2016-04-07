@@ -16,19 +16,19 @@ namespace Toggl.Joey
         private readonly NotificationCompat.Builder runningBuilder;
         private readonly NotificationCompat.Builder idleBuilder;
 
-        public AndroidNotificationManager ()
+        public AndroidNotificationManager()
         {
             ctx = ServiceContainer.Resolve<Context> ();
-            notificationManager = (NotificationManager)ctx.GetSystemService (Context.NotificationService);
-            runningBuilder = CreateRunningNotificationBuilder (ctx);
-            idleBuilder = CreateIdleNotificationBuilder (ctx);
+            notificationManager = (NotificationManager)ctx.GetSystemService(Context.NotificationService);
+            runningBuilder = CreateRunningNotificationBuilder(ctx);
+            idleBuilder = CreateIdleNotificationBuilder(ctx);
         }
 
-        public void Dispose ()
+        public void Dispose()
         {
         }
 
-        private void SyncNotification ()
+        private void SyncNotification()
         {
             /*
             var authManager = ServiceContainer.Resolve<AuthManager> ();
@@ -69,56 +69,56 @@ namespace Toggl.Joey
             */
         }
 
-        private string GetProjectName ()
+        private string GetProjectName()
         {
-            return ctx.Resources.GetString (Resource.String.RunningNotificationNoProject);
+            return ctx.Resources.GetString(Resource.String.RunningNotificationNoProject);
         }
 
-        private string GetDescription ()
+        private string GetDescription()
         {
-            return ctx.Resources.GetString (Resource.String.RunningNotificationNoDescription);
+            return ctx.Resources.GetString(Resource.String.RunningNotificationNoDescription);
         }
 
-        private static NotificationCompat.Builder CreateRunningNotificationBuilder (Context ctx)
+        private static NotificationCompat.Builder CreateRunningNotificationBuilder(Context ctx)
         {
             var res = ctx.Resources;
 
-            var openIntent = new Intent (ctx, typeof (MainDrawerActivity));
-            openIntent.SetAction (Intent.ActionMain);
-            openIntent.AddCategory (Intent.CategoryLauncher);
-            var pendingOpenIntent = PendingIntent.GetActivity (ctx, 0, openIntent, 0);
+            var openIntent = new Intent(ctx, typeof(MainDrawerActivity));
+            openIntent.SetAction(Intent.ActionMain);
+            openIntent.AddCategory(Intent.CategoryLauncher);
+            var pendingOpenIntent = PendingIntent.GetActivity(ctx, 0, openIntent, 0);
 
-            var stopIntent = new Intent (ctx, typeof (StopRunningTimeEntryService.Receiver));
-            var pendingStopIntent = PendingIntent.GetBroadcast (ctx, 0, stopIntent, PendingIntentFlags.UpdateCurrent);
+            var stopIntent = new Intent(ctx, typeof(StopRunningTimeEntryService.Receiver));
+            var pendingStopIntent = PendingIntent.GetBroadcast(ctx, 0, stopIntent, PendingIntentFlags.UpdateCurrent);
 
-            return new NotificationCompat.Builder (ctx)
-                   .SetAutoCancel (false)
-                   .SetUsesChronometer (true)
-                   .SetOngoing (true)
-                   .SetSmallIcon (Resource.Drawable.IcNotificationIcon)
+            return new NotificationCompat.Builder(ctx)
+                   .SetAutoCancel(false)
+                   .SetUsesChronometer(true)
+                   .SetOngoing(true)
+                   .SetSmallIcon(Resource.Drawable.IcNotificationIcon)
                    // TODO: Removed Stop button from notification until
                    // find a fiable solution
                    // .AddAction (Resource.Drawable.IcActionStop, res.GetString (Resource.String.RunningNotificationStopButton), pendingStopIntent)
                    // .AddAction (Resource.Drawable.IcActionEdit, res.GetString (Resource.String.RunningNotificationEditButton), editIntent)
-                   .SetContentIntent (pendingOpenIntent);
+                   .SetContentIntent(pendingOpenIntent);
         }
 
-        private static NotificationCompat.Builder CreateIdleNotificationBuilder (Context ctx)
+        private static NotificationCompat.Builder CreateIdleNotificationBuilder(Context ctx)
         {
             var res = ctx.Resources;
 
-            var openIntent = new Intent (ctx, typeof (MainDrawerActivity));
-            openIntent.SetAction (Intent.ActionMain);
-            openIntent.AddCategory (Intent.CategoryLauncher);
-            var pendingOpenIntent = PendingIntent.GetActivity (ctx, 0, openIntent, 0);
+            var openIntent = new Intent(ctx, typeof(MainDrawerActivity));
+            openIntent.SetAction(Intent.ActionMain);
+            openIntent.AddCategory(Intent.CategoryLauncher);
+            var pendingOpenIntent = PendingIntent.GetActivity(ctx, 0, openIntent, 0);
 
-            return new NotificationCompat.Builder (ctx)
-                   .SetAutoCancel (false)
-                   .SetOngoing (true)
-                   .SetSmallIcon (Resource.Drawable.IcNotificationIconIdle)
-                   .SetContentIntent (pendingOpenIntent)
-                   .SetContentTitle (res.GetString (Resource.String.IdleNotificationTitle))
-                   .SetContentText (res.GetString (Resource.String.IdleNotificationText));
+            return new NotificationCompat.Builder(ctx)
+                   .SetAutoCancel(false)
+                   .SetOngoing(true)
+                   .SetSmallIcon(Resource.Drawable.IcNotificationIconIdle)
+                   .SetContentIntent(pendingOpenIntent)
+                   .SetContentTitle(res.GetString(Resource.String.IdleNotificationTitle))
+                   .SetContentText(res.GetString(Resource.String.IdleNotificationText));
         }
     }
 }

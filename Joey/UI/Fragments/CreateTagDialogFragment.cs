@@ -22,93 +22,97 @@ namespace Toggl.Joey.UI.Fragments
 
         private Guid WorkspaceId
         {
-            get {
+            get
+            {
                 var id = Guid.Empty;
-                if (Arguments != null) {
-                    Guid.TryParse (Arguments.GetString (WorkspaceIdArgument), out id);
+                if (Arguments != null)
+                {
+                    Guid.TryParse(Arguments.GetString(WorkspaceIdArgument), out id);
                 }
                 return id;
             }
         }
 
-        public CreateTagDialogFragment ()
+        public CreateTagDialogFragment()
         {
         }
 
-        public CreateTagDialogFragment (IntPtr jref, Android.Runtime.JniHandleOwnership xfer) : base (jref, xfer)
+        public CreateTagDialogFragment(IntPtr jref, Android.Runtime.JniHandleOwnership xfer) : base(jref, xfer)
         {
         }
 
-        public static CreateTagDialogFragment NewInstance (Guid workspaceId)
+        public static CreateTagDialogFragment NewInstance(Guid workspaceId)
         {
-            var fragment = new CreateTagDialogFragment ();
+            var fragment = new CreateTagDialogFragment();
 
-            var args = new Bundle ();
-            args.PutString (WorkspaceIdArgument, workspaceId.ToString ());
+            var args = new Bundle();
+            args.PutString(WorkspaceIdArgument, workspaceId.ToString());
             fragment.Arguments = args;
 
             return fragment;
         }
 
-        public override void OnCreate (Bundle savedInstanceState)
+        public override void OnCreate(Bundle savedInstanceState)
         {
-            base.OnCreate (savedInstanceState);
-            viewModel = new NewTagVM (StoreManager.Singleton.AppState, WorkspaceId);
+            base.OnCreate(savedInstanceState);
+            viewModel = new NewTagVM(StoreManager.Singleton.AppState, WorkspaceId);
         }
 
-        public override Dialog OnCreateDialog (Bundle savedInstanceState)
+        public override Dialog OnCreateDialog(Bundle savedInstanceState)
         {
-            nameEditText = new EditText (Activity);
-            nameEditText.SetHint (Resource.String.CreateTagDialogHint);
+            nameEditText = new EditText(Activity);
+            nameEditText.SetHint(Resource.String.CreateTagDialogHint);
             nameEditText.InputType = InputTypes.TextFlagCapSentences;
             nameEditText.TextChanged += OnNameEditTextTextChanged;
 
-            return new AlertDialog.Builder (Activity)
-                   .SetTitle (Resource.String.CreateTagDialogTitle)
-                   .SetView (nameEditText)
-                   .SetPositiveButton (Resource.String.CreateTagDialogOk, OnPositiveButtonClicked)
-                   .Create ();
+            return new AlertDialog.Builder(Activity)
+                   .SetTitle(Resource.String.CreateTagDialogTitle)
+                   .SetView(nameEditText)
+                   .SetPositiveButton(Resource.String.CreateTagDialogOk, OnPositiveButtonClicked)
+                   .Create();
         }
 
-        public override void OnStart ()
+        public override void OnStart()
         {
-            base.OnStart ();
-            positiveButton = ((AlertDialog)Dialog).GetButton ((int)DialogButtonType.Positive);
-            ValidateTagName ();
+            base.OnStart();
+            positiveButton = ((AlertDialog)Dialog).GetButton((int)DialogButtonType.Positive);
+            ValidateTagName();
         }
 
-        public override void OnDestroy ()
+        public override void OnDestroy()
         {
-            viewModel.Dispose ();
-            base.OnDestroy ();
+            viewModel.Dispose();
+            base.OnDestroy();
         }
 
-        public CreateTagDialogFragment SetCreateNewTagHandler (IOnTagSelectedHandler handler)
+        public CreateTagDialogFragment SetCreateNewTagHandler(IOnTagSelectedHandler handler)
         {
             updateTagHandler = handler;
             return this;
         }
 
-        private void OnNameEditTextTextChanged (object sender, TextChangedEventArgs e)
+        private void OnNameEditTextTextChanged(object sender, TextChangedEventArgs e)
         {
-            ValidateTagName ();
+            ValidateTagName();
         }
 
-        private void OnPositiveButtonClicked (object sender, DialogClickEventArgs e)
+        private void OnPositiveButtonClicked(object sender, DialogClickEventArgs e)
         {
-            var newTagData = viewModel.SaveTag (nameEditText.Text);
-            if (updateTagHandler != null) {
-                updateTagHandler.OnCreateNewTag (newTagData);
+            var newTagData = viewModel.SaveTag(nameEditText.Text);
+            if (updateTagHandler != null)
+            {
+                updateTagHandler.OnCreateNewTag(newTagData);
             }
         }
 
-        private void ValidateTagName ()
+        private void ValidateTagName()
         {
-            if (positiveButton == null || nameEditText == null) {
+            if (positiveButton == null || nameEditText == null)
+            {
                 return;
             }
 
-            positiveButton.Enabled = !string.IsNullOrWhiteSpace (nameEditText.Text);
+            positiveButton.Enabled = !string.IsNullOrWhiteSpace(nameEditText.Text);
         }
     }
 }

@@ -5,61 +5,61 @@ namespace Toggl.Phoebe.Data.Json
 {
     public class UserJson : CommonJson
     {
-        [JsonProperty ("fullname")]
+        [JsonProperty("fullname")]
         public string Name { get; set; }
 
-        [JsonProperty ("email")]
+        [JsonProperty("email")]
         public string Email { get; set; }
 
-        [JsonProperty ("password", NullValueHandling = NullValueHandling.Include)]
+        [JsonProperty("password", NullValueHandling = NullValueHandling.Include)]
         public string Password { get; set; }
 
-        [JsonProperty ("google_access_token", NullValueHandling = NullValueHandling.Ignore)]
+        [JsonProperty("google_access_token", NullValueHandling = NullValueHandling.Ignore)]
         public string GoogleAccessToken { get; set; }
 
-        [JsonProperty ("api_token", NullValueHandling = NullValueHandling.Ignore)]
+        [JsonProperty("api_token", NullValueHandling = NullValueHandling.Ignore)]
         public string ApiToken { get; set; }
 
-        [JsonProperty ("beginning_of_week")]
+        [JsonProperty("beginning_of_week")]
         public DayOfWeek StartOfWeek { get; set; }
 
-        [JsonProperty ("date_format")]
+        [JsonProperty("date_format")]
         public string DateFormat { get; set; }
 
-        [JsonProperty ("timeofday_format")]
+        [JsonProperty("timeofday_format")]
         public string TimeFormat { get; set; }
 
-        [JsonProperty ("image_url")]
+        [JsonProperty("image_url")]
         public string ImageUrl { get; set; }
 
-        [JsonProperty ("language")]
+        [JsonProperty("language")]
         public string Locale { get; set; }
 
-        [JsonProperty ("timezone")]
+        [JsonProperty("timezone")]
         public string Timezone { get; set; }
 
-        [JsonProperty ("send_product_emails")]
+        [JsonProperty("send_product_emails")]
         public bool SendProductEmails { get; set; }
 
-        [JsonProperty ("send_timer_notifications")]
+        [JsonProperty("send_timer_notifications")]
         public bool SendTimerNotifications { get; set; }
 
-        [JsonProperty ("send_weekly_report")]
+        [JsonProperty("send_weekly_report")]
         public bool SendWeeklyReport { get; set; }
 
-        [JsonProperty ("store_start_and_stop_time")]
+        [JsonProperty("store_start_and_stop_time")]
         public bool StoreStartAndStopTime { get; set; }
 
-        [JsonProperty ("created_with")]
+        [JsonProperty("created_with")]
         public string CreatedWith { get; set; }
 
-        [JsonProperty ("default_wid")]
+        [JsonProperty("default_wid")]
         public long DefaultWorkspaceRemoteId { get; set; }
 
-        [JsonProperty ("duration_format")]
+        [JsonProperty("duration_format")]
         public DurationFormat DurationFormat { get; set; }
 
-        [JsonProperty ("obm")]
+        [JsonProperty("obm")]
         public OBMJson OBM { get; set; }
     }
 
@@ -68,23 +68,24 @@ namespace Toggl.Phoebe.Data.Json
     {
         public class Options
         {
-            [JsonProperty ("question")]
+            [JsonProperty("question")]
             public int Question { get; set; }
 
-            [JsonProperty ("variants")]
+            [JsonProperty("variants")]
             public string[] Variants { get; set; }
         }
 
-        [JsonProperty ("comments")]
+        [JsonProperty("comments")]
         public string Comments { get; set; }
 
-        [JsonProperty ("closing_options")]
+        [JsonProperty("closing_options")]
         public Options ClosingOptions { get; set; }
 
-        public CloseAccountInfo ()
+        public CloseAccountInfo()
         {
             Comments = string.Empty;
-            ClosingOptions = new Options () {
+            ClosingOptions = new Options()
+            {
                 Question = 0,
                 Variants = new string[0]
             };

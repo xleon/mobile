@@ -19,63 +19,73 @@ namespace Toggl.Joey.UI.Adapters
 
         public int SelectedClientIndex { get; set; }
 
-        public ClientsAdapter (IDataView<ClientData> view) : base (view)
+        public ClientsAdapter(IDataView<ClientData> view) : base(view)
         {
         }
 
-        public override long GetItemId (int position)
+        public override long GetItemId(int position)
         {
-            if (!DataView.IsLoading && position == DataView.Count) {
+            if (!DataView.IsLoading && position == DataView.Count)
+            {
                 return CreateClientId;
             }
-            return base.GetItemId (position);
+            return base.GetItemId(position);
         }
 
         public override int ViewTypeCount
         {
-            get {
+            get
+            {
                 return base.ViewTypeCount + 1;
             }
         }
 
-        public override int GetItemViewType (int position)
+        public override int GetItemViewType(int position)
         {
-            if (GetItemId (position) == CreateClientId) {
+            if (GetItemId(position) == CreateClientId)
+            {
                 return ViewTypeCreateClient;
             }
-            return base.GetItemViewType (position);
+            return base.GetItemViewType(position);
         }
 
         public override int Count
         {
-            get {
+            get
+            {
                 var count = base.Count;
-                if (!DataView.IsLoading) {
+                if (!DataView.IsLoading)
+                {
                     count += 1;
                 }
                 return count;
             }
         }
 
-        protected override View GetModelView (int position, View convertView, ViewGroup parent)
+        protected override View GetModelView(int position, View convertView, ViewGroup parent)
         {
             View view = convertView;
 
-            var viewType = GetItemViewType (position);
-            if (viewType == ViewTypeCreateClient) {
-                if (view == null) {
-                    view = LayoutInflater.FromContext (parent.Context).Inflate (
+            var viewType = GetItemViewType(position);
+            if (viewType == ViewTypeCreateClient)
+            {
+                if (view == null)
+                {
+                    view = LayoutInflater.FromContext(parent.Context).Inflate(
                                Resource.Layout.ClientListCreateItem, parent, false);
-                    view.FindViewById<TextView> (Resource.Id.CreateLabelTextView).SetFont (Font.Roboto);
+                    view.FindViewById<TextView> (Resource.Id.CreateLabelTextView).SetFont(Font.Roboto);
                 }
-            } else {
-                if (view == null) {
-                    view = LayoutInflater.FromContext (parent.Context).Inflate (
+            }
+            else
+            {
+                if (view == null)
+                {
+                    view = LayoutInflater.FromContext(parent.Context).Inflate(
                                Resource.Layout.ClientListClientItem, parent, false);
-                    view.Tag = new ClientListItemHolder (view);
+                    view.Tag = new ClientListItemHolder(view);
                 }
                 var holder = (ClientListItemHolder)view.Tag;
-                holder.Bind ((ClientModel)GetEntry (position));
+                holder.Bind((ClientModel)GetEntry(position));
             }
 
             return view;
@@ -87,23 +97,25 @@ namespace Toggl.Joey.UI.Adapters
         {
             public TextView ClientTextView { get; private set; }
 
-            public ClientListItemHolder (View root) : base (root)
+            public ClientListItemHolder(View root) : base(root)
             {
-                ClientTextView = root.FindViewById<TextView> (Resource.Id.ClientTextView).SetFont (Font.Roboto);
+                ClientTextView = root.FindViewById<TextView> (Resource.Id.ClientTextView).SetFont(Font.Roboto);
             }
 
-            protected override void ResetTrackedObservables ()
+            protected override void ResetTrackedObservables()
             {
             }
 
-            protected override void Rebind ()
+            protected override void Rebind()
             {
                 // Protect against Java side being GCed
-                if (Handle == IntPtr.Zero) {
+                if (Handle == IntPtr.Zero)
+                {
                     return;
                 }
 
-                if (DataSource == null) {
+                if (DataSource == null)
+                {
                     return;
                 }
 

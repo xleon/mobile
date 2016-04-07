@@ -12,22 +12,22 @@ namespace Toggl.Joey.UI.Views
 {
     public class ColorPickerRecyclerView : FrameLayout
     {
-        public ColorPickerRecyclerView (Context context) :
-        base (context)
+        public ColorPickerRecyclerView(Context context) :
+        base(context)
         {
-            Initialize ();
+            Initialize();
         }
 
-        public ColorPickerRecyclerView (Context context, IAttributeSet attrs) :
-        base (context, attrs)
+        public ColorPickerRecyclerView(Context context, IAttributeSet attrs) :
+        base(context, attrs)
         {
-            Initialize ();
+            Initialize();
         }
 
-        public ColorPickerRecyclerView (Context context, IAttributeSet attrs, int defStyle) :
-        base (context, attrs, defStyle)
+        public ColorPickerRecyclerView(Context context, IAttributeSet attrs, int defStyle) :
+        base(context, attrs, defStyle)
         {
-            Initialize ();
+            Initialize();
         }
 
         public RecyclerView Recycler { get; private set; }
@@ -37,18 +37,18 @@ namespace Toggl.Joey.UI.Views
         public static int ColumnsCount = 5;
         public static int RowsCount = 5;
 
-        private void Initialize ()
+        private void Initialize()
         {
-            var inflater = (LayoutInflater)Context.GetSystemService (Context.LayoutInflaterService);
-            inflater.Inflate (Resource.Layout.ColorPicker, this);
+            var inflater = (LayoutInflater)Context.GetSystemService(Context.LayoutInflaterService);
+            inflater.Inflate(Resource.Layout.ColorPicker, this);
 
             Recycler = FindViewById<RecyclerView> (Resource.Id.ColorPickerRecyclerView);
 
-            LayoutManager = new GridLayoutManager (Context, ColumnsCount);
-            Recycler.SetLayoutManager (LayoutManager);
+            LayoutManager = new GridLayoutManager(Context, ColumnsCount);
+            Recycler.SetLayoutManager(LayoutManager);
 
-            Adapter = new ColorPickerAdapter ();
-            Recycler.SetAdapter (Adapter);
+            Adapter = new ColorPickerAdapter();
+            Recycler.SetAdapter(Adapter);
         }
 
         public class ColorPickerAdapter : RecyclerView.Adapter
@@ -62,37 +62,39 @@ namespace Toggl.Joey.UI.Views
                 SelectedColor = 0;
             }
 
-            public override RecyclerView.ViewHolder OnCreateViewHolder (ViewGroup parent, int viewType)
+            public override RecyclerView.ViewHolder OnCreateViewHolder(ViewGroup parent, int viewType)
             {
-                var v = LayoutInflater.From (parent.Context).Inflate (Resource.Layout.ColorPickerItem, parent, false);
-                return new ColorPickerViewHolder (v, OnClick);
+                var v = LayoutInflater.From(parent.Context).Inflate(Resource.Layout.ColorPickerItem, parent, false);
+                return new ColorPickerViewHolder(v, OnClick);
             }
 
-            public override int GetItemViewType (int position)
+            public override int GetItemViewType(int position)
             {
                 return 1;
             }
 
-            public override void OnBindViewHolder (RecyclerView.ViewHolder holder, int position)
+            public override void OnBindViewHolder(RecyclerView.ViewHolder holder, int position)
             {
                 var h = (ColorPickerViewHolder)holder;
-                h.Button.SetBackgroundColor (Color.ParseColor (ProjectData.HexColors.ElementAt (position)));
+                h.Button.SetBackgroundColor(Color.ParseColor(ProjectData.HexColors.ElementAt(position)));
                 h.Tick.Visibility = position == SelectedColor ? ViewStates.Visible : ViewStates.Invisible;
             }
 
             public override int ItemCount
             {
-                get {
-                    return ProjectData.HexColors.Take (ColumnsCount*RowsCount).Count();
+                get
+                {
+                    return ProjectData.HexColors.Take(ColumnsCount * RowsCount).Count();
                 }
             }
 
-            private void OnClick (int position)
+            private void OnClick(int position)
             {
                 SelectedColor = position;
-                NotifyDataSetChanged ();
-                if (SelectedColorChanged != null) {
-                    SelectedColorChanged (this, EventArgs.Empty);
+                NotifyDataSetChanged();
+                if (SelectedColorChanged != null)
+                {
+                    SelectedColorChanged(this, EventArgs.Empty);
                 }
             }
 
@@ -101,9 +103,9 @@ namespace Toggl.Joey.UI.Views
                 public View Button { get; private set; }
                 public ImageView Tick { get; private set; }
 
-                public ColorPickerViewHolder (View v, Action<int> listener) : base (v)
+                public ColorPickerViewHolder(View v, Action<int> listener) : base(v)
                 {
-                    v.Click += (sender, e) => listener (AdapterPosition);
+                    v.Click += (sender, e) => listener(AdapterPosition);
                     Tick = v.FindViewById<ImageView> (Resource.Id.ColorPickerViewTick);
                     Tick.BringToFront();
                     Button = v.FindViewById<View> (Resource.Id.ColorPickerViewButton);

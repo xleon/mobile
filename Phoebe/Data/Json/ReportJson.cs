@@ -6,19 +6,19 @@ namespace Toggl.Phoebe.Data.Json
 {
     public class ReportJson
     {
-        [JsonProperty ("total_grand")]
+        [JsonProperty("total_grand")]
         public long TotalGrand { get; set; }
 
-        [JsonProperty ("total_billable")]
+        [JsonProperty("total_billable")]
         public long TotalBillable { get; set; }
 
-        [JsonProperty ("total_currencies")]
+        [JsonProperty("total_currencies")]
         public List<ReportCurrencyJson> TotalCurrencies { get; set; }
 
-        [JsonProperty ("activity")]
+        [JsonProperty("activity")]
         public ReportActivityJson ActivityContainer { get; set; }
 
-        [JsonProperty ("data")]
+        [JsonProperty("data")]
         public List<ReportProjectJson> Projects { get; set; }
     }
 
@@ -26,31 +26,31 @@ namespace Toggl.Phoebe.Data.Json
 
     public class ReportProjectJson
     {
-        [JsonProperty ("id")]
+        [JsonProperty("id")]
         public string Id { get; set; }
 
-        [JsonProperty ("title")]
+        [JsonProperty("title")]
         public ReportProjectDescJson Description { get; set; }
 
-        [JsonProperty ("time")]
+        [JsonProperty("time")]
         public long TotalTime { get; set; }
 
-        [JsonProperty ("total_currencies")]
+        [JsonProperty("total_currencies")]
         public List<ReportCurrencyJson> Currencies { get; set; }
 
-        [JsonProperty ("items")]
+        [JsonProperty("items")]
         public List<ReportTimeEntryJson> Items { get; set; }
     }
 
     public class ReportProjectDescJson
     {
-        [JsonProperty ("project")]
+        [JsonProperty("project")]
         public string Project { get; set; }
 
-        [JsonProperty ("client")]
+        [JsonProperty("client")]
         public string Client { get; set; }
 
-        [JsonProperty ("color")]
+        [JsonProperty("color")]
         public string Color { get; set; }
     }
 
@@ -60,28 +60,28 @@ namespace Toggl.Phoebe.Data.Json
 
     public class ReportTimeEntryJson
     {
-        [JsonProperty ("ids")]
+        [JsonProperty("ids")]
         public string Ids { get; set; }
 
-        [JsonProperty ("title")]
+        [JsonProperty("title")]
         public ReportTimeEntryDescJson Description { get; set; }
 
-        [JsonProperty ("time")]
+        [JsonProperty("time")]
         public long Time { get; set; }
 
-        [JsonProperty ("cur")]
+        [JsonProperty("cur")]
         public string Currency { get; set; }
 
-        [JsonProperty ("sum", Required = Required.AllowNull)]
+        [JsonProperty("sum", Required = Required.AllowNull)]
         public float Sum { get; set; }
 
-        [JsonProperty ("rate", Required = Required.AllowNull)]
+        [JsonProperty("rate", Required = Required.AllowNull)]
         public float Rate { get; set; }
     }
 
     public class ReportTimeEntryDescJson
     {
-        [JsonProperty ("time_entry")]
+        [JsonProperty("time_entry")]
         public string Title { get; set; }
     }
 
@@ -91,10 +91,10 @@ namespace Toggl.Phoebe.Data.Json
 
     public class ReportActivityJson : CommonJson
     {
-        [JsonProperty ("rows")]
+        [JsonProperty("rows")]
         public List<List<string>> Rows { get; set; }
 
-        [JsonProperty ("zoom_level")]
+        [JsonProperty("zoom_level")]
         public string ZoomLevel { get; set; }
     }
 
@@ -102,10 +102,10 @@ namespace Toggl.Phoebe.Data.Json
 
     public class ReportCurrencyJson
     {
-        [JsonProperty ("currency")]
+        [JsonProperty("currency")]
         public string Currency { get; set; }
 
-        [JsonProperty ("amount")]
+        [JsonProperty("amount")]
         public float Amount { get; set; }
     }
 }

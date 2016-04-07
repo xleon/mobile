@@ -4,7 +4,7 @@ using Android.OS;
 
 namespace Toggl.Joey.UI.Activities
 {
-    [Activity (
+    [Activity(
          ScreenOrientation = ScreenOrientation.Portrait,
          Name = "toggl.joey.ui.activities.SplashActivity",
          Label = "@string/EntryName",
@@ -13,10 +13,10 @@ namespace Toggl.Joey.UI.Activities
          NoHistory = true)]
     public class SplashActivity : Activity
     {
-        protected override void OnCreate (Bundle savedInstanceState)
+        protected override void OnCreate(Bundle savedInstanceState)
         {
-            base.OnCreate (savedInstanceState);
-            StartActivity (typeof (MainDrawerActivity));
+            base.OnCreate(savedInstanceState);
+            StartActivity(typeof(MainDrawerActivity));
         }
     }
 }

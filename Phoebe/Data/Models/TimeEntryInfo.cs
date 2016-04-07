@@ -14,7 +14,7 @@ namespace Toggl.Phoebe.Data.Models
         public IReadOnlyList<ITagData> Tags { get; private set; }
         public int Color { get; private set; }
 
-        public TimeEntryInfo (
+        public TimeEntryInfo(
             IWorkspaceData wsData,
             IProjectData projectData,
             IClientData clientData,
@@ -30,7 +30,7 @@ namespace Toggl.Phoebe.Data.Models
             Color = color;
         }
 
-        public TimeEntryInfo With (
+        public TimeEntryInfo With(
             IWorkspaceData wsData = null,
             IProjectData projectData = null,
             IClientData clientData = null,
@@ -38,7 +38,7 @@ namespace Toggl.Phoebe.Data.Models
             IReadOnlyList<ITagData> tags = null,
             int? color = null)
         {
-            return new TimeEntryInfo (
+            return new TimeEntryInfo(
                        wsData ?? this.WorkspaceData,
                        projectData ?? this.ProjectData,
                        clientData ?? this.ClientData,

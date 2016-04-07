@@ -17,12 +17,13 @@ namespace Toggl.Phoebe.Tests.Data
         [Test]
         public void TestPublicInstancePropertiesEqual()
         {
-            var id = Guid.NewGuid ();
+            var id = Guid.NewGuid();
             var at = DateTime.UtcNow;
-            var tagId1 = Guid.NewGuid ();
-            var tagId2 = Guid.NewGuid ();
+            var tagId1 = Guid.NewGuid();
+            var tagId2 = Guid.NewGuid();
 
-            var te1 = TimeEntryData.Create (x => {
+            var te1 = TimeEntryData.Create(x =>
+            {
                 x.Id = id;
                 x.ModifiedAt = at;
                 x.Description = "Test";
@@ -30,7 +31,8 @@ namespace Toggl.Phoebe.Tests.Data
                 x.TagIds = new List<Guid> { tagId1, tagId2 };
             });
 
-            var te2 = TimeEntryData.Create (x => {
+            var te2 = TimeEntryData.Create(x =>
+            {
                 x.Id = id;
                 x.ModifiedAt = at;
                 x.Description = "Test";
@@ -38,7 +40,8 @@ namespace Toggl.Phoebe.Tests.Data
                 x.TagIds = new List<Guid> { tagId1, tagId2 };
             });
 
-            var te3 = TimeEntryData.Create (x => {
+            var te3 = TimeEntryData.Create(x =>
+            {
                 x.Id = id;
                 x.ModifiedAt = at;
                 x.Description = "TEST";
@@ -46,15 +49,17 @@ namespace Toggl.Phoebe.Tests.Data
                 x.TagIds = new List<Guid> { tagId1, tagId2 };
             });
 
-            var te4 = TimeEntryData.Create (x => {
+            var te4 = TimeEntryData.Create(x =>
+            {
                 x.Id = id;
                 x.ModifiedAt = at;
                 x.Description = "Test";
-                x.DeletedAt = DateTime.Today.AddDays (1);
+                x.DeletedAt = DateTime.Today.AddDays(1);
                 x.TagIds = new List<Guid> { tagId1, tagId2 };
             });
 
-            var te5 = TimeEntryData.Create (x => {
+            var te5 = TimeEntryData.Create(x =>
+            {
                 x.Id = id;
                 x.ModifiedAt = at;
                 x.Description = "Test";
@@ -62,13 +67,13 @@ namespace Toggl.Phoebe.Tests.Data
                 x.TagIds = new List<Guid> { tagId1 };
             });
 
-            Assert.That (te1.PublicInstancePropertiesEqual (te2), Is.True);
-            Assert.That (te1.PublicInstancePropertiesEqual (te3), Is.False);
-            Assert.That (te1.PublicInstancePropertiesEqual (te3, "Description"), Is.True);
-            Assert.That (te1.PublicInstancePropertiesEqual (te4), Is.False);
-            Assert.That (te1.PublicInstancePropertiesEqual (te4, "DeletedAt"), Is.True);
-            Assert.That (te1.PublicInstancePropertiesEqual (te5), Is.False);
-            Assert.That (te1.PublicInstancePropertiesEqual (te5, "TagIds"), Is.True);
+            Assert.That(te1.PublicInstancePropertiesEqual(te2), Is.True);
+            Assert.That(te1.PublicInstancePropertiesEqual(te3), Is.False);
+            Assert.That(te1.PublicInstancePropertiesEqual(te3, "Description"), Is.True);
+            Assert.That(te1.PublicInstancePropertiesEqual(te4), Is.False);
+            Assert.That(te1.PublicInstancePropertiesEqual(te4, "DeletedAt"), Is.True);
+            Assert.That(te1.PublicInstancePropertiesEqual(te5), Is.False);
+            Assert.That(te1.PublicInstancePropertiesEqual(te5, "TagIds"), Is.True);
         }
     }
 }

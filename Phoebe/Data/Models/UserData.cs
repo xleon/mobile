@@ -3,7 +3,8 @@ using SQLite.Net.Attributes;
 
 namespace Toggl.Phoebe.Data.Models
 {
-    public enum TrackingMode {
+    public enum TrackingMode
+    {
         Continue,
         StartNew
     }
@@ -29,26 +30,26 @@ namespace Toggl.Phoebe.Data.Models
         Guid DefaultWorkspaceId { get; }
         string GoogleAccessToken { get; }
         string ApiToken { get; }
-        IUserData With (Action<UserData> transform);
+        IUserData With(Action<UserData> transform);
     }
 
-    [Table ("UserModel")]
+    [Table("UserModel")]
     public class UserData : CommonData, IUserData
     {
-        public static IUserData Create (Action<UserData> transform = null)
+        public static IUserData Create(Action<UserData> transform = null)
         {
-            return CommonData.Create (transform);
+            return CommonData.Create(transform);
         }
 
         /// <summary>
         /// ATTENTION: This constructor should only be used by SQL and JSON serializers
         /// To create new objects, use the static Create method instead
         /// </summary>
-        public UserData ()
+        public UserData()
         {
         }
 
-        UserData (UserData other) : base (other)
+        UserData(UserData other) : base(other)
         {
             Name = other.Name;
             Email = other.Email;
@@ -71,14 +72,14 @@ namespace Toggl.Phoebe.Data.Models
             ApiToken = other.ApiToken;
         }
 
-        public override object Clone ()
+        public override object Clone()
         {
-            return new UserData (this);
+            return new UserData(this);
         }
 
-        public IUserData With (Action<UserData> transform)
+        public IUserData With(Action<UserData> transform)
         {
-            return base.With (transform);
+            return base.With(transform);
         }
 
         public string Name { get; set; }

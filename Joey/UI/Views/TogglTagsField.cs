@@ -17,14 +17,14 @@ namespace Toggl.Joey.UI.Views
 
         private List<string> tagNames = new List<string> ();
 
-        public TogglTagsField (Context context) : base (context)
+        public TogglTagsField(Context context) : base(context)
         {
-            Initialize ();
+            Initialize();
         }
 
-        public TogglTagsField (Context context, IAttributeSet attrs) : base (context, attrs)
+        public TogglTagsField(Context context, IAttributeSet attrs) : base(context, attrs)
         {
-            Initialize ();
+            Initialize();
         }
 
         public event EventHandler OnPressTagField;
@@ -35,24 +35,28 @@ namespace Toggl.Joey.UI.Views
 
         public List<string> TagNames
         {
-            get {
+            get
+            {
                 return tagNames;
-            } set {
-                tagNames.Clear ();
-                tagNames.AddRange (value);
-                DrawTags ();
+            }
+            set
+            {
+                tagNames.Clear();
+                tagNames.AddRange(value);
+                DrawTags();
             }
         }
 
         private void Initialize()
         {
-            var inflater = (LayoutInflater)Context.GetSystemService (Context.LayoutInflaterService);
-            inflater.Inflate (Resource.Layout.TogglTagsField, this);
+            var inflater = (LayoutInflater)Context.GetSystemService(Context.LayoutInflaterService);
+            inflater.Inflate(Resource.Layout.TogglTagsField, this);
 
             EditText = FindViewById<EditText> (Resource.Id.TogglTagsFieldEditText);
             TextView = FindViewById<TextView> (Resource.Id.TogglTagsFieldTitle);
 
-            EditText.Touch += (sender, e) => {
+            EditText.Touch += (sender, e) =>
+            {
                 e.Handled = false;
                 TextView.Pressed = e.Event.Action != MotionEventActions.Up;
             };
@@ -64,71 +68,78 @@ namespace Toggl.Joey.UI.Views
             // tags defined when the view was inflated
             // are drawn. In general, the xxxxFields
             // give problems.
-            EditText.ViewAttachedToWindow += (sender, e) => {
-                if (tagNames.Count > 0) {
-                    DrawTags ();
+            EditText.ViewAttachedToWindow += (sender, e) =>
+            {
+                if (tagNames.Count > 0)
+                {
+                    DrawTags();
                 }
             };
         }
 
-        private void OnClick (object obj, EventArgs args)
+        private void OnClick(object obj, EventArgs args)
         {
             EventHandler handler = OnPressTagField;
-            if (handler != null) {
-                handler (this, args);
+            if (handler != null)
+            {
+                handler(this, args);
             }
         }
 
-        private void DrawTags ()
+        private void DrawTags()
         {
             String tagName;
             var tagNameList = new List<String> ();
 
-            if (tagNames.Count == 0) {
+            if (tagNames.Count == 0)
+            {
                 EditText.Text = String.Empty;
                 return;
             }
 
-            foreach (var tagText in tagNames) {
-                tagName = tagText.Length > TagMaxLength ? tagText.Substring (0, TagMaxLength - 1).Trim () + "…" : tagText;
-                if (tagText.Length > 0) {
-                    tagNameList.Add (tagName);
+            foreach (var tagText in tagNames)
+            {
+                tagName = tagText.Length > TagMaxLength ? tagText.Substring(0, TagMaxLength - 1).Trim() + "…" : tagText;
+                if (tagText.Length > 0)
+                {
+                    tagNameList.Add(tagName);
                 }
             }
             // The extra whitespace prevents the ImageSpans and the text they are over
             // to break at different positions, leaving zero linespacing on edge cases.
-            var tags = new SpannableStringBuilder (String.Join (" ", tagNameList) + " ");
+            var tags = new SpannableStringBuilder(String.Join(" ", tagNameList) + " ");
 
             int x = 0;
-            foreach (String tagText in tagNameList) {
-                tags.SetSpan (new ImageSpan (MakeTagChip (tagText)), x, x + tagText.Length, SpanTypes.ExclusiveExclusive);
+            foreach (String tagText in tagNameList)
+            {
+                tags.SetSpan(new ImageSpan(MakeTagChip(tagText)), x, x + tagText.Length, SpanTypes.ExclusiveExclusive);
                 x = x + tagText.Length + 1;
             }
 
-            EditText.SetText (tags, EditText.BufferType.Spannable);
+            EditText.SetText(tags, EditText.BufferType.Spannable);
         }
 
-        private BitmapDrawable MakeTagChip (String tagText)
+        private BitmapDrawable MakeTagChip(String tagText)
         {
-            var Inflater = LayoutInflater.FromContext (Context);
-            var tagChipView = (TextView)Inflater.Inflate (Resource.Layout.TagViewChip, this, false);
-            tagChipView.Text = tagText.ToUpper ();
-            int spec = MeasureSpec.MakeMeasureSpec (0, MeasureSpecMode.Unspecified);
-            tagChipView.Measure (spec, spec);
-            tagChipView.Layout (0, 0, tagChipView.MeasuredWidth, tagChipView.MeasuredHeight);
+            var Inflater = LayoutInflater.FromContext(Context);
+            var tagChipView = (TextView)Inflater.Inflate(Resource.Layout.TagViewChip, this, false);
+            tagChipView.Text = tagText.ToUpper();
+            int spec = MeasureSpec.MakeMeasureSpec(0, MeasureSpecMode.Unspecified);
+            tagChipView.Measure(spec, spec);
+            tagChipView.Layout(0, 0, tagChipView.MeasuredWidth, tagChipView.MeasuredHeight);
 
-            var b = Bitmap.CreateBitmap (tagChipView.Width, tagChipView.Height, Bitmap.Config.Argb8888);
+            var b = Bitmap.CreateBitmap(tagChipView.Width, tagChipView.Height, Bitmap.Config.Argb8888);
 
-            var canvas = new Canvas (b);
-            canvas.Translate (-tagChipView.ScrollX, -tagChipView.ScrollY);
-            tagChipView.Draw (canvas);
+            var canvas = new Canvas(b);
+            canvas.Translate(-tagChipView.ScrollX, -tagChipView.ScrollY);
+            tagChipView.Draw(canvas);
             tagChipView.DrawingCacheEnabled = true;
 
             var cacheBmp = tagChipView.DrawingCache;
-            var viewBmp = cacheBmp.Copy (Bitmap.Config.Argb8888, true);
-            tagChipView.DestroyDrawingCache ();
-            var bmpDrawable = new BitmapDrawable (Resources, viewBmp);
-            bmpDrawable.SetBounds (0, 0, bmpDrawable.IntrinsicWidth, bmpDrawable.IntrinsicHeight);
+            var viewBmp = cacheBmp.Copy(Bitmap.Config.Argb8888, true);
+            tagChipView.DestroyDrawingCache();
+            var bmpDrawable = new BitmapDrawable(Resources, viewBmp);
+            bmpDrawable.SetBounds(0, 0, bmpDrawable.IntrinsicWidth, bmpDrawable.IntrinsicHeight);
             return bmpDrawable;
         }
     }

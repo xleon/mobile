@@ -12,55 +12,61 @@ namespace Toggl.Ross.DataSources
         protected readonly ObservableCollection<TData> collection;
         protected UITableView TableView  { get { return tableView; }}
 
-        protected PlainObservableCollectionViewSource (UITableView tableView, ObservableCollection<TData> collection)
+        protected PlainObservableCollectionViewSource(UITableView tableView, ObservableCollection<TData> collection)
         {
             this.tableView = tableView;
             this.collection = collection;
             collection.CollectionChanged += OnCollectionChange;
         }
 
-        protected override void Dispose (bool disposing)
+        protected override void Dispose(bool disposing)
         {
-            if (disposing) {
+            if (disposing)
+            {
                 collection.CollectionChanged -= OnCollectionChange;
             }
-            base.Dispose (disposing);
+            base.Dispose(disposing);
         }
 
-        public override nint RowsInSection (UITableView tableview, nint section)
+        public override nint RowsInSection(UITableView tableview, nint section)
         {
             return collection.Count;
         }
 
-        public override nint NumberOfSections (UITableView tableView)
+        public override nint NumberOfSections(UITableView tableView)
         {
             return 1;
         }
 
-        private void OnCollectionChange (object sender, NotifyCollectionChangedEventArgs e)
+        private void OnCollectionChange(object sender, NotifyCollectionChangedEventArgs e)
         {
             var collectionData = (ObservableCollection<TData>) sender;
 
-            if (e.Action == NotifyCollectionChangedAction.Reset) {
+            if (e.Action == NotifyCollectionChangedAction.Reset)
+            {
                 TableView.ReloadData();
             }
 
-            if (e.Action == NotifyCollectionChangedAction.Add) {
-                TableView.InsertRows (new [] {NSIndexPath.FromRowSection (e.NewStartingIndex, 0)}, UITableViewRowAnimation.Automatic);
+            if (e.Action == NotifyCollectionChangedAction.Add)
+            {
+                TableView.InsertRows(new [] {NSIndexPath.FromRowSection(e.NewStartingIndex, 0)}, UITableViewRowAnimation.Automatic);
             }
 
-            if (e.Action == NotifyCollectionChangedAction.Remove) {
-                TableView.DeleteRows (new [] {NSIndexPath.FromRowSection (e.OldStartingIndex, 0)}, UITableViewRowAnimation.Automatic);
+            if (e.Action == NotifyCollectionChangedAction.Remove)
+            {
+                TableView.DeleteRows(new [] {NSIndexPath.FromRowSection(e.OldStartingIndex, 0)}, UITableViewRowAnimation.Automatic);
             }
 
-            if (e.Action == NotifyCollectionChangedAction.Replace) {
-                TableView.ReloadRows (new [] {NSIndexPath.FromRowSection (e.NewStartingIndex, 0)}, UITableViewRowAnimation.None);
+            if (e.Action == NotifyCollectionChangedAction.Replace)
+            {
+                TableView.ReloadRows(new [] {NSIndexPath.FromRowSection(e.NewStartingIndex, 0)}, UITableViewRowAnimation.None);
             }
 
-            if (e.Action == NotifyCollectionChangedAction.Move) {
-                var fromIndexPath = NSIndexPath.FromRowSection (e.OldStartingIndex, 0);
-                var toIndexPath = NSIndexPath.FromRowSection (e.NewStartingIndex, 0);
-                TableView.MoveRow (fromIndexPath, toIndexPath);
+            if (e.Action == NotifyCollectionChangedAction.Move)
+            {
+                var fromIndexPath = NSIndexPath.FromRowSection(e.OldStartingIndex, 0);
+                var toIndexPath = NSIndexPath.FromRowSection(e.NewStartingIndex, 0);
+                TableView.MoveRow(fromIndexPath, toIndexPath);
             }
         }
 

@@ -19,57 +19,60 @@ namespace Toggl.Joey.UI.Views
         private bool isDragging;
         private Animator scrollAnim;
 
-        public SnappyLayout (Context ctx) : base (ctx)
+        public SnappyLayout(Context ctx) : base(ctx)
         {
-            Initialize ();
+            Initialize();
         }
 
-        public SnappyLayout (IntPtr javaRef, JniHandleOwnership xfer) : base (javaRef, xfer)
+        public SnappyLayout(IntPtr javaRef, JniHandleOwnership xfer) : base(javaRef, xfer)
         {
-            Initialize ();
+            Initialize();
         }
 
-        public SnappyLayout (Context ctx, IAttributeSet attrs) : base (ctx, attrs)
+        public SnappyLayout(Context ctx, IAttributeSet attrs) : base(ctx, attrs)
         {
-            Initialize ();
+            Initialize();
         }
 
-        public SnappyLayout (Context ctx, IAttributeSet attrs, int defStyle) : base (ctx, attrs, defStyle)
+        public SnappyLayout(Context ctx, IAttributeSet attrs, int defStyle) : base(ctx, attrs, defStyle)
         {
-            Initialize ();
+            Initialize();
         }
 
         private void Initialize()
         {
             var dm = Resources.DisplayMetrics;
 
-            scrollThreshold = TypedValue.ApplyDimension (ComplexUnitType.Dip, 75, dm);
+            scrollThreshold = TypedValue.ApplyDimension(ComplexUnitType.Dip, 75, dm);
 
-            var conf = ViewConfiguration.Get (Context);
+            var conf = ViewConfiguration.Get(Context);
             touchSlop = conf.ScaledTouchSlop;
         }
 
-        private void ForEachChild (Action<View> act)
+        private void ForEachChild(Action<View> act)
         {
             var count = ChildCount;
-            for (var i = 0; i < count; i++) {
-                act (GetChildAt (i));
+            for (var i = 0; i < count; i++)
+            {
+                act(GetChildAt(i));
             }
         }
 
-        private void ForEachChild (Action<int, View> act)
+        private void ForEachChild(Action<int, View> act)
         {
             var count = ChildCount;
-            for (var i = 0; i < count; i++) {
-                act (i, GetChildAt (i));
+            for (var i = 0; i < count; i++)
+            {
+                act(i, GetChildAt(i));
             }
         }
 
-        private void UpdateChildrenTranslationY ()
+        private void UpdateChildrenTranslationY()
         {
-            translateY = Math.Min (0, Math.Max (maxTranslateY, translateY));
+            translateY = Math.Min(0, Math.Max(maxTranslateY, translateY));
 
-            ForEachChild (child => {
+            ForEachChild(child =>
+            {
                 child.TranslationY = translateY;
             });
         }
@@ -77,29 +80,33 @@ namespace Toggl.Joey.UI.Views
         public int ActiveChild
         {
             get { return activeChild; }
-            set {
-                if (value == activeChild) {
+            set
+            {
+                if (value == activeChild)
+                {
                     return;
                 }
 
-                SetActiveChild (value);
+                SetActiveChild(value);
 
-                CancelAnimations ();
-                translateY = -GetChildAt (activeChild).Top;
-                UpdateChildrenTranslationY ();
+                CancelAnimations();
+                translateY = -GetChildAt(activeChild).Top;
+                UpdateChildrenTranslationY();
             }
         }
 
-        private void SetActiveChild (int value)
+        private void SetActiveChild(int value)
         {
-            if (value >= ChildCount) {
-                throw new ArgumentOutOfRangeException ("value", "Invalid child index.");
+            if (value >= ChildCount)
+            {
+                throw new ArgumentOutOfRangeException("value", "Invalid child index.");
             }
 
             activeChild = value;
 
-            if (ActiveChildChanged != null) {
-                ActiveChildChanged (this, EventArgs.Empty);
+            if (ActiveChildChanged != null)
+            {
+                ActiveChildChanged(this, EventArgs.Empty);
             }
         }
 
@@ -108,116 +115,139 @@ namespace Toggl.Joey.UI.Views
         private void CancelAnimations()
         {
             // Stop any current animations
-            if (scrollAnim != null) {
-                scrollAnim.Cancel ();
+            if (scrollAnim != null)
+            {
+                scrollAnim.Cancel();
                 scrollAnim = null;
             }
         }
 
-        public override bool OnInterceptTouchEvent (MotionEvent ev)
+        public override bool OnInterceptTouchEvent(MotionEvent ev)
         {
-            switch (ev.Action) {
-            case MotionEventActions.Down:
-                touchX = ev.RawX;
-                touchY = ev.RawY;
-                CancelAnimations ();
-                break;
-            case MotionEventActions.Cancel:
-            case MotionEventActions.Up:
-                EndTouch ();
-                break;
-            case MotionEventActions.Move:
-                float dx = Math.Abs (ev.RawX - touchX);
-                float dy = Math.Abs (ev.RawY - touchY);
-
-                if (dy > dx && dy > touchSlop) {
-                    isDragging = true;
+            switch (ev.Action)
+            {
+                case MotionEventActions.Down:
+                    touchX = ev.RawX;
                     touchY = ev.RawY;
-                    return true;
-                }
-                break;
+                    CancelAnimations();
+                    break;
+                case MotionEventActions.Cancel:
+                case MotionEventActions.Up:
+                    EndTouch();
+                    break;
+                case MotionEventActions.Move:
+                    float dx = Math.Abs(ev.RawX - touchX);
+                    float dy = Math.Abs(ev.RawY - touchY);
+
+                    if (dy > dx && dy > touchSlop)
+                    {
+                        isDragging = true;
+                        touchY = ev.RawY;
+                        return true;
+                    }
+                    break;
             }
 
 
             return false;
         }
 
-        public override bool OnTouchEvent (MotionEvent ev)
+        public override bool OnTouchEvent(MotionEvent ev)
         {
-            switch (ev.Action) {
-            case MotionEventActions.Down:
-                return true;
-            case MotionEventActions.Move:
-                if (isDragging) {
-                    var dy = ev.RawY - touchY;
-                    touchY = ev.RawY;
-
-                    translateY += dy;
-                    UpdateChildrenTranslationY ();
-                } else {
-                    float dx = Math.Abs (ev.RawX - touchX);
-                    float dy = Math.Abs (ev.RawY - touchY);
-
-                    if (dy > dx && dy > touchSlop) {
-                        isDragging = true;
+            switch (ev.Action)
+            {
+                case MotionEventActions.Down:
+                    return true;
+                case MotionEventActions.Move:
+                    if (isDragging)
+                    {
+                        var dy = ev.RawY - touchY;
                         touchY = ev.RawY;
-                        return true;
+
+                        translateY += dy;
+                        UpdateChildrenTranslationY();
                     }
-                }
-                return true;
-            case MotionEventActions.Up:
-            case MotionEventActions.Cancel:
-                EndTouch ();
-                return true;
+                    else
+                    {
+                        float dx = Math.Abs(ev.RawX - touchX);
+                        float dy = Math.Abs(ev.RawY - touchY);
+
+                        if (dy > dx && dy > touchSlop)
+                        {
+                            isDragging = true;
+                            touchY = ev.RawY;
+                            return true;
+                        }
+                    }
+                    return true;
+                case MotionEventActions.Up:
+                case MotionEventActions.Cancel:
+                    EndTouch();
+                    return true;
             }
 
-            return base.OnTouchEvent (ev);
+            return base.OnTouchEvent(ev);
         }
 
         private void EndTouch()
         {
             isDragging = false;
 
-            if (ChildCount == 0) {
+            if (ChildCount == 0)
+            {
                 translateY = 0;
-            } else {
+            }
+            else
+            {
                 // Determine new ActiveChild
-                var active = GetChildAt (ActiveChild);
+                var active = GetChildAt(ActiveChild);
                 var offset = -translateY - active.Top;
 
-                if (offset < 0 && ActiveChild > 0) {
+                if (offset < 0 && ActiveChild > 0)
+                {
                     // Scroll to one of the previous children
-                    var previous = GetChildAt (ActiveChild - 1);
+                    var previous = GetChildAt(ActiveChild - 1);
                     // Adjust the scroll threshold to account for children smaller than that
-                    var threshold = Math.Min (previous.Height / 2f, scrollThreshold);
+                    var threshold = Math.Min(previous.Height / 2f, scrollThreshold);
 
-                    if (-offset > threshold) {
+                    if (-offset > threshold)
+                    {
                         // Determine which child is the new active one
-                        ForEachChild ((i, child) => {
+                        ForEachChild((i, child) =>
+                        {
                             var y = -translateY;
-                            if (child.Top <= y && y <= child.Bottom) {
-                                SetActiveChild (i);
+                            if (child.Top <= y && y <= child.Bottom)
+                            {
+                                SetActiveChild(i);
                                 active = child;
                             }
                         });
                     }
 
-                } else if (offset > 0 && ActiveChild + 1 < ChildCount) {
+                }
+                else if (offset > 0 && ActiveChild + 1 < ChildCount)
+                {
                     // Scroll to one of the following children
                     // Adjust the scroll threshold to account for children smaller than that
-                    var threshold = Math.Min (active.Height / 2f, scrollThreshold);
+                    var threshold = Math.Min(active.Height / 2f, scrollThreshold);
 
-                    if (offset > threshold) {
-                        if (-translateY <= active.Bottom) {
+                    if (offset > threshold)
+                    {
+                        if (-translateY <= active.Bottom)
+                        {
                             // Just the next child
-                            SetActiveChild (ActiveChild + 1);
-                            active = GetChildAt (ActiveChild);
-                        } else {
+                            SetActiveChild(ActiveChild + 1);
+                            active = GetChildAt(ActiveChild);
+                        }
+                        else
+                        {
                             // Scroll many children at once
-                            ForEachChild ((i, child) => {
+                            ForEachChild((i, child) =>
+                            {
                                 var y = -translateY;
-                                if (child.Top <= y && y <= child.Bottom) {
-                                    SetActiveChild (i);
+                                if (child.Top <= y && y <= child.Bottom)
+                                {
+                                    SetActiveChild(i);
                                     active = child;
                                 }
                             });
@@ -226,39 +256,41 @@ namespace Toggl.Joey.UI.Views
                 }
 
                 // Scroll to active
-                var anim = ValueAnimator.OfFloat (translateY, -active.Top);
+                var anim = ValueAnimator.OfFloat(translateY, -active.Top);
                 anim.Update += OnScrollAnimationUpdate;
-                anim.SetDuration (250);
-                anim.Start ();
+                anim.SetDuration(250);
+                anim.Start();
                 scrollAnim = anim;
 
-                UpdateChildrenTranslationY ();
+                UpdateChildrenTranslationY();
             }
         }
 
-        private void OnScrollAnimationUpdate (object sender, ValueAnimator.AnimatorUpdateEventArgs e)
+        private void OnScrollAnimationUpdate(object sender, ValueAnimator.AnimatorUpdateEventArgs e)
         {
             translateY = (float)e.Animation.AnimatedValue;
-            UpdateChildrenTranslationY ();
+            UpdateChildrenTranslationY();
         }
 
-        protected override void OnMeasure (int widthMeasureSpec, int heightMeasureSpec)
+        protected override void OnMeasure(int widthMeasureSpec, int heightMeasureSpec)
         {
-            var widthSize = MeasureSpec.GetSize (widthMeasureSpec);
-            var heightSize = MeasureSpec.GetSize (heightMeasureSpec);
+            var widthSize = MeasureSpec.GetSize(widthMeasureSpec);
+            var heightSize = MeasureSpec.GetSize(heightMeasureSpec);
 
-            ForEachChild (child => {
-                MeasureChildWithMargins (child, widthMeasureSpec, 0, heightMeasureSpec, 0);
+            ForEachChild(child =>
+            {
+                MeasureChildWithMargins(child, widthMeasureSpec, 0, heightMeasureSpec, 0);
             });
 
-            SetMeasuredDimension (widthSize, heightSize);
+            SetMeasuredDimension(widthSize, heightSize);
         }
 
-        protected override void OnLayout (bool changed, int l, int t, int r, int b)
+        protected override void OnLayout(bool changed, int l, int t, int r, int b)
         {
             var currentTop = 0;
 
-            ForEachChild (child => {
+            ForEachChild(child =>
+            {
                 var childWidth = child.MeasuredWidth;
                 var childHeight = child.MeasuredHeight;
 
@@ -268,53 +300,55 @@ namespace Toggl.Joey.UI.Views
                 var bottom = currentTop + childHeight;
 
                 var lp = child.LayoutParameters as SnappyLayout.LayoutParams;
-                if (lp != null) {
+                if (lp != null)
+                {
                     left += lp.LeftMargin;
                     right += lp.LeftMargin;
                     top += lp.TopMargin;
                     bottom += lp.TopMargin;
                 }
 
-                child.Layout (left, top, right, bottom);
+                child.Layout(left, top, right, bottom);
                 maxTranslateY = -top;
                 currentTop += childHeight;
-                if (lp != null) {
+                if (lp != null)
+                {
                     currentTop += lp.TopMargin + lp.BottomMargin;
                 }
             });
         }
 
-        public override ViewGroup.LayoutParams GenerateLayoutParams (IAttributeSet attrs)
+        public override ViewGroup.LayoutParams GenerateLayoutParams(IAttributeSet attrs)
         {
-            return new SnappyLayout.LayoutParams (Context, attrs);
+            return new SnappyLayout.LayoutParams(Context, attrs);
         }
 
-        protected override ViewGroup.LayoutParams GenerateDefaultLayoutParams ()
+        protected override ViewGroup.LayoutParams GenerateDefaultLayoutParams()
         {
-            return new SnappyLayout.LayoutParams (LayoutParams.MatchParent, LayoutParams.MatchParent);
+            return new SnappyLayout.LayoutParams(LayoutParams.MatchParent, LayoutParams.MatchParent);
         }
 
-        protected override ViewGroup.LayoutParams GenerateLayoutParams (ViewGroup.LayoutParams p)
+        protected override ViewGroup.LayoutParams GenerateLayoutParams(ViewGroup.LayoutParams p)
         {
-            return new SnappyLayout.LayoutParams (p);
+            return new SnappyLayout.LayoutParams(p);
         }
 
-        protected override bool CheckLayoutParams (ViewGroup.LayoutParams p)
+        protected override bool CheckLayoutParams(ViewGroup.LayoutParams p)
         {
             return p is SnappyLayout.LayoutParams;
         }
 
         public class LayoutParams : ViewGroup.MarginLayoutParams
         {
-            public LayoutParams (Context ctx, IAttributeSet attrs) : base (ctx, attrs)
+            public LayoutParams(Context ctx, IAttributeSet attrs) : base(ctx, attrs)
             {
             }
 
-            public LayoutParams (int width, int height) : base (width, height)
+            public LayoutParams(int width, int height) : base(width, height)
             {
             }
 
-            public LayoutParams (ViewGroup.LayoutParams source) : base (source)
+            public LayoutParams(ViewGroup.LayoutParams source) : base(source)
             {
             }
         }

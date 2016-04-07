@@ -6,41 +6,44 @@ namespace Toggl.Ross.Theme
 {
     public static partial class Style
     {
-        public static void Screen (UIView v)
+        public static void Screen(UIView v)
         {
             v.BackgroundColor = Color.LightestGray;
         }
 
-        public static void NavigationBar (UINavigationBar v)
+        public static void NavigationBar(UINavigationBar v)
         {
-            var borderImage = v.GetBorderImage ();
-            if (borderImage != null) {
+            var borderImage = v.GetBorderImage();
+            if (borderImage != null)
+            {
                 borderImage.Hidden = true;
             }
         }
 
-        public static void NavLabelButton (UIBarButtonItem v)
+        public static void NavLabelButton(UIBarButtonItem v)
         {
-            v.SetTitleTextAttributes (new UITextAttributes {
-                Font = UIFont.FromName ("HelveticaNeue-Medium", 17f),
+            v.SetTitleTextAttributes(new UITextAttributes
+            {
+                Font = UIFont.FromName("HelveticaNeue-Medium", 17f),
                 TextColor = Color.Green,
             }, UIControlState.Normal);
         }
 
-        public static void DisableNavLabelButton (UIBarButtonItem v)
+        public static void DisableNavLabelButton(UIBarButtonItem v)
         {
-            v.SetTitleTextAttributes (new UITextAttributes {
-                Font = UIFont.FromName ("HelveticaNeue-Medium", 17f),
-                TextColor = Color.Green.ColorWithAlpha (0.3f),
+            v.SetTitleTextAttributes(new UITextAttributes
+            {
+                Font = UIFont.FromName("HelveticaNeue-Medium", 17f),
+                TextColor = Color.Green.ColorWithAlpha(0.3f),
             }, UIControlState.Normal);
         }
 
-        public static void TableViewHeader (UIView v)
+        public static void TableViewHeader(UIView v)
         {
             v.BackgroundColor = Color.LightestGray;
         }
 
-        public static void CellSelectedBackground (UIView v)
+        public static void CellSelectedBackground(UIView v)
         {
             v.BackgroundColor = Color.LightestGray;
         }

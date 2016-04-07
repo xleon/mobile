@@ -7,22 +7,22 @@ namespace Toggl.Ross.Theme
     {
         public static class OBMEmptyView
         {
-            public static void TitleLabel (UILabel v)
+            public static void TitleLabel(UILabel v)
             {
-                v.Font = UIFont.FromName ("HelveticaNeue-Light", 35f);
+                v.Font = UIFont.FromName("HelveticaNeue-Light", 35f);
                 v.TextAlignment = UITextAlignment.Center;
                 v.TextColor = Color.LightGray;
             }
 
-            public static void MessageLabel (UILabel v)
+            public static void MessageLabel(UILabel v)
             {
-                v.Font = UIFont.FromName ("HelveticaNeue-Light", 17f);
+                v.Font = UIFont.FromName("HelveticaNeue-Light", 17f);
                 v.Lines = 5;
                 v.TextAlignment = UITextAlignment.Center;
                 v.TextColor = Color.LightGray;
             }
 
-            public static void ArrowImageView (UIImageView v)
+            public static void ArrowImageView(UIImageView v)
             {
                 v.Image = Image.ArrowEmptyState;
             }

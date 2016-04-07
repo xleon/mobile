@@ -7,97 +7,97 @@ namespace Toggl.Ross.Theme
     {
         public static class Log
         {
-            public static void HeaderBackgroundView (UIView v)
+            public static void HeaderBackgroundView(UIView v)
             {
                 v.BackgroundColor = Color.LightestGray;
             }
 
-            public static void HeaderDateLabel (UILabel v)
+            public static void HeaderDateLabel(UILabel v)
             {
                 v.TextColor = Color.Gray;
                 v.TextAlignment = UITextAlignment.Left;
-                v.Font = UIFont.FromName ("HelveticaNeue-Medium", 14f);
+                v.Font = UIFont.FromName("HelveticaNeue-Medium", 14f);
             }
 
-            public static void HeaderDurationLabel (UILabel v)
+            public static void HeaderDurationLabel(UILabel v)
             {
                 v.TextColor = Color.Gray;
                 v.TextAlignment = UITextAlignment.Right;
-                v.Font = UIFont.FromName ("HelveticaNeue", 14f);
+                v.Font = UIFont.FromName("HelveticaNeue", 14f);
             }
 
-            public static void ReloadTableViewFooterLabel (UILabel v)
+            public static void ReloadTableViewFooterLabel(UILabel v)
             {
                 v.TextColor = Color.Gray;
                 v.TextAlignment = UITextAlignment.Center;
-                v.Font = UIFont.FromName ("HelveticaNeue-Light", 12f);
+                v.Font = UIFont.FromName("HelveticaNeue-Light", 12f);
             }
 
-            public static void ReloadTableViewFooterButton (UIButton v)
+            public static void ReloadTableViewFooterButton(UIButton v)
             {
-                v.Font = UIFont.FromName ("HelveticaNeue", 13f);
-                v.SetTitleColor (Color.DarkGray, UIControlState.Normal);
+                v.Font = UIFont.FromName("HelveticaNeue", 13f);
+                v.SetTitleColor(Color.DarkGray, UIControlState.Normal);
             }
 
-            public static void CellContentView (UIView v)
+            public static void CellContentView(UIView v)
             {
-                v.Apply (TimeEntryCell.ContentView);
+                v.Apply(TimeEntryCell.ContentView);
             }
 
-            public static void CellProjectLabel (UILabel v)
+            public static void CellProjectLabel(UILabel v)
             {
-                v.Apply (TimeEntryCell.ProjectLabel);
+                v.Apply(TimeEntryCell.ProjectLabel);
             }
 
-            public static void CellClientLabel (UILabel v)
+            public static void CellClientLabel(UILabel v)
             {
-                v.Apply (TimeEntryCell.ClientLabel);
+                v.Apply(TimeEntryCell.ClientLabel);
             }
 
-            public static void CellTaskLabel (UILabel v)
+            public static void CellTaskLabel(UILabel v)
             {
-                v.Apply (TimeEntryCell.TaskLabel);
+                v.Apply(TimeEntryCell.TaskLabel);
             }
 
-            public static void CellDescriptionLabel (UILabel v)
+            public static void CellDescriptionLabel(UILabel v)
             {
-                v.Apply (TimeEntryCell.DescriptionLabel);
+                v.Apply(TimeEntryCell.DescriptionLabel);
             }
 
-            public static void CellDurationLabel (UILabel v)
+            public static void CellDurationLabel(UILabel v)
             {
-                v.Apply (TimeEntryCell.DurationLabel);
+                v.Apply(TimeEntryCell.DurationLabel);
             }
 
-            public static void CellTaskDescriptionSeparator (UIImageView v)
+            public static void CellTaskDescriptionSeparator(UIImageView v)
             {
-                v.Apply (TimeEntryCell.TaskDescriptionSeparator);
+                v.Apply(TimeEntryCell.TaskDescriptionSeparator);
             }
 
-            public static void CellRunningIndicator (UIImageView v)
+            public static void CellRunningIndicator(UIImageView v)
             {
-                v.Apply (TimeEntryCell.RunningIndicator);
+                v.Apply(TimeEntryCell.RunningIndicator);
             }
 
-            public static void BillableAndTaggedEntry (UIImageView v)
+            public static void BillableAndTaggedEntry(UIImageView v)
             {
                 v.ContentMode = UIViewContentMode.Center;
                 v.Image = Image.IconTagBillable;
             }
 
-            public static void TaggedEntry (UIImageView v)
+            public static void TaggedEntry(UIImageView v)
             {
                 v.ContentMode = UIViewContentMode.Center;
                 v.Image = Image.IconTag;
             }
 
-            public static void BillableEntry (UIImageView v)
+            public static void BillableEntry(UIImageView v)
             {
                 v.ContentMode = UIViewContentMode.Center;
                 v.Image = Image.IconBillable;
             }
 
-            public static void PlainEntry (UIImageView v)
+            public static void PlainEntry(UIImageView v)
             {
                 v.Image = null;
             }

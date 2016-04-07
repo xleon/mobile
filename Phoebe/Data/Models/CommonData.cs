@@ -3,7 +3,8 @@ using SQLite.Net.Attributes;
 
 namespace Toggl.Phoebe.Data.Models
 {
-    public enum SyncState {
+    public enum SyncState
+    {
         /// <summary>
         /// ILLEGAL: The default state must be changed immediately after creation
         /// </summary>
@@ -25,18 +26,19 @@ namespace Toggl.Phoebe.Data.Models
     public abstract class CommonData : ICommonData
     {
         protected static T Create<T> (Action<T> transform = null, T draft = null)
-        where T : CommonData, new ()
+        where T : CommonData, new()
         {
-            var x = draft ?? new T ();
-            x.Id = Guid.NewGuid ();
+            var x = draft ?? new T();
+            x.Id = Guid.NewGuid();
             x.SyncState = SyncState.CreatePending;
-            if (transform != null) {
-                transform (x);
+            if (transform != null)
+            {
+                transform(x);
             }
             return x;
         }
 
-        protected CommonData ()
+        protected CommonData()
         {
             ModifiedAt = Time.UtcNow;
         }
@@ -46,7 +48,7 @@ namespace Toggl.Phoebe.Data.Models
         /// the data from the other object.
         /// </summary>
         /// <param name="other">Instance to copy data from.</param>
-        protected CommonData (ICommonData other)
+        protected CommonData(ICommonData other)
         {
             Id = other.Id;
             ModifiedAt = other.ModifiedAt;
@@ -55,15 +57,15 @@ namespace Toggl.Phoebe.Data.Models
             RemoteId = other.RemoteId;
         }
 
-        public abstract object Clone ();
+        public abstract object Clone();
 
         protected T With<T> (Action<T> transform)
         where T : CommonData
         {
-            var newItem = (T)Clone ();
+            var newItem = (T)Clone();
             newItem.ModifiedAt = Time.UtcNow;
             newItem.SyncState = SyncState.UpdatePending;
-            transform (newItem);
+            transform(newItem);
             return newItem;
         }
 
@@ -71,22 +73,31 @@ namespace Toggl.Phoebe.Data.Models
         /// If only one of them has DeletedAt != null, favors that one
         /// Else favors the one with the most recent DeletedAt or ModifiedAt dates
         /// </summary>
-        public int CompareTo (ICommonData other)
+        public int CompareTo(ICommonData other)
         {
-            if (other == null) {
-                throw new ArgumentNullException (nameof (other));
+            if (other == null)
+            {
+                throw new ArgumentNullException(nameof(other));
             }
 
-            if (DeletedAt != null || other.DeletedAt != null) {
-                if (other.DeletedAt == null) {
+            if (DeletedAt != null || other.DeletedAt != null)
+            {
+                if (other.DeletedAt == null)
+                {
                     return 1;
-                } else if (DeletedAt == null) {
-                    return -1;
-                } else {
-                    return DeletedAt.Value.CompareTo (other.DeletedAt);
                 }
-            } else {
-                return ModifiedAt.CompareTo (other.ModifiedAt);
+                else if (DeletedAt == null)
+                {
+                    return -1;
+                }
+                else
+                {
+                    return DeletedAt.Value.CompareTo(other.DeletedAt);
+                }
+            }
+            else
+            {
+                return ModifiedAt.CompareTo(other.ModifiedAt);
             }
         }
 

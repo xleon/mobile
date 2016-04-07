@@ -19,71 +19,72 @@ using XPlatUtils;
 
 namespace Toggl.Joey
 {
-    [Application (
+    [Application(
          Icon = "@drawable/Icon",
          Label = "@string/AppName",
          Description = "@string/AppDescription",
          Theme = "@style/Theme.Toggl.App")]
-    [MetaData ("com.google.android.gms.version",
-               Value = "@integer/google_play_services_version")]
+    [MetaData("com.google.android.gms.version",
+              Value = "@integer/google_play_services_version")]
     class AndroidApp : Application, IPlatformUtils
     {
         private bool componentsInitialized;
         private Stopwatch startTimeMeasure = Stopwatch.StartNew();
 
-        public AndroidApp ()
+        public AndroidApp()
         {
         }
 
-        public AndroidApp (IntPtr javaRef, Android.Runtime.JniHandleOwnership transfer) : base (javaRef, transfer)
+        public AndroidApp(IntPtr javaRef, Android.Runtime.JniHandleOwnership transfer) : base(javaRef, transfer)
         {
         }
 
-        public override void OnCreate ()
+        public override void OnCreate()
         {
-            base.OnCreate ();
-            RegisterComponents ();
-            InitializeStartupComponents ();
+            base.OnCreate();
+            RegisterComponents();
+            InitializeStartupComponents();
         }
 
-        private void RegisterComponents ()
+        private void RegisterComponents()
         {
             // Attach bug tracker
-            #if (!DEBUG)
-            RaygunClient.Attach (Build.RaygunApiKey);
-            #endif
+#if (!DEBUG)
+            RaygunClient.Attach(Build.RaygunApiKey);
+#endif
 
             // Register platform service.
             ServiceContainer.Register<IPlatformUtils> (this);
-            ServiceContainer.Register<ITimeProvider> (() => new DefaultTimeProvider ());
-            ServiceContainer.Register<INetworkPresence> (() => new NetworkPresence (Context, (ConnectivityManager)GetSystemService (ConnectivityService)));
+            ServiceContainer.Register<ITimeProvider> (() => new DefaultTimeProvider());
+            ServiceContainer.Register<INetworkPresence> (() => new NetworkPresence(Context, (ConnectivityManager)GetSystemService(ConnectivityService)));
 
             // Register Phoebe services.
-            Services.Register ();
+            Services.Register();
 
             // Register Joey components:
-            ServiceContainer.Register<ILogger> (() => new Logger ());
+            ServiceContainer.Register<ILogger> (() => new Logger());
             ServiceContainer.Register<Context> (this);
             ServiceContainer.Register<SyncMonitor> ();
             ServiceContainer.Register<GcmRegistrationManager> ();
             ServiceContainer.Register<AndroidNotificationManager> ();
-            ServiceContainer.Register<ILoggerClient> (() => new LogClient ());
-            var tracker = new Tracker (this);
+            ServiceContainer.Register<ILoggerClient> (() => new LogClient());
+            var tracker = new Tracker(this);
             ServiceContainer.Register<ITracker> (() => tracker);
 
             // This needs some services, like ITimeProvider, so run it at the end
-            RxChain.Init (AppState.Init ());
+            RxChain.Init(AppState.Init());
         }
 
-        private void InitializeStartupComponents ()
+        private void InitializeStartupComponents()
         {
             //ServiceContainer.Resolve<UpgradeManger> ().TryUpgrade ();
             ServiceContainer.Resolve<ILoggerClient> ();
         }
 
-        public void InitializeComponents ()
+        public void InitializeComponents()
         {
-            if (componentsInitialized) {
+            if (componentsInitialized)
+            {
                 return;
             }
 
@@ -95,23 +96,28 @@ namespace Toggl.Joey
 
         public void MarkLaunched()
         {
-            if (!startTimeMeasure.IsRunning) {
+            if (!startTimeMeasure.IsRunning)
+            {
                 return;
             }
 
-            startTimeMeasure.Stop ();
-            ServiceContainer.Resolve<ITracker> ().SendAppInitTime (startTimeMeasure.Elapsed);
+            startTimeMeasure.Stop();
+            ServiceContainer.Resolve<ITracker> ().SendAppInitTime(startTimeMeasure.Elapsed);
         }
 
-        public override void OnTrimMemory (TrimMemory level)
+        public override void OnTrimMemory(TrimMemory level)
         {
-            base.OnTrimMemory (level);
+            base.OnTrimMemory(level);
 
-            if (level <= TrimMemory.Moderate) {
-                if (level <= TrimMemory.Complete) {
-                    GC.Collect (GC.MaxGeneration);
-                } else {
-                    GC.Collect ();
+            if (level <= TrimMemory.Moderate)
+            {
+                if (level <= TrimMemory.Complete)
+                {
+                    GC.Collect(GC.MaxGeneration);
+                }
+                else
+                {
+                    GC.Collect();
                 }
             }
         }
@@ -123,7 +129,7 @@ namespace Toggl.Joey
 
         public string AppVersion
         {
-            get { return PackageManager.GetPackageInfo (PackageName, 0).VersionName; }
+            get { return PackageManager.GetPackageInfo(PackageName, 0).VersionName; }
         }
 
         // Property to match with the IPlatformUtils
@@ -135,8 +141,9 @@ namespace Toggl.Joey
 
         public ISQLitePlatform SQLiteInfo
         {
-            get {
-                return new SQLitePlatformAndroid ();
+            get
+            {
+                return new SQLitePlatformAndroid();
             }
         }
 
@@ -145,9 +152,9 @@ namespace Toggl.Joey
             get { return componentsInitialized; }
         }
 
-        public void DispatchOnUIThread (Action action)
+        public void DispatchOnUIThread(Action action)
         {
-            BaseActivity.CurrentActivity.RunOnUiThread (action);
+            BaseActivity.CurrentActivity.RunOnUiThread(action);
         }
     }
 }

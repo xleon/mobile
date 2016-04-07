@@ -12,9 +12,9 @@ namespace Toggl.Phoebe.ViewModels
 {
     public interface IOnTagSelectedHandler
     {
-        void OnCreateNewTag (ITagData newTagData);
+        void OnCreateNewTag(ITagData newTagData);
 
-        void OnModifyTagList (List<ITagData> newTagList);
+        void OnModifyTagList(List<ITagData> newTagList);
     }
 
     public class TagListVM : IDisposable
@@ -24,26 +24,26 @@ namespace Toggl.Phoebe.ViewModels
         // the list. (subscription and reload of data
         // everytime a tag is changed/created/deleted
 
-        public TagListVM (AppState appState, Guid workspaceId, List<Guid> previousSelectedIds)
+        public TagListVM(AppState appState, Guid workspaceId, List<Guid> previousSelectedIds)
         {
-            TagCollection = LoadTags (appState, workspaceId, previousSelectedIds);
+            TagCollection = LoadTags(appState, workspaceId, previousSelectedIds);
             ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Select Tags";
         }
 
-        public void Dispose ()
+        public void Dispose()
         {
             TagCollection = null;
         }
 
         public ObservableRangeCollection<ITagData> TagCollection { get; set; }
 
-        private ObservableRangeCollection<ITagData> LoadTags (
+        private ObservableRangeCollection<ITagData> LoadTags(
             AppState appState, Guid workspaceId, List<Guid> previousSelectedIds)
         {
             var tagCollection = new ObservableRangeCollection<ITagData> ();
             var workspaceTags = appState.Tags.Values
-                                .Where (r => r.DeletedAt == null && r.WorkspaceId == workspaceId);
-            tagCollection.AddRange (workspaceTags);
+                                .Where(r => r.DeletedAt == null && r.WorkspaceId == workspaceId);
+            tagCollection.AddRange(workspaceTags);
             return tagCollection;
         }
     }

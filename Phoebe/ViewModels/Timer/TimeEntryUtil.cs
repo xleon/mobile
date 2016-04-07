@@ -17,11 +17,12 @@ namespace Toggl.Phoebe.ViewModels.Timer
         IList<RichTimeEntry> EntryCollection { get; }
         IList<string> Guids { get; }
 
-        TimeSpan GetDuration ();
-        DateTime GetStartTime ();
+        TimeSpan GetDuration();
+        DateTime GetStartTime();
     }
 
-    public enum TimeEntryGroupMethod {
+    public enum TimeEntryGroupMethod
+    {
         Single,
         ByDateAndTask
     }
@@ -30,21 +31,21 @@ namespace Toggl.Phoebe.ViewModels.Timer
     {
         readonly TimeEntryGroupMethod Method;
 
-        public TimeEntryGrouper (TimeEntryGroupMethod method)
+        public TimeEntryGrouper(TimeEntryGroupMethod method)
         {
             Method = method;
         }
 
-        public IEnumerable<ITimeEntryHolder> Group (IEnumerable<TimeEntryHolder> items)
+        public IEnumerable<ITimeEntryHolder> Group(IEnumerable<TimeEntryHolder> items)
         {
             return Method == TimeEntryGroupMethod.Single
-                   ? items.Cast<ITimeEntryHolder> () : TimeEntryGroup.Group (items);
+                   ? items.Cast<ITimeEntryHolder> () : TimeEntryGroup.Group(items);
         }
 
-        public IEnumerable<TimeEntryHolder> Ungroup (IEnumerable<ITimeEntryHolder> groups)
+        public IEnumerable<TimeEntryHolder> Ungroup(IEnumerable<ITimeEntryHolder> groups)
         {
             return Method == TimeEntryGroupMethod.Single
-                   ? groups.Cast<TimeEntryHolder> () : TimeEntryGroup.Ungroup (groups.Cast<TimeEntryGroup> ());
+                   ? groups.Cast<TimeEntryHolder> () : TimeEntryGroup.Ungroup(groups.Cast<TimeEntryGroup> ());
         }
     }
 }

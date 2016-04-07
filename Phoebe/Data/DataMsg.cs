@@ -117,10 +117,10 @@ namespace Toggl.Phoebe.Data
                 Data = Either<ITimeEntryData, Exception>.Left(data);
             }
 
-            public TimeEntryPut (ITimeEntryData data, IEnumerable<string> tagNames)
+            public TimeEntryPut(ITimeEntryData data, IEnumerable<string> tagNames)
             {
                 TagNames = tagNames;
-                Data = Either<ITimeEntryData, Exception>.Left (data);
+                Data = Either<ITimeEntryData, Exception>.Left(data);
             }
         }
 

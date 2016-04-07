@@ -45,9 +45,9 @@ namespace Toggl.Ross.ViewControllers
 
         protected EditTimeEntryVM ViewModel { get; set; }
 
-        public EditTimeEntryViewController (Guid dataId, bool isManual = false)
+        public EditTimeEntryViewController(Guid dataId, bool isManual = false)
         {
-            ViewModel = new EditTimeEntryVM (StoreManager.Singleton.AppState, dataId, isManual);
+            ViewModel = new EditTimeEntryVM(StoreManager.Singleton.AppState, dataId, isManual);
         }
 
         public override void LoadView()
@@ -170,7 +170,7 @@ namespace Toggl.Ross.ViewControllers
                     startStopView.StopTime = ViewModel.StopDate;
                 }
             });
-            isBillableBinding = this.SetBinding (() => ViewModel.IsBillable, () => billableSwitch.Switch.On);
+            isBillableBinding = this.SetBinding(() => ViewModel.IsBillable, () => billableSwitch.Switch.On);
 
             // Events to edit some fields
             descriptionTextField.EditingChanged += (sender, e) => { ViewModel.ChangeDescription(descriptionTextField.Text); };

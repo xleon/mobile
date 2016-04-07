@@ -273,9 +273,11 @@ namespace Toggl.Phoebe.Reactive
                                 string.Format("Unexpected SyncState ({0}) of enqueued item: {1}",
                                               Enum.GetName(typeof(SyncState), data.SyncState), data.Id));
                     }
-                    remoteObjects = PrepareForLocalSave (response, data, remoteObjects, state);
-                } else {
-                    var json = mapper.MapToJson (data);
+                    remoteObjects = PrepareForLocalSave(response, data, remoteObjects, state);
+                }
+                else
+                {
+                    var json = mapper.MapToJson(data);
                     // If RemoteId is null, check whether it can be found in previously sent objects and ignore if not
                     json.RemoteId = json.RemoteId ?? remoteObjects.SingleOrDefault(x => x.Id == data.Id)?.RemoteId;
                     if (json.RemoteId != null)
@@ -503,7 +505,7 @@ namespace Toggl.Phoebe.Reactive
                            .Concat(newClients.Select(mapper.Map<ClientData>).Cast<CommonData> ())
                            .Concat(newProjects.Select(mapper.Map<ProjectData>).Cast<CommonData> ())
                            .Concat(newTasks.Select(mapper.Map<TaskData>).Cast<CommonData> ())
-                           .Concat(jsonEntries.Select(x => MapEntryWithTags(x, state, newTags.Select (mapper.Map<TagData>))))
+                           .Concat(jsonEntries.Select(x => MapEntryWithTags(x, state, newTags.Select(mapper.Map<TagData>))))
                            .ToList();
 
 
@@ -529,17 +531,20 @@ namespace Toggl.Phoebe.Reactive
             }
         }
 
-        List<CommonData> PrepareForLocalSave (CommonJson json, ICommonData previousData, List<CommonData> remoteObjects, AppState state)
+        List<CommonData> PrepareForLocalSave(CommonJson json, ICommonData previousData, List<CommonData> remoteObjects, AppState state)
         {
             CommonData resData;
-            if (json is TimeEntryJson) {
-                resData = MapEntryWithTags ((TimeEntryJson)json, state);
-            } else {
-                resData = mapper.Map (json);
+            if (json is TimeEntryJson)
+            {
+                resData = MapEntryWithTags((TimeEntryJson)json, state);
+            }
+            else
+            {
+                resData = mapper.Map(json);
 
             }
             resData.Id = previousData.Id;
-            remoteObjects.Add (resData);
+            remoteObjects.Add(resData);
             return remoteObjects;
         }
 
@@ -570,17 +575,21 @@ namespace Toggl.Phoebe.Reactive
         // ATTENTION Until a better modification or a re-thinking
         // for the first load of objects, the tags downloaded in the
         // first request will be used to get RemoteIds.
-        CommonData MapEntryWithTags (TimeEntryJson jsonEntry, AppState state, IEnumerable<TagData> sameRequestTagList = null)
+        CommonData MapEntryWithTags(TimeEntryJson jsonEntry, AppState state, IEnumerable<TagData> sameRequestTagList = null)
         {
             var tagIds = new List<Guid> ();
-            var tagDataList = (sameRequestTagList != null) ? state.Tags.Values.Concat (sameRequestTagList) : state.Tags.Values;
+            var tagDataList = (sameRequestTagList != null) ? state.Tags.Values.Concat(sameRequestTagList) : state.Tags.Values;
 
-            foreach (var tag in jsonEntry.Tags) {
-                var tagData = tagDataList.SingleOrDefault (
+            foreach (var tag in jsonEntry.Tags)
+            {
+                var tagData = tagDataList.SingleOrDefault(
                                   x => x.WorkspaceRemoteId == jsonEntry.WorkspaceRemoteId && x.Name == tag);
-                if (tagData != null) {
-                    tagIds.Add (tagData.Id);
-                } else {
+                if (tagData != null)
+                {
+                    tagIds.Add(tagData.Id);
+                }
+                else
+                {
                     // TODO RX: How to retrieve the tag from server without RemoteId?
                     //newTags.Add (await client.Get<TagJson> (authToken, tagRemoteId));
                 }
@@ -591,7 +600,7 @@ namespace Toggl.Phoebe.Reactive
             return te;
         }
 
-        ICommonData BuildRemoteRelationships (ICommonData data, List<CommonData> remoteObjects, AppState state)
+        ICommonData BuildRemoteRelationships(ICommonData data, List<CommonData> remoteObjects, AppState state)
         {
             if (data is TimeEntryData)
             {

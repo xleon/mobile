@@ -27,10 +27,11 @@ namespace Toggl.Phoebe.ViewModels
         {
         }
 
-        public Task<IClientData> SaveClientAsync (string clientName, SyncTestOptions testOptions = null)
+        public Task<IClientData> SaveClientAsync(string clientName, SyncTestOptions testOptions = null)
         {
             var tcs = new TaskCompletionSource<IClientData> ();
-            model = ClientData.Create (x => {
+            model = ClientData.Create(x =>
+            {
                 x.Name = clientName;
                 x.WorkspaceId = workspace.Id;
                 x.WorkspaceRemoteId = workspace.RemoteId.HasValue ? workspace.RemoteId.Value : 0;
@@ -41,13 +42,15 @@ namespace Toggl.Phoebe.ViewModels
                 appState.Clients.Values
                 .SingleOrDefault(
                     r => r.WorkspaceId == model.WorkspaceId && r.Name == clientName);
-            if (existing != null) {
-                return Task.FromResult (existing);
+            if (existing != null)
+            {
+                return Task.FromResult(existing);
             }
 
-            RxChain.Send (new DataMsg.ClientDataPut (model), new SyncTestOptions (false, (state, sent, queued) => {
-                var clientData = state.Clients.Values.First (x => x.WorkspaceId == model.WorkspaceId && x.Name == model.Name);
-                tcs.SetResult (clientData);
+            RxChain.Send(new DataMsg.ClientDataPut(model), new SyncTestOptions(false, (state, sent, queued) =>
+            {
+                var clientData = state.Clients.Values.First(x => x.WorkspaceId == model.WorkspaceId && x.Name == model.Name);
+                tcs.SetResult(clientData);
             }));
 
             return tcs.Task;

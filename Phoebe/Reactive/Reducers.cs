@@ -135,58 +135,58 @@ namespace Toggl.Phoebe.Reactive
         {
             var serverMsg = msg as DataMsg.ServerResponse;
             return serverMsg.Data.Match(
-                receivedData => serverMsg.Request.MatchType(
-                    (ServerRequest.CRUD _) =>
-                    {
-                        state = UpdateStateWithNewData(state, receivedData);
-                        return DataSyncMsg.Create(state);
-                    },
-                    (ServerRequest.DownloadEntries req) =>
-                    {
-                        state = UpdateStateWithNewData(state, receivedData);
-                        var reqInfo = state.RequestInfo.With(
-                                          running: state.RequestInfo.Running.Where(x => x != req).ToList(),
-                                          hasMore: receivedData.OfType<TimeEntryData> ().Any(),
-                                          hadErrors: false);
-                        return DataSyncMsg.Create(state.With(requestInfo: reqInfo));
-                    },
-                    (ServerRequest.GetChanges req) =>
-                    {
-                        state = UpdateStateWithNewData(state, receivedData);
+                       receivedData => serverMsg.Request.MatchType(
+                           (ServerRequest.CRUD _) =>
+            {
+                state = UpdateStateWithNewData(state, receivedData);
+                return DataSyncMsg.Create(state);
+            },
+            (ServerRequest.DownloadEntries req) =>
+            {
+                state = UpdateStateWithNewData(state, receivedData);
+                var reqInfo = state.RequestInfo.With(
+                                  running: state.RequestInfo.Running.Where(x => x != req).ToList(),
+                                  hasMore: receivedData.OfType<TimeEntryData> ().Any(),
+                                  hadErrors: false);
+                return DataSyncMsg.Create(state.With(requestInfo: reqInfo));
+            },
+            (ServerRequest.GetChanges req) =>
+            {
+                state = UpdateStateWithNewData(state, receivedData);
 
-                        // Update user
-                        var dataStore = ServiceContainer.Resolve<ISyncDataStore> ();
-                        UserData user = serverMsg.User;
-                        user.Id = state.User.Id;
-                        user.DefaultWorkspaceId = state.Workspaces.Values.Single(x => x.RemoteId == user.DefaultWorkspaceRemoteId).Id;
-                        var userUpdated = (UserData)dataStore.Update(ctx => ctx.Put(user)).Single();
+                // Update user
+                var dataStore = ServiceContainer.Resolve<ISyncDataStore> ();
+                UserData user = serverMsg.User;
+                user.Id = state.User.Id;
+                user.DefaultWorkspaceId = state.Workspaces.Values.Single(x => x.RemoteId == user.DefaultWorkspaceRemoteId).Id;
+                var userUpdated = (UserData)dataStore.Update(ctx => ctx.Put(user)).Single();
 
-                        var reqInfo = state.RequestInfo.With(
-                                          hadErrors: false,
-                                          running: state.RequestInfo.Running.Where(x => x != req).ToList(),
-                                          getChangesLastRun: serverMsg.Timestamp);
+                var reqInfo = state.RequestInfo.With(
+                                  hadErrors: false,
+                                  running: state.RequestInfo.Running.Where(x => x != req).ToList(),
+                                  getChangesLastRun: serverMsg.Timestamp);
 
-                        return DataSyncMsg.Create(state.With(
-                                                      user: userUpdated,
-                                                      requestInfo: reqInfo,
-                                                      settings: state.Settings.With(getChangesLastRun: serverMsg.Timestamp)));
-                    },
-                    (ServerRequest.GetCurrentState _) =>
-                    {
-                        throw new NotImplementedException();
-                    },
-                    (ServerRequest.Authenticate _) =>
-                    {
-                        // TODO RX: Right now, Authenticate responses send UserDataPut messages
-                        throw new NotImplementedException();
-                    }),
-                ex =>
-                {
-                    var reqInfo = state.RequestInfo.With(
-                                      running: state.RequestInfo.Running.Where(x => x != serverMsg.Request).ToList(),
-                                      hadErrors: true);
-                    return DataSyncMsg.Create(state.With(requestInfo: reqInfo));
-                });
+                return DataSyncMsg.Create(state.With(
+                                              user: userUpdated,
+                                              requestInfo: reqInfo,
+                                              settings: state.Settings.With(getChangesLastRun: serverMsg.Timestamp)));
+            },
+            (ServerRequest.GetCurrentState _) =>
+            {
+                throw new NotImplementedException();
+            },
+            (ServerRequest.Authenticate _) =>
+            {
+                // TODO RX: Right now, Authenticate responses send UserDataPut messages
+                throw new NotImplementedException();
+            }),
+            ex =>
+            {
+                var reqInfo = state.RequestInfo.With(
+                                  running: state.RequestInfo.Running.Where(x => x != serverMsg.Request).ToList(),
+                                  hadErrors: true);
+                return DataSyncMsg.Create(state.With(requestInfo: reqInfo));
+            });
         }
 
         static DataSyncMsg<AppState> TimeEntryPut(AppState state, DataMsg msg)
@@ -195,34 +195,41 @@ namespace Toggl.Phoebe.Reactive
             var dataStore = ServiceContainer.Resolve<ISyncDataStore>();
             var tagList = (msg as DataMsg.TimeEntryPut).TagNames;
 
-            var updated = dataStore.Update (ctx => {
+            var updated = dataStore.Update(ctx =>
+            {
                 // Update time entry tags
-                if (tagList.Any ()) {
-                    var existingTags = state.Tags.Values.Where (x => x.WorkspaceId == entryData.WorkspaceId);
+                if (tagList.Any())
+                {
+                    var existingTags = state.Tags.Values.Where(x => x.WorkspaceId == entryData.WorkspaceId);
                     List<Guid> tagIds = new List<Guid> ();
-                    foreach (var item in tagList) {
-                        if (!existingTags.Any (x => x.Name == item)) {
-                            var newTag = TagData.Create (x => {
+                    foreach (var item in tagList)
+                    {
+                        if (!existingTags.Any(x => x.Name == item))
+                        {
+                            var newTag = TagData.Create(x =>
+                            {
                                 x.Name = item;
                                 x.WorkspaceId = entryData.WorkspaceId;
                                 x.WorkspaceRemoteId = entryData.WorkspaceRemoteId;
                             });
-                            ctx.Put (newTag);
+                            ctx.Put(newTag);
                             // Add the last added id
-                            tagIds.Add (ctx.UpdatedItems.Last ().Id);
-                        } else {
-                            tagIds.Add (existingTags.First (x => x.Name == item).Id);
+                            tagIds.Add(ctx.UpdatedItems.Last().Id);
+                        }
+                        else
+                        {
+                            tagIds.Add(existingTags.First(x => x.Name == item).Id);
                         }
                     }
-                    entryData.With (x => x.TagIds = tagIds);
+                    entryData.With(x => x.TagIds = tagIds);
                 }
                 // TODO: Entry sanity check
-                ctx.Put (entryData);
+                ctx.Put(entryData);
             });
-            return DataSyncMsg.Create (
-                       state.With (timeEntries: state.UpdateTimeEntries (updated),
-                                   tags:state.Update (state.Tags, updated)),
-                       syncData:updated);
+            return DataSyncMsg.Create(
+                       state.With(timeEntries: state.UpdateTimeEntries(updated),
+                                  tags: state.Update(state.Tags, updated)),
+                       syncData: updated);
         }
 
         static DataSyncMsg<AppState> TimeEntryRemove(AppState state, DataMsg msg)
@@ -440,8 +447,8 @@ namespace Toggl.Phoebe.Reactive
                     // If no localId, check if an item with the same RemoteId is in the db
                     var newData = iterator;
                     var oldData = newData.Id != Guid.Empty
-                                         ? ctx.GetByColumn(newData.GetType(), nameof(ICommonData.Id), newData.Id)
-                                         : ctx.GetByColumn(newData.GetType(), nameof(ICommonData.RemoteId), newData.RemoteId);
+                                  ? ctx.GetByColumn(newData.GetType(), nameof(ICommonData.Id), newData.Id)
+                                  : ctx.GetByColumn(newData.GetType(), nameof(ICommonData.RemoteId), newData.RemoteId);
 
                     if (oldData != null)
                     {
@@ -450,13 +457,14 @@ namespace Toggl.Phoebe.Reactive
                         if (newData.CompareTo(oldData) >= 0)
                         {
                             newData.Id = oldData.Id;
-                            var data = BuildLocalRelationships (state, newData); // Set local Id values.
-                            PutOrDelete (ctx, data);
-                        } else 
+                            var data = BuildLocalRelationships(state, newData);  // Set local Id values.
+                            PutOrDelete(ctx, data);
+                        }
+                        else
                         {
                             // No changes, just continue.
                             var logger = ServiceContainer.Resolve<ILogger> ();
-                            logger.Info ("UpdateStateWithNewData", "Posible sync error. Object without changes " +  newData);
+                            logger.Info("UpdateStateWithNewData", "Posible sync error. Object without changes " +  newData);
                             continue;
                         }
                         else

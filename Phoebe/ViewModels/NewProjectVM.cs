@@ -37,13 +37,14 @@ namespace Toggl.Phoebe.ViewModels
         {
             this.clientData = clientData;
             ClientName = clientData.Name;
-            Console.WriteLine ("bbbeD " + ClientName);
+            Console.WriteLine("bbbeD " + ClientName);
         }
 
-        public Task<IProjectData> SaveProjectAsync (string projectName, int projectColor, SyncTestOptions testOptions = null)
+        public Task<IProjectData> SaveProjectAsync(string projectName, int projectColor, SyncTestOptions testOptions = null)
         {
             var tcs = new TaskCompletionSource<IProjectData> ();
-            model = ProjectData.Create (x => {
+            model = ProjectData.Create(x =>
+            {
                 x.Name = projectName;
                 x.Color = projectColor;
                 x.WorkspaceId = workspace.Id;
@@ -56,9 +57,10 @@ namespace Toggl.Phoebe.ViewModels
             // ATTENTION  ProjectUserData is not used
             // because no admin features are implemented.
             // Just save the project and wait for the state update.
-            RxChain.Send (new DataMsg.ProjectDataPut (model), new SyncTestOptions (true, (state, sent, queued) => {
-                var projectData = state.Projects.Values.First (x => x.Name == model.Name && x.ClientId == model.ClientId);
-                tcs.SetResult (projectData);
+            RxChain.Send(new DataMsg.ProjectDataPut(model), new SyncTestOptions(true, (state, sent, queued) =>
+            {
+                var projectData = state.Projects.Values.First(x => x.Name == model.Name && x.ClientId == model.ClientId);
+                tcs.SetResult(projectData);
             }));
             return tcs.Task;
         }
@@ -66,7 +68,7 @@ namespace Toggl.Phoebe.ViewModels
         public bool ExistProjectWithName(string projectName)
         {
             Guid clientId = clientData != null ? clientData.Id : Guid.Empty;
-            return appState.Projects.Values.Any (r => r.Name == projectName && r.ClientId == clientId);
+            return appState.Projects.Values.Any(r => r.Name == projectName && r.ClientId == clientId);
         }
 
         public bool ContainsClients(Guid workspaceId)

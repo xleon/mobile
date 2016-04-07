@@ -157,18 +157,19 @@ namespace Toggl.Ross.ViewControllers
         {
             // Send experiment data.
             ViewModel.ReportExperiment(OBMExperimentManager.StartButtonActionKey,
-                                        OBMExperimentManager.ClickActionValue);
+                                       OBMExperimentManager.ClickActionValue);
             ViewModel.StartStopTimeEntry();
-            if (!ViewModel.IsEntryRunning) {
+            if (!ViewModel.IsEntryRunning)
+            {
                 // Show next viewController.
                 var controllers = new List<UIViewController>(NavigationController.ViewControllers);
                 var editController = new EditTimeEntryViewController(ViewModel.ActiveEntry.Data.Id);
-                controllers.Add (editController);
-                if (StoreManager.Singleton.AppState.Settings.ChooseProjectForNew) 
+                controllers.Add(editController);
+                if (StoreManager.Singleton.AppState.Settings.ChooseProjectForNew)
                 {
                     controllers.Add(new ProjectSelectionViewController(ViewModel.ActiveEntry.Data.WorkspaceId, editController));
                 }
-                NavigationController.SetViewControllers (controllers.ToArray(), true);
+                NavigationController.SetViewControllers(controllers.ToArray(), true);
             }
         }
 
@@ -358,7 +359,7 @@ namespace Toggl.Ross.ViewControllers
             public override void RowSelected(UITableView tableView, NSIndexPath indexPath)
             {
                 var holder = collection.ElementAt(indexPath.Row) as ITimeEntryHolder;
-                if(holder != null)
+                if (holder != null)
                     owner.NavigationController.PushViewController(new EditTimeEntryViewController(holder.Entry.Data.Id), true);
                 tableView.DeselectRow(indexPath, true);
             }
@@ -724,7 +725,7 @@ namespace Toggl.Ross.ViewControllers
             public SectionCell(IntPtr handle) : base(handle)
             {
                 UserInteractionEnabled = false;
-                dateLabel = new UILabel ().Apply(Style.Log.HeaderDateLabel);
+                dateLabel = new UILabel().Apply(Style.Log.HeaderDateLabel);
                 ContentView.AddSubview(dateLabel);
 
                 totalDurationLabel = new UILabel().Apply(Style.Log.HeaderDurationLabel);

@@ -26,26 +26,29 @@ namespace Toggl.Phoebe.ViewModels
         {
         }
 
-        public Task<ITagData> SaveTagAsync (string tagName, SyncTestOptions testOptions = null)
+        public Task<ITagData> SaveTagAsync(string tagName, SyncTestOptions testOptions = null)
         {
             var tcs = new TaskCompletionSource<ITagData> ();
             var existing =
                 appState.Tags.Values.SingleOrDefault(
                     r => r.WorkspaceId == workspace.Id && r.Name == tagName);
 
-            if (existing != null) {
-                return Task.FromResult (existing);
+            if (existing != null)
+            {
+                return Task.FromResult(existing);
             }
 
-            var tag = TagData.Create (x => {
+            var tag = TagData.Create(x =>
+            {
                 x.Name = tagName;
                 x.WorkspaceId = workspace.Id;
                 x.WorkspaceRemoteId = workspace.RemoteId.HasValue ? workspace.RemoteId.Value : 0;
             });
 
-            RxChain.Send (new DataMsg.TagsPut (new[] {tag}), new SyncTestOptions (false, (state, sent, queued) => {
-                var tagData = state.Tags.Values.First (x => x.WorkspaceId == tag.WorkspaceId && x.Name == tag.Name);
-                tcs.SetResult (tagData);
+            RxChain.Send(new DataMsg.TagsPut(new[] {tag}), new SyncTestOptions(false, (state, sent, queued) =>
+            {
+                var tagData = state.Tags.Values.First(x => x.WorkspaceId == tag.WorkspaceId && x.Name == tag.Name);
+                tcs.SetResult(tagData);
             }));
 
             return tcs.Task;

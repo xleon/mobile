@@ -89,17 +89,18 @@ namespace Toggl.Ross.ViewControllers
             nameTextField.BecomeFirstResponder();
         }
 
-        public override void ViewWillDisappear (bool animated)
+        public override void ViewWillDisappear(bool animated)
         {
             // TODO: Release ViewModel only when the
             // ViewController is poped. It is a weird behaviour
             // considering the property name used.
             // But it works ok.
-            if (IsMovingFromParentViewController) {
-                clientBinding.Detach ();
-                ViewModel.Dispose ();
+            if (IsMovingFromParentViewController)
+            {
+                clientBinding.Detach();
+                ViewModel.Dispose();
             }
-            base.ViewWillDisappear (animated);
+            base.ViewWillDisappear(animated);
         }
 
         private void OnClientButtonTouchUpInside(object sender, EventArgs e)

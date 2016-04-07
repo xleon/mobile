@@ -56,16 +56,16 @@ namespace Toggl.Ross.ViewControllers
             NameTextField.BecomeFirstResponder();
         }
 
-        public override void ViewWillAppear (bool animated)
+        public override void ViewWillAppear(bool animated)
         {
-            base.ViewWillAppear (animated);
-            ViewModel = new NewClientVM (StoreManager.Singleton.AppState, workspaceId);
+            base.ViewWillAppear(animated);
+            ViewModel = new NewClientVM(StoreManager.Singleton.AppState, workspaceId);
         }
 
-        public override void ViewWillDisappear (bool animated)
+        public override void ViewWillDisappear(bool animated)
         {
-            ViewModel.Dispose ();
-            base.ViewWillDisappear (animated);
+            ViewModel.Dispose();
+            base.ViewWillDisappear(animated);
         }
 
         private async void OnNavigationBarAddClicked(object sender, EventArgs e)

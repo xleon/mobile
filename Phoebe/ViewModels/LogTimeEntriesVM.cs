@@ -145,16 +145,19 @@ namespace Toggl.Phoebe.ViewModels
             RxChain.Send(new DataMsg.UpdateSetting(nameof(SettingsState.ShowWelcome), false));
         }
 
-        public void StartStopTimeEntry ()
+        public void StartStopTimeEntry()
         {
             // TODO RX: Protect from requests in short time (double click...)?
             var entry = ActiveEntry.Data;
-            if (entry.State == TimeEntryState.Running) {
-                RxChain.Send (new DataMsg.TimeEntryStop (entry));
-                ServiceContainer.Resolve<ITracker> ().SendTimerStopEvent (TimerStopSource.App);
-            } else {
-                RxChain.Send (new DataMsg.TimeEntryContinue (entry, true));
-                ServiceContainer.Resolve<ITracker> ().SendTimerStartEvent (TimerStartSource.AppNew);
+            if (entry.State == TimeEntryState.Running)
+            {
+                RxChain.Send(new DataMsg.TimeEntryStop(entry));
+                ServiceContainer.Resolve<ITracker> ().SendTimerStopEvent(TimerStopSource.App);
+            }
+            else
+            {
+                RxChain.Send(new DataMsg.TimeEntryContinue(entry, true));
+                ServiceContainer.Resolve<ITracker> ().SendTimerStartEvent(TimerStartSource.AppNew);
             }
         }
 
@@ -213,7 +216,7 @@ namespace Toggl.Phoebe.ViewModels
 
             ActiveEntry = activeTimeEntry;
             IsEntryRunning = activeTimeEntry.Data.State == TimeEntryState.Running;
-            UpdateDuration ();
+            UpdateDuration();
         }
 
         private void UpdateDuration()

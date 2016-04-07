@@ -30,18 +30,18 @@ namespace Toggl.Phoebe.ViewModels
             ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Select Project";
 
             CurrentWorkspaceId = workspaceId;
-            var savedSort = Enum.Parse (typeof (ProjectsCollectionVM.SortProjectsBy), appState.Settings.ProjectSort);
-            ProjectList = new ProjectsCollectionVM (appState, (ProjectsCollectionVM.SortProjectsBy)savedSort, workspaceId);
-            WorkspaceList = appState.Workspaces.Values.OrderBy (r => r.Name).ToList ();
-            CurrentWorkspaceIndex = WorkspaceList.IndexOf (p => p.Id == workspaceId);
+            var savedSort = Enum.Parse(typeof(ProjectsCollectionVM.SortProjectsBy), appState.Settings.ProjectSort);
+            ProjectList = new ProjectsCollectionVM(appState, (ProjectsCollectionVM.SortProjectsBy)savedSort, workspaceId);
+            WorkspaceList = appState.Workspaces.Values.OrderBy(r => r.Name).ToList();
+            CurrentWorkspaceIndex = WorkspaceList.IndexOf(p => p.Id == workspaceId);
 
             // Search stream
             searchObservable = Observable.FromEventPattern<string> (ev => onSearch += ev, ev => onSearch -= ev)
-                               .Throttle (TimeSpan.FromMilliseconds (300))
-                               .DistinctUntilChanged ()
-                               .ObserveOn (SynchronizationContext.Current)
-                               .Subscribe (p => ProjectList.ProjectNameFilter = p.EventArgs,
-                                           ex => ServiceContainer.Resolve<ILogger> ().Error ("Search", ex, null));
+                               .Throttle(TimeSpan.FromMilliseconds(300))
+                               .DistinctUntilChanged()
+                               .ObserveOn(SynchronizationContext.Current)
+                               .Subscribe(p => ProjectList.ProjectNameFilter = p.EventArgs,
+                                          ex => ServiceContainer.Resolve<ILogger> ().Error("Search", ex, null));
         }
 
         public void Dispose()

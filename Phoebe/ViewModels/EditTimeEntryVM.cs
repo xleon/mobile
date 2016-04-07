@@ -21,15 +21,18 @@ namespace Toggl.Phoebe.ViewModels
         private RichTimeEntry richData;
         private RichTimeEntry previousData;
 
-        public EditTimeEntryVM (AppState appState, Guid timeEntryId, bool isManual = false)
+        public EditTimeEntryVM(AppState appState, Guid timeEntryId, bool isManual = false)
         {
             List<Guid> tagList;
             IsManual = isManual;
 
-            if (timeEntryId == Guid.Empty) {
-                richData = isManual ? new RichTimeEntry (appState.GetTimeEntryDraft(), appState) : appState.ActiveEntry;
-                tagList = GetDefaultTagList (appState, richData.Data).Select (x => x.Id).ToList();
-            } else {
+            if (timeEntryId == Guid.Empty)
+            {
+                richData = isManual ? new RichTimeEntry(appState.GetTimeEntryDraft(), appState) : appState.ActiveEntry;
+                tagList = GetDefaultTagList(appState, richData.Data).Select(x => x.Id).ToList();
+            }
+            else
+            {
                 richData = appState.TimeEntries[timeEntryId];
                 tagList = new List<Guid> (richData.Data.TagIds);
             }
@@ -48,20 +51,20 @@ namespace Toggl.Phoebe.ViewModels
             // Save previous state.
             previousData = IsManual
                            // Hack to force tag saving even if there're no other changes
-                           ? new RichTimeEntry (richData.Data.With (x => x.TagIds = new List<Guid> ()), appState)
-                           : new RichTimeEntry (richData.Data, richData.Info);
+                           ? new RichTimeEntry(richData.Data.With(x => x.TagIds = new List<Guid> ()), appState)
+                           : new RichTimeEntry(richData.Data, richData.Info);
 
             subscriptionState = StoreManager
                                 .Singleton
-                                .Observe (x => x.State)
-                                .ObserveOn (SynchronizationContext.Current)
-                                .StartWith (appState)
-                                .Subscribe (s => appState = s);
+                                .Observe(x => x.State)
+                                .ObserveOn(SynchronizationContext.Current)
+                                .StartWith(appState)
+                                .Subscribe(s => appState = s);
 
-            subscriptionTimer = Observable.Timer (TimeSpan.FromMilliseconds (1000 - Time.Now.Millisecond),
-                                                  TimeSpan.FromSeconds (1))
-                                .ObserveOn (SynchronizationContext.Current)
-                                .Subscribe (x => UpdateDuration ());
+            subscriptionTimer = Observable.Timer(TimeSpan.FromMilliseconds(1000 - Time.Now.Millisecond),
+                                                 TimeSpan.FromSeconds(1))
+                                .ObserveOn(SynchronizationContext.Current)
+                                .Subscribe(x => UpdateDuration());
 
             ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Edit Time Entry";
         }
@@ -130,45 +133,49 @@ namespace Toggl.Phoebe.ViewModels
         public void ChangeProjectAndTask(Guid projectId, Guid taskId)
         {
             if (projectId == richData.Data.ProjectId &&
-                    taskId == richData.Data.TaskId) {
+                    taskId == richData.Data.TaskId)
+            {
                 return;
             }
 
-            if (projectId != Guid.Empty) {
-                SetNewProject (projectId);
-                SetNewTask (taskId);
-            } else {
-                SetEmptyProject ();
+            if (projectId != Guid.Empty)
+            {
+                SetNewProject(projectId);
+                SetNewTask(taskId);
+            }
+            else
+            {
+                SetEmptyProject();
             }
         }
 
         public void ChangeTimeEntryDuration(TimeSpan newDuration)
         {
-            UpdateView (x => x.SetDuration (newDuration), nameof (Duration), nameof (StartDate), nameof (StopDate));
+            UpdateView(x => x.SetDuration(newDuration), nameof(Duration), nameof(StartDate), nameof(StopDate));
             //ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Change Duration";
         }
 
         public void ChangeTimeEntryStart(TimeSpan diffTime)
         {
-            UpdateView (x => x.ChangeStartTime (x.StartTime + diffTime), nameof (Duration), nameof (StartDate), nameof (StopDate));
+            UpdateView(x => x.ChangeStartTime(x.StartTime + diffTime), nameof(Duration), nameof(StartDate), nameof(StopDate));
             //ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Change Start Time";
         }
 
         public void ChangeTimeEntryStart(DateTime newStartTime)
         {
-            UpdateView (x => x.ChangeStartTime (newStartTime), nameof (Duration), nameof (StartDate), nameof (StopDate));
+            UpdateView(x => x.ChangeStartTime(newStartTime), nameof(Duration), nameof(StartDate), nameof(StopDate));
             //ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Change Start Time";
         }
 
         public void ChangeTimeEntryStop(TimeSpan diffTime)
         {
-            UpdateView (x => x.ChangeStoptime (x.StopTime + diffTime),nameof (Duration), nameof (StopDate));
+            UpdateView(x => x.ChangeStoptime(x.StopTime + diffTime), nameof(Duration), nameof(StopDate));
             //ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Change Stop Time";
         }
 
         public void ChangeTimeEntryStop(DateTime newStopTime)
         {
-            UpdateView (x => x.ChangeStoptime (newStopTime), nameof (Duration), nameof (StopDate));
+            UpdateView(x => x.ChangeStoptime(newStopTime), nameof(Duration), nameof(StopDate));
             //ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Change Stop Time";
         }
 
@@ -187,72 +194,81 @@ namespace Toggl.Phoebe.ViewModels
             UpdateView(x => x.IsBillable = billable, nameof(IsBillable));
         }
 
-        public void Delete ()
+        public void Delete()
         {
             RxChain.Send(new DataMsg.TimeEntriesRemove(richData.Data));
         }
 
-        public void Save ()
+        public void Save()
         {
-            if (!previousData.Data.PublicInstancePropertiesEqual (richData.Data)) {
-                RxChain.Send (new DataMsg.TimeEntryPut (richData.Data, TagList.Select (x => x.Name)));
+            if (!previousData.Data.PublicInstancePropertiesEqual(richData.Data))
+            {
+                RxChain.Send(new DataMsg.TimeEntryPut(richData.Data, TagList.Select(x => x.Name)));
                 previousData = richData;
             }
         }
 
-        private void UpdateView (Action<TimeEntryData> updater, params string[] changedProperties)
+        private void UpdateView(Action<TimeEntryData> updater, params string[] changedProperties)
         {
-            richData = new RichTimeEntry (richData.Data.With (updater), StoreManager.Singleton.AppState);
-            foreach (var prop in changedProperties) {
-                RaisePropertyChanged (prop);
+            richData = new RichTimeEntry(richData.Data.With(updater), StoreManager.Singleton.AppState);
+            foreach (var prop in changedProperties)
+            {
+                RaisePropertyChanged(prop);
             }
         }
 
-        private void UpdateDuration ()
+        private void UpdateDuration()
         {
-            if (richData.Data.State == TimeEntryState.Running) {
-                RaisePropertyChanged (nameof (Duration));
+            if (richData.Data.State == TimeEntryState.Running)
+            {
+                RaisePropertyChanged(nameof(Duration));
             }
         }
 
-        private void SetNewProject (Guid projectId)
+        private void SetNewProject(Guid projectId)
         {
-            if (richData.Data.ProjectId == projectId) {
+            if (richData.Data.ProjectId == projectId)
+            {
                 return;
             }
 
             var projectData = StoreManager.Singleton.AppState.Projects [projectId];
-            UpdateView (x => {
+            UpdateView(x =>
+            {
                 x.ProjectRemoteId = projectData.RemoteId;
                 x.ProjectId = projectData.Id;
                 x.WorkspaceId = projectData.WorkspaceId;
                 x.WorkspaceRemoteId = projectData.WorkspaceRemoteId;
                 x.IsBillable = projectData.IsBillable;
-            }, nameof (ProjectName), nameof (ClientName), nameof (ProjectColorHex), nameof (IsPremium), nameof (IsBillable));
+            }, nameof(ProjectName), nameof(ClientName), nameof(ProjectColorHex), nameof(IsPremium), nameof(IsBillable));
         }
 
-        private void SetEmptyProject ()
+        private void SetEmptyProject()
         {
-            if (richData.Data.ProjectId == Guid.Empty) {
+            if (richData.Data.ProjectId == Guid.Empty)
+            {
                 return;
             }
 
-            UpdateView (x => {
+            UpdateView(x =>
+            {
                 x.ProjectRemoteId = null;
                 x.ProjectId = Guid.Empty;
                 x.TaskId = Guid.Empty;
                 x.TaskRemoteId = null;
-            }, nameof (ProjectName), nameof (ClientName), nameof (ProjectColorHex));
+            }, nameof(ProjectName), nameof(ClientName), nameof(ProjectColorHex));
         }
 
-        private void SetNewTask (Guid taskId)
+        private void SetNewTask(Guid taskId)
         {
-            if (richData.Data.ProjectId == taskId) {
+            if (richData.Data.ProjectId == taskId)
+            {
                 return;
             }
 
             var taskRemoteId = taskId != Guid.Empty ? StoreManager.Singleton.AppState.Tasks [taskId].RemoteId : null;
-            UpdateView (x => {
+            UpdateView(x =>
+            {
                 x.TaskId = taskId;
                 x.TaskRemoteId = taskRemoteId;
             });

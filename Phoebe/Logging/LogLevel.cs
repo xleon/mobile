@@ -1,7 +1,8 @@
 
 namespace Toggl.Phoebe.Logging
 {
-    public enum LogLevel {
+    public enum LogLevel
+    {
         Debug,
         Info,
         Warning,

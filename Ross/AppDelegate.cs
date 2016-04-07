@@ -26,49 +26,49 @@ namespace Toggl.Ross
     // The UIApplicationDelegate for the application. This class is responsible for launching the
     // User Interface of the application, as well as listening (and optionally responding) to
     // application events from iOS.
-    [Register ("AppDelegate")]
+    [Register("AppDelegate")]
     public class AppDelegate : UIApplicationDelegate, IPlatformUtils
     {
         private TogglWindow window;
         private int systemVersion;
         private const int minVersionWidget = 7;
 
-        public override bool FinishedLaunching (UIApplication application, NSDictionary launchOptions)
+        public override bool FinishedLaunching(UIApplication application, NSDictionary launchOptions)
         {
             var versionString = UIDevice.CurrentDevice.SystemVersion;
-            systemVersion = Convert.ToInt32 ( versionString.Split ( new [] {"."}, StringSplitOptions.None)[0]);
+            systemVersion = Convert.ToInt32(versionString.Split(new [] {"."}, StringSplitOptions.None)[0]);
 
             // Attach bug tracker
-            #if (!DEBUG)
-            TestFairy.Begin (Build.TestFairyApiToken);
-            #endif
+#if (!DEBUG)
+            TestFairy.Begin(Build.TestFairyApiToken);
+#endif
 
             // Component initialisation.
-            RegisterComponents ();
+            RegisterComponents();
 
             // Setup Google sign in
-            SetupGoogleServices ();
+            SetupGoogleServices();
 
-            Theme.Style.Initialize ();
+            Theme.Style.Initialize();
 
             // Make sure critical services are running are running:
-            ServiceContainer.Resolve<UpgradeManger> ().TryUpgrade ();
+            ServiceContainer.Resolve<UpgradeManger> ().TryUpgrade();
             ServiceContainer.Resolve<ILoggerClient> ();
             ServiceContainer.Resolve<ITracker> ();
             ServiceContainer.Resolve<APNSManager> ();
 
             // This needs some services, like ITimeProvider, so run it at the end
-            RxChain.Init (AppState.Init ());
+            RxChain.Init(AppState.Init());
 
             // Start app
-            window = new TogglWindow (UIScreen.MainScreen.Bounds);
-            window.RootViewController = new MainViewController ();
-            window.MakeKeyAndVisible ();
+            window = new TogglWindow(UIScreen.MainScreen.Bounds);
+            window.RootViewController = new MainViewController();
+            window.MakeKeyAndVisible();
 
             return true;
         }
 
-        public override void RegisteredForRemoteNotifications (UIApplication application, NSData deviceToken)
+        public override void RegisteredForRemoteNotifications(UIApplication application, NSData deviceToken)
         {
             /*
             Task.Run (async () => {
@@ -78,37 +78,41 @@ namespace Toggl.Ross
             */
         }
 
-        public override void FailedToRegisterForRemoteNotifications (UIApplication application, NSError error)
+        public override void FailedToRegisterForRemoteNotifications(UIApplication application, NSError error)
         {
-            ServiceContainer.Resolve<APNSManager> ().FailedToRegisterForRemoteNotifications (application, error);
+            ServiceContainer.Resolve<APNSManager> ().FailedToRegisterForRemoteNotifications(application, error);
         }
 
-        public override void DidReceiveRemoteNotification (UIApplication application, NSDictionary userInfo, Action<UIBackgroundFetchResult> completionHandler)
+        public override void DidReceiveRemoteNotification(UIApplication application, NSDictionary userInfo, Action<UIBackgroundFetchResult> completionHandler)
         {
-            Task.Run (async () => {
+            Task.Run(async() =>
+            {
                 var service = ServiceContainer.Resolve<APNSManager> ();
-                await service.DidReceiveRemoteNotificationAsync (application, userInfo, completionHandler);
+                await service.DidReceiveRemoteNotificationAsync(application, userInfo, completionHandler);
             });
         }
 
-        public override void OnActivated (UIApplication application)
+        public override void OnActivated(UIApplication application)
         {
             // Make sure the user data is refreshed when the application becomes active
             // TODO Rx Removed full sync from here.
             // RxChain.Send (new DataMsg.FullSync ());
             ServiceContainer.Resolve<NetworkIndicatorManager> ();
 
-            if (systemVersion > minVersionWidget) {
+            if (systemVersion > minVersionWidget)
+            {
                 // ServiceContainer.Resolve<WidgetSyncManager>();
                 // var widgetService = ServiceContainer.Resolve<WidgetUpdateService>();
                 // widgetService.SetAppOnBackground (false);
             }
         }
 
-        public override bool OpenUrl (UIApplication application, NSUrl url, string sourceApplication, NSObject annotation)
+        public override bool OpenUrl(UIApplication application, NSUrl url, string sourceApplication, NSObject annotation)
         {
-            if (systemVersion > minVersionWidget) {
-                if (url.AbsoluteString.Contains (WidgetUpdateService.TodayUrlPrefix)) {
+            if (systemVersion > minVersionWidget)
+            {
+                if (url.AbsoluteString.Contains(WidgetUpdateService.TodayUrlPrefix))
+                {
                     /*
                     var widgetManager = ServiceContainer.Resolve<WidgetSyncManager>();
                     if (url.AbsoluteString.Contains (WidgetUpdateService.StartEntryUrlPrefix)) {
@@ -122,48 +126,51 @@ namespace Toggl.Ross
                     */
                 }
             }
-            return SignIn.SharedInstance.HandleUrl (url, sourceApplication, annotation);
+            return SignIn.SharedInstance.HandleUrl(url, sourceApplication, annotation);
         }
 
-        public override void DidEnterBackground (UIApplication application)
+        public override void DidEnterBackground(UIApplication application)
         {
-            if (systemVersion > minVersionWidget) {
+            if (systemVersion > minVersionWidget)
+            {
                 var widgetService = ServiceContainer.Resolve<WidgetUpdateService>();
-                widgetService.SetAppOnBackground (true);
+                widgetService.SetAppOnBackground(true);
             }
         }
 
-        public override void WillTerminate (UIApplication application)
+        public override void WillTerminate(UIApplication application)
         {
-            if (systemVersion > minVersionWidget) {
+            if (systemVersion > minVersionWidget)
+            {
                 var widgetService = ServiceContainer.Resolve<WidgetUpdateService>();
-                widgetService.SetAppActivated (false);
+                widgetService.SetAppActivated(false);
             }
         }
 
-        private void RegisterComponents ()
+        private void RegisterComponents()
         {
             // Register platform info first.
             ServiceContainer.Register<IPlatformUtils> (this);
 
             // Register Phoebe services
-            Services.Register ();
+            Services.Register();
 
             // Override default implementation
-            ServiceContainer.Register<ITimeProvider> (() => new NSTimeProvider ());
+            ServiceContainer.Register<ITimeProvider> (() => new NSTimeProvider());
 
             // Register Ross components:
-            ServiceContainer.Register<ILogger> (() => new Logger ());
-            if (systemVersion > minVersionWidget) {
+            ServiceContainer.Register<ILogger> (() => new Logger());
+            if (systemVersion > minVersionWidget)
+            {
                 //ServiceContainer.Register<WidgetUpdateService> (() => new WidgetUpdateService());
                 //ServiceContainer.Register<IWidgetUpdateService> (() => ServiceContainer.Resolve<WidgetUpdateService> ());
             }
-            ServiceContainer.Register<ExperimentManager> (() => new ExperimentManager (
-                typeof (Phoebe.Analytics.Experiments),
-                typeof (Analytics.Experiments)));
+            ServiceContainer.Register<ExperimentManager> (() => new ExperimentManager(
+                typeof(Phoebe.Analytics.Experiments),
+                typeof(Analytics.Experiments)));
             ServiceContainer.Register<ILoggerClient> (initialiseLogClient);
             ServiceContainer.Register<ITracker> (() => new Tracker());
-            ServiceContainer.Register<INetworkPresence> (() => new NetworkPresence ());
+            ServiceContainer.Register<INetworkPresence> (() => new NetworkPresence());
             ServiceContainer.Register<NetworkIndicatorManager> ();
             ServiceContainer.Register<TagChipCache> ();
             ServiceContainer.Register<APNSManager> ();
@@ -180,26 +187,28 @@ namespace Toggl.Ross
             return new LogClient();
         }
 
-        private void SetupGoogleServices ()
+        private void SetupGoogleServices()
         {
             // Set up Google Analytics
             // the tracker ID isn't detected automatically from GoogleService-info.plist
             // so, it's passed manually. Waiting for new versions of the library.
             var gaiInstance = Google.Analytics.Gai.SharedInstance;
-            gaiInstance.DefaultTracker = gaiInstance.GetTracker (Build.GoogleAnalyticsId);
+            gaiInstance.DefaultTracker = gaiInstance.GetTracker(Build.GoogleAnalyticsId);
 
             NSError configureError;
-            Context.SharedInstance.Configure (out configureError);
-            if (configureError != null) {
+            Context.SharedInstance.Configure(out configureError);
+            if (configureError != null)
+            {
                 var log = ServiceContainer.Resolve<ILogger> ();
                 SignIn.SharedInstance.ClientID = Build.GoogleReverseClientUrl;
-                log.Info ("AppDelegate", string.Format ("Error configuring the Google context: {0}", configureError));
+                log.Info("AppDelegate", string.Format("Error configuring the Google context: {0}", configureError));
             }
         }
 
         public static TogglWindow TogglWindow
         {
-            get {
+            get
+            {
                 return ((AppDelegate)UIApplication.SharedApplication.Delegate).window;
             }
         }
@@ -215,10 +224,12 @@ namespace Toggl.Ross
 
         public string AppVersion
         {
-            get {
-                if (appVersion == null) {
-                    appVersion = NSBundle.MainBundle.InfoDictionary.ObjectForKey (
-                                     new NSString ("CFBundleShortVersionString")).ToString ();
+            get
+            {
+                if (appVersion == null)
+                {
+                    appVersion = NSBundle.MainBundle.InfoDictionary.ObjectForKey(
+                                     new NSString("CFBundleShortVersionString")).ToString();
                 }
                 return appVersion;
             }
@@ -226,7 +237,8 @@ namespace Toggl.Ross
 
         public bool IsWidgetAvailable
         {
-            get {
+            get
+            {
                 // iOS 8 is the version where Today Widgets are availables.
                 return systemVersion > minVersionWidget;
             }
@@ -234,14 +246,15 @@ namespace Toggl.Ross
 
         public ISQLitePlatform SQLiteInfo
         {
-            get {
-                return new SQLitePlatformIOS ();
+            get
+            {
+                return new SQLitePlatformIOS();
             }
         }
 
-        public void DispatchOnUIThread (Action action)
+        public void DispatchOnUIThread(Action action)
         {
-            Console.WriteLine (action.Target);
+            Console.WriteLine(action.Target);
             //InvokeOnMainThread (action);
 
         }

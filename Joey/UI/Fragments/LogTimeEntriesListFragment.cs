@@ -63,10 +63,10 @@ namespace Toggl.Joey.UI.Fragments
 
         #endregion
 
-        public override View OnCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
+        public override View OnCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
         {
-            var view = inflater.Inflate (Resource.Layout.LogTimeEntriesListFragment, container, false);
-            view.FindViewById<TextView> (Resource.Id.EmptyTextTextView).SetFont (Font.RobotoLight);
+            var view = inflater.Inflate(Resource.Layout.LogTimeEntriesListFragment, container, false);
+            view.FindViewById<TextView> (Resource.Id.EmptyTextTextView).SetFont(Font.RobotoLight);
 
             coordinatorLayout = view.FindViewById<CoordinatorLayout> (Resource.Id.logCoordinatorLayout);
             experimentEmptyView = view.FindViewById<View> (Resource.Id.ExperimentEmptyMessageView);
@@ -74,9 +74,9 @@ namespace Toggl.Joey.UI.Fragments
             welcomeMessage = view.FindViewById<TextView> (Resource.Id.WelcomeTextView);
             noItemsMessage = view.FindViewById<TextView> (Resource.Id.EmptyTitleTextView);
             recyclerView = view.FindViewById<RecyclerView> (Resource.Id.LogRecyclerView);
-            recyclerView.SetLayoutManager (new LinearLayoutManager (Activity));
+            recyclerView.SetLayoutManager(new LinearLayoutManager(Activity));
             swipeLayout = view.FindViewById<SwipeRefreshLayout> (Resource.Id.LogSwipeContainer);
-            swipeLayout.SetOnRefreshListener (this);
+            swipeLayout.SetOnRefreshListener(this);
             StartStopBtn = view.FindViewById<StartStopFab> (Resource.Id.StartStopBtn);
             timerComponent = ((MainDrawerActivity)Activity).Timer; // TODO: a better way to do this?
             HasOptionsMenu = true;
@@ -84,185 +84,203 @@ namespace Toggl.Joey.UI.Fragments
             return view;
         }
 
-        public override void OnViewCreated (View view, Bundle savedInstanceState)
+        public override void OnViewCreated(View view, Bundle savedInstanceState)
         {
-            base.OnViewCreated (view, savedInstanceState);
+            base.OnViewCreated(view, savedInstanceState);
 
             // init viewModel
-            ViewModel = new LogTimeEntriesVM (StoreManager.Singleton.AppState);
+            ViewModel = new LogTimeEntriesVM(StoreManager.Singleton.AppState);
 
             //activeEntryBinding =  this.SetBinding (()=> ViewModel.ActiveEntry).WhenSourceChanges (OnActiveEntryChanged);
-            collectionBinding = this.SetBinding (() => ViewModel.Collection).WhenSourceChanges (() => {
-                logAdapter = new LogTimeEntriesAdapter (recyclerView, ViewModel);
-                recyclerView.SetAdapter (logAdapter);
+            collectionBinding = this.SetBinding(() => ViewModel.Collection).WhenSourceChanges(() =>
+            {
+                logAdapter = new LogTimeEntriesAdapter(recyclerView, ViewModel);
+                recyclerView.SetAdapter(logAdapter);
             });
-            isSyncingBinding = this.SetBinding (()=> ViewModel.IsFullSyncing).WhenSourceChanges (SetSyncState);
-            hasItemsBinding = this.SetBinding (()=> ViewModel.Collection.Count).WhenSourceChanges (SetCollectionState);
-            loadInfoBinding = this.SetBinding (()=> ViewModel.LoadInfo).WhenSourceChanges (SetFooterState);
-            fabBinding = this.SetBinding (() => ViewModel.IsEntryRunning, () => StartStopBtn.ButtonAction)
-                         .ConvertSourceToTarget (isRunning => isRunning ? FABButtonState.Stop : FABButtonState.Start);
+            isSyncingBinding = this.SetBinding(() => ViewModel.IsFullSyncing).WhenSourceChanges(SetSyncState);
+            hasItemsBinding = this.SetBinding(() => ViewModel.Collection.Count).WhenSourceChanges(SetCollectionState);
+            loadInfoBinding = this.SetBinding(() => ViewModel.LoadInfo).WhenSourceChanges(SetFooterState);
+            fabBinding = this.SetBinding(() => ViewModel.IsEntryRunning, () => StartStopBtn.ButtonAction)
+                         .ConvertSourceToTarget(isRunning => isRunning ? FABButtonState.Stop : FABButtonState.Start);
 
-            newMenuBinding = this.SetBinding (() => ViewModel.IsEntryRunning)
-            .WhenSourceChanges (() => {
-                if (AddNewMenuItem != null) {
-                    AddNewMenuItem.SetVisible (!ViewModel.IsEntryRunning);
+            newMenuBinding = this.SetBinding(() => ViewModel.IsEntryRunning)
+                             .WhenSourceChanges(() =>
+            {
+                if (AddNewMenuItem != null)
+                {
+                    AddNewMenuItem.SetVisible(!ViewModel.IsEntryRunning);
                 }
             });
 
             // Pass ViewModel to TimerComponent.
-            timerComponent.SetViewModel (ViewModel);
+            timerComponent.SetViewModel(ViewModel);
             StartStopBtn.Click += StartStopClick;
-            SetupRecyclerView (ViewModel);
+            SetupRecyclerView(ViewModel);
         }
 
 
-        public void StartStopClick (object sender, EventArgs e)
+        public void StartStopClick(object sender, EventArgs e)
         {
             // TODO RX: Send experiment data.
-            ViewModel.ReportExperiment (OBMExperimentManager.StartButtonActionKey,
-                                        OBMExperimentManager.ClickActionValue);
+            ViewModel.ReportExperiment(OBMExperimentManager.StartButtonActionKey,
+                                       OBMExperimentManager.ClickActionValue);
             var startedByFAB = ViewModel.ActiveEntry.Data.State != TimeEntryState.Running;
-            ViewModel.StartStopTimeEntry (startedByFAB);
+            ViewModel.StartStopTimeEntry(startedByFAB);
         }
 
-        public override void OnDestroyView ()
+        public override void OnDestroyView()
         {
             // Protect against Java side being GCed
-            if (Handle == IntPtr.Zero) {
+            if (Handle == IntPtr.Zero)
+            {
                 return;
             }
 
             // TODO: Remove bindings to ViewModel
             // check if it is needed or not.
-            timerComponent.DetachBindind ();
-            ReleaseRecyclerView ();
-            ViewModel.Dispose ();
-            base.OnDestroyView ();
+            timerComponent.DetachBindind();
+            ReleaseRecyclerView();
+            ViewModel.Dispose();
+            base.OnDestroyView();
         }
 
         #region Menu setup
-        public override void OnCreateOptionsMenu (IMenu menu, MenuInflater inflater)
+        public override void OnCreateOptionsMenu(IMenu menu, MenuInflater inflater)
         {
-            inflater.Inflate (Resource.Menu.NewItemMenu, menu);
-            AddNewMenuItem = menu.FindItem (Resource.Id.newItem);
-            ConfigureOptionMenu ();
+            inflater.Inflate(Resource.Menu.NewItemMenu, menu);
+            AddNewMenuItem = menu.FindItem(Resource.Id.newItem);
+            ConfigureOptionMenu();
         }
 
-        public override bool OnOptionsItemSelected (IMenuItem item)
+        public override bool OnOptionsItemSelected(IMenuItem item)
         {
-            var i = new Intent (Activity, typeof (EditTimeEntryActivity));
-            i.PutStringArrayListExtra (
+            var i = new Intent(Activity, typeof(EditTimeEntryActivity));
+            i.PutStringArrayListExtra(
                 EditTimeEntryActivity.ExtraGroupedTimeEntriesGuids,
-                new List<string> { ViewModel.ActiveEntry.Data.Id.ToString ()});
-            Activity.StartActivity (i);
+                new List<string> { ViewModel.ActiveEntry.Data.Id.ToString()});
+            Activity.StartActivity(i);
 
-            return base.OnOptionsItemSelected (item);
+            return base.OnOptionsItemSelected(item);
         }
 
         // Because the viewModel needs time to be created,
         // this method is called from two points
-        private void ConfigureOptionMenu ()
+        private void ConfigureOptionMenu()
         {
-            if (ViewModel != null && AddNewMenuItem != null) {
-                AddNewMenuItem.SetVisible (!ViewModel.IsEntryRunning);
+            if (ViewModel != null && AddNewMenuItem != null)
+            {
+                AddNewMenuItem.SetVisible(!ViewModel.IsEntryRunning);
             }
         }
         #endregion
 
         #region IDismissListener implementation
-        public bool CanDismiss (RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder)
+        public bool CanDismiss(RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder)
         {
-            var adapter = recyclerView.GetAdapter ();
-            return adapter.GetItemViewType (viewHolder.LayoutPosition) == RecyclerCollectionDataAdapter<IHolder>.ViewTypeContent;
+            var adapter = recyclerView.GetAdapter();
+            return adapter.GetItemViewType(viewHolder.LayoutPosition) == RecyclerCollectionDataAdapter<IHolder>.ViewTypeContent;
         }
         #endregion
 
         #region IRecyclerViewOnItemClickListener implementation
-        public void OnItemClick (RecyclerView parent, View clickedView, int position)
+        public void OnItemClick(RecyclerView parent, View clickedView, int position)
         {
-            var undoAdapter = (IUndoAdapter)parent.GetAdapter ();
-            if (undoAdapter.IsUndo (position)) {
+            var undoAdapter = (IUndoAdapter)parent.GetAdapter();
+            if (undoAdapter.IsUndo(position))
+            {
                 return;
             }
 
-            var intent = new Intent (Activity, typeof (EditTimeEntryActivity));
-            IList<string> guids = ((ITimeEntryHolder)ViewModel.Collection.ElementAt (position)).Guids;
-            intent.PutStringArrayListExtra (EditTimeEntryActivity.ExtraGroupedTimeEntriesGuids, guids);
-            intent.PutExtra (EditTimeEntryActivity.IsGrouped, guids.Count > 1);
+            var intent = new Intent(Activity, typeof(EditTimeEntryActivity));
+            IList<string> guids = ((ITimeEntryHolder)ViewModel.Collection.ElementAt(position)).Guids;
+            intent.PutStringArrayListExtra(EditTimeEntryActivity.ExtraGroupedTimeEntriesGuids, guids);
+            intent.PutExtra(EditTimeEntryActivity.IsGrouped, guids.Count > 1);
 
-            StartActivity (intent);
+            StartActivity(intent);
         }
 
-        public void OnItemLongClick (RecyclerView parent, View clickedView, int position)
+        public void OnItemLongClick(RecyclerView parent, View clickedView, int position)
         {
-            OnItemClick (parent, clickedView, position);
+            OnItemClick(parent, clickedView, position);
         }
 
-        public bool CanClick (RecyclerView view, int position)
+        public bool CanClick(RecyclerView view, int position)
         {
-            var adapter = recyclerView.GetAdapter ();
-            return adapter.GetItemViewType (position) == RecyclerCollectionDataAdapter<IHolder>.ViewTypeContent;
+            var adapter = recyclerView.GetAdapter();
+            return adapter.GetItemViewType(position) == RecyclerCollectionDataAdapter<IHolder>.ViewTypeContent;
         }
         #endregion
 
         #region Sync
-        public void OnRefresh ()
+        public void OnRefresh()
         {
-            ViewModel.TriggerFullSync ();
+            ViewModel.TriggerFullSync();
         }
 
-        private void OnActiveEntryChanged ()
+        private void OnActiveEntryChanged()
         {
             var activeEntry = ViewModel.ActiveEntry.Data;
-            if (activeEntry.State == TimeEntryState.Running) {
-                var ids = new List<string> { activeEntry.Id.ToString () };
-                var intent = new Intent (Activity, typeof (EditTimeEntryActivity));
-                intent.PutStringArrayListExtra (EditTimeEntryActivity.ExtraGroupedTimeEntriesGuids, ids);
-                intent.PutExtra (EditTimeEntryActivity.IsGrouped,  false);
-                StartActivity (intent);
+            if (activeEntry.State == TimeEntryState.Running)
+            {
+                var ids = new List<string> { activeEntry.Id.ToString() };
+                var intent = new Intent(Activity, typeof(EditTimeEntryActivity));
+                intent.PutStringArrayListExtra(EditTimeEntryActivity.ExtraGroupedTimeEntriesGuids, ids);
+                intent.PutExtra(EditTimeEntryActivity.IsGrouped,  false);
+                StartActivity(intent);
             }
         }
 
-        private void SetSyncState ()
+        private void SetSyncState()
         {
             // Full sync method.
-            if (!swipeLayout.Refreshing) {
+            if (!swipeLayout.Refreshing)
+            {
                 return;
             }
             swipeLayout.Refreshing = ViewModel.IsFullSyncing;
-            if (ViewModel.HasSyncErrors) {
+            if (ViewModel.HasSyncErrors)
+            {
                 int msgId = Resource.String.LastSyncHadErrors;
-                Snackbar.Make (coordinatorLayout, Resources.GetString (msgId), Snackbar.LengthLong).Show ();
+                Snackbar.Make(coordinatorLayout, Resources.GetString(msgId), Snackbar.LengthLong).Show();
             }
         }
 
-        private void SetFooterState ()
+        private void SetFooterState()
         {
             var info = ViewModel.LoadInfo;
-            if (info.HasMore && !info.HadErrors) {
-                logAdapter.SetFooterState (RecyclerCollectionDataAdapter<IHolder>.RecyclerLoadState.Loading);
-            } else if (info.HasMore && info.HadErrors) {
-                logAdapter.SetFooterState (RecyclerCollectionDataAdapter<IHolder>.RecyclerLoadState.Retry);
-            } else if (!info.HasMore && !info.HadErrors) {
-                logAdapter.SetFooterState (RecyclerCollectionDataAdapter<IHolder>.RecyclerLoadState.Finished);
+            if (info.HasMore && !info.HadErrors)
+            {
+                logAdapter.SetFooterState(RecyclerCollectionDataAdapter<IHolder>.RecyclerLoadState.Loading);
+            }
+            else if (info.HasMore && info.HadErrors)
+            {
+                logAdapter.SetFooterState(RecyclerCollectionDataAdapter<IHolder>.RecyclerLoadState.Retry);
+            }
+            else if (!info.HasMore && !info.HadErrors)
+            {
+                logAdapter.SetFooterState(RecyclerCollectionDataAdapter<IHolder>.RecyclerLoadState.Finished);
             }
         }
 
-        private void SetCollectionState ()
+        private void SetCollectionState()
         {
-            if (ViewModel.LoadInfo.IsSyncing && ViewModel.Collection.Count == 0) {
+            if (ViewModel.LoadInfo.IsSyncing && ViewModel.Collection.Count == 0)
+            {
                 return;
             }
 
             View emptyView = emptyMessageView;
-            var isWelcome = ViewModel.IsWelcomeMessageShown ();
+            var isWelcome = ViewModel.IsWelcomeMessageShown();
             var hasItems = ViewModel.Collection.Count > 0;
-            var isInExperiment = ViewModel.IsInExperiment ();
+            var isInExperiment = ViewModel.IsInExperiment();
 
             // TODO RX: OBM Experiments
-            if (isWelcome && isInExperiment) {
+            if (isWelcome && isInExperiment)
+            {
                 emptyView = experimentEmptyView;
-            } else {
+            }
+            else
+            {
                 // always keeps this view hidden if it is not needed.
                 experimentEmptyView.Visibility = ViewStates.Gone;
             }
@@ -275,40 +293,40 @@ namespace Toggl.Joey.UI.Fragments
         }
         #endregion
 
-        private void SetupRecyclerView (LogTimeEntriesVM viewModel)
+        private void SetupRecyclerView(LogTimeEntriesVM viewModel)
         {
             // Touch listeners.
-            itemTouchListener = new ItemTouchListener (recyclerView, this);
-            recyclerView.AddOnItemTouchListener (itemTouchListener);
+            itemTouchListener = new ItemTouchListener(recyclerView, this);
+            recyclerView.AddOnItemTouchListener(itemTouchListener);
 
             // Scroll listener
-            recyclerView.AddOnScrollListener (
-                new ScrollListener ((LinearLayoutManager)recyclerView.GetLayoutManager (), viewModel));
+            recyclerView.AddOnScrollListener(
+                new ScrollListener((LinearLayoutManager)recyclerView.GetLayoutManager(), viewModel));
 
-            var touchCallback = new SwipeDismissCallback (ItemTouchHelper.Up | ItemTouchHelper.Down, ItemTouchHelper.Left, this);
-            var touchHelper = new ItemTouchHelper (touchCallback);
-            touchHelper.AttachToRecyclerView (recyclerView);
+            var touchCallback = new SwipeDismissCallback(ItemTouchHelper.Up | ItemTouchHelper.Down, ItemTouchHelper.Left, this);
+            var touchHelper = new ItemTouchHelper(touchCallback);
+            touchHelper.AttachToRecyclerView(recyclerView);
 
             // Decorations.
-            dividerDecoration = new DividerItemDecoration (Activity, DividerItemDecoration.VerticalList);
-            shadowDecoration = new ShadowItemDecoration (Activity);
-            recyclerView.AddItemDecoration (dividerDecoration);
-            recyclerView.AddItemDecoration (shadowDecoration);
-            recyclerView.GetItemAnimator ().ChangeDuration = 0;
+            dividerDecoration = new DividerItemDecoration(Activity, DividerItemDecoration.VerticalList);
+            shadowDecoration = new ShadowItemDecoration(Activity);
+            recyclerView.AddItemDecoration(dividerDecoration);
+            recyclerView.AddItemDecoration(shadowDecoration);
+            recyclerView.GetItemAnimator().ChangeDuration = 0;
         }
 
-        private void ReleaseRecyclerView ()
+        private void ReleaseRecyclerView()
         {
-            recyclerView.RemoveItemDecoration (shadowDecoration);
-            recyclerView.RemoveItemDecoration (dividerDecoration);
-            recyclerView.RemoveOnItemTouchListener (itemTouchListener);
+            recyclerView.RemoveItemDecoration(shadowDecoration);
+            recyclerView.RemoveItemDecoration(dividerDecoration);
+            recyclerView.RemoveOnItemTouchListener(itemTouchListener);
 
-            recyclerView.GetAdapter ().Dispose ();
-            recyclerView.Dispose ();
+            recyclerView.GetAdapter().Dispose();
+            recyclerView.Dispose();
 
-            itemTouchListener.Dispose ();
-            dividerDecoration.Dispose ();
-            shadowDecoration.Dispose ();
+            itemTouchListener.Dispose();
+            dividerDecoration.Dispose();
+            shadowDecoration.Dispose();
         }
 
         class ScrollListener : RecyclerView.OnScrollListener
@@ -320,31 +338,34 @@ namespace Toggl.Joey.UI.Fragments
             private readonly LinearLayoutManager linearLayoutManager;
             private readonly LogTimeEntriesVM viewModel;
 
-            public ScrollListener (LinearLayoutManager linearLayoutManager, LogTimeEntriesVM viewModel)
+            public ScrollListener(LinearLayoutManager linearLayoutManager, LogTimeEntriesVM viewModel)
             {
                 this.linearLayoutManager = linearLayoutManager;
                 this.viewModel = viewModel;
             }
 
-            public override void OnScrolled (RecyclerView recyclerView, int dx, int dy)
+            public override void OnScrolled(RecyclerView recyclerView, int dx, int dy)
             {
-                base.OnScrolled (recyclerView, dx, dy);
+                base.OnScrolled(recyclerView, dx, dy);
 
                 visibleItemCount = recyclerView.ChildCount;
                 totalItemCount = linearLayoutManager.ItemCount;
-                firstVisibleItem = linearLayoutManager.FindFirstVisibleItemPosition ();
+                firstVisibleItem = linearLayoutManager.FindFirstVisibleItemPosition();
 
-                if (loading) {
-                    if (totalItemCount > previousTotal) {
+                if (loading)
+                {
+                    if (totalItemCount > previousTotal)
+                    {
                         loading = false;
                         previousTotal = totalItemCount;
                     }
                 }
 
-                if (!loading && (totalItemCount - visibleItemCount) <= (firstVisibleItem + visibleThreshold)) {
+                if (!loading && (totalItemCount - visibleItemCount) <= (firstVisibleItem + visibleThreshold))
+                {
                     loading = true;
                     // Request more entries.
-                    viewModel.LoadMore ();
+                    viewModel.LoadMore();
                 }
             }
         }

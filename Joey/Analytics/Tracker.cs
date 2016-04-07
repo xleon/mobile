@@ -12,71 +12,73 @@ namespace Toggl.Joey.Analytics
         private readonly Dictionary<int, string> customDimensions = new Dictionary<int, string>();
         private readonly Android.Gms.Analytics.Tracker tracker;
 
-        public Tracker (Context ctx)
+        public Tracker(Context ctx)
         {
-            var ga = GoogleAnalytics.GetInstance (ctx);
-            #if DEBUG
-            ga.SetDryRun (true);
-            #endif
+            var ga = GoogleAnalytics.GetInstance(ctx);
+#if DEBUG
+            ga.SetDryRun(true);
+#endif
 
-            tracker = ga.NewTracker (Build.GoogleAnalyticsId);
-            tracker.SetSessionTimeout ((long)TimeSpan.FromMinutes (5).TotalSeconds);
-            tracker.EnableAutoActivityTracking (false);
-            tracker.EnableExceptionReporting (false);
+            tracker = ga.NewTracker(Build.GoogleAnalyticsId);
+            tracker.SetSessionTimeout((long)TimeSpan.FromMinutes(5).TotalSeconds);
+            tracker.EnableAutoActivityTracking(false);
+            tracker.EnableExceptionReporting(false);
         }
 
-        protected override void StartNewSession ()
+        protected override void StartNewSession()
         {
-            var builder = new HitBuilders.ScreenViewBuilder ();
+            var builder = new HitBuilders.ScreenViewBuilder();
 
             // XXX: Workaround wrong signature for setNetSession in the component bindings:
-            HitBuilderWorkaround.SetNewSession (builder);
+            HitBuilderWorkaround.SetNewSession(builder);
 
-            SendHit (builder);
+            SendHit(builder);
         }
 
-        protected override void SendTiming (long elapsedMilliseconds, string category, string variable, string label = null)
+        protected override void SendTiming(long elapsedMilliseconds, string category, string variable, string label = null)
         {
-            SendHit (new HitBuilders.TimingBuilder ()
-                     .SetValue (elapsedMilliseconds)
-                     .SetCategory (category)
-                     .SetVariable (variable)
-                     .SetLabel (label));
+            SendHit(new HitBuilders.TimingBuilder()
+                    .SetValue(elapsedMilliseconds)
+                    .SetCategory(category)
+                    .SetVariable(variable)
+                    .SetLabel(label));
         }
 
-        protected override void SendEvent (string category, string action, string label = null, long value = 0)
+        protected override void SendEvent(string category, string action, string label = null, long value = 0)
         {
-            SendHit (new HitBuilders.EventBuilder ()
-                     .SetCategory (category)
-                     .SetAction (action)
-                     .SetLabel (label)
-                     .SetValue (value));
+            SendHit(new HitBuilders.EventBuilder()
+                    .SetCategory(category)
+                    .SetAction(action)
+                    .SetLabel(label)
+                    .SetValue(value));
 
         }
 
-        protected override void SetCustomDimension (int idx, string value)
+        protected override void SetCustomDimension(int idx, string value)
         {
             customDimensions [idx] = value;
         }
 
         public override string CurrentScreen
         {
-            set {
-                tracker.SetScreenName (value);
-                SendHit (new HitBuilders.ScreenViewBuilder ());
+            set
+            {
+                tracker.SetScreenName(value);
+                SendHit(new HitBuilders.ScreenViewBuilder());
             }
         }
 
-        private void SendHit (HitBuilders.HitBuilder builder)
+        private void SendHit(HitBuilders.HitBuilder builder)
         {
             // Inject custom dimensions, if any have been set:
-            foreach (var kvp in customDimensions) {
+            foreach (var kvp in customDimensions)
+            {
                 // XXX: Workaround wrong signature for setCustomDimension in the component bindings:
-                HitBuilderWorkaround.SetCustomDimension (builder, kvp.Key, kvp.Value);
+                HitBuilderWorkaround.SetCustomDimension(builder, kvp.Key, kvp.Value);
             }
-            customDimensions.Clear ();
+            customDimensions.Clear();
 
-            tracker.Send (builder.Build ());
+            tracker.Send(builder.Build());
         }
 
         [Obsolete]
@@ -88,28 +90,31 @@ namespace Toggl.Joey.Analytics
 
             private static IntPtr HitBuilderClassRef
             {
-                get { return Android.Runtime.JNIEnv.FindClass ("com/google/android/gms/analytics/HitBuilders$HitBuilder", ref HitBuilderClassHandle); }
+                get { return Android.Runtime.JNIEnv.FindClass("com/google/android/gms/analytics/HitBuilders$HitBuilder", ref HitBuilderClassHandle); }
             }
 
-            public static void SetNewSession (HitBuilders.HitBuilder builder)
+            public static void SetNewSession(HitBuilders.HitBuilder builder)
             {
-                if (HitBuilderSetNewSessionId == IntPtr.Zero) {
-                    HitBuilderSetNewSessionId = Android.Runtime.JNIEnv.GetMethodID (HitBuilderClassRef, "setNewSession", "()Lcom/google/android/gms/analytics/HitBuilders$HitBuilder;");
+                if (HitBuilderSetNewSessionId == IntPtr.Zero)
+                {
+                    HitBuilderSetNewSessionId = Android.Runtime.JNIEnv.GetMethodID(HitBuilderClassRef, "setNewSession", "()Lcom/google/android/gms/analytics/HitBuilders$HitBuilder;");
                 }
-                Android.Runtime.JNIEnv.CallObjectMethod (builder.Handle, HitBuilderSetNewSessionId);
+                Android.Runtime.JNIEnv.CallObjectMethod(builder.Handle, HitBuilderSetNewSessionId);
             }
 
-            public static void SetCustomDimension (HitBuilders.HitBuilder builder, int index, string dimension)
+            public static void SetCustomDimension(HitBuilders.HitBuilder builder, int index, string dimension)
             {
-                if (HitBuilderSetCustomDimensionId == IntPtr.Zero) {
-                    HitBuilderSetCustomDimensionId = Android.Runtime.JNIEnv.GetMethodID (HitBuilderClassRef, "setCustomDimension", "(ILjava/lang/String;)Lcom/google/android/gms/analytics/HitBuilders$HitBuilder;");
+                if (HitBuilderSetCustomDimensionId == IntPtr.Zero)
+                {
+                    HitBuilderSetCustomDimensionId = Android.Runtime.JNIEnv.GetMethodID(HitBuilderClassRef, "setCustomDimension", "(ILjava/lang/String;)Lcom/google/android/gms/analytics/HitBuilders$HitBuilder;");
                 }
-                IntPtr dimensionPtr = Android.Runtime.JNIEnv.NewString (dimension);
-                Android.Runtime.JNIEnv.CallObjectMethod (builder.Handle, HitBuilderSetCustomDimensionId, new Android.Runtime.JValue[] {
-                    new Android.Runtime.JValue (index),
-                    new Android.Runtime.JValue (dimensionPtr)
+                IntPtr dimensionPtr = Android.Runtime.JNIEnv.NewString(dimension);
+                Android.Runtime.JNIEnv.CallObjectMethod(builder.Handle, HitBuilderSetCustomDimensionId, new Android.Runtime.JValue[]
+                {
+                    new Android.Runtime.JValue(index),
+                    new Android.Runtime.JValue(dimensionPtr)
                 });
-                Android.Runtime.JNIEnv.DeleteLocalRef (dimensionPtr);
+                Android.Runtime.JNIEnv.DeleteLocalRef(dimensionPtr);
             }
         }
     }

@@ -10,75 +10,79 @@ namespace Toggl.Joey.UI.Views
     public class FadeDrawable : Drawable
     {
         private readonly int intrinsicWidth;
-        private readonly StateColorMap colorMap = new StateColorMap ();
-        private readonly Paint paint = new Paint ();
+        private readonly StateColorMap colorMap = new StateColorMap();
+        private readonly Paint paint = new Paint();
         private Color? gradientColor;
 
-        public FadeDrawable (int intrinsicWidth)
+        public FadeDrawable(int intrinsicWidth)
         {
             this.intrinsicWidth = intrinsicWidth;
         }
 
-        public void SetStateColor (int[] state, Color color)
+        public void SetStateColor(int[] state, Color color)
         {
-            colorMap.Add (state, color);
-            OnStateChange (GetState ());
+            colorMap.Add(state, color);
+            OnStateChange(GetState());
         }
 
-        protected override bool OnStateChange (int[] state)
+        protected override bool OnStateChange(int[] state)
         {
-            var color = colorMap.Get (state);
-            if (color == null) {
-                color = colorMap.Get (StateSet.WildCard.ToArray ());
+            var color = colorMap.Get(state);
+            if (color == null)
+            {
+                color = colorMap.Get(StateSet.WildCard.ToArray());
             }
 
-            if (gradientColor != color) {
+            if (gradientColor != color)
+            {
                 gradientColor = color;
-                InvalidateGradient ();
+                InvalidateGradient();
                 return true;
             }
 
-            return base.OnStateChange (state);
+            return base.OnStateChange(state);
         }
 
-        protected override void OnBoundsChange (Rect bounds)
+        protected override void OnBoundsChange(Rect bounds)
         {
-            base.OnBoundsChange (bounds);
-            InvalidateGradient ();
+            base.OnBoundsChange(bounds);
+            InvalidateGradient();
         }
 
-        private void InvalidateGradient ()
+        private void InvalidateGradient()
         {
-            if (gradientColor == null) {
+            if (gradientColor == null)
+            {
                 return;
             }
 
             var opaqueColor = gradientColor.Value;
-            var transparentColor = new Color ((int)opaqueColor.R, opaqueColor.G, opaqueColor.B, 0);
+            var transparentColor = new Color((int)opaqueColor.R, opaqueColor.G, opaqueColor.B, 0);
 
-            var gradient = new LinearGradient (
+            var gradient = new LinearGradient(
                 Bounds.Left, Bounds.Top,
                 Bounds.Right, Bounds.Top,
                 transparentColor, opaqueColor,
                 Shader.TileMode.Clamp);
 
-            paint.SetShader (gradient);
+            paint.SetShader(gradient);
         }
 
-        public override void Draw (Canvas canvas)
+        public override void Draw(Canvas canvas)
         {
-            if (gradientColor == null) {
+            if (gradientColor == null)
+            {
                 return;
             }
 
-            canvas.DrawRect (Bounds, paint);
+            canvas.DrawRect(Bounds, paint);
         }
 
-        public override void SetAlpha (int alpha)
+        public override void SetAlpha(int alpha)
         {
         }
 
-        public override void SetColorFilter (ColorFilter cf)
+        public override void SetColorFilter(ColorFilter cf)
         {
         }
 
@@ -107,16 +111,18 @@ namespace Toggl.Joey.UI.Views
             private readonly List<int[]> stateSetList = new List<int[]> ();
             private readonly List<Color> colorList = new List<Color> ();
 
-            public void Add (int[] state, Color color)
+            public void Add(int[] state, Color color)
             {
-                stateSetList.Add (state);
-                colorList.Add (color);
+                stateSetList.Add(state);
+                colorList.Add(color);
             }
 
-            public Color? Get (int[] state)
+            public Color? Get(int[] state)
             {
-                for (var i = 0; i < stateSetList.Count; i++) {
-                    if (StateSet.StateSetMatches (stateSetList [i], state)) {
+                for (var i = 0; i < stateSetList.Count; i++)
+                {
+                    if (StateSet.StateSetMatches(stateSetList [i], state))
+                    {
                         return colorList [i];
                     }
                 }

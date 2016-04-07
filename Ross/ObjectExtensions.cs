@@ -7,7 +7,7 @@ namespace Toggl.Ross
         public static T Apply<T> (this T self, Action<T> extension)
         where T : class
         {
-            extension (self);
+            extension(self);
             return self;
         }
     }

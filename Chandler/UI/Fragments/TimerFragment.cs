@@ -14,9 +14,9 @@ namespace Toggl.Chandler.UI.Fragments
     {
         private readonly string greenButtonColor = "#ee4dd965";
         private readonly string redButtonColor = "#eeff3c47";
-        private readonly string grayButtonColor= "#ee8f8f8f";
+        private readonly string grayButtonColor = "#ee8f8f8f";
 
-        private readonly Handler handler = new Handler ();
+        private readonly Handler handler = new Handler();
         private TextView DurationTextView;
         private TextView DescriptionTextView;
         private TextView ProjectTextView;
@@ -27,9 +27,9 @@ namespace Toggl.Chandler.UI.Fragments
         private Context context;
         private MainActivity activity;
 
-        public override View OnCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
+        public override View OnCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
         {
-            var view = inflater.Inflate (Resource.Layout.TimeEntryFragment, container, false);
+            var view = inflater.Inflate(Resource.Layout.TimeEntryFragment, container, false);
 
             ActionButton = view.FindViewById<ImageButton> (Resource.Id.testButton);
             DurationTextView = view.FindViewById<TextView> (Resource.Id.DurationTextView);
@@ -42,16 +42,19 @@ namespace Toggl.Chandler.UI.Fragments
             activity = ((MainActivity)Activity);
             context = Activity.ApplicationContext;
 
-            Rebind ();
+            Rebind();
 
             return view;
         }
 
         public bool UserLoggedIn
         {
-            get {
+            get
+            {
                 return userLoggedIn;
-            } set {
+            }
+            set
+            {
                 userLoggedIn = value;
                 Rebind();
             }
@@ -59,9 +62,12 @@ namespace Toggl.Chandler.UI.Fragments
 
         public bool TimerEnabled
         {
-            get {
+            get
+            {
                 return timerEnabled;
-            } set {
+            }
+            set
+            {
                 timerEnabled = value;
                 Rebind();
             }
@@ -69,85 +75,92 @@ namespace Toggl.Chandler.UI.Fragments
 
         private SimpleTimeEntryData data
         {
-            get {
+            get
+            {
                 return activity.Data[0];
             }
         }
 
-        private void OnActionButtonClicked (object sender, EventArgs e)
+        private void OnActionButtonClicked(object sender, EventArgs e)
         {
             activity.RequestStartStop();
         }
 
         private void Rebind()
         {
-            if (!IsAdded) {
+            if (!IsAdded)
+            {
                 return;
             }
 
-            switch (CurrentState) {
+            switch (CurrentState)
+            {
 
-            case TimerState.New:
-                ButtonColor = Color.ParseColor (greenButtonColor);
-                ActionButton.SetImageDrawable (context.Resources.GetDrawable (Resource.Drawable.IcPlay));
-                DurationTextView.Text = Resources.GetString (Resource.String.DurationNotRunningState);
-                ProjectTextView.Text = Resources.GetString (Resource.String.TimerBlankIntroduction);
-                DescriptionTextView.Text =  Resources.GetString (Resource.String.WearNewBlankDescription);
-                break;
+                case TimerState.New:
+                    ButtonColor = Color.ParseColor(greenButtonColor);
+                    ActionButton.SetImageDrawable(context.Resources.GetDrawable(Resource.Drawable.IcPlay));
+                    DurationTextView.Text = Resources.GetString(Resource.String.DurationNotRunningState);
+                    ProjectTextView.Text = Resources.GetString(Resource.String.TimerBlankIntroduction);
+                    DescriptionTextView.Text =  Resources.GetString(Resource.String.WearNewBlankDescription);
+                    break;
 
-            case TimerState.Running:
-                ButtonColor = Color.ParseColor (redButtonColor);
-                ActionButton.SetImageDrawable (context.Resources.GetDrawable (Resource.Drawable.IcStop));
-                var dur = data.GetDuration();
-                DurationTextView.Text = TimeSpan.FromSeconds ((long)dur.TotalSeconds).ToString ();
-                ProjectTextView.Text = data.Project;
-                DescriptionTextView.Text = String.IsNullOrWhiteSpace (data.Description)
-                                           ? Resources.GetString (Resource.String.TimeEntryNoDescription)
-                                           : data.Description;
-                break;
+                case TimerState.Running:
+                    ButtonColor = Color.ParseColor(redButtonColor);
+                    ActionButton.SetImageDrawable(context.Resources.GetDrawable(Resource.Drawable.IcStop));
+                    var dur = data.GetDuration();
+                    DurationTextView.Text = TimeSpan.FromSeconds((long)dur.TotalSeconds).ToString();
+                    ProjectTextView.Text = data.Project;
+                    DescriptionTextView.Text = String.IsNullOrWhiteSpace(data.Description)
+                                               ? Resources.GetString(Resource.String.TimeEntryNoDescription)
+                                               : data.Description;
+                    break;
 
-            case TimerState.Loading:
-                ActionButton.Visibility = ViewStates.Gone;
-                ProgressBar.Visibility = ViewStates.Visible;
-                DurationTextView.Text = userLoggedIn
-                                        ? Resources.GetString (Resource.String.TimerLoading)
-                                        : Resources.GetString (Resource.String.TimerWaiting);
-                DescriptionTextView.Text = userLoggedIn
-                                           ? String.Empty
-                                           : Resources.GetString (Resource.String.TimerNotLoggedIn);
-                break;
+                case TimerState.Loading:
+                    ActionButton.Visibility = ViewStates.Gone;
+                    ProgressBar.Visibility = ViewStates.Visible;
+                    DurationTextView.Text = userLoggedIn
+                                            ? Resources.GetString(Resource.String.TimerLoading)
+                                            : Resources.GetString(Resource.String.TimerWaiting);
+                    DescriptionTextView.Text = userLoggedIn
+                                               ? String.Empty
+                                               : Resources.GetString(Resource.String.TimerNotLoggedIn);
+                    break;
 
-            case TimerState.Waiting:
-                ProjectTextView.Text = String.Empty;
-                DescriptionTextView.Text = Resources.GetString (Resource.String.TimerRequestSent);
-                DurationTextView.Text = String.Empty;
-                ActionButton.Visibility = ViewStates.Gone;
-                ProgressBar.Visibility = ViewStates.Visible;
-                break;
+                case TimerState.Waiting:
+                    ProjectTextView.Text = String.Empty;
+                    DescriptionTextView.Text = Resources.GetString(Resource.String.TimerRequestSent);
+                    DurationTextView.Text = String.Empty;
+                    ActionButton.Visibility = ViewStates.Gone;
+                    ProgressBar.Visibility = ViewStates.Visible;
+                    break;
             }
 
-            handler.RemoveCallbacks (Rebind);
-            handler.PostDelayed (Rebind, 1000);
+            handler.RemoveCallbacks(Rebind);
+            handler.PostDelayed(Rebind, 1000);
         }
 
         private Color ButtonColor
         {
-            set {
+            set
+            {
                 ProgressBar.Visibility = ViewStates.Gone;
                 ActionButton.Visibility = ViewStates.Visible;
                 var shape = ActionButton.Background as GradientDrawable;
-                shape.SetColor (value);
+                shape.SetColor(value);
             }
         }
 
         private TimerState CurrentState
         {
-            get {
-                if (activity.Data.Count == 0) {
+            get
+            {
+                if (activity.Data.Count == 0)
+                {
                     return TimerState.Loading;
                 }
 
-                if (!timerEnabled) {
+                if (!timerEnabled)
+                {
                     return TimerState.Waiting;
                 }
 
@@ -155,7 +168,8 @@ namespace Toggl.Chandler.UI.Fragments
             }
         }
 
-        private enum TimerState {
+        private enum TimerState
+        {
             New,
             Running,
             Loading,

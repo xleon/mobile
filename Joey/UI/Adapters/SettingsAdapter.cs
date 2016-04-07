@@ -28,47 +28,48 @@ namespace Toggl.Joey.UI.Adapters
         CheckboxListItem chooseProjectForNew { get; set; }
         CheckboxListItem useDefault { get; set; }
 
-        public SettingsAdapter ()
+        public SettingsAdapter()
         {
-            viewModel = new SettingsVM (StoreManager.Singleton.AppState);
-            showNotification = new CheckboxListItem (
+            viewModel = new SettingsVM(StoreManager.Singleton.AppState);
+            showNotification = new CheckboxListItem(
                 Resource.String.SettingsGeneralShowNotificationTitle,
                 Resource.String.SettingsGeneralShowNotificationDesc,
                 SettingsStore.PropertyShowNotification,
                 viewModel.SetShowNotification);
 
-            idleNotification = new CheckboxListItem (
+            idleNotification = new CheckboxListItem(
                 Resource.String.SettingsGeneralNotifTitle,
                 Resource.String.SettingsGeneralNotifDesc,
                 SettingsStore.PropertyIdleNotification,
                 viewModel.SetIdleNotification);
 
-            chooseProjectForNew = new CheckboxListItem (
+            chooseProjectForNew = new CheckboxListItem(
                 Resource.String.SettingsGeneralAskProjectTitle,
                 Resource.String.SettingsGeneralAskProjectDesc,
                 SettingsStore.PropertyChooseProjectForNew,
                 viewModel.SetChooseProjectForNew);
 
-            useDefault = new CheckboxListItem (
+            useDefault = new CheckboxListItem(
                 Resource.String.SettingsGeneralMobileTagTitle,
                 Resource.String.SettingsGeneralMobileTagDesc,
                 SettingsStore.PropertyUseDefaultTag,
                 viewModel.SetUseDefaultTag);
 
-            groupedEntries = new CheckboxListItem (
+            groupedEntries = new CheckboxListItem(
                 Resource.String.SettingsGeneralGroupedEntriesTitle,
                 Resource.String.SettingsGeneralGroupedEntriesDesc,
                 SettingsStore.PropertyGroupedTimeEntries,
                 viewModel.SetGroupedTimeEntries);
 
-            showNotificationBinding = this.SetBinding (() => viewModel.ShowNotification, () => showNotification.IsChecked);
-            idleBinding = this.SetBinding (() => viewModel.IdleNotification, () => idleNotification.IsChecked);
-            chooseProjectBinding = this.SetBinding (() => viewModel.ChooseProjectForNew, () => chooseProjectForNew.IsChecked);
-            useDefaultBinding = this.SetBinding (() => viewModel.UseDefaultTag, () => useDefault.IsChecked);
-            groupedBinding = this.SetBinding (() => viewModel.GroupedTimeEntries, () => groupedEntries.IsChecked);
+            showNotificationBinding = this.SetBinding(() => viewModel.ShowNotification, () => showNotification.IsChecked);
+            idleBinding = this.SetBinding(() => viewModel.IdleNotification, () => idleNotification.IsChecked);
+            chooseProjectBinding = this.SetBinding(() => viewModel.ChooseProjectForNew, () => chooseProjectForNew.IsChecked);
+            useDefaultBinding = this.SetBinding(() => viewModel.UseDefaultTag, () => useDefault.IsChecked);
+            groupedBinding = this.SetBinding(() => viewModel.GroupedTimeEntries, () => groupedEntries.IsChecked);
 
-            listItems = new List<IListItem>  {
-                new HeaderListItem (Resource.String.SettingsGeneralHeader),
+            listItems = new List<IListItem>
+            {
+                new HeaderListItem(Resource.String.SettingsGeneralHeader),
                 showNotification,
                 idleNotification,
                 chooseProjectForNew,
@@ -76,7 +77,7 @@ namespace Toggl.Joey.UI.Adapters
                 groupedEntries
             };
 
-            viewModel.PropertyChanged += (e,ar) => NotifyDataSetChanged ();
+            viewModel.PropertyChanged += (e, ar) => NotifyDataSetChanged();
         }
 
         public override int ViewTypeCount
@@ -84,50 +85,57 @@ namespace Toggl.Joey.UI.Adapters
             get { return 2; }
         }
 
-        public override Java.Lang.Object GetItem (int position)
+        public override Java.Lang.Object GetItem(int position)
         {
             return null;
         }
 
-        public override long GetItemId (int position)
+        public override long GetItemId(int position)
         {
             return position;
         }
 
-        public override bool IsEnabled (int position)
+        public override bool IsEnabled(int position)
         {
-            return GetItemViewType (position) != HeaderViewType;
+            return GetItemViewType(position) != HeaderViewType;
         }
 
-        public override int GetItemViewType (int position)
+        public override int GetItemViewType(int position)
         {
             return listItems [position].ViewType;
         }
 
-        public override View GetView (int position, View convertView, ViewGroup parent)
+        public override View GetView(int position, View convertView, ViewGroup parent)
         {
             var view = convertView;
             var listItem = listItems [position];
             var viewType = listItem.ViewType;
 
-            if (viewType == HeaderViewType) {
-                if (view == null) {
-                    view = LayoutInflater.FromContext (parent.Context).Inflate (
+            if (viewType == HeaderViewType)
+            {
+                if (view == null)
+                {
+                    view = LayoutInflater.FromContext(parent.Context).Inflate(
                                Resource.Layout.SettingsListHeaderItem, parent, false);
-                    view.Tag = new HeaderListItemHolder (view);
+                    view.Tag = new HeaderListItemHolder(view);
                 }
                 var holder = (HeaderListItemHolder)view.Tag;
-                holder.Bind ((HeaderListItem)listItem);
-            } else if (viewType == CheckboxViewType) {
-                if (view == null) {
-                    view = LayoutInflater.FromContext (parent.Context).Inflate (
+                holder.Bind((HeaderListItem)listItem);
+            }
+            else if (viewType == CheckboxViewType)
+            {
+                if (view == null)
+                {
+                    view = LayoutInflater.FromContext(parent.Context).Inflate(
                                Resource.Layout.SettingsListCheckboxItem, parent, false);
-                    view.Tag = new CheckboxListItemHolder (view);
+                    view.Tag = new CheckboxListItemHolder(view);
                 }
                 var holder = (CheckboxListItemHolder)view.Tag;
-                holder.Bind ((CheckboxListItem)listItem);
-            } else {
-                throw new InvalidOperationException (String.Format ("Unknown view type {0}", viewType));
+                holder.Bind((CheckboxListItem)listItem);
+            }
+            else
+            {
+                throw new InvalidOperationException(String.Format("Unknown view type {0}", viewType));
             }
 
             return view;
@@ -138,13 +146,14 @@ namespace Toggl.Joey.UI.Adapters
             get { return listItems.Count; }
         }
 
-        public void OnItemClicked (int position)
+        public void OnItemClicked(int position)
         {
             var item = listItems [position];
 
             var checkItem = item as CheckboxListItem;
-            if (checkItem != null) {
-                checkItem.Toggle ();
+            if (checkItem != null)
+            {
+                checkItem.Toggle();
             }
         }
 
@@ -157,7 +166,7 @@ namespace Toggl.Joey.UI.Adapters
         {
             private readonly int headerResId;
 
-            public HeaderListItem (int headerResId)
+            public HeaderListItem(int headerResId)
             {
                 this.headerResId = headerResId;
             }
@@ -180,7 +189,7 @@ namespace Toggl.Joey.UI.Adapters
             private readonly string settingName;
             private readonly Action<bool> valueSetter;
 
-            public CheckboxListItem (int titleResId, int descriptionResId, string settingName, Action<bool> valueSetter)
+            public CheckboxListItem(int titleResId, int descriptionResId, string settingName, Action<bool> valueSetter)
             {
                 this.titleResId = titleResId;
                 this.descriptionResId = descriptionResId;
@@ -210,9 +219,9 @@ namespace Toggl.Joey.UI.Adapters
 
             public bool IsChecked { get; set; }
 
-            public void Toggle ()
+            public void Toggle()
             {
-                valueSetter (!IsChecked);
+                valueSetter(!IsChecked);
             }
         }
 
@@ -220,14 +229,14 @@ namespace Toggl.Joey.UI.Adapters
         {
             public TextView HeaderTextView { get; private set; }
 
-            public HeaderListItemHolder (View root) : base (root)
+            public HeaderListItemHolder(View root) : base(root)
             {
-                HeaderTextView = root.FindViewById<TextView> (Resource.Id.HeaderTextView).SetFont (Font.RobotoMedium);
+                HeaderTextView = root.FindViewById<TextView> (Resource.Id.HeaderTextView).SetFont(Font.RobotoMedium);
             }
 
-            protected override void Rebind ()
+            protected override void Rebind()
             {
-                HeaderTextView.SetText (DataSource.HeaderResId);
+                HeaderTextView.SetText(DataSource.HeaderResId);
             }
         }
 
@@ -235,57 +244,61 @@ namespace Toggl.Joey.UI.Adapters
         {
             private Subscription<SettingChangedMessage> subscriptionSettingChanged;
 
-            public SettingViewHolder (View root) : base (root)
+            public SettingViewHolder(View root) : base(root)
             {
             }
 
-            protected override void Dispose (bool disposing)
+            protected override void Dispose(bool disposing)
             {
-                if (disposing) {
-                    Unsubscribe (ServiceContainer.Resolve<MessageBus> ());
+                if (disposing)
+                {
+                    Unsubscribe(ServiceContainer.Resolve<MessageBus> ());
                 }
 
-                base.Dispose (disposing);
+                base.Dispose(disposing);
             }
 
-            protected override void OnRootAttachedToWindow (object sender, View.ViewAttachedToWindowEventArgs e)
+            protected override void OnRootAttachedToWindow(object sender, View.ViewAttachedToWindowEventArgs e)
             {
-                base.OnRootAttachedToWindow (sender, e);
-                Subscribe (ServiceContainer.Resolve<MessageBus> ());
+                base.OnRootAttachedToWindow(sender, e);
+                Subscribe(ServiceContainer.Resolve<MessageBus> ());
             }
 
-            protected override void OnRootDetachedFromWindow (object sender, View.ViewDetachedFromWindowEventArgs e)
+            protected override void OnRootDetachedFromWindow(object sender, View.ViewDetachedFromWindowEventArgs e)
             {
-                Unsubscribe (ServiceContainer.Resolve<MessageBus> ());
-                base.OnRootDetachedFromWindow (sender, e);
+                Unsubscribe(ServiceContainer.Resolve<MessageBus> ());
+                base.OnRootDetachedFromWindow(sender, e);
             }
 
-            protected virtual void Subscribe (MessageBus bus)
+            protected virtual void Subscribe(MessageBus bus)
             {
-                if (subscriptionSettingChanged == null) {
+                if (subscriptionSettingChanged == null)
+                {
                     subscriptionSettingChanged = bus.Subscribe<SettingChangedMessage> (DispatchSettingChanged);
                 }
             }
 
-            protected virtual void Unsubscribe (MessageBus bus)
+            protected virtual void Unsubscribe(MessageBus bus)
             {
-                if (subscriptionSettingChanged != null) {
-                    bus.Unsubscribe (subscriptionSettingChanged);
+                if (subscriptionSettingChanged != null)
+                {
+                    bus.Unsubscribe(subscriptionSettingChanged);
                     subscriptionSettingChanged = null;
                 }
             }
 
-            private void DispatchSettingChanged (SettingChangedMessage msg)
+            private void DispatchSettingChanged(SettingChangedMessage msg)
             {
                 // Protect against Java side being GCed
-                if (Handle == IntPtr.Zero) {
+                if (Handle == IntPtr.Zero)
+                {
                     return;
                 }
 
-                OnSettingChanged (msg);
+                OnSettingChanged(msg);
             }
 
-            protected abstract void OnSettingChanged (SettingChangedMessage msg);
+            protected abstract void OnSettingChanged(SettingChangedMessage msg);
         }
 
         private class CheckboxListItemHolder : SettingViewHolder<CheckboxListItem>
@@ -296,28 +309,30 @@ namespace Toggl.Joey.UI.Adapters
 
             public CheckBox CheckBox { get; private set; }
 
-            public CheckboxListItemHolder (View root) : base (root)
+            public CheckboxListItemHolder(View root) : base(root)
             {
-                TitleTextView = root.FindViewById<TextView> (Resource.Id.TitleTextView).SetFont (Font.Roboto);
-                DescriptionTextView = root.FindViewById<TextView> (Resource.Id.DescriptionTextView).SetFont (Font.RobotoLight);
+                TitleTextView = root.FindViewById<TextView> (Resource.Id.TitleTextView).SetFont(Font.Roboto);
+                DescriptionTextView = root.FindViewById<TextView> (Resource.Id.DescriptionTextView).SetFont(Font.RobotoLight);
                 CheckBox = root.FindViewById<CheckBox> (Resource.Id.CheckBox);
             }
 
-            protected override void Rebind ()
+            protected override void Rebind()
             {
-                TitleTextView.SetText (DataSource.TitleResId);
-                DescriptionTextView.SetText (DataSource.DescriptionResId);
+                TitleTextView.SetText(DataSource.TitleResId);
+                DescriptionTextView.SetText(DataSource.DescriptionResId);
                 CheckBox.Checked = DataSource.IsChecked;
             }
 
-            protected override void OnSettingChanged (SettingChangedMessage msg)
+            protected override void OnSettingChanged(SettingChangedMessage msg)
             {
-                if (DataSource == null) {
+                if (DataSource == null)
+                {
                     return;
                 }
 
-                if (msg.Name == DataSource.SettingName) {
-                    Rebind ();
+                if (msg.Name == DataSource.SettingName)
+                {
+                    Rebind();
                 }
             }
         }

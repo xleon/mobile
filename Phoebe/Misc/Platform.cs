@@ -17,7 +17,7 @@ namespace Toggl.Phoebe
 
         public static string DefaultCreatedWith
         {
-            get { return String.Format ("{0}/{1}", AppIdentifier, AppVersion); }
+            get { return String.Format("{0}/{1}", AppIdentifier, AppVersion); }
         }
     }
 }

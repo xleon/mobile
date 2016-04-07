@@ -3,31 +3,31 @@ using Newtonsoft.Json;
 
 namespace Toggl.Phoebe.Data.Json
 {
-    [JsonObject (MemberSerialization.OptIn)]
+    [JsonObject(MemberSerialization.OptIn)]
     public class FeedbackJson
     {
-        [JsonProperty ("subject")]
+        [JsonProperty("subject")]
         public string Subject { get; set; }
 
-        [JsonProperty ("details")]
+        [JsonProperty("details")]
         public string Message { get; set; }
 
-        [JsonProperty ("toggl_version")]
+        [JsonProperty("toggl_version")]
         public string AppVersion { get; set; }
 
-        [JsonProperty ("mobile")]
+        [JsonProperty("mobile")]
         public bool IsMobile { get; set; }
 
-        [JsonProperty ("desktop")]
+        [JsonProperty("desktop")]
         public bool IsDesktop { get; set; }
 
-        [JsonProperty ("date")]
+        [JsonProperty("date")]
         public DateTime Timestamp { get; set; }
 
-        [JsonProperty ("attachment")]
+        [JsonProperty("attachment")]
         public byte[] AttachmentData { get; set; }
 
-        [JsonProperty ("attachment_name")]
+        [JsonProperty("attachment_name")]
         public string AttachmentName { get; set; }
     }
 }

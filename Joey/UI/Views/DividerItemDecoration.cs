@@ -17,10 +17,10 @@ namespace Toggl.Joey.UI.Views
         public const int HorizontalList = LinearLayoutManager.Horizontal;
         public const int VerticalList = LinearLayoutManager.Vertical;
 
-        public DividerItemDecoration (Context context, int orientation)
+        public DividerItemDecoration(Context context, int orientation)
         {
-            var a = context.ObtainStyledAttributes (Attrs);
-            divider = a.GetDrawable (0);
+            var a = context.ObtainStyledAttributes(Attrs);
+            divider = a.GetDrawable(0);
             a.Recycle();
             Orientation = orientation;
         }
@@ -31,31 +31,35 @@ namespace Toggl.Joey.UI.Views
         public int Orientation
         {
             get { return orientation; }
-            set {
-                if (value != HorizontalList && value != VerticalList) {
-                    throw new ArgumentException ("Invalid orientation", "value");
+            set
+            {
+                if (value != HorizontalList && value != VerticalList)
+                {
+                    throw new ArgumentException("Invalid orientation", "value");
                 }
                 orientation = value;
             }
         }
 
-        public void DrawVertical (Canvas c, RecyclerView parent)
+        public void DrawVertical(Canvas c, RecyclerView parent)
         {
             var left = parent.PaddingLeft;
             var right = parent.PaddingRight;
 
             var childCount = parent.ChildCount;
-            for (int i = 0; i < childCount; i++) {
-                using (View child = parent.GetChildAt (i)) {
+            for (int i = 0; i < childCount; i++)
+            {
+                using(View child = parent.GetChildAt(i))
+                {
                     var top = child.Bottom;
                     var bottom = top + divider.IntrinsicHeight;
-                    divider.SetBounds (left, top, right, bottom);
-                    divider.Draw (c);
+                    divider.SetBounds(left, top, right, bottom);
+                    divider.Draw(c);
                 }
             }
         }
 
-        public void DrawHorizontal (Canvas c, RecyclerView parent)
+        public void DrawHorizontal(Canvas c, RecyclerView parent)
         {
             var top = parent.PaddingTop;
             var bottom = parent.PaddingBottom;
@@ -63,38 +67,47 @@ namespace Toggl.Joey.UI.Views
             View child = null;
 
             var childCount = parent.ChildCount;
-            for (int i = 0; i < childCount; i++) {
-                child = parent.GetChildAt (i);
+            for (int i = 0; i < childCount; i++)
+            {
+                child = parent.GetChildAt(i);
                 layoutParams = child.LayoutParameters.JavaCast<RecyclerView.LayoutParams>();
                 var left = child.Right + layoutParams.RightMargin;
                 var right = left + divider.IntrinsicHeight;
-                divider.SetBounds (left, top, right, bottom);
-                divider.Draw (c);
+                divider.SetBounds(left, top, right, bottom);
+                divider.Draw(c);
             }
 
-            if (child != null) {
-                child.Dispose ();
+            if (child != null)
+            {
+                child.Dispose();
             }
-            if (layoutParams != null) {
-                layoutParams.Dispose ();
+            if (layoutParams != null)
+            {
+                layoutParams.Dispose();
             }
         }
 
-        public override void GetItemOffsets (Rect outRect, View view, RecyclerView parent, RecyclerView.State state)
+        public override void GetItemOffsets(Rect outRect, View view, RecyclerView parent, RecyclerView.State state)
         {
-            if (orientation == VerticalList) {
-                outRect.Set (0, 0, 0, divider.IntrinsicHeight);
-            } else {
-                outRect.Set (0, 0, divider.IntrinsicWidth, 0);
+            if (orientation == VerticalList)
+            {
+                outRect.Set(0, 0, 0, divider.IntrinsicHeight);
+            }
+            else
+            {
+                outRect.Set(0, 0, divider.IntrinsicWidth, 0);
             }
         }
 
-        public override void OnDraw (Canvas c, RecyclerView parent, RecyclerView.State state)
+        public override void OnDraw(Canvas c, RecyclerView parent, RecyclerView.State state)
         {
-            if (orientation == VerticalList) {
-                DrawVertical (c, parent);
-            } else {
-                DrawHorizontal (c, parent);
+            if (orientation == VerticalList)
+            {
+                DrawVertical(c, parent);
+            }
+            else
+            {
+                DrawHorizontal(c, parent);
             }
         }
     }

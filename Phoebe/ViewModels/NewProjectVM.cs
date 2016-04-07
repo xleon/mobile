@@ -17,11 +17,12 @@ namespace Toggl.Phoebe.ViewModels
         private readonly AppState appState;
         private readonly IWorkspaceData workspace;
 
-        public NewProjectVM (AppState appState, Guid workspaceId)
+        public NewProjectVM(AppState appState, Guid workspaceId)
         {
             this.appState = appState;
             workspace = appState.Workspaces[workspaceId];
-            model = ProjectData.Create (x => {
+            model = ProjectData.Create(x =>
+            {
                 x.WorkspaceId = workspaceId;
                 x.WorkspaceRemoteId = workspace.RemoteId.HasValue ? workspace.RemoteId.Value : 0;
                 x.IsActive = true;
@@ -30,24 +31,26 @@ namespace Toggl.Phoebe.ViewModels
             ServiceContainer.Resolve<ITracker> ().CurrentScreen = "New Project";
         }
 
-        public void Dispose ()
+        public void Dispose()
         {
         }
 
         public string ClientName { get; set; }
 
-        public void SetClient (IClientData clientData)
+        public void SetClient(IClientData clientData)
         {
-            model = model.With (x => {
+            model = model.With(x =>
+            {
                 x.ClientId = clientData.Id;
                 x.ClientRemoteId = clientData.RemoteId;
             });
             ClientName = clientData.Name;
         }
 
-        public IProjectData SaveProject (string projectName, int projectColor, RxChain.Continuation cont = null)
+        public IProjectData SaveProject(string projectName, int projectColor, RxChain.Continuation cont = null)
         {
-            model = model.With (x => {
+            model = model.With(x =>
+            {
                 x.Name = projectName;
                 x.Color = projectColor;
             });
@@ -65,20 +68,20 @@ namespace Toggl.Phoebe.ViewModels
             };
             */
             // Save new project and relationship
-            RxChain.Send (new DataMsg.ProjectDataPut (model), cont);
+            RxChain.Send(new DataMsg.ProjectDataPut(model), cont);
 
             return model;
         }
 
-        public bool ExistProjectWithName (string projectName)
+        public bool ExistProjectWithName(string projectName)
         {
             Guid clientId = model.ClientId;
-            return appState.Projects.Values.Any (r => r.Name == projectName && r.ClientId == clientId);
+            return appState.Projects.Values.Any(r => r.Name == projectName && r.ClientId == clientId);
         }
 
-        public bool ContainsClients (Guid workspaceId)
+        public bool ContainsClients(Guid workspaceId)
         {
-            return appState.Clients.Values.Any (r => r.DeletedAt == null && r.WorkspaceId == workspaceId);
+            return appState.Clients.Values.Any(r => r.DeletedAt == null && r.WorkspaceId == workspaceId);
         }
     }
 }

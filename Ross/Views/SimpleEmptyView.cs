@@ -10,29 +10,29 @@ namespace Toggl.Ross.Views
         private readonly UILabel titleLabel;
         private readonly UILabel messageLabel;
 
-        public SimpleEmptyView ()
+        public SimpleEmptyView()
         {
-            Add (titleLabel = new UILabel ().Apply (Style.EmptyView.TitleLabel));
+            Add(titleLabel = new UILabel().Apply(Style.EmptyView.TitleLabel));
 
-            Add (messageLabel = new UILabel ().Apply (Style.EmptyView.MessageLabel));
+            Add(messageLabel = new UILabel().Apply(Style.EmptyView.MessageLabel));
         }
 
-        public override void LayoutSubviews ()
+        public override void LayoutSubviews()
         {
-            var titleSize = titleLabel.SizeThatFits (Frame.Size);
-            var messageSize = messageLabel.SizeThatFits (new CGSize (Frame.Width, Frame.Height - titleSize.Height));
+            var titleSize = titleLabel.SizeThatFits(Frame.Size);
+            var messageSize = messageLabel.SizeThatFits(new CGSize(Frame.Width, Frame.Height - titleSize.Height));
             var spacing = titleSize.Height * 0.25f;
 
             var topOffset = (Frame.Height - titleSize.Height - spacing - messageSize.Height) / 2;
 
-            titleLabel.Frame = new CGRect (
+            titleLabel.Frame = new CGRect(
                 (Frame.Width - titleSize.Width) / 2,
                 topOffset,
                 titleSize.Width,
                 titleSize.Height
             );
 
-            messageLabel.Frame = new CGRect (
+            messageLabel.Frame = new CGRect(
                 (Frame.Width - messageSize.Width) / 2,
                 titleLabel.Frame.Bottom + spacing,
                 messageSize.Width,
@@ -43,24 +43,28 @@ namespace Toggl.Ross.Views
         public string Title
         {
             get { return titleLabel.Text; }
-            set {
-                if (titleLabel.Text == value) {
+            set
+            {
+                if (titleLabel.Text == value)
+                {
                     return;
                 }
                 titleLabel.Text = value;
-                SetNeedsLayout ();
+                SetNeedsLayout();
             }
         }
 
         public string Message
         {
             get { return messageLabel.Text; }
-            set {
-                if (messageLabel.Text == value) {
+            set
+            {
+                if (messageLabel.Text == value)
+                {
                     return;
                 }
                 messageLabel.Text = value;
-                SetNeedsLayout ();
+                SetNeedsLayout();
             }
         }
     }

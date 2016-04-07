@@ -13,10 +13,10 @@ namespace Toggl.Joey.UI.Views
 {
     public class BarChart : ViewGroup
     {
-        private static Color LightGrayColor = Color.ParseColor ("#CCCCCC");
-        private static Color DarkGrayColor = Color.ParseColor ("#666666");
-        private static Color DarkBlueColor = Color.ParseColor ("#00AEFF");
-        private static Color LightBlueColor = Color.ParseColor ("#80D6FF");
+        private static Color LightGrayColor = Color.ParseColor("#CCCCCC");
+        private static Color DarkGrayColor = Color.ParseColor("#666666");
+        private static Color DarkBlueColor = Color.ParseColor("#00AEFF");
+        private static Color LightBlueColor = Color.ParseColor("#80D6FF");
         private const int ZoomCount = 3;
 
         private readonly List<Row> rows = new List<Row> (31);
@@ -37,80 +37,86 @@ namespace Toggl.Joey.UI.Views
         private PointF tapInitialPos;
         private bool isZooming;
 
-        public BarChart (Context context, IAttributeSet attrs) : base (context, attrs)
+        public BarChart(Context context, IAttributeSet attrs) : base(context, attrs)
         {
-            Initialize (context);
+            Initialize(context);
         }
 
-        public BarChart (Context context, IAttributeSet attrs, int defStyle) : base (context, attrs, defStyle)
+        public BarChart(Context context, IAttributeSet attrs, int defStyle) : base(context, attrs, defStyle)
         {
-            Initialize (context);
+            Initialize(context);
         }
 
-        private void Initialize (Context ctx)
+        private void Initialize(Context ctx)
         {
             var dm = ctx.Resources.DisplayMetrics;
-            var inflater = LayoutInflater.FromContext (ctx);
+            var inflater = LayoutInflater.FromContext(ctx);
 
-            leftMargin = (int)TypedValue.ApplyDimension (ComplexUnitType.Dip, 45, dm);
-            leftPadding = (int)TypedValue.ApplyDimension (ComplexUnitType.Dip, 14, dm);
-            topPadding = (int)TypedValue.ApplyDimension (ComplexUnitType.Dip, 10, dm);
-            bottomPadding = (int)TypedValue.ApplyDimension (ComplexUnitType.Dip, 23, dm);
-            rightPadding = (int)TypedValue.ApplyDimension (ComplexUnitType.Dip, 45, dm);
-            yAxisSpacing = (int)TypedValue.ApplyDimension (ComplexUnitType.Dip, 5, dm);
-            barZeroSize = (int)TypedValue.ApplyDimension (ComplexUnitType.Dip, 3, dm);
-            barLabelSpacing = (int)TypedValue.ApplyDimension (ComplexUnitType.Dip, 5, dm);
+            leftMargin = (int)TypedValue.ApplyDimension(ComplexUnitType.Dip, 45, dm);
+            leftPadding = (int)TypedValue.ApplyDimension(ComplexUnitType.Dip, 14, dm);
+            topPadding = (int)TypedValue.ApplyDimension(ComplexUnitType.Dip, 10, dm);
+            bottomPadding = (int)TypedValue.ApplyDimension(ComplexUnitType.Dip, 23, dm);
+            rightPadding = (int)TypedValue.ApplyDimension(ComplexUnitType.Dip, 45, dm);
+            yAxisSpacing = (int)TypedValue.ApplyDimension(ComplexUnitType.Dip, 5, dm);
+            barZeroSize = (int)TypedValue.ApplyDimension(ComplexUnitType.Dip, 3, dm);
+            barLabelSpacing = (int)TypedValue.ApplyDimension(ComplexUnitType.Dip, 5, dm);
 
-            backgroundView = new BackgroundView (ctx);
-            AddView (backgroundView);
+            backgroundView = new BackgroundView(ctx);
+            AddView(backgroundView);
 
-            loadingOverlayView = inflater.Inflate (Resource.Layout.BarChartLoading, this, false);
-            AddView (loadingOverlayView);
+            loadingOverlayView = inflater.Inflate(Resource.Layout.BarChartLoading, this, false);
+            AddView(loadingOverlayView);
 
-            emptyOverlayView = inflater.Inflate (Resource.Layout.BarChartEmpty, this, false);
+            emptyOverlayView = inflater.Inflate(Resource.Layout.BarChartEmpty, this, false);
             emptyOverlayView.Visibility = ViewStates.Gone;
-            AddView (emptyOverlayView);
+            AddView(emptyOverlayView);
         }
 
-        private void ResetRows (int neededRows)
+        private void ResetRows(int neededRows)
         {
             var existingRows = rows.Count;
-            var totalRows = Math.Max (existingRows, neededRows);
+            var totalRows = Math.Max(existingRows, neededRows);
             var expandRows = neededRows > existingRows;
             var contractRows = existingRows > neededRows;
 
-            if (expandRows) {
-                for (var i = existingRows; i < totalRows; i++) {
+            if (expandRows)
+            {
+                for (var i = existingRows; i < totalRows; i++)
+                {
                     // Create new row
-                    var row = new Row (Context);
-                    rows.Add (row);
+                    var row = new Row(Context);
+                    rows.Add(row);
 
                     // Add new row views
                     var startIndex = 1 + 3 * i;
-                    AddView (row.YAxisTextView, startIndex++);
-                    AddView (row.BarView, startIndex++);
-                    AddView (row.ValueTextView, startIndex++);
+                    AddView(row.YAxisTextView, startIndex++);
+                    AddView(row.BarView, startIndex++);
+                    AddView(row.ValueTextView, startIndex++);
                 }
-            } else if (contractRows) {
+            }
+            else if (contractRows)
+            {
                 // Remove unused rows and views
                 var rowCount = existingRows - neededRows;
-                rows.RemoveRange (neededRows, rowCount);
+                rows.RemoveRange(neededRows, rowCount);
 
                 var startIndex = 1 + 3 * neededRows;
                 var viewCount = 3 * rowCount;
-                RemoveViews (startIndex, viewCount);
+                RemoveViews(startIndex, viewCount);
             }
 
-            foreach (var row in rows) {
-                row.Reset ();
+            foreach (var row in rows)
+            {
+                row.Reset();
             }
         }
 
-        public void Reset (SummaryReportView data)
+        public void Reset(SummaryReportView data)
         {
             // Cancel old animation
-            if (currentAnimation != null) {
-                currentAnimation.Cancel ();
+            if (currentAnimation != null)
+            {
+                currentAnimation.Cancel();
                 currentAnimation = null;
             }
 
@@ -120,32 +126,38 @@ namespace Toggl.Joey.UI.Views
             var totalRows = 0;
             var hasTime = false;
 
-            if (data == null) {
+            if (data == null)
+            {
                 backgroundView.XAxisLabels = null;
-                ResetRows (totalRows);
-            } else {
+                ResetRows(totalRows);
+            }
+            else
+            {
                 var showEveryYLabel = 1;
                 var showValueLabels = true;
 
-                backgroundView.XAxisLabels = data.ChartTimeLabels.ToArray ();
+                backgroundView.XAxisLabels = data.ChartTimeLabels.ToArray();
 
-                totalRows = Math.Min (data.Activity.Count, data.ChartRowLabels.Count);
-                ResetRows (totalRows);
+                totalRows = Math.Min(data.Activity.Count, data.ChartRowLabels.Count);
+                ResetRows(totalRows);
 
-                if (totalRows > 25) {
+                if (totalRows > 25)
+                {
                     showEveryYLabel = 3;
                     showValueLabels = false;
                 }
 
-                for (var i = 0; i < totalRows; i++) {
+                for (var i = 0; i < totalRows; i++)
+                {
                     var activity = data.Activity [i];
                     var yLabel = data.ChartRowLabels [i];
 
-                    if (activity.TotalTime > 0) {
+                    if (activity.TotalTime > 0)
+                    {
                         hasTime = true;
                     }
 
-                    var barWidth = (float)activity.TotalTime / (float) (data.MaxTotal * 3600);
+                    var barWidth = (float)activity.TotalTime / (float)(data.MaxTotal * 3600);
                     var showYAxis = i % showEveryYLabel == 0;
 
                     // Bind the data to row
@@ -164,13 +176,16 @@ namespace Toggl.Joey.UI.Views
             var isLoading = totalRows == 0 || (data != null && data.IsLoading);
             var isEmpty = !isLoading && !hasTime;
 
-            if (isLoading) {
+            if (isLoading)
+            {
                 // Loading state
                 loadingOverlayView.Visibility = ViewStates.Visible;
                 loadingOverlayView.Alpha = 1f;
 
                 emptyOverlayView.Visibility = ViewStates.Gone;
-            } else if (isEmpty) {
+            }
+            else if (isEmpty)
+            {
                 // Error state
                 loadingOverlayView.Visibility = ViewStates.Visible;
                 loadingOverlayView.Alpha = 1f;
@@ -179,78 +194,84 @@ namespace Toggl.Joey.UI.Views
                 emptyOverlayView.Alpha = 0f;
 
                 // Animate overlay in
-                var scene = new AnimatorSet ();
+                var scene = new AnimatorSet();
 
-                var fadeIn = ObjectAnimator.OfFloat (emptyOverlayView, "alpha", 0f, 1f).SetDuration (500);
-                var fadeOut = ObjectAnimator.OfFloat (loadingOverlayView, "alpha", 1f, 0f).SetDuration (500);
-                fadeOut.AnimationEnd += delegate {
+                var fadeIn = ObjectAnimator.OfFloat(emptyOverlayView, "alpha", 0f, 1f).SetDuration(500);
+                var fadeOut = ObjectAnimator.OfFloat(loadingOverlayView, "alpha", 1f, 0f).SetDuration(500);
+                fadeOut.AnimationEnd += delegate
+                {
                     loadingOverlayView.Visibility = ViewStates.Gone;
                 };
 
-                scene.Play (fadeOut);
-                scene.Play (fadeIn).After (3 * fadeOut.Duration / 4);
+                scene.Play(fadeOut);
+                scene.Play(fadeIn).After(3 * fadeOut.Duration / 4);
 
                 currentAnimation = scene;
                 scene.Start();
-            } else {
+            }
+            else
+            {
                 // Normal state
-                var scene = new AnimatorSet ();
+                var scene = new AnimatorSet();
 
                 // Fade loading message out
-                var fadeOverlayOut = ObjectAnimator.OfFloat (loadingOverlayView, "alpha", 1f, 0f).SetDuration (500);
-                fadeOverlayOut.AnimationEnd += delegate {
+                var fadeOverlayOut = ObjectAnimator.OfFloat(loadingOverlayView, "alpha", 1f, 0f).SetDuration(500);
+                fadeOverlayOut.AnimationEnd += delegate
+                {
                     loadingOverlayView.Visibility = ViewStates.Gone;
                 };
 
-                scene.Play (fadeOverlayOut);
+                scene.Play(fadeOverlayOut);
 
-                foreach (var row in rows) {
-                    var axisFadeIn = ObjectAnimator.OfFloat (row.YAxisTextView, "alpha", 0f, 1f).SetDuration (500);
-                    var barScaleUp = ObjectAnimator.OfFloat (row.BarView, "scaleX", 0f, 1f).SetDuration (750);
-                    var valueFadeIn = ObjectAnimator.OfFloat (row.ValueTextView, "alpha", 0f, 1f).SetDuration (400);
+                foreach (var row in rows)
+                {
+                    var axisFadeIn = ObjectAnimator.OfFloat(row.YAxisTextView, "alpha", 0f, 1f).SetDuration(500);
+                    var barScaleUp = ObjectAnimator.OfFloat(row.BarView, "scaleX", 0f, 1f).SetDuration(750);
+                    var valueFadeIn = ObjectAnimator.OfFloat(row.ValueTextView, "alpha", 0f, 1f).SetDuration(400);
 
-                    scene.Play (axisFadeIn);
-                    scene.Play (barScaleUp).After (axisFadeIn.Duration / 2);
-                    scene.Play (valueFadeIn).After (barScaleUp);
+                    scene.Play(axisFadeIn);
+                    scene.Play(barScaleUp).After(axisFadeIn.Duration / 2);
+                    scene.Play(valueFadeIn).After(barScaleUp);
                 }
 
                 currentAnimation = scene;
                 scene.Start();
             }
 
-            RequestLayout ();
+            RequestLayout();
         }
 
-        protected override void OnMeasure (int widthMeasureSpec, int heightMeasureSpec)
+        protected override void OnMeasure(int widthMeasureSpec, int heightMeasureSpec)
         {
             var dm = Resources.DisplayMetrics;
 
             // Let various labels measure themselves
-            var unspecifiedMeasureSpec = MeasureSpec.MakeMeasureSpec (0, MeasureSpecMode.Unspecified);
-            foreach (var row in rows) {
-                row.YAxisTextView.Measure (unspecifiedMeasureSpec, unspecifiedMeasureSpec);
-                row.ValueTextView.Measure (unspecifiedMeasureSpec, unspecifiedMeasureSpec);
+            var unspecifiedMeasureSpec = MeasureSpec.MakeMeasureSpec(0, MeasureSpecMode.Unspecified);
+            foreach (var row in rows)
+            {
+                row.YAxisTextView.Measure(unspecifiedMeasureSpec, unspecifiedMeasureSpec);
+                row.ValueTextView.Measure(unspecifiedMeasureSpec, unspecifiedMeasureSpec);
             }
 
-            var width = (int)Math.Max (
-                            TypedValue.ApplyDimension (ComplexUnitType.Dip, 300, dm),
-                            MeasureSpec.GetSize (widthMeasureSpec)
+            var width = (int)Math.Max(
+                            TypedValue.ApplyDimension(ComplexUnitType.Dip, 300, dm),
+                            MeasureSpec.GetSize(widthMeasureSpec)
                         );
-            var height = (int)Math.Max (
-                             TypedValue.ApplyDimension (ComplexUnitType.Dip, 250, dm),
-                             MeasureSpec.GetSize (heightMeasureSpec)
+            var height = (int)Math.Max(
+                             TypedValue.ApplyDimension(ComplexUnitType.Dip, 250, dm),
+                             MeasureSpec.GetSize(heightMeasureSpec)
                          );
 
             // Measure overlays
-            var overlayWidthSpec = MeasureSpec.MakeMeasureSpec (width - leftMargin, MeasureSpecMode.Exactly);
-            var overlayHeightSpec = MeasureSpec.MakeMeasureSpec (height, MeasureSpecMode.Exactly);
-            loadingOverlayView.Measure (overlayWidthSpec, overlayHeightSpec);
-            emptyOverlayView.Measure (overlayWidthSpec, overlayHeightSpec);
+            var overlayWidthSpec = MeasureSpec.MakeMeasureSpec(width - leftMargin, MeasureSpecMode.Exactly);
+            var overlayHeightSpec = MeasureSpec.MakeMeasureSpec(height, MeasureSpecMode.Exactly);
+            loadingOverlayView.Measure(overlayWidthSpec, overlayHeightSpec);
+            emptyOverlayView.Measure(overlayWidthSpec, overlayHeightSpec);
 
-            SetMeasuredDimension (width, height);
+            SetMeasuredDimension(width, height);
         }
 
-        protected override void OnLayout (bool changed, int l, int t, int r, int b)
+        protected override void OnLayout(bool changed, int l, int t, int r, int b)
         {
             var dm = Resources.DisplayMetrics;
             var width = r - l;
@@ -258,19 +279,20 @@ namespace Toggl.Joey.UI.Views
 
             // Assign positions to children
             var backgroundWidth = width - leftMargin;
-            backgroundView.Layout (leftMargin, 0, leftMargin + backgroundWidth, height);
+            backgroundView.Layout(leftMargin, 0, leftMargin + backgroundWidth, height);
 
             // Position overlays
-            loadingOverlayView.Layout (leftMargin, 0, leftMargin + backgroundWidth, height);
-            emptyOverlayView.Layout (leftMargin, 0, leftMargin + backgroundWidth, height);
+            loadingOverlayView.Layout(leftMargin, 0, leftMargin + backgroundWidth, height);
+            emptyOverlayView.Layout(leftMargin, 0, leftMargin + backgroundWidth, height);
 
-            if (rows.Count > 0) {
+            if (rows.Count > 0)
+            {
                 var rowHeight = (height - topPadding - bottomPadding) / rows.Count;
-                rowMargin = (int)Math.Max (
-                                TypedValue.ApplyDimension (ComplexUnitType.Dip, 1f, dm), // Minimum
-                                Math.Min (
+                rowMargin = (int)Math.Max(
+                                TypedValue.ApplyDimension(ComplexUnitType.Dip, 1f, dm),  // Minimum
+                                Math.Min(
                                     rowHeight * 0.05f,
-                                    TypedValue.ApplyDimension (ComplexUnitType.Dip, 5f, dm) // Maximum
+                                    TypedValue.ApplyDimension(ComplexUnitType.Dip, 5f, dm)  // Maximum
                                 )
                             );
 
@@ -279,70 +301,78 @@ namespace Toggl.Joey.UI.Views
 
                 // Determine Y-axis left margin (by respecting yAxisSpacing)
                 var yAxisLeftMargin = leftPadding;
-                var maxYAxisWidth = rows.Max (x => x.YAxisTextView.MeasuredWidth);
-                yAxisLeftMargin += Math.Min (0, leftMargin - yAxisLeftMargin - yAxisSpacing - maxYAxisWidth);
+                var maxYAxisWidth = rows.Max(x => x.YAxisTextView.MeasuredWidth);
+                yAxisLeftMargin += Math.Min(0, leftMargin - yAxisLeftMargin - yAxisSpacing - maxYAxisWidth);
 
                 // Layout rows
-                for (var i = 0; i < rows.Count; i++) {
+                for (var i = 0; i < rows.Count; i++)
+                {
                     var row = rows [i];
 
                     var rowTop = topPadding + rowMargin + (2 * rowMargin + rowHeight) * i;
-                    var rowWidth = barZeroSize + (int) (row.RelativeWidth * effBgWidth);
-                    row.BarView.Layout (leftMargin, rowTop, leftMargin + rowWidth, rowTop + rowHeight);
+                    var rowWidth = barZeroSize + (int)(row.RelativeWidth * effBgWidth);
+                    row.BarView.Layout(leftMargin, rowTop, leftMargin + rowWidth, rowTop + rowHeight);
 
                     // Position value label
                     var tv = row.ValueTextView;
                     var valueX = leftMargin + rowWidth + barLabelSpacing;
-                    var valueY = rowTop + CalculateTextViewY (tv, rowHeight);
-                    tv.Layout (valueX, valueY, valueX + tv.MeasuredWidth, valueY + tv.MeasuredHeight);
+                    var valueY = rowTop + CalculateTextViewY(tv, rowHeight);
+                    tv.Layout(valueX, valueY, valueX + tv.MeasuredWidth, valueY + tv.MeasuredHeight);
 
                     // Position y-axis label
                     tv = row.YAxisTextView;
                     var axisX = yAxisLeftMargin;
-                    var axisY = rowTop + CalculateTextViewY (tv, rowHeight);
-                    tv.Layout (axisX, axisY, axisX + tv.MeasuredWidth, axisY + tv.MeasuredHeight);
+                    var axisY = rowTop + CalculateTextViewY(tv, rowHeight);
+                    tv.Layout(axisX, axisY, axisX + tv.MeasuredWidth, axisY + tv.MeasuredHeight);
                 }
             }
         }
 
-        public override bool OnTouchEvent (MotionEvent e)
+        public override bool OnTouchEvent(MotionEvent e)
         {
             // check correct zoomlevel
-            if (rows.Count <= 12) {
-                return base.OnTouchEvent (e);
+            if (rows.Count <= 12)
+            {
+                return base.OnTouchEvent(e);
             }
 
-            if (e.Action == MotionEventActions.Down) {
+            if (e.Action == MotionEventActions.Down)
+            {
                 // check selected row
-                selectedRowIndex = GetSelectedBarIndex (Convert.ToInt32 (e.GetX ()), Convert.ToInt32 (e.GetY ()));
-                if (selectedRowIndex == -1) {
-                    ZoomOutBars ();
-                    return base.OnTouchEvent (e);
+                selectedRowIndex = GetSelectedBarIndex(Convert.ToInt32(e.GetX()), Convert.ToInt32(e.GetY()));
+                if (selectedRowIndex == -1)
+                {
+                    ZoomOutBars();
+                    return base.OnTouchEvent(e);
                 }
-                tapInitialPos = new PointF (e.GetX (), e.GetY ());
+                tapInitialPos = new PointF(e.GetX(), e.GetY());
             }
 
-            if (e.Action == MotionEventActions.Up || e.Action == MotionEventActions.Cancel) {
+            if (e.Action == MotionEventActions.Up || e.Action == MotionEventActions.Cancel)
+            {
                 // set a small threshold to detect drag
-                if ( Math.Abs ( tapInitialPos.X - e.GetX ()) > 30 || Math.Abs ( tapInitialPos.Y - e.GetY ()) > 30 ) {
-                    ZoomOutBars ();
-                    return base.OnTouchEvent (e);
+                if (Math.Abs(tapInitialPos.X - e.GetX()) > 30 || Math.Abs(tapInitialPos.Y - e.GetY()) > 30)
+                {
+                    ZoomOutBars();
+                    return base.OnTouchEvent(e);
                 }
-                ZoomInBars (selectedRowIndex);
+                ZoomInBars(selectedRowIndex);
             }
             return true;
         }
 
-        private void ZoomInBars ( int index)
+        private void ZoomInBars(int index)
         {
             // Do zoomout if bar is previously zoomed
-            if (rows [index].IsZoomed) {
-                ZoomOutBars ();
+            if (rows [index].IsZoomed)
+            {
+                ZoomOutBars();
                 return;
             }
 
             // Return if previous animation is running
-            if (currentAnimation != null && currentAnimation.IsRunning) {
+            if (currentAnimation != null && currentAnimation.IsRunning)
+            {
                 return;
             }
 
@@ -350,7 +380,7 @@ namespace Toggl.Joey.UI.Views
             var contentHeight = rows.Last().BarView.Bottom - zoomedTop + 2 * rowMargin;
 
             // Max zoomed height slightly bigger than week bars
-            var maxZoomedHeight = Convert.ToInt32 ( contentHeight / 6.8f); ;
+            var maxZoomedHeight = Convert.ToInt32(contentHeight / 6.8f); ;
             var minZoomedHeight = (contentHeight - maxZoomedHeight * ZoomCount) / (rows.Count - ZoomCount);
 
             // calculate leftover space
@@ -363,20 +393,25 @@ namespace Toggl.Joey.UI.Views
             float axisAlphaEnd;
             float valueAlphaEnd;
 
-            for (int i = 0; i < rows.Count; i++) {
+            for (int i = 0; i < rows.Count; i++)
+            {
                 var row = rows [i];
 
                 if ((index == rows.Count - 1 && i > rows.Count - 1 - ZoomCount) ||
                         (i >= index - 1 && i <= index + 1) ||
-                        (index == 0 && i < ZoomCount)) {
+                        (index == 0 && i < ZoomCount))
+                {
                     zoomedHeight = maxZoomedHeight;
                     axisAlphaEnd = 1f;
                     valueAlphaEnd = 1f;
                     row.IsZoomed = true;
-                } else {
+                }
+                else
+                {
                     // add 1 space unit to every row until offset == 0
                     zoomedHeight = minZoomedHeight;
-                    if (offset > 0) {
+                    if (offset > 0)
+                    {
                         zoomedHeight = minZoomedHeight + 1;
                         offset--; // decrease overflow
                     }
@@ -391,12 +426,12 @@ namespace Toggl.Joey.UI.Views
                 row.ValueTextView.Visibility = row.YAxisTextView.Visibility = ViewStates.Visible;
 
                 // Get difference between future and current top value
-                var yAxisTranslate = zoomedTop + CalculateTextViewY (row.YAxisTextView, zoomedHeight) - row.YAxisTextView.Top;
-                var yValueTranslate = zoomedTop + CalculateTextViewY (row.ValueTextView, zoomedHeight) - row.ValueTextView.Top;
+                var yAxisTranslate = zoomedTop + CalculateTextViewY(row.YAxisTextView, zoomedHeight) - row.YAxisTextView.Top;
+                var yValueTranslate = zoomedTop + CalculateTextViewY(row.ValueTextView, zoomedHeight) - row.ValueTextView.Top;
 
-                row.YAxisTextView.Animate ().Alpha (axisAlphaEnd).TranslationY (yAxisTranslate);
-                row.ValueTextView.Animate ().Alpha (valueAlphaEnd).TranslationY ( yValueTranslate);
-                row.BarView.Animate ().TranslationY ( zoomedTop - row.BarView.Top).ScaleY ( (float)zoomedHeight/ (float)row.BarView.Height);
+                row.YAxisTextView.Animate().Alpha(axisAlphaEnd).TranslationY(yAxisTranslate);
+                row.ValueTextView.Animate().Alpha(valueAlphaEnd).TranslationY(yValueTranslate);
+                row.BarView.Animate().TranslationY(zoomedTop - row.BarView.Top).ScaleY((float)zoomedHeight / (float)row.BarView.Height);
 
                 zoomedTop += (2 * rowMargin + zoomedHeight);
             }
@@ -406,40 +441,46 @@ namespace Toggl.Joey.UI.Views
 
         private void ZoomOutBars()
         {
-            if (!isZooming) {
+            if (!isZooming)
+            {
                 return;
             }
 
-            for (int i = 0; i < rows.Count; i++) {
+            for (int i = 0; i < rows.Count; i++)
+            {
                 var row = rows [i];
 
-                row.YAxisTextView.Animate ().Alpha ( i % 3 == 0 ? 1.0f : 0.0f).TranslationY (0f).WithEndAction ( new Java.Lang.Runnable (() => {
+                row.YAxisTextView.Animate().Alpha(i % 3 == 0 ? 1.0f : 0.0f).TranslationY(0f).WithEndAction(new Java.Lang.Runnable(() =>
+                {
                     row.ValueTextView.Visibility = (i % 3 == 0) ? ViewStates.Visible : ViewStates.Gone;
                 }));
 
-                row.ValueTextView.Animate ().Alpha (0f).TranslationY (0f).WithEndAction ( new Java.Lang.Runnable (() => {
+                row.ValueTextView.Animate().Alpha(0f).TranslationY(0f).WithEndAction(new Java.Lang.Runnable(() =>
+                {
                     row.ValueTextView.Visibility = ViewStates.Gone;
                 }));
 
-                row.BarView.Animate ().TranslationY (0f).ScaleY (1f);
+                row.BarView.Animate().TranslationY(0f).ScaleY(1f);
                 row.IsZoomed = false;
             }
 
             isZooming = false;
         }
 
-        private int GetSelectedBarIndex ( int x, int y)
+        private int GetSelectedBarIndex(int x, int y)
         {
             var result = -1;
             var index = 0;
 
-            foreach (var item in rows) {
-                var area = new Rect ();
-                item.BarView.GetHitRect (area);
+            foreach (var item in rows)
+            {
+                var area = new Rect();
+                item.BarView.GetHitRect(area);
                 area.Top -= rowMargin;
                 area.Bottom += rowMargin;
                 area.Right = Right;
-                if ( area.Contains ( x, y)) {
+                if (area.Contains(x, y))
+                {
                     result = index;
                 }
                 index++;
@@ -447,19 +488,21 @@ namespace Toggl.Joey.UI.Views
             return result;
         }
 
-        private static string FormatTime (long seconds)
+        private static string FormatTime(long seconds)
         {
-            if (seconds == 0) {
+            if (seconds == 0)
+            {
                 return String.Empty;
             }
-            var t = TimeSpan.FromSeconds (seconds);
-            return String.Format ("{0}:{1:mm}", (int)t.TotalHours, t);
+            var t = TimeSpan.FromSeconds(seconds);
+            return String.Format("{0}:{1:mm}", (int)t.TotalHours, t);
         }
 
-        private static int CalculateTextViewY ( TextView tv, int rowHeight)
+        private static int CalculateTextViewY(TextView tv, int rowHeight)
         {
             var valueY = (rowHeight - tv.MeasuredHeight - (tv.MeasuredHeight - tv.Baseline)) / 2;
-            if (rowHeight < tv.MeasuredHeight) {
+            if (rowHeight < tv.MeasuredHeight)
+            {
                 // If the bar is smaller than text, we baseline algin the text to bar bottom
                 valueY = rowHeight - tv.Baseline;
             }
@@ -481,28 +524,32 @@ namespace Toggl.Joey.UI.Views
             private string[] xLabels;
             private string[] defaultXLabels;
 
-            public BackgroundView (Context ctx) : base (ctx)
+            public BackgroundView(Context ctx) : base(ctx)
             {
                 var dm = ctx.Resources.DisplayMetrics;
 
-                leftBorderWidth = (int)TypedValue.ApplyDimension (ComplexUnitType.Dip, 3, dm);
-                topPadding = (int)TypedValue.ApplyDimension (ComplexUnitType.Dip, 5, dm);
-                bottomPadding = (int)TypedValue.ApplyDimension (ComplexUnitType.Dip, 18, dm);
-                rightPadding = (int)TypedValue.ApplyDimension (ComplexUnitType.Dip, 45, dm);
-                var lineWidth = (int)Math.Max (1, TypedValue.ApplyDimension (ComplexUnitType.Dip, 0.5f, dm));
-                var xLabelFontSize = TypedValue.ApplyDimension (ComplexUnitType.Sp, 10, dm);
+                leftBorderWidth = (int)TypedValue.ApplyDimension(ComplexUnitType.Dip, 3, dm);
+                topPadding = (int)TypedValue.ApplyDimension(ComplexUnitType.Dip, 5, dm);
+                bottomPadding = (int)TypedValue.ApplyDimension(ComplexUnitType.Dip, 18, dm);
+                rightPadding = (int)TypedValue.ApplyDimension(ComplexUnitType.Dip, 45, dm);
+                var lineWidth = (int)Math.Max(1, TypedValue.ApplyDimension(ComplexUnitType.Dip, 0.5f, dm));
+                var xLabelFontSize = TypedValue.ApplyDimension(ComplexUnitType.Sp, 10, dm);
 
-                backgroundPaint = new Paint() {
+                backgroundPaint = new Paint()
+                {
                     Color = Color.White,
                 };
-                borderPaint = new Paint() {
+                borderPaint = new Paint()
+                {
                     Color = LightGrayColor,
                 };
-                linePaint = new Paint() {
+                linePaint = new Paint()
+                {
                     Color = borderPaint.Color,
                     StrokeWidth = lineWidth,
                 };
-                xLabelPaint = new Paint() {
+                xLabelPaint = new Paint()
+                {
                     Color = linePaint.Color,
                     TextSize = xLabelFontSize,
                     AntiAlias = true,
@@ -512,26 +559,27 @@ namespace Toggl.Joey.UI.Views
                 xLabels = defaultXLabels = new[] { zeroLabel, zeroLabel, zeroLabel, zeroLabel, zeroLabel };
             }
 
-            protected override void OnDraw (Canvas canvas)
+            protected override void OnDraw(Canvas canvas)
             {
-                base.OnDraw (canvas);
+                base.OnDraw(canvas);
 
                 var width = canvas.Width;
                 var height = canvas.Height;
 
                 // Background
                 int backgroundWidth = width - leftBorderWidth;
-                rect.Set (leftBorderWidth, 0, width, height);
-                canvas.DrawRect (rect, backgroundPaint);
+                rect.Set(leftBorderWidth, 0, width, height);
+                canvas.DrawRect(rect, backgroundPaint);
 
                 // Left border
-                rect.Set (0, 0, leftBorderWidth, height);
-                canvas.DrawRect (rect, borderPaint);
+                rect.Set(0, 0, leftBorderWidth, height);
+                canvas.DrawRect(rect, borderPaint);
 
-                for (int i = 0; i < xLabels.Length; i++) {
+                for (int i = 0; i < xLabels.Length; i++)
+                {
                     // X-axis line
-                    var lineRight = (int) ((backgroundWidth - rightPadding) / (float)xLabels.Length * (i + 1));
-                    canvas.DrawLine (
+                    var lineRight = (int)((backgroundWidth - rightPadding) / (float)xLabels.Length * (i + 1));
+                    canvas.DrawLine(
                         leftBorderWidth + lineRight,
                         topPadding,
                         leftBorderWidth + lineRight,
@@ -541,11 +589,11 @@ namespace Toggl.Joey.UI.Views
 
                     // X-axis label
                     var label = xLabels [i];
-                    xLabelPaint.GetTextBounds (label, 0, label.Length, rect);
-                    canvas.DrawText (
+                    xLabelPaint.GetTextBounds(label, 0, label.Length, rect);
+                    canvas.DrawText(
                         label,
-                        leftBorderWidth + lineRight - rect.Width () / 2f,
-                        height - bottomPadding / 2f + rect.Height () / 2f,
+                        leftBorderWidth + lineRight - rect.Width() / 2f,
+                        height - bottomPadding / 2f + rect.Height() / 2f,
                         xLabelPaint
                     );
                 }
@@ -554,12 +602,14 @@ namespace Toggl.Joey.UI.Views
             public string[] XAxisLabels
             {
                 get { return xLabels; }
-                set {
-                    if (value == null) {
+                set
+                {
+                    if (value == null)
+                    {
                         value = defaultXLabels;
                     }
                     xLabels = value;
-                    Invalidate ();
+                    Invalidate();
                 }
             }
         }
@@ -573,34 +623,45 @@ namespace Toggl.Joey.UI.Views
             private readonly Paint billablePaint;
             private readonly Paint charityPaint;
 
-            public BarView (Context ctx) : base (ctx)
+            public BarView(Context ctx) : base(ctx)
             {
-                emptyPaint = new Paint() {
+                emptyPaint = new Paint()
+                {
                     Color = DarkGrayColor,
                 };
-                billablePaint = new Paint() {
+                billablePaint = new Paint()
+                {
                     Color = DarkBlueColor,
                 };
-                charityPaint = new Paint() {
+                charityPaint = new Paint()
+                {
                     Color = LightBlueColor,
                 };
             }
 
-            protected override void OnDraw (Canvas canvas)
+            protected override void OnDraw(Canvas canvas)
             {
-                base.OnDraw (canvas);
+                base.OnDraw(canvas);
 
-                if (totalTime == 0) {
-                    canvas.DrawRect (0, 0, canvas.Width, canvas.Height, emptyPaint);
-                } else {
-                    if (billableTime == 0) {
-                        canvas.DrawRect (0, 0, canvas.Width, canvas.Height, charityPaint);
-                    } else if (billableTime == totalTime) {
-                        canvas.DrawRect (0, 0, canvas.Width, canvas.Height, billablePaint);
-                    } else {
+                if (totalTime == 0)
+                {
+                    canvas.DrawRect(0, 0, canvas.Width, canvas.Height, emptyPaint);
+                }
+                else
+                {
+                    if (billableTime == 0)
+                    {
+                        canvas.DrawRect(0, 0, canvas.Width, canvas.Height, charityPaint);
+                    }
+                    else if (billableTime == totalTime)
+                    {
+                        canvas.DrawRect(0, 0, canvas.Width, canvas.Height, billablePaint);
+                    }
+                    else
+                    {
                         var billableWidth = canvas.Width * (float)billableTime / totalTime;
-                        canvas.DrawRect (0, 0, billableWidth, canvas.Height, billablePaint);
-                        canvas.DrawRect (billableWidth, 0, canvas.Width, canvas.Height, charityPaint);
+                        canvas.DrawRect(0, 0, billableWidth, canvas.Height, billablePaint);
+                        canvas.DrawRect(billableWidth, 0, canvas.Width, canvas.Height, charityPaint);
                     }
                 }
             }
@@ -608,45 +669,52 @@ namespace Toggl.Joey.UI.Views
             public long TotalTime
             {
                 get { return totalTime; }
-                set {
-                    if (totalTime == value) {
+                set
+                {
+                    if (totalTime == value)
+                    {
                         return;
                     }
                     totalTime = value;
-                    Invalidate ();
+                    Invalidate();
                 }
             }
 
             public long BillableTime
             {
                 get { return billableTime; }
-                set {
-                    if (billableTime == value) {
+                set
+                {
+                    if (billableTime == value)
+                    {
                         return;
                     }
                     billableTime = value;
-                    Invalidate ();
+                    Invalidate();
                 }
             }
         }
 
         private class Row
         {
-            public Row (Context ctx)
+            public Row(Context ctx)
             {
-                YAxisTextView = new TextView (ctx) {
+                YAxisTextView = new TextView(ctx)
+                {
                     TextSize = 10,
                 };
-                YAxisTextView.SetTextColor (DarkGrayColor);
+                YAxisTextView.SetTextColor(DarkGrayColor);
 
-                BarView = new BarView (ctx) {
+                BarView = new BarView(ctx)
+                {
                     PivotX = 0f,
                 };
 
-                ValueTextView = new TextView (ctx) {
+                ValueTextView = new TextView(ctx)
+                {
                     TextSize = 10,
                 };
-                ValueTextView.SetTextColor (DarkBlueColor);
+                ValueTextView.SetTextColor(DarkBlueColor);
 
                 IsZoomed = false;
             }

@@ -9,14 +9,16 @@ namespace Toggl.Emma.Views
 
         public bool IsRunning
         {
-            get {
+            get
+            {
                 return isRunning;
             }
 
-            set {
+            set
+            {
                 isRunning = value;
                 isActive |= isRunning;
-                SetNeedsDisplay ();
+                SetNeedsDisplay();
             }
         }
 
@@ -24,85 +26,94 @@ namespace Toggl.Emma.Views
 
         public bool IsActive
         {
-            get {
+            get
+            {
                 return isActive;
             }
 
-            set {
+            set
+            {
                 isActive = value;
-                SetNeedsDisplay ();
+                SetNeedsDisplay();
             }
         }
 
         // Color Declarations
-        private readonly UIColor greenColor = UIColor.FromRGBA (0.302f, 0.851f, 0.396f, 1.000f);
-        private readonly UIColor redColor = UIColor.FromRGBA (1.000f, 61f/255f, 50f/255f, 1.000f);
+        private readonly UIColor greenColor = UIColor.FromRGBA(0.302f, 0.851f, 0.396f, 1.000f);
+        private readonly UIColor redColor = UIColor.FromRGBA(1.000f, 61f / 255f, 50f / 255f, 1.000f);
         private const float radius = 32.0f;
 
-        public StartStopBtn ()
+        public StartStopBtn()
         {
             isRunning = false;
             isActive = false;
         }
 
-        public override void Draw (CGRect rect)
+        public override void Draw(CGRect rect)
         {
-            base.Draw (rect);
+            base.Draw(rect);
 
             var posX = (rect.Width - radius) / 2;
             var posY = (rect.Height - radius) / 2;
 
-            using (var context = UIGraphics.GetCurrentContext ()) {
+            using(var context = UIGraphics.GetCurrentContext())
+            {
 
                 UIBezierPath ovalPath;
                 UIBezierPath bezierPath;
 
-                if (isActive) {
-                    if (isRunning) {
+                if (isActive)
+                {
+                    if (isRunning)
+                    {
 
                         // Oval Drawing
-                        ovalPath = UIBezierPath.FromOval (new CGRect (posX, posY, radius, radius));
+                        ovalPath = UIBezierPath.FromOval(new CGRect(posX, posY, radius, radius));
                         redColor.SetFill();
                         ovalPath.Fill();
 
                         // Rectangle Drawing
-                        var rectanglePath = UIBezierPath.FromRect (new CGRect (posX + 12.0f, posY + 12.0f, 8.0f, 8.0f));
+                        var rectanglePath = UIBezierPath.FromRect(new CGRect(posX + 12.0f, posY + 12.0f, 8.0f, 8.0f));
                         UIColor.White.SetFill();
                         rectanglePath.Fill();
 
-                    } else {
+                    }
+                    else
+                    {
 
                         // Oval Drawing
-                        ovalPath = UIBezierPath.FromOval (new CGRect (posX, posY, radius, radius));
-                        greenColor.SetFill ();
-                        ovalPath.Fill ();
+                        ovalPath = UIBezierPath.FromOval(new CGRect(posX, posY, radius, radius));
+                        greenColor.SetFill();
+                        ovalPath.Fill();
 
                         // Bezier Drawing
-                        bezierPath = new UIBezierPath ();
-                        bezierPath.MoveTo (new CGPoint (posX + 13.0f, posY + 8.0f));
-                        bezierPath.AddLineTo (new CGPoint (posX + 20.0f, posY + 16.47f));
-                        bezierPath.AddLineTo (new CGPoint (posX + 13.0f, posY + 24.0f));
-                        UIColor.White.SetStroke ();
+                        bezierPath = new UIBezierPath();
+                        bezierPath.MoveTo(new CGPoint(posX + 13.0f, posY + 8.0f));
+                        bezierPath.AddLineTo(new CGPoint(posX + 20.0f, posY + 16.47f));
+                        bezierPath.AddLineTo(new CGPoint(posX + 13.0f, posY + 24.0f));
+                        UIColor.White.SetStroke();
                         bezierPath.LineWidth = 1.0f;
-                        bezierPath.Stroke ();
+                        bezierPath.Stroke();
                     }
-                } else {
+                }
+                else
+                {
                     // Oval Drawing
-                    UIColor.White.SetStroke ();
+                    UIColor.White.SetStroke();
 
-                    ovalPath = UIBezierPath.FromOval (new CGRect (posX, posY, radius, radius));
+                    ovalPath = UIBezierPath.FromOval(new CGRect(posX, posY, radius, radius));
                     ovalPath.LineWidth = 1.0f;
-                    ovalPath.Stroke ();
-                    context.AddPath (ovalPath.CGPath);
+                    ovalPath.Stroke();
+                    context.AddPath(ovalPath.CGPath);
 
                     // Bezier Drawing
-                    bezierPath = new UIBezierPath ();
-                    bezierPath.MoveTo (new CGPoint (posX + 13.0f, posY + 8.0f));
-                    bezierPath.AddLineTo (new CGPoint (posX + 20.0f, posY + 16.47f));
-                    bezierPath.AddLineTo (new CGPoint (posX + 13.0f, posY + 24.0f));
+                    bezierPath = new UIBezierPath();
+                    bezierPath.MoveTo(new CGPoint(posX + 13.0f, posY + 8.0f));
+                    bezierPath.AddLineTo(new CGPoint(posX + 20.0f, posY + 16.47f));
+                    bezierPath.AddLineTo(new CGPoint(posX + 13.0f, posY + 24.0f));
                     bezierPath.LineWidth = 1.0f;
-                    bezierPath.Stroke ();
-                    context.AddPath (bezierPath.CGPath);
+                    bezierPath.Stroke();
+                    context.AddPath(bezierPath.CGPath);
                 }
             }
         }

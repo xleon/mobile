@@ -5,11 +5,11 @@ namespace Toggl.Phoebe.Data.Models
 {
     public class ReportData
     {
-        public ReportData ()
+        public ReportData()
         {
         }
 
-        public ReportData (ReportData other)
+        public ReportData(ReportData other)
         {
             TotalGrand = other.TotalGrand;
             TotalBillable = other.TotalBillable;
@@ -29,13 +29,15 @@ namespace Toggl.Phoebe.Data.Models
         public List<ReportProject> Projects;
     }
 
-    public enum ZoomLevel {
+    public enum ZoomLevel
+    {
         Week = 1,
         Month = 2,
         Year = 3
     }
 
-    public struct ReportActivity {
+    public struct ReportActivity
+    {
 
         public DateTime StartTime { get; set; }
 
@@ -46,7 +48,8 @@ namespace Toggl.Phoebe.Data.Models
         public string FormattedTotalTime { get; set; }
     }
 
-    public struct ReportProject {
+    public struct ReportProject
+    {
 
         public string Project { get; set; }
 
@@ -67,7 +70,8 @@ namespace Toggl.Phoebe.Data.Models
         public List<ReportTimeEntry> Items;
     }
 
-    public struct ReportTimeEntry {
+    public struct ReportTimeEntry
+    {
 
         public string Title { get; set; }
 
@@ -82,7 +86,8 @@ namespace Toggl.Phoebe.Data.Models
         public float Rate { get; set; }
     }
 
-    public struct ReportCurrency {
+    public struct ReportCurrency
+    {
 
         public string Currency { get; set; }
 

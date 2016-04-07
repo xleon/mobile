@@ -8,12 +8,12 @@ using UIKit;
 
 namespace Toggl.Emma.Views
 {
-    [Register ("WidgetCell")]
+    [Register("WidgetCell")]
     public class WidgetCell : UITableViewCell
     {
         private const string defaultTimeValue = "  00:00:00";
 
-        public static NSString WidgetProjectCellId = new NSString ("WidgetCellId");
+        public static NSString WidgetProjectCellId = new NSString("WidgetCellId");
 
         public event EventHandler StartBtnPressed;
 
@@ -21,41 +21,49 @@ namespace Toggl.Emma.Views
 
         public WidgetEntryData Data
         {
-            get {
+            get
+            {
                 return data;
             }
 
-            set {
+            set
+            {
                 data = value;
 
                 // Set state
-                if (data.IsEmpty) {
-                    projectLabel.Text = (startBtn.IsRunning) ? "StopTogglLabel".Tr () : "StartTogglLabel".Tr ();
-                } else {
-                    projectLabel.Text = string.IsNullOrEmpty (data.ProjectName) ? "CellNoProject".Tr() : data.ProjectName;
-                    descriptionLabel.Text = string.IsNullOrEmpty (data.Description) ? "CellNoDescription".Tr() : data.Description;
+                if (data.IsEmpty)
+                {
+                    projectLabel.Text = (startBtn.IsRunning) ? "StopTogglLabel".Tr() : "StartTogglLabel".Tr();
+                }
+                else
+                {
+                    projectLabel.Text = string.IsNullOrEmpty(data.ProjectName) ? "CellNoProject".Tr() : data.ProjectName;
+                    descriptionLabel.Text = string.IsNullOrEmpty(data.Description) ? "CellNoDescription".Tr() : data.Description;
                 }
                 startBtn.IsRunning = data.IsRunning;
                 startBtn.IsActive = data.IsEmpty || data.IsRunning;
                 descriptionLabel.Hidden = data.IsEmpty;
 
                 // Set time size
-                var nsString = new NSString (defaultTimeValue);
+                var nsString = new NSString(defaultTimeValue);
                 var attribs = new UIStringAttributes { Font = timeLabel.Font };
-                timeLabel.Bounds = new CGRect (CGPoint.Empty, nsString.GetSizeUsingAttributes (attribs));
+                timeLabel.Bounds = new CGRect(CGPoint.Empty, nsString.GetSizeUsingAttributes(attribs));
 
-                timeLabel.Text = string.IsNullOrEmpty (value.TimeValue) ? defaultTimeValue : value.TimeValue;
+                timeLabel.Text = string.IsNullOrEmpty(value.TimeValue) ? defaultTimeValue : value.TimeValue;
 
                 // Set color
-                colorBox.BackgroundColor = (data.IsEmpty) ? UIColor.Clear : UIColorFromHex (data.Color);
+                colorBox.BackgroundColor = (data.IsEmpty) ? UIColor.Clear : UIColorFromHex(data.Color);
             }
         }
 
         public string TimeValue
         {
-            get {
+            get
+            {
                 return timeLabel.Text;
-            } set {
+            }
+            set
+            {
                 timeLabel.Text = value;
             }
         }
@@ -67,67 +75,76 @@ namespace Toggl.Emma.Views
         private UIView colorBox;
         private UIView textContentView;
 
-        public WidgetCell (IntPtr handle) : base (handle)
+        public WidgetCell(IntPtr handle) : base(handle)
         {
             SelectionStyle = UITableViewCellSelectionStyle.None;
 
-            textContentView = new UIView() {
+            textContentView = new UIView()
+            {
                 TranslatesAutoresizingMaskIntoConstraints = false,
             };
 
-            textContentView.Add (projectLabel = new UILabel {
+            textContentView.Add(projectLabel = new UILabel
+            {
                 TranslatesAutoresizingMaskIntoConstraints = false,
-                Font = UIFont.FromName ("Helvetica", 16f),
+                Font = UIFont.FromName("Helvetica", 16f),
                 Text = "Project",
                 TextColor = UIColor.White,
             });
 
-            textContentView.Add (descriptionLabel = new UILabel {
+            textContentView.Add(descriptionLabel = new UILabel
+            {
                 TranslatesAutoresizingMaskIntoConstraints = false,
-                Font = UIFont.FromName ("Helvetica", 13f),
+                Font = UIFont.FromName("Helvetica", 13f),
                 Text = "Description",
                 TextColor = UIColor.White,
             });
 
-            ContentView.Add (colorBox = new UIView() {
+            ContentView.Add(colorBox = new UIView()
+            {
                 TranslatesAutoresizingMaskIntoConstraints = false,
             });
 
-            ContentView.Add (timeLabel = new UILabel {
+            ContentView.Add(timeLabel = new UILabel
+            {
                 TranslatesAutoresizingMaskIntoConstraints = false,
                 Text = defaultTimeValue,
-                Font = UIFont.FromName ("Helvetica", 13f),
+                Font = UIFont.FromName("Helvetica", 13f),
                 TextAlignment = UITextAlignment.Right,
                 TextColor = UIColor.White,
             });
 
-            ContentView.Add (startBtn = new StartStopBtn {
+            ContentView.Add(startBtn = new StartStopBtn
+            {
                 TranslatesAutoresizingMaskIntoConstraints = false,
             });
 
-            ContentView.Add (textContentView);
+            ContentView.Add(textContentView);
 
-            startBtn.TouchUpInside += (sender, e) => {
+            startBtn.TouchUpInside += (sender, e) =>
+            {
                 startBtn.IsActive = true;
                 startBtn.IsRunning = !startBtn.IsRunning;
-                if (StartBtnPressed != null) {
-                    StartBtnPressed.Invoke (this, e);
+                if (StartBtnPressed != null)
+                {
+                    StartBtnPressed.Invoke(this, e);
                 }
             };
 
-            var maskLayer = new CAGradientLayer {
+            var maskLayer = new CAGradientLayer
+            {
                 AnchorPoint = CGPoint.Empty,
-                StartPoint = new CGPoint (0.0f, 0.0f),
-                EndPoint = new CGPoint (1.0f, 0.0f),
+                StartPoint = new CGPoint(0.0f, 0.0f),
+                EndPoint = new CGPoint(1.0f, 0.0f),
                 Colors = new [] {
-                    UIColor.FromWhiteAlpha (1, 1).CGColor,
-                    UIColor.FromWhiteAlpha (1, 1).CGColor,
-                    UIColor.FromWhiteAlpha (1, 0).CGColor,
+                    UIColor.FromWhiteAlpha(1, 1).CGColor,
+                    UIColor.FromWhiteAlpha(1, 1).CGColor,
+                    UIColor.FromWhiteAlpha(1, 0).CGColor,
                 },
                 Locations = new [] {
-                    NSNumber.FromFloat (0f),
-                    NSNumber.FromFloat (0.9f),
-                    NSNumber.FromFloat (1f),
+                    NSNumber.FromFloat(0f),
+                    NSNumber.FromFloat(0.9f),
+                    NSNumber.FromFloat(1f),
                 },
             };
 
@@ -135,92 +152,98 @@ namespace Toggl.Emma.Views
 
         }
 
-        public override void UpdateConstraints ()
+        public override void UpdateConstraints()
         {
-            if (ContentView.Constraints.Length > 0) {
-                base.UpdateConstraints ();
+            if (ContentView.Constraints.Length > 0)
+            {
+                base.UpdateConstraints();
                 return;
             }
 
-            ContentView.AddConstraints (
+            ContentView.AddConstraints(
 
-                colorBox.AtLeftOf (ContentView, 0f),
-                colorBox.AtTopOf (ContentView, 10f),
-                colorBox.AtBottomOf (ContentView, 10f),
-                colorBox.Width().EqualTo (3f),
+                colorBox.AtLeftOf(ContentView, 0f),
+                colorBox.AtTopOf(ContentView, 10f),
+                colorBox.AtBottomOf(ContentView, 10f),
+                colorBox.Width().EqualTo(3f),
 
-                startBtn.AtRightOf (ContentView, 15f),
-                startBtn.WithSameCenterY (ContentView),
-                startBtn.Height().EqualTo (35f),
-                startBtn.Width().EqualTo (35f),
+                startBtn.AtRightOf(ContentView, 15f),
+                startBtn.WithSameCenterY(ContentView),
+                startBtn.Height().EqualTo(35f),
+                startBtn.Width().EqualTo(35f),
 
-                timeLabel.WithSameCenterY (ContentView),
-                timeLabel.ToLeftOf (startBtn, 10f),
-                timeLabel.Width().EqualTo (timeLabel.Bounds.Width),
+                timeLabel.WithSameCenterY(ContentView),
+                timeLabel.ToLeftOf(startBtn, 10f),
+                timeLabel.Width().EqualTo(timeLabel.Bounds.Width),
 
-                textContentView.AtLeftOf (ContentView, 50f),
-                textContentView.ToLeftOf (timeLabel, 5f),
-                textContentView.WithSameCenterY (ContentView),
-                textContentView.WithSameHeight (ContentView)
+                textContentView.AtLeftOf(ContentView, 50f),
+                textContentView.ToLeftOf(timeLabel, 5f),
+                textContentView.WithSameCenterY(ContentView),
+                textContentView.WithSameHeight(ContentView)
             );
 
-            textContentView.AddConstraints (
-                projectLabel.AtLeftOf (textContentView, 0f)
+            textContentView.AddConstraints(
+                projectLabel.AtLeftOf(textContentView, 0f)
             );
 
-            if (data.IsEmpty) {
-                textContentView.AddConstraints (
-                    projectLabel.WithSameCenterY (textContentView),
+            if (data.IsEmpty)
+            {
+                textContentView.AddConstraints(
+                    projectLabel.WithSameCenterY(textContentView),
                     null
                 );
-            } else {
-                textContentView.AddConstraints (
-                    projectLabel.AtTopOf (textContentView, 10f),
-                    descriptionLabel.WithSameLeft (projectLabel),
-                    descriptionLabel.Below (projectLabel, 0f),
-                    descriptionLabel.AtBottomOf (textContentView, 10f),
+            }
+            else
+            {
+                textContentView.AddConstraints(
+                    projectLabel.AtTopOf(textContentView, 10f),
+                    descriptionLabel.WithSameLeft(projectLabel),
+                    descriptionLabel.Below(projectLabel, 0f),
+                    descriptionLabel.AtBottomOf(textContentView, 10f),
                     null
                 );
             }
 
-            base.UpdateConstraints ();
+            base.UpdateConstraints();
 
             LayoutIfNeeded();
         }
 
-        public override void LayoutSubviews ()
+        public override void LayoutSubviews()
         {
             textContentView.Layer.Mask.Bounds = textContentView.Frame;
 
-            base.LayoutSubviews ();
+            base.LayoutSubviews();
         }
 
-        private UIColor UIColorFromHex (string hexValue, float alpha = 1f)
+        private UIColor UIColorFromHex(string hexValue, float alpha = 1f)
         {
-            hexValue = hexValue.TrimStart ('#');
+            hexValue = hexValue.TrimStart('#');
 
             int rgb;
-            if (!Int32.TryParse (hexValue, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out rgb)) {
-                throw new ArgumentException ("Invalid hex string.", "hexValue");
+            if (!Int32.TryParse(hexValue, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out rgb))
+            {
+                throw new ArgumentException("Invalid hex string.", "hexValue");
             }
 
-            switch (hexValue.Length) {
-            case 6:
-                return new UIColor (
-                           ((rgb & 0xFF0000) >> 16) / 255.0f,
-                           ((rgb & 0x00FF00) >> 8) / 255.0f,
-                           (rgb & 0x0000FF) / 255.0f,
-                           alpha
-                       );
-            case 3:
-                return new UIColor (
-                           (((rgb & 0xF00) >> 4) | ((rgb & 0xF00) >> 8)) / 255.0f,
-                           ((rgb & 0x0F0) | (rgb & 0x0F0) >> 4) / 255.0f,
-                           ((rgb & 0x00F << 4) | (rgb & 0x00F)) / 255.0f,
-                           alpha
-                       );
-            default:
-                throw new ArgumentException ("Invalid hex string.", "hexValue");
+            switch (hexValue.Length)
+            {
+                case 6:
+                    return new UIColor(
+                               ((rgb & 0xFF0000) >> 16) / 255.0f,
+                               ((rgb & 0x00FF00) >> 8) / 255.0f,
+                               (rgb & 0x0000FF) / 255.0f,
+                               alpha
+                           );
+                case 3:
+                    return new UIColor(
+                               (((rgb & 0xF00) >> 4) | ((rgb & 0xF00) >> 8)) / 255.0f,
+                               ((rgb & 0x0F0) | (rgb & 0x0F0) >> 4) / 255.0f,
+                               ((rgb & 0x00F << 4) | (rgb & 0x00F)) / 255.0f,
+                               alpha
+                           );
+                default:
+                    throw new ArgumentException("Invalid hex string.", "hexValue");
             }
         }
     }

@@ -6,32 +6,32 @@ namespace Toggl.Phoebe.Data.Json
 {
     public class ProjectJson : CommonJson
     {
-        [DefaultValue ("")]
-        [JsonProperty (PropertyName = "name", DefaultValueHandling = DefaultValueHandling.Populate)]
+        [DefaultValue("")]
+        [JsonProperty(PropertyName = "name", DefaultValueHandling = DefaultValueHandling.Populate)]
         public string Name { get; set; }
 
-        [JsonProperty ("color")]
+        [JsonProperty("color")]
         public string Color { get; set; }
 
-        [JsonProperty ("active")]
+        [JsonProperty("active")]
         public bool IsActive { get; set; }
 
-        [JsonProperty ("billable")]
+        [JsonProperty("billable")]
         public bool IsBillable { get; set; }
 
-        [JsonProperty ("is_private")]
+        [JsonProperty("is_private")]
         public bool IsPrivate { get; set; }
 
-        [JsonProperty ("template")]
+        [JsonProperty("template")]
         public bool IsTemplate { get; set; }
 
-        [JsonProperty ("auto_estimates")]
+        [JsonProperty("auto_estimates")]
         public bool UseTasksEstimate { get; set; }
 
-        [JsonProperty ("wid")]
+        [JsonProperty("wid")]
         public long WorkspaceRemoteId { get; set; }
 
-        [JsonProperty ("cid")]
+        [JsonProperty("cid")]
         public long? ClientRemoteId { get; set; }
     }
 }

@@ -2,51 +2,52 @@
 
 namespace Toggl.Phoebe.Helpers
 {
-    public struct Duration {
+    public struct Duration
+    {
         private readonly int encoded;
         private readonly int digits;
 
-        public Duration (int hours, int minutes) : this (hours * 100 + minutes)
+        public Duration(int hours, int minutes) : this(hours * 100 + minutes)
         {
         }
 
-        private Duration (int encoded)
+        private Duration(int encoded)
         {
             this.encoded = encoded;
-            this.digits = GetDigits (encoded);
+            this.digits = GetDigits(encoded);
         }
 
-        public Duration RemoveDigit ()
+        public Duration RemoveDigit()
         {
-            return new Duration (encoded / 10);
+            return new Duration(encoded / 10);
         }
 
-        public Duration AppendDigit (int digit)
+        public Duration AppendDigit(int digit)
         {
-            return new Duration (encoded * 10 + digit);
+            return new Duration(encoded * 10 + digit);
         }
 
-        public Duration AddMinutes (int minutes)
+        public Duration AddMinutes(int minutes)
         {
             minutes += Minutes;
             var hours = Hours + minutes / 60;
             minutes = minutes % 60;
-            return new Duration (hours, minutes);
+            return new Duration(hours, minutes);
         }
 
-        public override bool Equals (object obj)
+        public override bool Equals(object obj)
         {
             return obj is Duration && this == (Duration)obj;
         }
 
-        public override int GetHashCode ()
+        public override int GetHashCode()
         {
-            return encoded.GetHashCode ();
+            return encoded.GetHashCode();
         }
 
-        public override string ToString ()
+        public override string ToString()
         {
-            return String.Format ("{0:00}:{1:00}", Hours, Minutes);
+            return String.Format("{0:00}:{1:00}", Hours, Minutes);
         }
 
         public bool IsValid
@@ -69,10 +70,11 @@ namespace Toggl.Phoebe.Helpers
             get { return encoded % 100; }
         }
 
-        private static int GetDigits (int encoded)
+        private static int GetDigits(int encoded)
         {
             int digits = 0;
-            while (encoded > 0) {
+            while (encoded > 0)
+            {
                 digits += 1;
                 encoded /= 10;
             }
@@ -86,21 +88,22 @@ namespace Toggl.Phoebe.Helpers
 
         public static bool operator != (Duration left, Duration right)
         {
-            return ! (left == right);
+            return !(left == right);
         }
 
-        public static implicit operator Duration (TimeSpan timespan)
+        public static implicit operator Duration(TimeSpan timespan)
         {
-            return new Duration (timespan.Hours, timespan.Minutes);
+            return new Duration(timespan.Hours, timespan.Minutes);
         }
 
         public static Duration Zero
         {
-            get { return new Duration (); }
+            get { return new Duration(); }
         }
     }
 
-    public enum DurationFormat {
+    public enum DurationFormat
+    {
         Classic,
         Improved,
         Decimal

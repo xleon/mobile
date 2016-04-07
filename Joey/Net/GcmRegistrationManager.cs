@@ -18,40 +18,45 @@ namespace Toggl.Joey.Net
         private readonly object subscriptionAuthChanged;
 #pragma warning restore 0414
 
-        public GcmRegistrationManager ()
+        public GcmRegistrationManager()
         {
             var bus = ServiceContainer.Resolve<MessageBus> ();
-            CheckRegistrationId ();
+            CheckRegistrationId();
         }
 
-        private void CheckRegistrationId ()
+        private void CheckRegistrationId()
         {
             return;
 
-            if (!HasGcmSupport) {
+            if (!HasGcmSupport)
+            {
                 return;
             }
 
-            if (RegistrationId == null) {
+            if (RegistrationId == null)
+            {
                 // Registration ID missing (either due update or something else)
-                RegisterDevice ();
+                RegisterDevice();
             }
         }
 
         private bool HasGcmSupport
         {
-            get {
-                if (String.IsNullOrEmpty (Build.GcmSenderId)) {
+            get
+            {
+                if (String.IsNullOrEmpty(Build.GcmSenderId))
+                {
                     return false;
                 }
                 var ctx = ServiceContainer.Resolve<Context> ();
-                return GoogleApiAvailability.Instance.IsGooglePlayServicesAvailable (ctx) == ConnectionResult.Success;
+                return GoogleApiAvailability.Instance.IsGooglePlayServicesAvailable(ctx) == ConnectionResult.Success;
             }
         }
 
         private string RegistrationId
         {
-            get {
+            get
+            {
                 /*
                 var settingsStore = ServiceContainer.Resolve<SettingsStore> ();
                 var id = settingsStore.GcmRegistrationId;
@@ -65,7 +70,9 @@ namespace Toggl.Joey.Net
                 */
 
                 return string.Empty;
-            } set {
+            }
+            set
+            {
                 /*
                 var settingsStore = ServiceContainer.Resolve<SettingsStore> ();
                 if (value == null) {
@@ -76,63 +83,71 @@ namespace Toggl.Joey.Net
                     settingsStore.GcmAppVersion = AppVersion;
                 }
                 */
-                Console.WriteLine (value);
+                Console.WriteLine(value);
             }
         }
 
         private int AppVersion
         {
-            get {
+            get
+            {
                 var ctx = ServiceContainer.Resolve<Context> ();
-                var info = ctx.PackageManager.GetPackageInfo (ctx.PackageName, 0);
+                var info = ctx.PackageManager.GetPackageInfo(ctx.PackageName, 0);
                 return info.VersionCode;
             }
         }
 
-        private async void RegisterDevice ()
+        private async void RegisterDevice()
         {
             var regId = RegistrationId;
 
-            if (regId == null) {
+            if (regId == null)
+            {
                 // Obtain registration id for app:
                 var ctx = ServiceContainer.Resolve<Context> ();
-                var gcm = GoogleCloudMessaging.GetInstance (ctx);
+                var gcm = GoogleCloudMessaging.GetInstance(ctx);
 
-                try {
-                    RegistrationId = regId = await System.Threading.Tasks.Task.Factory.StartNew (() =>
-                                             gcm.Register (Build.GcmSenderId));
-                } catch (Exception exc) {
+                try
+                {
+                    RegistrationId = regId = await System.Threading.Tasks.Task.Factory.StartNew(() =>
+                                             gcm.Register(Build.GcmSenderId));
+                }
+                catch (Exception exc)
+                {
                     var log = ServiceContainer.Resolve<ILogger> ();
-                    log.Info (Tag, exc, "Failed register device for GCM push.");
+                    log.Info(Tag, exc, "Failed register device for GCM push.");
                     return;
                 }
             }
 
             // Register user device with server
             var pushClient = ServiceContainer.Resolve<IPushClient> ();
-            IgnoreTaskErrors (pushClient.Register (authToken, PushService.GCM, regId));
+            IgnoreTaskErrors(pushClient.Register(authToken, PushService.GCM, regId));
         }
 
-        private void UnregisterDevice ()
+        private void UnregisterDevice()
         {
-            if (authToken == null) {
+            if (authToken == null)
+            {
                 return;
             }
 
             var regId = RegistrationId;
-            if (regId != null) {
+            if (regId != null)
+            {
                 var pushClient = ServiceContainer.Resolve<IPushClient> ();
-                IgnoreTaskErrors (pushClient.Unregister (authToken, PushService.GCM, regId));
+                IgnoreTaskErrors(pushClient.Unregister(authToken, PushService.GCM, regId));
                 RegistrationId = regId = null;
             }
         }
 
-        private static void IgnoreTaskErrors (System.Threading.Tasks.Task task)
+        private static void IgnoreTaskErrors(System.Threading.Tasks.Task task)
         {
-            task.ContinueWith (t => {
+            task.ContinueWith(t =>
+            {
                 var e = t.Exception;
                 var log = ServiceContainer.Resolve<ILogger> ();
-                log.Info (Tag, e, "Failed to send GCM info to server.");
+                log.Info(Tag, e, "Failed to send GCM info to server.");
             }, TaskContinuationOptions.OnlyOnFaulted);
         }
     }

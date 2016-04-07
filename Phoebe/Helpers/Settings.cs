@@ -15,13 +15,14 @@ namespace Toggl.Phoebe.Helpers
     {
         private static ISettings AppSettings
         {
-            get {
-                #if __MOBILE__
+            get
+            {
+#if __MOBILE__
                 return CrossSettings.Current;
-                #else
+#else
                 // Used for tests only
-                return new CrossSettingsTest ();
-                #endif
+                return new CrossSettingsTest();
+#endif
             }
         }
 
@@ -33,21 +34,22 @@ namespace Toggl.Phoebe.Helpers
 
         public static string SerializedSettings
         {
-            get { return AppSettings.GetValueOrDefault (SerializedSettingsKey, SerializedSettingsDefault); }
-            set { AppSettings.AddOrUpdateValue (SerializedSettingsKey, value); }
+            get { return AppSettings.GetValueOrDefault(SerializedSettingsKey, SerializedSettingsDefault); }
+            set { AppSettings.AddOrUpdateValue(SerializedSettingsKey, value); }
         }
 
         public static bool IsStaging
         {
-            get { return AppSettings.GetValueOrDefault (IsStagingKey, IsStagingDefault); }
-            set { AppSettings.AddOrUpdateValue (IsStagingKey, value); }
+            get { return AppSettings.GetValueOrDefault(IsStagingKey, IsStagingDefault); }
+            set { AppSettings.AddOrUpdateValue(IsStagingKey, value); }
         }
 
         // Helper class to deserialize using private properties
         // http://stackoverflow.com/questions/4066947/private-setters-in-json-net/4110232#4110232
-        public static JsonSerializerSettings GetNonPublicPropertiesResolverSettings ()
+        public static JsonSerializerSettings GetNonPublicPropertiesResolverSettings()
         {
-            var settings = new JsonSerializerSettings {
+            var settings = new JsonSerializerSettings
+            {
                 ContractResolver = new NonPublicPropertiesResolver()
             };
             return settings;
@@ -55,11 +57,12 @@ namespace Toggl.Phoebe.Helpers
 
         public class NonPublicPropertiesResolver : DefaultContractResolver
         {
-            protected override JsonProperty CreateProperty (MemberInfo member, MemberSerialization memberSerialization)
+            protected override JsonProperty CreateProperty(MemberInfo member, MemberSerialization memberSerialization)
             {
-                var prop = base.CreateProperty (member, memberSerialization);
+                var prop = base.CreateProperty(member, memberSerialization);
                 var pi = member as PropertyInfo;
-                if (pi != null) {
+                if (pi != null)
+                {
                     prop.Readable = (pi.GetMethod != null);
                     prop.Writable = (pi.SetMethod != null);
                 }
@@ -79,7 +82,7 @@ namespace Toggl.Phoebe.Helpers
                 return defaultValue;
             }
 
-            public void Remove (string key)
+            public void Remove(string key)
             {
                 // Do Nothing.
             }

@@ -8,36 +8,36 @@ namespace Toggl.Ross.Theme
     {
         public static class NavTimer
         {
-            public static void DurationButton (UIButton v)
+            public static void DurationButton(UIButton v)
             {
-                v.Font = UIFont.FromName ("HelveticaNeue-Thin", 32f);
+                v.Font = UIFont.FromName("HelveticaNeue-Thin", 32f);
                 v.LineBreakMode = UILineBreakMode.Clip;
-                v.SetTitleColor (Color.Black, UIControlState.Normal);
-                v.SetTitleColor (Color.Gray, UIControlState.Highlighted);
+                v.SetTitleColor(Color.Black, UIControlState.Normal);
+                v.SetTitleColor(Color.Gray, UIControlState.Highlighted);
             }
 
-            public static void StartButton (UIButton v)
+            public static void StartButton(UIButton v)
             {
-                v.Font = UIFont.FromName ("HelveticaNeue", 16f);
-                v.SetBackgroundImage (Image.CircleStart, UIControlState.Normal);
-                v.SetBackgroundImage (Image.CircleStartPressed, UIControlState.Highlighted);
-                v.SetTitleColor (Color.White, UIControlState.Normal);
-                v.SetTitleColor (Color.White, UIControlState.Highlighted);
-                v.SetTitle ("NavTimerStart".Tr (), UIControlState.Normal);
+                v.Font = UIFont.FromName("HelveticaNeue", 16f);
+                v.SetBackgroundImage(Image.CircleStart, UIControlState.Normal);
+                v.SetBackgroundImage(Image.CircleStartPressed, UIControlState.Highlighted);
+                v.SetTitleColor(Color.White, UIControlState.Normal);
+                v.SetTitleColor(Color.White, UIControlState.Highlighted);
+                v.SetTitle("NavTimerStart".Tr(), UIControlState.Normal);
                 // TODO: Remove this scale workaround
-                v.Transform = CoreGraphics.CGAffineTransform.MakeScale (0.7f, 0.7f);
+                v.Transform = CoreGraphics.CGAffineTransform.MakeScale(0.7f, 0.7f);
             }
 
-            public static void StopButton (UIButton v)
+            public static void StopButton(UIButton v)
             {
-                v.Font = UIFont.FromName ("HelveticaNeue-Light", 16f);
-                v.SetBackgroundImage (Image.CircleStop, UIControlState.Normal);
-                v.SetBackgroundImage (Image.CircleStopPressed, UIControlState.Highlighted);
-                v.SetTitleColor (Color.Red, UIControlState.Normal);
-                v.SetTitleColor (Color.White, UIControlState.Highlighted);
-                v.SetTitle ("NavTimerStop".Tr (), UIControlState.Normal);
+                v.Font = UIFont.FromName("HelveticaNeue-Light", 16f);
+                v.SetBackgroundImage(Image.CircleStop, UIControlState.Normal);
+                v.SetBackgroundImage(Image.CircleStopPressed, UIControlState.Highlighted);
+                v.SetTitleColor(Color.Red, UIControlState.Normal);
+                v.SetTitleColor(Color.White, UIControlState.Highlighted);
+                v.SetTitle("NavTimerStop".Tr(), UIControlState.Normal);
                 // TODO: Remove this scale workaround
-                v.Transform = CoreGraphics.CGAffineTransform.MakeScale (0.7f, 0.7f);
+                v.Transform = CoreGraphics.CGAffineTransform.MakeScale(0.7f, 0.7f);
             }
         }
     }

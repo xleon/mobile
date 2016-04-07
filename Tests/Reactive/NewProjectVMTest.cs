@@ -17,53 +17,57 @@ namespace Toggl.Phoebe.Tests.Reactive
     {
         NewProjectVM viewModel;
         SyncSqliteDataStore dataStore;
-        readonly ToggleClientMock togglClient = new ToggleClientMock ();
+        readonly ToggleClientMock togglClient = new ToggleClientMock();
 
-        public override void Init ()
+        public override void Init()
         {
-            base.Init ();
+            base.Init();
 
-            var initState = Util.GetInitAppState ();
-            var platformUtils = new PlatformUtils ();
+            var initState = Util.GetInitAppState();
+            var platformUtils = new PlatformUtils();
             ServiceContainer.RegisterScoped<IPlatformUtils> (platformUtils);
             ServiceContainer.RegisterScoped<ITogglClient> (togglClient);
             ServiceContainer.RegisterScoped<ITracker> (new TrackerMock());
 
-            RxChain.Init (initState);
-            viewModel = new NewProjectVM (initState, Util.WorkspaceId);
-            dataStore = new SyncSqliteDataStore (databasePath, platformUtils.SQLiteInfo);
+            RxChain.Init(initState);
+            viewModel = new NewProjectVM(initState, Util.WorkspaceId);
+            dataStore = new SyncSqliteDataStore(databasePath, platformUtils.SQLiteInfo);
         }
 
-        public override void Cleanup ()
+        public override void Cleanup()
         {
-            base.Cleanup ();
-            RxChain.Cleanup ();
+            base.Cleanup();
+            RxChain.Cleanup();
         }
 
         [Test]
-        public async Task TestSaveProject ()
+        public async Task TestSaveProject()
         {
             var pcolor = 2;
             var pname = "MyProject";
             var tcs = Util.CreateTask<bool> ();
 
-            viewModel.SaveProject (pname, pcolor, new SyncTestOptions (false, (state, sent, queued) => {
-                try {
+            viewModel.SaveProject(pname, pcolor, new SyncTestOptions(false, (state, sent, queued) =>
+            {
+                try
+                {
                     IProjectData project = null;
-                    Assert.That (project = state.Projects.Values.SingleOrDefault (
-                                               x => x.WorkspaceId == Util.WorkspaceId && x.Name == pname && x.Color == pcolor), Is.Not.Null);
+                    Assert.That(project = state.Projects.Values.SingleOrDefault(
+                                              x => x.WorkspaceId == Util.WorkspaceId && x.Name == pname && x.Color == pcolor), Is.Not.Null);
 
                     // Check project has been correctly saved in database
-                    Assert.That (dataStore.Table<ProjectData> ().SingleOrDefault (
-                                     x => x.WorkspaceId == Util.WorkspaceId && x.Name == pname && x.Color == pcolor && x.Id == project.Id), Is.Not.Null);
+                    Assert.That(dataStore.Table<ProjectData> ().SingleOrDefault(
+                                    x => x.WorkspaceId == Util.WorkspaceId && x.Name == pname && x.Color == pcolor && x.Id == project.Id), Is.Not.Null);
 
                     // ProjectUserData
                     //Assert.That (state.ProjectUsers.Values.SingleOrDefault (x => x.ProjectId == project.Id), Is.Not.Null);
                     //Assert.That (dataStore.Table<ProjectUserData> ().SingleOrDefault (x => x.ProjectId == project.Id), Is.Not.Null);
 
-                    tcs.SetResult (true);
-                } catch (Exception ex) {
-                    tcs.SetException (ex);
+                    tcs.SetResult(true);
+                }
+                catch (Exception ex)
+                {
+                    tcs.SetException(ex);
                 }
             }));
             await tcs.Task;
@@ -71,22 +75,26 @@ namespace Toggl.Phoebe.Tests.Reactive
 
 
         [Test]
-        public async Task TestSetClient ()
+        public async Task TestSetClient()
         {
             var pcolor = 5;
             var pname = "MyProject2";
-            var client = ClientData.Create (x => x.Name = "MyClient");
+            var client = ClientData.Create(x => x.Name = "MyClient");
             var tcs = Util.CreateTask<bool> ();
 
-            viewModel.SetClient (client);
-            viewModel.SaveProject (pname, pcolor, new SyncTestOptions (false, (state, sent, queued) => {
-                try {
-                    Assert.That (state.Projects.Values.SingleOrDefault (
-                                     x => x.Name == pname && x.ClientId == client.Id), Is.Not.Null);
+            viewModel.SetClient(client);
+            viewModel.SaveProject(pname, pcolor, new SyncTestOptions(false, (state, sent, queued) =>
+            {
+                try
+                {
+                    Assert.That(state.Projects.Values.SingleOrDefault(
+                                    x => x.Name == pname && x.ClientId == client.Id), Is.Not.Null);
 
-                    tcs.SetResult (true);
-                } catch (Exception ex) {
-                    tcs.SetException (ex);
+                    tcs.SetResult(true);
+                }
+                catch (Exception ex)
+                {
+                    tcs.SetException(ex);
                 }
             }));
 

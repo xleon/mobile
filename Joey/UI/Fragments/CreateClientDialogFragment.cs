@@ -18,97 +18,102 @@ namespace Toggl.Joey.UI.Fragments
 
         private Guid WorkspaceId
         {
-            get {
+            get
+            {
                 var id = Guid.Empty;
-                if (Arguments != null) {
-                    Guid.TryParse (Arguments.GetString (WorkspaceIdArgument), out id);
+                if (Arguments != null)
+                {
+                    Guid.TryParse(Arguments.GetString(WorkspaceIdArgument), out id);
                 }
                 return id;
             }
         }
 
-        public CreateClientDialogFragment ()
+        public CreateClientDialogFragment()
         {
         }
 
-        public CreateClientDialogFragment (IntPtr jref, Android.Runtime.JniHandleOwnership xfer) : base (jref, xfer)
+        public CreateClientDialogFragment(IntPtr jref, Android.Runtime.JniHandleOwnership xfer) : base(jref, xfer)
         {
         }
 
-        public static CreateClientDialogFragment NewInstance (Guid workspaceId)
+        public static CreateClientDialogFragment NewInstance(Guid workspaceId)
         {
-            var fragment = new CreateClientDialogFragment ();
+            var fragment = new CreateClientDialogFragment();
 
             var args = new Bundle();
-            args.PutString (WorkspaceIdArgument, workspaceId.ToString ());
+            args.PutString(WorkspaceIdArgument, workspaceId.ToString());
             fragment.Arguments = args;
 
             return fragment;
         }
 
-        public override void OnCreate (Bundle savedInstanceState)
+        public override void OnCreate(Bundle savedInstanceState)
         {
-            base.OnCreate (savedInstanceState);
-            ViewModel = new NewClientVM (Phoebe.Reactive.StoreManager.Singleton.AppState, WorkspaceId);
-            ValidateClientName ();
+            base.OnCreate(savedInstanceState);
+            ViewModel = new NewClientVM(Phoebe.Reactive.StoreManager.Singleton.AppState, WorkspaceId);
+            ValidateClientName();
         }
 
-        public override void OnDestroy ()
+        public override void OnDestroy()
         {
-            ViewModel.Dispose ();
-            base.OnDestroy ();
+            ViewModel.Dispose();
+            base.OnDestroy();
         }
 
-        public override Dialog OnCreateDialog (Bundle savedInstanceState)
+        public override Dialog OnCreateDialog(Bundle savedInstanceState)
         {
-            NameEditText = new EditText (Activity);
-            NameEditText.SetHint (Resource.String.CreateClientDialogHint);
+            NameEditText = new EditText(Activity);
+            NameEditText.SetHint(Resource.String.CreateClientDialogHint);
             NameEditText.InputType = InputTypes.TextFlagCapSentences;
             NameEditText.TextChanged += OnNameEditTextTextChanged;
 
-            return new AlertDialog.Builder (Activity)
-                   .SetTitle (Resource.String.CreateClientDialogTitle)
-                   .SetView (NameEditText)
-                   .SetPositiveButton (Resource.String.CreateClientDialogOk, OnPositiveButtonClicked)
-                   .Create ();
+            return new AlertDialog.Builder(Activity)
+                   .SetTitle(Resource.String.CreateClientDialogTitle)
+                   .SetView(NameEditText)
+                   .SetPositiveButton(Resource.String.CreateClientDialogOk, OnPositiveButtonClicked)
+                   .Create();
         }
 
-        public override void OnStart ()
+        public override void OnStart()
         {
-            base.OnStart ();
-            positiveButton = ((AlertDialog)Dialog).GetButton ((int)DialogButtonType.Positive);
-            ValidateClientName ();
+            base.OnStart();
+            positiveButton = ((AlertDialog)Dialog).GetButton((int)DialogButtonType.Positive);
+            ValidateClientName();
         }
 
-        public CreateClientDialogFragment SetOnClientSelectedListener (IOnClientSelectedHandler handler)
+        public CreateClientDialogFragment SetOnClientSelectedListener(IOnClientSelectedHandler handler)
         {
             clientSelectedHandler = handler;
             return this;
         }
 
-        private void OnNameEditTextTextChanged (object sender, TextChangedEventArgs e)
+        private void OnNameEditTextTextChanged(object sender, TextChangedEventArgs e)
         {
-            ValidateClientName ();
+            ValidateClientName();
         }
 
-        private void OnPositiveButtonClicked (object sender, DialogClickEventArgs e)
+        private void OnPositiveButtonClicked(object sender, DialogClickEventArgs e)
         {
-            var clientData = ViewModel.SaveClient (NameEditText.Text);
-            if (clientSelectedHandler != null) {
-                clientSelectedHandler.OnClientSelected (clientData);
+            var clientData = ViewModel.SaveClient(NameEditText.Text);
+            if (clientSelectedHandler != null)
+            {
+                clientSelectedHandler.OnClientSelected(clientData);
             }
         }
 
-        private void ValidateClientName ()
+        private void ValidateClientName()
         {
-            if (positiveButton == null || NameEditText == null) {
+            if (positiveButton == null || NameEditText == null)
+            {
                 return;
             }
 
             var valid = true;
             var name = NameEditText.Text;
 
-            if (string.IsNullOrWhiteSpace (name)) {
+            if (string.IsNullOrWhiteSpace(name))
+            {
                 valid = false;
             }
 

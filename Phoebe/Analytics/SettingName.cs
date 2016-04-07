@@ -2,7 +2,8 @@
 
 namespace Toggl.Phoebe.Analytics
 {
-    public enum SettingName {
+    public enum SettingName
+    {
         AskForProject,
         IdleNotification,
         DefaultMobileTag,

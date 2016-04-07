@@ -7,22 +7,22 @@ namespace Toggl.Ross.Views
     {
         private T dataSource;
 
-        protected BindableTableViewCell (IntPtr handle) : base (handle)
+        protected BindableTableViewCell(IntPtr handle) : base(handle)
         {
         }
 
-        public void Bind (T dataSource)
+        public void Bind(T dataSource)
         {
             this.dataSource = dataSource;
-            OnDataSourceChanged ();
+            OnDataSourceChanged();
         }
 
-        protected virtual void OnDataSourceChanged ()
+        protected virtual void OnDataSourceChanged()
         {
-            Rebind ();
+            Rebind();
         }
 
-        protected abstract void Rebind ();
+        protected abstract void Rebind();
 
         public T DataSource
         {

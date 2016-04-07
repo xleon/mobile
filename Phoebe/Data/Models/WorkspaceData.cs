@@ -4,7 +4,8 @@ using SQLite.Net.Attributes;
 namespace Toggl.Phoebe.Data.Models
 {
     [Flags]
-    public enum AccessLevel {
+    public enum AccessLevel
+    {
         Regular = 1 << 0,
         Admin = 1 << 1,
         Any = Regular | Admin,
@@ -24,28 +25,28 @@ namespace Toggl.Phoebe.Data.Models
         int RoundingPercision { get; }
         string LogoUrl { get; }
         bool IsAdmin { get; }
-        IWorkspaceData With (Action<WorkspaceData> transform);
+        IWorkspaceData With(Action<WorkspaceData> transform);
     }
 
-    [Table ("WorkspaceModel")]
+    [Table("WorkspaceModel")]
     public class WorkspaceData : CommonData, IWorkspaceData
     {
-        public static IWorkspaceData Create (Action<WorkspaceData> transform = null)
+        public static IWorkspaceData Create(Action<WorkspaceData> transform = null)
         {
-            return CommonData.Create (transform);
+            return CommonData.Create(transform);
         }
 
         /// <summary>
         /// ATTENTION: This constructor should only be used by SQL and JSON serializers
         /// To create new objects, use the static Create method instead
         /// </summary>
-        public WorkspaceData ()
+        public WorkspaceData()
         {
             ProjectCreationPrivileges = AccessLevel.Any;
             BillableRatesVisibility = AccessLevel.Any;
         }
 
-        WorkspaceData (WorkspaceData other) : base (other)
+        WorkspaceData(WorkspaceData other) : base(other)
         {
             Name = other.Name;
             IsPremium = other.IsPremium;
@@ -59,14 +60,14 @@ namespace Toggl.Phoebe.Data.Models
             IsAdmin = other.IsAdmin;
         }
 
-        public override object Clone ()
+        public override object Clone()
         {
-            return new WorkspaceData (this);
+            return new WorkspaceData(this);
         }
 
-        public IWorkspaceData With (Action<WorkspaceData> transform)
+        public IWorkspaceData With(Action<WorkspaceData> transform)
         {
-            return base.With (transform);
+            return base.With(transform);
         }
 
         public string Name { get; set; }

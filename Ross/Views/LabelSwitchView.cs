@@ -10,32 +10,35 @@ namespace Toggl.Ross.Views
         private readonly UILabel label;
         private readonly UISwitch toggle;
 
-        public LabelSwitchView ()
+        public LabelSwitchView()
         {
-            Add (label = new UILabel () {
+            Add(label = new UILabel()
+            {
                 TranslatesAutoresizingMaskIntoConstraints = false,
             });
-            Add (toggle = new UISwitch () {
+            Add(toggle = new UISwitch()
+            {
                 TranslatesAutoresizingMaskIntoConstraints = false,
             });
         }
 
-        public override void UpdateConstraints ()
+        public override void UpdateConstraints()
         {
-            if (Constraints.Length == 0) {
-                this.AddConstraints (
-                    toggle.AtRightOf (this, 15f),
-                    toggle.WithSameCenterY (this),
+            if (Constraints.Length == 0)
+            {
+                this.AddConstraints(
+                    toggle.AtRightOf(this, 15f),
+                    toggle.WithSameCenterY(this),
 
-                    label.AtLeftOf (this, 15f),
-                    label.WithSameCenterY (this),
-                    label.ToLeftOf (toggle, 5f),
+                    label.AtLeftOf(this, 15f),
+                    label.WithSameCenterY(this),
+                    label.ToLeftOf(toggle, 5f),
 
                     null
                 );
             }
 
-            base.UpdateConstraints ();
+            base.UpdateConstraints();
         }
 
         public string Text
@@ -54,8 +57,8 @@ namespace Toggl.Ross.Views
             get { return toggle; }
         }
 
-        [Export ("requiresConstraintBasedLayout")]
-        public static new bool RequiresConstraintBasedLayout ()
+        [Export("requiresConstraintBasedLayout")]
+        public static new bool RequiresConstraintBasedLayout()
         {
             return true;
         }

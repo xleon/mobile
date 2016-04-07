@@ -2,16 +2,16 @@
 
 namespace Toggl.Phoebe.Data.Json
 {
-    [JsonObject (MemberSerialization.OptIn)]
+    [JsonObject(MemberSerialization.OptIn)]
     public class ActionJson
     {
-        [JsonProperty ("experiment_id")]
+        [JsonProperty("experiment_id")]
         public int ExperimentId { get; set; }
 
-        [JsonProperty ("key")]
+        [JsonProperty("key")]
         public string Key { get; set; }
 
-        [JsonProperty ("value")]
+        [JsonProperty("value")]
         public string Value { get; set; }
     }
 }

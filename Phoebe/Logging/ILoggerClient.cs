@@ -3,7 +3,8 @@ using Newtonsoft.Json.Linq;
 
 namespace Toggl.Phoebe.Logging
 {
-    public enum ErrorSeverity {
+    public enum ErrorSeverity
+    {
         Info,
         Warning,
         Error,
@@ -12,34 +13,38 @@ namespace Toggl.Phoebe.Logging
 
     public class Metadata : JObject
     {
-        public Metadata ()
+        public Metadata()
         {
         }
 
-        public Metadata (Metadata other) : base (other)
+        public Metadata(Metadata other) : base(other)
         {
         }
 
-        public void AddToTab (string tabName, string key, object value)
+        public void AddToTab(string tabName, string key, object value)
         {
-            var tab = GetTab (tabName);
-            if (value != null) {
-                tab [key] = JToken.FromObject (value);
-            } else {
-                tab.Remove (key);
+            var tab = GetTab(tabName);
+            if (value != null)
+            {
+                tab [key] = JToken.FromObject(value);
+            }
+            else
+            {
+                tab.Remove(key);
             }
         }
 
-        public void ClearTab (string tabName)
+        public void ClearTab(string tabName)
         {
-            Remove (tabName);
+            Remove(tabName);
         }
 
-        private JObject GetTab (string tabName)
+        private JObject GetTab(string tabName)
         {
             var tab = this [tabName] as JObject;
-            if (tab == null) {
-                this [tabName] = tab = new JObject ();
+            if (tab == null)
+            {
+                this [tabName] = tab = new JObject();
             }
             return tab;
         }
@@ -47,9 +52,9 @@ namespace Toggl.Phoebe.Logging
 
     public interface ILoggerClient
     {
-        void SetUser (string id, string email = null, string name = null);
+        void SetUser(string id, string email = null, string name = null);
 
-        void Notify (Exception e, ErrorSeverity severity = ErrorSeverity.Error, Metadata extraMetadata = null);
+        void Notify(Exception e, ErrorSeverity severity = ErrorSeverity.Error, Metadata extraMetadata = null);
     }
 }
 

@@ -7,21 +7,21 @@ using XPlatUtils;
 
 namespace Toggl.Joey.Widget
 {
-    [Service (Exported = false)]
+    [Service(Exported = false)]
     public sealed class WidgetStartStopService : Service
     {
         private static readonly string Tag = "WidgetStartStopService";
 
-        public WidgetStartStopService ()
+        public WidgetStartStopService()
         {
         }
 
-        public WidgetStartStopService (IntPtr javaRef, Android.Runtime.JniHandleOwnership transfer)
-        : base (javaRef, transfer)
+        public WidgetStartStopService(IntPtr javaRef, Android.Runtime.JniHandleOwnership transfer)
+        : base(javaRef, transfer)
         {
         }
 
-        public override void OnStart (Intent intent, int startId)
+        public override void OnStart(Intent intent, int startId)
         {
             /*
             try {
@@ -49,32 +49,32 @@ namespace Toggl.Joey.Widget
             */
         }
 
-        public override StartCommandResult OnStartCommand (Intent intent, StartCommandFlags flags, int startId)
+        public override StartCommandResult OnStartCommand(Intent intent, StartCommandFlags flags, int startId)
         {
             //OnStart (intent, startId);
             return StartCommandResult.Sticky;
         }
 
-        public override void OnCreate ()
+        public override void OnCreate()
         {
-            base.OnCreate ();
-            ((AndroidApp)Application).InitializeComponents ();
+            base.OnCreate();
+            ((AndroidApp)Application).InitializeComponents();
         }
 
-        public override Android.OS.IBinder OnBind (Intent intent)
+        public override Android.OS.IBinder OnBind(Intent intent)
         {
             return null;
         }
 
-        [BroadcastReceiver (Exported = true)]
+        [BroadcastReceiver(Exported = true)]
         public sealed class Receiver : WakefulBroadcastReceiver
         {
-            public override void OnReceive (Context context, Intent intent)
+            public override void OnReceive(Context context, Intent intent)
             {
-                var serviceIntent = new Intent (context, typeof (WidgetStartStopService));
-                serviceIntent.SetAction (intent.Action);
-                serviceIntent.PutExtra (WidgetProvider.TimeEntryIdParameter, intent.GetStringExtra (WidgetProvider.TimeEntryIdParameter));
-                StartWakefulService (context, serviceIntent);
+                var serviceIntent = new Intent(context, typeof(WidgetStartStopService));
+                serviceIntent.SetAction(intent.Action);
+                serviceIntent.PutExtra(WidgetProvider.TimeEntryIdParameter, intent.GetStringExtra(WidgetProvider.TimeEntryIdParameter));
+                StartWakefulService(context, serviceIntent);
             }
         }
     }

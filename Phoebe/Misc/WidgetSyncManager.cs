@@ -28,7 +28,7 @@ namespace Toggl.Phoebe
         private bool isLoading;
         private MessageBus messageBus;
 
-        public WidgetSyncManager ()
+        public WidgetSyncManager()
         {
             authManager = ServiceContainer.Resolve<AuthManager>();
             authManager.PropertyChanged += OnAuthPropertyChanged;
@@ -42,81 +42,94 @@ namespace Toggl.Phoebe
             subscriptionStartStopFinished = messageBus.Subscribe<StartStopMessage> (OnSyncWidget);
         }
 
-        public void Dispose ()
+        public void Dispose()
         {
             var bus = ServiceContainer.Resolve<MessageBus> ();
 
-            if (subscriptionSyncStarted != null) {
-                bus.Unsubscribe (subscriptionSyncStarted);
+            if (subscriptionSyncStarted != null)
+            {
+                bus.Unsubscribe(subscriptionSyncStarted);
                 subscriptionSyncStarted = null;
             }
 
-            if (subscriptionSyncFinished != null) {
-                bus.Unsubscribe (subscriptionSyncFinished);
+            if (subscriptionSyncFinished != null)
+            {
+                bus.Unsubscribe(subscriptionSyncFinished);
                 subscriptionSyncFinished = null;
             }
 
-            if (subscriptionSyncFinished != null) {
-                bus.Unsubscribe (subscriptionSyncFinished);
+            if (subscriptionSyncFinished != null)
+            {
+                bus.Unsubscribe(subscriptionSyncFinished);
                 subscriptionSyncFinished = null;
             }
         }
 
-        public async Task StartStopTimeEntry ()
+        public async Task StartStopTimeEntry()
         {
-            if (activeTimeEntryManager.IsRunning) {
-                await TimeEntryModel.StopAsync (activeTimeEntryManager.ActiveTimeEntry);
-                ServiceContainer.Resolve<ITracker>().SendTimerStopEvent (TimerStopSource.Widget);
-            } else {
-                var startedEntry = await TimeEntryModel.StartAsync (TimeEntryModel.GetDraft ());
+            if (activeTimeEntryManager.IsRunning)
+            {
+                await TimeEntryModel.StopAsync(activeTimeEntryManager.ActiveTimeEntry);
+                ServiceContainer.Resolve<ITracker>().SendTimerStopEvent(TimerStopSource.Widget);
+            }
+            else
+            {
+                var startedEntry = await TimeEntryModel.StartAsync(TimeEntryModel.GetDraft());
 
                 // Show new screen on platform
-                widgetUpdateService.ShowNewTimeEntryScreen (new TimeEntryModel (startedEntry));
-                ServiceContainer.Resolve<ITracker>().SendTimerStartEvent (TimerStartSource.WidgetNew);
+                widgetUpdateService.ShowNewTimeEntryScreen(new TimeEntryModel(startedEntry));
+                ServiceContainer.Resolve<ITracker>().SendTimerStartEvent(TimerStartSource.WidgetNew);
             }
         }
 
-        public async Task ContinueTimeEntry (Guid timeEntryId)
+        public async Task ContinueTimeEntry(Guid timeEntryId)
         {
-            var entryModel = new TimeEntryModel (timeEntryId);
-            await TimeEntryModel.ContinueAsync (entryModel.Data);
-            ServiceContainer.Resolve<ITracker>().SendTimerStartEvent (TimerStartSource.WidgetStart);
+            var entryModel = new TimeEntryModel(timeEntryId);
+            await TimeEntryModel.ContinueAsync(entryModel.Data);
+            ServiceContainer.Resolve<ITracker>().SendTimerStartEvent(TimerStartSource.WidgetStart);
         }
 
-        private async void OnSyncWidget (Message msg)
+        private async void OnSyncWidget(Message msg)
         {
-            await SyncWidgetData ();
+            await SyncWidgetData();
         }
 
-        public async Task SyncWidgetData ()
+        public async Task SyncWidgetData()
         {
-            try {
+            try
+            {
                 // Dispathc started message.
-                messageBus.Send<SyncWidgetMessage> (new SyncWidgetMessage (this,true));
+                messageBus.Send<SyncWidgetMessage> (new SyncWidgetMessage(this, true));
 
                 // Query local data:
                 var store = ServiceContainer.Resolve<IDataStore> ();
                 var entries = await store.Table<TimeEntryData> ()
-                              .OrderByDescending (r => r.StartTime) .Where (r => r.DeletedAt == null && r.State != TimeEntryState.New)
-                              .Take (4).ToListAsync ().ConfigureAwait (false);
+                              .OrderByDescending(r => r.StartTime) .Where(r => r.DeletedAt == null && r.State != TimeEntryState.New)
+                              .Take(4).ToListAsync().ConfigureAwait(false);
 
                 var widgetEntries = new List<WidgetEntryData>();
 
-                foreach (var entry in entries) {
+                foreach (var entry in entries)
+                {
 
                     ProjectData project;
-                    if (entry.ProjectId != null) {
-                        var q = store.Table<ProjectData>().Where (p => p.Id == entry.ProjectId.Value);
-                        var l = await q.ToListAsync ().ConfigureAwait (false);
+                    if (entry.ProjectId != null)
+                    {
+                        var q = store.Table<ProjectData>().Where(p => p.Id == entry.ProjectId.Value);
+                        var l = await q.ToListAsync().ConfigureAwait(false);
                         project = l.FirstOrDefault();
-                    } else {
-                        project = new ProjectData {
+                    }
+                    else
+                    {
+                        project = new ProjectData
+                        {
                             Name = string.Empty,
                             Color = ProjectModel.HexColors.Length - 1,
                         };
                     }
 
-                    widgetEntries.Add (new WidgetEntryData {
+                    widgetEntries.Add(new WidgetEntryData
+                    {
                         Id = entry.Id.ToString(),
                         ProjectName = project.Name,
                         Description = entry.Description,
@@ -130,20 +143,25 @@ namespace Toggl.Phoebe
 
                 widgetUpdateService.LastEntries = widgetEntries;
 
-            } catch (Exception exc) {
+            }
+            catch (Exception exc)
+            {
                 var log = ServiceContainer.Resolve<ILogger> ();
-                log.Error (Tag, exc, "Failed to fetch time entries");
-            } finally {
+                log.Error(Tag, exc, "Failed to fetch time entries");
+            }
+            finally
+            {
                 isLoading = false;
 
                 // Dispathc ended message.
-                messageBus.Send<SyncWidgetMessage> (new SyncWidgetMessage (this));
+                messageBus.Send<SyncWidgetMessage> (new SyncWidgetMessage(this));
             }
         }
 
-        private void OnAuthPropertyChanged (object sender, PropertyChangedEventArgs args)
+        private void OnAuthPropertyChanged(object sender, PropertyChangedEventArgs args)
         {
-            if (args.PropertyName == AuthManager.PropertyIsAuthenticated) {
+            if (args.PropertyName == AuthManager.PropertyIsAuthenticated)
+            {
                 widgetUpdateService.IsUserLogged = authManager.IsAuthenticated;
             }
         }

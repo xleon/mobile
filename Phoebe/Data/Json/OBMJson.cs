@@ -4,10 +4,10 @@ namespace Toggl.Phoebe.Data.Json
 {
     public class OBMJson
     {
-        [JsonProperty ("included")]
+        [JsonProperty("included")]
         public bool Included { get; set; }
 
-        [JsonProperty ("nr")]
+        [JsonProperty("nr")]
         public int Number { get; set; }
     }
 }

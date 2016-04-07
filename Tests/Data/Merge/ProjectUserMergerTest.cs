@@ -9,20 +9,21 @@ namespace Toggl.Phoebe.Tests.Data.Merge
     public class ProjectUserMergerTest : MergeTest
     {
         [Test]
-        public void TestDefault ()
+        public void TestDefault()
         {
-            var projectUserId = Guid.NewGuid ();
-            var userId = Guid.NewGuid ();
-            var projectId = Guid.NewGuid ();
+            var projectUserId = Guid.NewGuid();
+            var userId = Guid.NewGuid();
+            var projectId = Guid.NewGuid();
 
             // Data before server push
-            var merger = new ProjectUserMerger (new ProjectUserData () {
+            var merger = new ProjectUserMerger(new ProjectUserData()
+            {
                 Id = projectUserId,
                 RemoteId = null,
                 RemoteRejected = false,
                 DeletedAt = null,
                 IsDirty = true,
-                ModifiedAt = new DateTime (2014, 1, 10, 10, 0, 0, DateTimeKind.Utc),
+                ModifiedAt = new DateTime(2014, 1, 10, 10, 0, 0, DateTimeKind.Utc),
                 IsManager = false,
                 HourlyRate = 0,
                 UserId = userId,
@@ -30,13 +31,14 @@ namespace Toggl.Phoebe.Tests.Data.Merge
             });
 
             // Data from server
-            merger.Add (new ProjectUserData () {
+            merger.Add(new ProjectUserData()
+            {
                 Id = projectUserId,
                 RemoteId = 1,
                 RemoteRejected = false,
                 DeletedAt = null,
                 IsDirty = false,
-                ModifiedAt = new DateTime (2014, 1, 10, 10, 0, 1, DateTimeKind.Utc),
+                ModifiedAt = new DateTime(2014, 1, 10, 10, 0, 1, DateTimeKind.Utc),
                 IsManager = true,
                 HourlyRate = 0,
                 UserId = userId,
@@ -44,13 +46,14 @@ namespace Toggl.Phoebe.Tests.Data.Merge
             });
 
             // Data changed by user in the mean time
-            merger.Add (new ProjectUserData () {
+            merger.Add(new ProjectUserData()
+            {
                 Id = projectUserId,
                 RemoteId = null,
                 RemoteRejected = false,
                 DeletedAt = null,
                 IsDirty = true,
-                ModifiedAt = new DateTime (2014, 1, 10, 10, 0, 2, DateTimeKind.Utc),
+                ModifiedAt = new DateTime(2014, 1, 10, 10, 0, 2, DateTimeKind.Utc),
                 IsManager = false,
                 HourlyRate = 10,
                 UserId = userId,
@@ -58,13 +61,14 @@ namespace Toggl.Phoebe.Tests.Data.Merge
             });
 
             // Merged version
-            AssertPropertiesEqual (new ProjectUserData () {
+            AssertPropertiesEqual(new ProjectUserData()
+            {
                 Id = projectUserId,
                 RemoteId = 1,
                 RemoteRejected = false,
                 DeletedAt = null,
                 IsDirty = true,
-                ModifiedAt = new DateTime (2014, 1, 10, 10, 0, 2, DateTimeKind.Utc),
+                ModifiedAt = new DateTime(2014, 1, 10, 10, 0, 2, DateTimeKind.Utc),
                 IsManager = true,
                 HourlyRate = 10,
                 UserId = userId,

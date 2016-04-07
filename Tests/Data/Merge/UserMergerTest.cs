@@ -9,19 +9,20 @@ namespace Toggl.Phoebe.Tests.Data.Merge
     public class UserMergerTest : MergeTest
     {
         [Test]
-        public void TestDefault ()
+        public void TestDefault()
         {
-            var userId = Guid.NewGuid ();
-            var workspaceId = Guid.NewGuid ();
+            var userId = Guid.NewGuid();
+            var workspaceId = Guid.NewGuid();
 
             // Data before server push
-            var merger = new UserMerger (new UserData () {
+            var merger = new UserMerger(new UserData()
+            {
                 Id = userId,
                 RemoteId = null,
                 RemoteRejected = false,
                 DeletedAt = null,
                 IsDirty = true,
-                ModifiedAt = new DateTime (2014, 1, 10, 10, 0, 0, DateTimeKind.Utc),
+                ModifiedAt = new DateTime(2014, 1, 10, 10, 0, 0, DateTimeKind.Utc),
                 Name = "Initial",
                 Email = "me@example.com",
                 StartOfWeek = DayOfWeek.Sunday,
@@ -38,13 +39,14 @@ namespace Toggl.Phoebe.Tests.Data.Merge
             });
 
             // Data from server
-            merger.Add (new UserData () {
+            merger.Add(new UserData()
+            {
                 Id = userId,
                 RemoteId = 1,
                 RemoteRejected = false,
                 DeletedAt = null,
                 IsDirty = false,
-                ModifiedAt = new DateTime (2014, 1, 10, 10, 0, 1, DateTimeKind.Utc),
+                ModifiedAt = new DateTime(2014, 1, 10, 10, 0, 1, DateTimeKind.Utc),
                 Name = "Initial",
                 Email = "me@example.com",
                 StartOfWeek = DayOfWeek.Sunday,
@@ -61,13 +63,14 @@ namespace Toggl.Phoebe.Tests.Data.Merge
             });
 
             // Data changed by user in the mean time
-            merger.Add (new UserData () {
+            merger.Add(new UserData()
+            {
                 Id = userId,
                 RemoteId = null,
                 RemoteRejected = false,
                 DeletedAt = null,
                 IsDirty = true,
-                ModifiedAt = new DateTime (2014, 1, 10, 10, 0, 2, DateTimeKind.Utc),
+                ModifiedAt = new DateTime(2014, 1, 10, 10, 0, 2, DateTimeKind.Utc),
                 Name = "Changed",
                 Email = "me@example.com",
                 StartOfWeek = DayOfWeek.Monday,
@@ -84,13 +87,14 @@ namespace Toggl.Phoebe.Tests.Data.Merge
             });
 
             // Merged version
-            AssertPropertiesEqual (new UserData () {
+            AssertPropertiesEqual(new UserData()
+            {
                 Id = userId,
                 RemoteId = 1,
                 RemoteRejected = false,
                 DeletedAt = null,
                 IsDirty = true,
-                ModifiedAt = new DateTime (2014, 1, 10, 10, 0, 2, DateTimeKind.Utc),
+                ModifiedAt = new DateTime(2014, 1, 10, 10, 0, 2, DateTimeKind.Utc),
                 Name = "Changed",
                 Email = "me@example.com",
                 StartOfWeek = DayOfWeek.Monday,

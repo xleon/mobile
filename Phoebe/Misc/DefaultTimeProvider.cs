@@ -22,11 +22,15 @@ namespace Toggl.Phoebe
 
         public string TimeZoneId
         {
-            get {
+            get
+            {
                 TimeZoneInfo tz;
-                try {
+                try
+                {
                     tz = TimeZoneInfo.Local;
-                } catch (TimeZoneNotFoundException) {
+                }
+                catch (TimeZoneNotFoundException)
+                {
                     tz = null;
                 }
                 return tz == null ? "UTC" : tz.Id;

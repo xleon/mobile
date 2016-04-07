@@ -30,9 +30,12 @@ namespace Toggl.Joey.UI.Components
 
         public bool IsRunning
         {
-            get {
+            get
+            {
                 return isRunning;
-            } set {
+            }
+            set
+            {
                 isRunning = value;
                 TimerTitleTextView.Visibility = isRunning ? ViewStates.Gone : ViewStates.Visible;
                 ProjectTextView.Visibility = isRunning ? ViewStates.Visible : ViewStates.Gone;
@@ -44,50 +47,51 @@ namespace Toggl.Joey.UI.Components
         public bool Hide
         {
             get { return hide; }
-            set {
+            set
+            {
                 hide = value;
                 Root.Visibility = Hide ? ViewStates.Gone : ViewStates.Visible;
             }
         }
 
-        public void OnCreate (Activity activity)
+        public void OnCreate(Activity activity)
         {
             this.activity = activity;
-            Root = LayoutInflater.From (activity).Inflate (Resource.Layout.TimerComponent, null);
+            Root = LayoutInflater.From(activity).Inflate(Resource.Layout.TimerComponent, null);
 
-            DurationTextView = Root.FindViewById<TextView> (Resource.Id.DurationTextView).SetFont (Font.RobotoLight);
+            DurationTextView = Root.FindViewById<TextView> (Resource.Id.DurationTextView).SetFont(Font.RobotoLight);
             TimerTitleTextView = Root.FindViewById<TextView> (Resource.Id.TimerTitleTextView);
             ProjectTextView = Root.FindViewById<TextView> (Resource.Id.ProjectTextView);
-            DescriptionTextView = Root.FindViewById<TextView> (Resource.Id.DescriptionTextView).SetFont (Font.RobotoLight);
+            DescriptionTextView = Root.FindViewById<TextView> (Resource.Id.DescriptionTextView).SetFont(Font.RobotoLight);
 
             IsRunning = false;
         }
 
-        public void SetViewModel (LogTimeEntriesVM viewModel)
+        public void SetViewModel(LogTimeEntriesVM viewModel)
         {
             ViewModel = viewModel;
 
             // TODO: investigate why WhenSourceChanges doesn't work. :(
-            isRunningBinding = this.SetBinding (() => ViewModel.IsEntryRunning, () => IsRunning);
-            durationBinding = this.SetBinding (() => ViewModel.Duration, () => DurationTextView.Text);
-            entryBinding = this.SetBinding (() => ViewModel.ActiveEntry)
-                           .WhenSourceChanges (OnActiveEntryChanged);
+            isRunningBinding = this.SetBinding(() => ViewModel.IsEntryRunning, () => IsRunning);
+            durationBinding = this.SetBinding(() => ViewModel.Duration, () => DurationTextView.Text);
+            entryBinding = this.SetBinding(() => ViewModel.ActiveEntry)
+                           .WhenSourceChanges(OnActiveEntryChanged);
         }
 
-        private void OnActiveEntryChanged ()
+        private void OnActiveEntryChanged()
         {
             var entry = ViewModel.ActiveEntry;
-            DescriptionTextView.Text = !string.IsNullOrEmpty (entry.Data.Description)
-                                       ? entry.Data.Description : activity.ApplicationContext.Resources.GetText (Resource.String.TimerComponentNoDescription);
-            ProjectTextView.Text = !string.IsNullOrEmpty (entry.Info.ProjectData.Name)
-                                   ? entry.Info.ProjectData.Name : activity.ApplicationContext.Resources.GetText (Resource.String.TimerComponentNoProject);
+            DescriptionTextView.Text = !string.IsNullOrEmpty(entry.Data.Description)
+                                       ? entry.Data.Description : activity.ApplicationContext.Resources.GetText(Resource.String.TimerComponentNoDescription);
+            ProjectTextView.Text = !string.IsNullOrEmpty(entry.Info.ProjectData.Name)
+                                   ? entry.Info.ProjectData.Name : activity.ApplicationContext.Resources.GetText(Resource.String.TimerComponentNoProject);
         }
 
-        public void DetachBindind ()
+        public void DetachBindind()
         {
-            isRunningBinding.Detach ();
-            durationBinding.Detach ();
-            entryBinding.Detach ();
+            isRunningBinding.Detach();
+            durationBinding.Detach();
+            entryBinding.Detach();
         }
     }
 }

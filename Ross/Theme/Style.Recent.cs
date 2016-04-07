@@ -7,56 +7,56 @@ namespace Toggl.Ross.Theme
     {
         public static class Recent
         {
-            public static void HeaderBackgroundView (UIView v)
+            public static void HeaderBackgroundView(UIView v)
             {
                 v.BackgroundColor = Color.LightestGray;
             }
 
-            public static void HeaderLabel (UILabel v)
+            public static void HeaderLabel(UILabel v)
             {
                 v.TextColor = Color.Gray;
                 v.TextAlignment = UITextAlignment.Left;
-                v.Font = UIFont.FromName ("HelveticaNeue-Medium", 14f);
+                v.Font = UIFont.FromName("HelveticaNeue-Medium", 14f);
             }
 
-            public static void CellContentView (UIView v)
+            public static void CellContentView(UIView v)
             {
-                v.Apply (TimeEntryCell.ContentView);
+                v.Apply(TimeEntryCell.ContentView);
             }
 
-            public static void CellProjectLabel (UILabel v)
+            public static void CellProjectLabel(UILabel v)
             {
-                v.Apply (TimeEntryCell.ProjectLabel);
+                v.Apply(TimeEntryCell.ProjectLabel);
             }
 
-            public static void CellClientLabel (UILabel v)
+            public static void CellClientLabel(UILabel v)
             {
-                v.Apply (TimeEntryCell.ClientLabel);
+                v.Apply(TimeEntryCell.ClientLabel);
             }
 
-            public static void CellTaskLabel (UILabel v)
+            public static void CellTaskLabel(UILabel v)
             {
-                v.Apply (TimeEntryCell.TaskLabel);
+                v.Apply(TimeEntryCell.TaskLabel);
             }
 
-            public static void CellDescriptionLabel (UILabel v)
+            public static void CellDescriptionLabel(UILabel v)
             {
-                v.Apply (TimeEntryCell.DescriptionLabel);
+                v.Apply(TimeEntryCell.DescriptionLabel);
             }
 
-            public static void CellDurationLabel (UILabel v)
+            public static void CellDurationLabel(UILabel v)
             {
-                v.Apply (TimeEntryCell.DurationLabel);
+                v.Apply(TimeEntryCell.DurationLabel);
             }
 
-            public static void CellTaskDescriptionSeparator (UIImageView v)
+            public static void CellTaskDescriptionSeparator(UIImageView v)
             {
-                v.Apply (TimeEntryCell.TaskDescriptionSeparator);
+                v.Apply(TimeEntryCell.TaskDescriptionSeparator);
             }
 
-            public static void CellRunningIndicator (UIImageView v)
+            public static void CellRunningIndicator(UIImageView v)
             {
-                v.Apply (TimeEntryCell.RunningIndicator);
+                v.Apply(TimeEntryCell.RunningIndicator);
             }
         }
     }

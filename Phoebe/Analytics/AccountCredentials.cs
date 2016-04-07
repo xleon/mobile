@@ -2,7 +2,8 @@
 
 namespace Toggl.Phoebe.Analytics
 {
-    public enum AccountCredentials {
+    public enum AccountCredentials
+    {
         Password,
         Google
     }

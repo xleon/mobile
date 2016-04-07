@@ -8,42 +8,46 @@ using XPlatUtils;
 
 namespace Toggl.Joey
 {
-    [Service (Exported = false)]
+    [Service(Exported = false)]
     public sealed class StopRunningTimeEntryService : Service
     {
         private static readonly string Tag = "StopRunningTimeEntryService";
 
-        public StopRunningTimeEntryService () : base ()
+        public StopRunningTimeEntryService() : base()
         {
         }
 
-        public StopRunningTimeEntryService (IntPtr javaRef, Android.Runtime.JniHandleOwnership transfer)
-        : base (javaRef, transfer)
+        public StopRunningTimeEntryService(IntPtr javaRef, Android.Runtime.JniHandleOwnership transfer)
+        : base(javaRef, transfer)
         {
         }
 
-        public override async void OnStart (Intent intent, int startId)
+        public override async void OnStart(Intent intent, int startId)
         {
-            try {
-                var stopTask = FindAndStopRunning ();
+            try
+            {
+                var stopTask = FindAndStopRunning();
 
                 // Try initialising components (while the changes are being made)
                 var app = Application as AndroidApp;
-                if (app != null) {
-                    app.InitializeComponents ();
+                if (app != null)
+                {
+                    app.InitializeComponents();
                 }
 
                 // Wait until the changes have been commited to the database before stopping the service
                 await stopTask;
-            } finally {
-                Receiver.CompleteWakefulIntent (intent);
-                StopSelf (startId);
+            }
+            finally
+            {
+                Receiver.CompleteWakefulIntent(intent);
+                StopSelf(startId);
             }
         }
 
-        private static async Task FindAndStopRunning ()
+        private static async Task FindAndStopRunning()
         {
-            await Task.Delay (1);
+            await Task.Delay(1);
             /*
             var userId = ServiceContainer.Resolve<AuthManager> ().GetUserId ();
             var dataStore = ServiceContainer.Resolve<IDataStore> ();
@@ -58,28 +62,28 @@ namespace Toggl.Joey
             await Task.WhenAll (stopTasks).ConfigureAwait (false);
             */
             // Ping analytics
-            ServiceContainer.Resolve<ITracker> ().SendTimerStopEvent (TimerStopSource.Notification);
+            ServiceContainer.Resolve<ITracker> ().SendTimerStopEvent(TimerStopSource.Notification);
         }
 
-        public override StartCommandResult OnStartCommand (Intent intent, StartCommandFlags flags, int startId)
+        public override StartCommandResult OnStartCommand(Intent intent, StartCommandFlags flags, int startId)
         {
-            OnStart (intent, startId);
+            OnStart(intent, startId);
 
             return StartCommandResult.Sticky;
         }
 
-        public override Android.OS.IBinder OnBind (Intent intent)
+        public override Android.OS.IBinder OnBind(Intent intent)
         {
             return null;
         }
 
-        [BroadcastReceiver (Exported = true)]
+        [BroadcastReceiver(Exported = true)]
         public sealed class Receiver : WakefulBroadcastReceiver
         {
-            public override void OnReceive (Context context, Intent intent)
+            public override void OnReceive(Context context, Intent intent)
             {
-                var serviceIntent = new Intent (context, typeof (StopRunningTimeEntryService));
-                StartWakefulService (context, serviceIntent);
+                var serviceIntent = new Intent(context, typeof(StopRunningTimeEntryService));
+                StartWakefulService(context, serviceIntent);
             }
         }
     }

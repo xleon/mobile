@@ -10,9 +10,10 @@ namespace Toggl.Phoebe.Logging
 
         // TODO RX Set or find a way to set the user everytime it is needed.
         // reading from the state maybe.
-        public void SetUser (string id, string email = null, string name = null)
+        public void SetUser(string id, string email = null, string name = null)
         {
-            if (id != null) {
+            if (id != null)
+            {
                 var traits = new Dictionary<string, string>
                 {
                     { Insights.Traits.Email, email },
@@ -22,14 +23,17 @@ namespace Toggl.Phoebe.Logging
             }
         }
 
-        public void Notify (Exception e, ErrorSeverity severity = ErrorSeverity.Error, Metadata extraMetadata = null)
+        public void Notify(Exception e, ErrorSeverity severity = ErrorSeverity.Error, Metadata extraMetadata = null)
         {
             var extraData = new Dictionary<string, string> ();
-            foreach (var item in extraMetadata) {
-                if (item.Value != null) {
+            foreach (var item in extraMetadata)
+            {
+                if (item.Value != null)
+                {
                     var data = item.Value.ToObject<Dictionary<string, string>>();
-                    foreach (var i in data) {
-                        extraData.Add ( item.Key + ":" + i.Key, i.Value);
+                    foreach (var i in data)
+                    {
+                        extraData.Add(item.Key + ":" + i.Key, i.Value);
                     }
                 }
             }
@@ -41,8 +45,8 @@ namespace Toggl.Phoebe.Logging
             else
             {
                 var reportSeverity = severity == ErrorSeverity.Warning
-                    ? Insights.Severity.Warning : Insights.Severity.Error;
-                
+                                     ? Insights.Severity.Warning : Insights.Severity.Error;
+
                 Insights.Report(e, extraData, reportSeverity);
             }
         }

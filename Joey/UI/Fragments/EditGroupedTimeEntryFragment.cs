@@ -42,59 +42,60 @@ namespace Toggl.Joey.UI.Fragments
 
         private IList<string> TimeEntryIds
         {
-            get {
-                return Arguments != null ? Arguments.GetStringArrayList (TimeEntriesIdsArgument) : new List<string>();
+            get
+            {
+                return Arguments != null ? Arguments.GetStringArrayList(TimeEntriesIdsArgument) : new List<string>();
             }
         }
 
-        public EditGroupedTimeEntryFragment ()
+        public EditGroupedTimeEntryFragment()
         {
         }
 
-        public EditGroupedTimeEntryFragment (IntPtr jref, Android.Runtime.JniHandleOwnership xfer) : base (jref, xfer)
+        public EditGroupedTimeEntryFragment(IntPtr jref, Android.Runtime.JniHandleOwnership xfer) : base(jref, xfer)
         {
         }
 
-        public static EditGroupedTimeEntryFragment NewInstance (IList<string> timeEntryListIds)
+        public static EditGroupedTimeEntryFragment NewInstance(IList<string> timeEntryListIds)
         {
-            var fragment = new EditGroupedTimeEntryFragment ();
+            var fragment = new EditGroupedTimeEntryFragment();
 
-            var args = new Bundle ();
-            args.PutStringArrayList (TimeEntriesIdsArgument, timeEntryListIds);
+            var args = new Bundle();
+            args.PutStringArrayList(TimeEntriesIdsArgument, timeEntryListIds);
             fragment.Arguments = args;
 
             return fragment;
         }
 
-        public override View OnCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
+        public override View OnCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
         {
-            var view = inflater.Inflate (Resource.Layout.EditGroupedTimeEntryFragment, container, false);
+            var view = inflater.Inflate(Resource.Layout.EditGroupedTimeEntryFragment, container, false);
             var activityToolbar = view.FindViewById<Android.Support.V7.Widget.Toolbar> (Resource.Id.EditTimeEntryFragmentToolbar);
             var activity = (Activity)Activity;
 
-            activity.SetSupportActionBar (activityToolbar);
+            activity.SetSupportActionBar(activityToolbar);
             toolbar = activity.SupportActionBar;
-            toolbar.SetDisplayHomeAsUpEnabled (true);
+            toolbar.SetDisplayHomeAsUpEnabled(true);
 
-            var durationLayout = inflater.Inflate (Resource.Layout.DurationTextView, null);
+            var durationLayout = inflater.Inflate(Resource.Layout.DurationTextView, null);
             DurationTextView = durationLayout.FindViewById<TextView> (Resource.Id.DurationTextViewTextView);
 
-            toolbar.SetCustomView (durationLayout, new ActionBar.LayoutParams ((int)GravityFlags.Center));
-            toolbar.SetDisplayShowCustomEnabled (true);
-            toolbar.SetDisplayShowTitleEnabled (false);
+            toolbar.SetCustomView(durationLayout, new ActionBar.LayoutParams((int)GravityFlags.Center));
+            toolbar.SetDisplayShowCustomEnabled(true);
+            toolbar.SetDisplayShowTitleEnabled(false);
 
-            StartTimeEditText = view.FindViewById<EditText> (Resource.Id.StartTimeEditText).SetFont (Font.Roboto);
-            StopTimeEditText = view.FindViewById<EditText> (Resource.Id.StopTimeEditText).SetFont (Font.Roboto);
+            StartTimeEditText = view.FindViewById<EditText> (Resource.Id.StartTimeEditText).SetFont(Font.Roboto);
+            StopTimeEditText = view.FindViewById<EditText> (Resource.Id.StopTimeEditText).SetFont(Font.Roboto);
             stopTimeEditLabel = view.FindViewById<TextView> (Resource.Id.StopTimeEditLabel);
 
             DescriptionField = view.FindViewById<TogglField> (Resource.Id.Description)
                                .DestroyAssistView().DestroyArrow()
-                               .SetName (Resource.String.EditTimeEntryFragmentDescription)
-                               .SetHint (Resource.String.EditTimeEntryFragmentDescriptionHint);
+                               .SetName(Resource.String.EditTimeEntryFragmentDescription)
+                               .SetHint(Resource.String.EditTimeEntryFragmentDescriptionHint);
 
             ProjectField = view.FindViewById<TogglField> (Resource.Id.Project)
-                           .SetName (Resource.String.EditTimeEntryFragmentProject)
-                           .SetHint (Resource.String.EditTimeEntryFragmentProjectHint)
+                           .SetName(Resource.String.EditTimeEntryFragmentProject)
+                           .SetHint(Resource.String.EditTimeEntryFragmentProjectHint)
                            .SimulateButton();
 
             timeEntriesListView = view.FindViewById<ListView> (Resource.Id.timeEntryGroupListView);
@@ -103,9 +104,9 @@ namespace Toggl.Joey.UI.Fragments
             return view;
         }
 
-        public override void OnViewCreated (View view, Bundle savedInstanceState)
+        public override void OnViewCreated(View view, Bundle savedInstanceState)
         {
-            base.OnViewCreated (view, savedInstanceState);
+            base.OnViewCreated(view, savedInstanceState);
             /*
             ViewModel = await EditTimeEntryGroupViewModel.Init (TimeEntryIds.ToList ());
 
@@ -128,63 +129,66 @@ namespace Toggl.Joey.UI.Fragments
             */
         }
 
-        public override void OnDestroyView ()
+        public override void OnDestroyView()
         {
             //ViewModel.Dispose ();
-            base.OnDestroyView ();
+            base.OnDestroyView();
         }
 
-        public override void OnPause ()
+        public override void OnPause()
         {
             // Save Time entry state every time
             // the fragment is paused.
             //Task.Run (async () => await ViewModel.SaveModel ());
-            base.OnPause ();
+            base.OnPause();
         }
 
-        private void HandleTimeEntryClick (TimeEntryData timeEntry)
+        private void HandleTimeEntryClick(TimeEntryData timeEntry)
         {
-            if (!timeEntry.StopTime.HasValue) {
+            if (!timeEntry.StopTime.HasValue)
+            {
                 return;
             }
 
             // TODO: Try to find a better persistence
             // for the time entry value.
             editedTimeEntry = timeEntry;
-            ChangeTimeEntryDurationDialogFragment.NewInstance (timeEntry.StopTime.Value, timeEntry.StartTime)
-            .SetChangeDurationHandler (this)
-            .Show (FragmentManager, "duration_dialog");
+            ChangeTimeEntryDurationDialogFragment.NewInstance(timeEntry.StopTime.Value, timeEntry.StartTime)
+            .SetChangeDurationHandler(this)
+            .Show(FragmentManager, "duration_dialog");
         }
 
-        public void OnChangeDuration (TimeSpan newDuration)
+        public void OnChangeDuration(TimeSpan newDuration)
         {
-            if (editedTimeEntry != null) {
+            if (editedTimeEntry != null)
+            {
                 //ViewModel.ChangeTimeEntryDuration (newDuration, editedTimeEntry);
             }
         }
 
-        private void OnProjectEditTextClick (object sender, EventArgs e)
+        private void OnProjectEditTextClick(object sender, EventArgs e)
         {
             //var intent = new Intent (Activity, typeof (ProjectListActivity));
             //intent.PutExtra (BaseActivity.IntentWorkspaceIdArgument, ViewModel.WorkspaceId.ToString ());
             //StartActivityForResult (intent, 0);
         }
 
-        public override void OnActivityResult (int requestCode, int resultCode, Intent data)
+        public override void OnActivityResult(int requestCode, int resultCode, Intent data)
         {
-            base.OnActivityResult (requestCode, resultCode, data);
-            if (resultCode == (int)Result.Ok) {
-                var taskId = GetGuidFromIntent (data, BaseActivity.IntentTaskIdArgument);
-                var projectId = GetGuidFromIntent (data, BaseActivity.IntentProjectIdArgument);
+            base.OnActivityResult(requestCode, resultCode, data);
+            if (resultCode == (int)Result.Ok)
+            {
+                var taskId = GetGuidFromIntent(data, BaseActivity.IntentTaskIdArgument);
+                var projectId = GetGuidFromIntent(data, BaseActivity.IntentProjectIdArgument);
 
                 //await Util.AwaitPredicate (() => ViewModel != null);
                 //await ViewModel.SetProjectAndTask (projectId, taskId);
             }
         }
 
-        private View GetTimeEntryView (int position, TimeEntryData timeEntryData, View convertView)
+        private View GetTimeEntryView(int position, TimeEntryData timeEntryData, View convertView)
         {
-            View view = convertView ?? LayoutInflater.FromContext (Activity).Inflate (Resource.Layout.EditGroupedTimeEntryItem, null);
+            View view = convertView ?? LayoutInflater.FromContext(Activity).Inflate(Resource.Layout.EditGroupedTimeEntryItem, null);
 
             var colorView = view.FindViewById<View> (Resource.Id.GroupedEditTimeEntryItemTimeColorView);
             var periodTextView = view.FindViewById<TextView> (Resource.Id.GroupedEditTimeEntryItemTimePeriodTextView);
@@ -197,35 +201,37 @@ namespace Toggl.Joey.UI.Fragments
             //colorView.SetBackgroundColor (color);
 
             // Set rest of data.
-            var stopTime = timeEntryData.StopTime.HasValue ? " – " + timeEntryData.StopTime.Value.ToLocalTime().ToShortTimeString () : "";
-            periodTextView.Text = timeEntryData.StartTime.ToLocalTime().ToShortTimeString () + stopTime;
-            durationTextView.Text = GetDuration (timeEntryData, Time.UtcNow).ToString (@"hh\:mm\:ss");
+            var stopTime = timeEntryData.StopTime.HasValue ? " – " + timeEntryData.StopTime.Value.ToLocalTime().ToShortTimeString() : "";
+            periodTextView.Text = timeEntryData.StartTime.ToLocalTime().ToShortTimeString() + stopTime;
+            durationTextView.Text = GetDuration(timeEntryData, Time.UtcNow).ToString(@"hh\:mm\:ss");
 
             return view;
         }
 
-        private TimeSpan GetDuration (TimeEntryData data, DateTime now)
+        private TimeSpan GetDuration(TimeEntryData data, DateTime now)
         {
-            if (data.StartTime.IsMinValue ()) {
+            if (data.StartTime.IsMinValue())
+            {
                 return TimeSpan.Zero;
             }
             var duration = (data.StopTime ?? now) - data.StartTime;
-            if (duration < TimeSpan.Zero) {
+            if (duration < TimeSpan.Zero)
+            {
                 duration = TimeSpan.Zero;
             }
             return duration;
         }
 
-        public override bool OnOptionsItemSelected (IMenuItem item)
+        public override bool OnOptionsItemSelected(IMenuItem item)
         {
-            Activity.OnBackPressed ();
-            return base.OnOptionsItemSelected (item);
+            Activity.OnBackPressed();
+            return base.OnOptionsItemSelected(item);
         }
 
-        private Guid GetGuidFromIntent (Intent data, string id)
+        private Guid GetGuidFromIntent(Intent data, string id)
         {
             Guid result;
-            Guid.TryParse (data.GetStringExtra (id), out result);
+            Guid.TryParse(data.GetStringExtra(id), out result);
             return result;
         }
     }

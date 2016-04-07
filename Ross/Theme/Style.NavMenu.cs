@@ -8,35 +8,35 @@ namespace Toggl.Ross.Theme
     {
         public static class NavMenu
         {
-            public static void Background (UIView v)
+            public static void Background(UIView v)
             {
-                v.BackgroundColor = Color.Black.ColorWithAlpha (0.90f);
+                v.BackgroundColor = Color.Black.ColorWithAlpha(0.90f);
             }
 
-            public static void Separator (UIView v)
+            public static void Separator(UIView v)
             {
                 v.BackgroundColor = Color.DarkGray;
             }
 
-            public static void MenuItem (UIButton v)
+            public static void MenuItem(UIButton v)
             {
-                v.Font = UIFont.FromName ("HelveticaNeue-Thin", 30f);
-                v.ContentEdgeInsets = new UIEdgeInsets (13f, 22f, 13f, 22f);
+                v.Font = UIFont.FromName("HelveticaNeue-Thin", 30f);
+                v.ContentEdgeInsets = new UIEdgeInsets(13f, 22f, 13f, 22f);
                 v.HorizontalAlignment = UIControlContentHorizontalAlignment.Left;
             }
 
-            public static void HighlightedItem (UIButton v)
+            public static void HighlightedItem(UIButton v)
             {
-                v.Apply (MenuItem);
-                v.SetTitleColor (Color.White, UIControlState.Normal);
-                v.SetTitleColor (Color.White, UIControlState.Highlighted);
+                v.Apply(MenuItem);
+                v.SetTitleColor(Color.White, UIControlState.Normal);
+                v.SetTitleColor(Color.White, UIControlState.Highlighted);
             }
 
-            public static void NormalItem (UIButton v)
+            public static void NormalItem(UIButton v)
             {
-                v.Apply (MenuItem);
-                v.SetTitleColor (Color.Gray, UIControlState.Normal);
-                v.SetTitleColor (Color.White, UIControlState.Highlighted);
+                v.Apply(MenuItem);
+                v.SetTitleColor(Color.Gray, UIControlState.Normal);
+                v.SetTitleColor(Color.White, UIControlState.Highlighted);
             }
         }
     }

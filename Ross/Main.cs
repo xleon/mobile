@@ -9,21 +9,22 @@ namespace Toggl.Ross
     {
         private static Stopwatch startTimeMeasure;
 
-        static void Main (string[] args)
+        static void Main(string[] args)
         {
-            startTimeMeasure = Stopwatch.StartNew ();
+            startTimeMeasure = Stopwatch.StartNew();
 
-            UIApplication.Main (args, null, "AppDelegate");
+            UIApplication.Main(args, null, "AppDelegate");
         }
 
         public static void MarkLaunched()
         {
-            if (!startTimeMeasure.IsRunning) {
+            if (!startTimeMeasure.IsRunning)
+            {
                 return;
             }
 
-            startTimeMeasure.Stop ();
-            ServiceContainer.Resolve<ITracker> ().SendAppInitTime (startTimeMeasure.Elapsed);
+            startTimeMeasure.Stop();
+            ServiceContainer.Resolve<ITracker> ().SendAppInitTime(startTimeMeasure.Elapsed);
         }
     }
 }

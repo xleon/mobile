@@ -5,16 +5,16 @@ namespace Toggl.Phoebe.Data.Json
 {
     public class ProjectUserJson : CommonJson
     {
-        [JsonProperty ("manager")]
+        [JsonProperty("manager")]
         public bool IsManager { get; set; }
 
-        [JsonProperty ("rate")]
+        [JsonProperty("rate")]
         public int HourlyRate { get; set; }
 
-        [JsonProperty ("pid")]
+        [JsonProperty("pid")]
         public long ProjectRemoteId { get; set; }
 
-        [JsonProperty ("uid")]
+        [JsonProperty("uid")]
         public long UserRemoteId { get; set; }
     }
 }

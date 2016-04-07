@@ -2,7 +2,8 @@
 
 namespace Toggl.Phoebe.Analytics
 {
-    public enum TimerStopSource {
+    public enum TimerStopSource
+    {
         App,
         Notification,
         Widget,

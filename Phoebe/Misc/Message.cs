@@ -5,7 +5,7 @@ namespace Toggl.Phoebe
     {
         private readonly object sender;
 
-        public Message (object sender)
+        public Message(object sender)
         {
             this.sender = sender;
         }

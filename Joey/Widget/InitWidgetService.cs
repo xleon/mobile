@@ -8,29 +8,29 @@ using XPlatUtils;
 namespace Toggl.Joey.Widget
 {
 
-    [Service (Exported = false)]
+    [Service(Exported = false)]
     public class InitWidgetService : Service
     {
         //private Subscription<SyncWidgetMessage> subscriptionSyncFinishedMessage;
 
-        public InitWidgetService ()
+        public InitWidgetService()
         {
         }
 
-        public InitWidgetService (IntPtr javaRef, Android.Runtime.JniHandleOwnership transfer)
-        : base (javaRef, transfer)
+        public InitWidgetService(IntPtr javaRef, Android.Runtime.JniHandleOwnership transfer)
+        : base(javaRef, transfer)
         {
         }
 
-        public override void OnCreate ()
+        public override void OnCreate()
         {
-            base.OnCreate ();
+            base.OnCreate();
 
             var bus = ServiceContainer.Resolve<MessageBus> ();
             //subscriptionSyncFinishedMessage = bus.Subscribe<SyncWidgetMessage> (OnSyncFinishedMessage);
         }
 
-        public override void OnDestroy ()
+        public override void OnDestroy()
         {
             /*
             if (subscriptionSyncFinishedMessage != null) {
@@ -39,10 +39,10 @@ namespace Toggl.Joey.Widget
                 subscriptionSyncFinishedMessage = null;
             }
             */
-            base.OnDestroy ();
+            base.OnDestroy();
         }
 
-        public override StartCommandResult OnStartCommand (Intent intent, StartCommandFlags flags, int startId)
+        public override StartCommandResult OnStartCommand(Intent intent, StartCommandFlags flags, int startId)
         {
             //Task.Run (async () => await ServiceContainer.Resolve<WidgetSyncManager>().SyncWidgetData ());
             return StartCommandResult.Sticky;
@@ -57,7 +57,7 @@ namespace Toggl.Joey.Widget
             }
         }
         */
-        public override IBinder OnBind (Intent intent)
+        public override IBinder OnBind(Intent intent)
         {
             return null;
         }

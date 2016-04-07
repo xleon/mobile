@@ -36,40 +36,41 @@ namespace Toggl.Joey.UI.Fragments
 
         private Guid WorkspaceId
         {
-            get {
+            get
+            {
                 Guid id;
-                Guid.TryParse (Arguments.GetString (WorkspaceIdArgument), out id);
+                Guid.TryParse(Arguments.GetString(WorkspaceIdArgument), out id);
                 return id;
             }
         }
 
-        public ProjectListFragment ()
+        public ProjectListFragment()
         {
         }
 
-        public ProjectListFragment (IntPtr jref, Android.Runtime.JniHandleOwnership xfer) : base (jref, xfer)
+        public ProjectListFragment(IntPtr jref, Android.Runtime.JniHandleOwnership xfer) : base(jref, xfer)
         {
         }
 
-        public static ProjectListFragment NewInstance (string workspaceId)
+        public static ProjectListFragment NewInstance(string workspaceId)
         {
-            var fragment = new ProjectListFragment ();
+            var fragment = new ProjectListFragment();
 
-            var args = new Bundle ();
-            args.PutString (WorkspaceIdArgument, workspaceId);
+            var args = new Bundle();
+            args.PutString(WorkspaceIdArgument, workspaceId);
             fragment.Arguments = args;
 
             return fragment;
         }
 
-        public override View OnCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
+        public override View OnCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
         {
-            var view = inflater.Inflate (Resource.Layout.ProjectListFragment, container, false);
+            var view = inflater.Inflate(Resource.Layout.ProjectListFragment, container, false);
 
             recyclerView = view.FindViewById<RecyclerView> (Resource.Id.ProjectListRecyclerView);
-            recyclerView.SetLayoutManager (new LinearLayoutManager (Activity));
-            recyclerView.AddItemDecoration (new ShadowItemDecoration (Activity));
-            recyclerView.AddItemDecoration (new DividerItemDecoration (Activity, DividerItemDecoration.VerticalList));
+            recyclerView.SetLayoutManager(new LinearLayoutManager(Activity));
+            recyclerView.AddItemDecoration(new ShadowItemDecoration(Activity));
+            recyclerView.AddItemDecoration(new DividerItemDecoration(Activity, DividerItemDecoration.VerticalList));
 
             emptyStateLayout = view.FindViewById<LinearLayout> (Resource.Id.ProjectListEmptyState);
             tabLayout = view.FindViewById<TabLayout> (Resource.Id.WorkspaceTabLayout);
@@ -77,83 +78,93 @@ namespace Toggl.Joey.UI.Fragments
             toolBar = view.FindViewById<Toolbar> (Resource.Id.ProjectListToolbar);
 
             var activity = (Activity)Activity;
-            activity.SetSupportActionBar (toolBar);
-            activity.SupportActionBar.SetDisplayHomeAsUpEnabled (true);
-            activity.SupportActionBar.SetTitle (Resource.String.ChooseTimeEntryProjectDialogTitle);
+            activity.SetSupportActionBar(toolBar);
+            activity.SupportActionBar.SetDisplayHomeAsUpEnabled(true);
+            activity.SupportActionBar.SetTitle(Resource.String.ChooseTimeEntryProjectDialogTitle);
 
             HasOptionsMenu = true;
             newProjectFab.Click += OnNewProjectFabClick;
-            tabLayout.SetOnTabSelectedListener (this);
+            tabLayout.SetOnTabSelectedListener(this);
 
             return view;
         }
 
-        public override void OnViewCreated (View view, Bundle savedInstanceState)
+        public override void OnViewCreated(View view, Bundle savedInstanceState)
         {
-            base.OnViewCreated (view, savedInstanceState);
-            viewModel = new ProjectListVM (Phoebe.Reactive.StoreManager.Singleton.AppState, WorkspaceId);
+            base.OnViewCreated(view, savedInstanceState);
+            viewModel = new ProjectListVM(Phoebe.Reactive.StoreManager.Singleton.AppState, WorkspaceId);
 
-            var adapter = new ProjectListAdapter (recyclerView, viewModel.ProjectList);
+            var adapter = new ProjectListAdapter(recyclerView, viewModel.ProjectList);
             adapter.HandleItemSelection = OnItemSelected;
-            recyclerView.SetAdapter (adapter);
+            recyclerView.SetAdapter(adapter);
 
-            ConfigureUIViews ();
-            CreateWorkspaceTabs ();
+            ConfigureUIViews();
+            CreateWorkspaceTabs();
         }
 
-        private void ConfigureUIViews ()
+        private void ConfigureUIViews()
         {
             // Set toolbar scrollable or not.
-            var _params = new AppBarLayout.LayoutParams (toolBar.LayoutParameters);
+            var _params = new AppBarLayout.LayoutParams(toolBar.LayoutParameters);
 
-            if (viewModel.WorkspaceList.Any ()) {
+            if (viewModel.WorkspaceList.Any())
+            {
                 tabLayout.Visibility = ViewStates.Visible;
                 _params.ScrollFlags  = AppBarLayout.LayoutParams.ScrollFlagScroll | AppBarLayout.LayoutParams.ScrollFlagEnterAlways;
-            } else {
+            }
+            else
+            {
                 tabLayout.Visibility = ViewStates.Gone;
                 _params.ScrollFlags = 0;
             }
             toolBar.LayoutParameters = _params;
 
             // Hide or show recyclerview.
-            var haveProjects = viewModel.ProjectList.OfType<ProjectData> ().Any ();
+            var haveProjects = viewModel.ProjectList.OfType<ProjectData> ().Any();
             recyclerView.Visibility = haveProjects ? ViewStates.Visible : ViewStates.Gone;
             emptyStateLayout.Visibility = haveProjects ? ViewStates.Gone : ViewStates.Visible;
         }
 
-        private void CreateWorkspaceTabs ()
+        private void CreateWorkspaceTabs()
         {
             // Create tabs
-            if (viewModel.WorkspaceList.Any ()) {
-                foreach (var ws in viewModel.WorkspaceList) {
-                    var tab = tabLayout.NewTab().SetText (ws.Name);
-                    tabLayout.AddTab (tab);
-                    if (ws.Id == WorkspaceId) {
-                        tab.Select ();
+            if (viewModel.WorkspaceList.Any())
+            {
+                foreach (var ws in viewModel.WorkspaceList)
+                {
+                    var tab = tabLayout.NewTab().SetText(ws.Name);
+                    tabLayout.AddTab(tab);
+                    if (ws.Id == WorkspaceId)
+                    {
+                        tab.Select();
                     }
                 }
             }
         }
 
-        private void OnNewProjectFabClick (object sender, EventArgs e)
+        private void OnNewProjectFabClick(object sender, EventArgs e)
         {
             // Show create project activity instead
-            var intent = new Intent (Activity, typeof (NewProjectActivity));
-            intent.PutExtra (NewProjectActivity.WorkspaceIdArgument, viewModel.CurrentWorkspaceId.ToString ());
-            StartActivityForResult (intent, ProjectCreatedRequestCode);
+            var intent = new Intent(Activity, typeof(NewProjectActivity));
+            intent.PutExtra(NewProjectActivity.WorkspaceIdArgument, viewModel.CurrentWorkspaceId.ToString());
+            StartActivityForResult(intent, ProjectCreatedRequestCode);
         }
 
-        private void OnItemSelected (CommonData m)
+        private void OnItemSelected(CommonData m)
         {
             // TODO: valorate to work only with IDs.
             Guid projectId = Guid.Empty;
             Guid taskId = Guid.Empty;
 
-            if (m is ProjectData) {
-                if (! ((ProjectsCollectionVM.SuperProjectData)m).IsEmpty) {
+            if (m is ProjectData)
+            {
+                if (!((ProjectsCollectionVM.SuperProjectData)m).IsEmpty)
+                {
                     projectId = m.Id;
                 }
-            } else if (m is TaskData) {
+            }
+            else if (m is TaskData)
+            {
                 var task = (TaskData)m;
                 projectId = task.ProjectId;
                 taskId = task.Id;
@@ -161,89 +172,93 @@ namespace Toggl.Joey.UI.Fragments
 
             // Return selected data inside the
             // intent.
-            var resultIntent = new Intent ();
+            var resultIntent = new Intent();
 
-            resultIntent.PutExtra (BaseActivity.IntentProjectIdArgument, projectId.ToString ());
-            resultIntent.PutExtra (BaseActivity.IntentTaskIdArgument, taskId.ToString ());
-            Activity.SetResult (Result.Ok, resultIntent);
+            resultIntent.PutExtra(BaseActivity.IntentProjectIdArgument, projectId.ToString());
+            resultIntent.PutExtra(BaseActivity.IntentTaskIdArgument, taskId.ToString());
+            Activity.SetResult(Result.Ok, resultIntent);
             Activity.Finish();
         }
 
-        public override void OnActivityResult (int requestCode, int resultCode, Intent data)
+        public override void OnActivityResult(int requestCode, int resultCode, Intent data)
         {
-            base.OnActivityResult (requestCode, resultCode, data);
+            base.OnActivityResult(requestCode, resultCode, data);
 
             // Bypass to close the activity
             // if the project is created in NewProject activity,
             // close the Project list activity
-            if (requestCode == ProjectCreatedRequestCode) {
-                if (resultCode == (int)Result.Ok) {
-                    data.PutExtra (BaseActivity.IntentTaskIdArgument, Guid.Empty.ToString ());
-                    Activity.SetResult (Result.Ok, data);
+            if (requestCode == ProjectCreatedRequestCode)
+            {
+                if (resultCode == (int)Result.Ok)
+                {
+                    data.PutExtra(BaseActivity.IntentTaskIdArgument, Guid.Empty.ToString());
+                    Activity.SetResult(Result.Ok, data);
                     Activity.Finish();
                 }
             }
         }
 
-        public override void OnDestroyView ()
+        public override void OnDestroyView()
         {
-            viewModel.Dispose ();
-            base.OnDestroyView ();
+            viewModel.Dispose();
+            base.OnDestroyView();
         }
 
         #region Option menu
-        public override void OnCreateOptionsMenu (IMenu menu, MenuInflater inflater)
+        public override void OnCreateOptionsMenu(IMenu menu, MenuInflater inflater)
         {
-            inflater.Inflate (Resource.Menu.ProjectListToolbarMenu, menu);
-            var item = menu.FindItem (Resource.Id.projectSearch);
+            inflater.Inflate(Resource.Menu.ProjectListToolbarMenu, menu);
+            var item = menu.FindItem(Resource.Id.projectSearch);
             var searchView = Android.Runtime.Extensions.JavaCast<SearchView> (item.ActionView);
-            searchView.SetOnQueryTextListener (this);
-            toolBar.SetOnMenuItemClickListener (this);
+            searchView.SetOnQueryTextListener(this);
+            toolBar.SetOnMenuItemClickListener(this);
         }
 
-        public bool OnQueryTextChange (string newText)
+        public bool OnQueryTextChange(string newText)
         {
-            viewModel.SearchByProjectName (newText);
+            viewModel.SearchByProjectName(newText);
             return true;
         }
 
-        public bool OnQueryTextSubmit (string query)
+        public bool OnQueryTextSubmit(string query)
         {
             return true;
         }
 
-        public override bool OnOptionsItemSelected (IMenuItem item)
+        public override bool OnOptionsItemSelected(IMenuItem item)
         {
-            if (item.ItemId == Android.Resource.Id.Home) {
-                Activity.OnBackPressed ();
+            if (item.ItemId == Android.Resource.Id.Home)
+            {
+                Activity.OnBackPressed();
             }
-            return base.OnOptionsItemSelected (item);
+            return base.OnOptionsItemSelected(item);
         }
 
-        public bool OnMenuItemClick (IMenuItem item)
+        public bool OnMenuItemClick(IMenuItem item)
         {
-            switch (item.ItemId) {
-            case Resource.Id.SortByClients:
-                viewModel.ChangeListSorting (ProjectsCollectionVM.SortProjectsBy.Clients);
-                return true;
-            case Resource.Id.SortByProjects:
-                viewModel.ChangeListSorting (ProjectsCollectionVM.SortProjectsBy.Projects);
-                return true;
+            switch (item.ItemId)
+            {
+                case Resource.Id.SortByClients:
+                    viewModel.ChangeListSorting(ProjectsCollectionVM.SortProjectsBy.Clients);
+                    return true;
+                case Resource.Id.SortByProjects:
+                    viewModel.ChangeListSorting(ProjectsCollectionVM.SortProjectsBy.Projects);
+                    return true;
             }
             return false;
         }
         #endregion
 
         #region Workspace Tablayout
-        public void OnTabSelected (TabLayout.Tab tab)
+        public void OnTabSelected(TabLayout.Tab tab)
         {
-            viewModel.ChangeWorkspaceByIndex (tab.Position);
+            viewModel.ChangeWorkspaceByIndex(tab.Position);
             ConfigureUIViews();
         }
 
-        public void OnTabReselected (TabLayout.Tab tab)  { }
+        public void OnTabReselected(TabLayout.Tab tab)  { }
 
-        public void OnTabUnselected (TabLayout.Tab tab) { }
+        public void OnTabUnselected(TabLayout.Tab tab) { }
         #endregion
     }
 }

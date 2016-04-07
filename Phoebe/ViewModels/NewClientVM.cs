@@ -15,22 +15,23 @@ namespace Toggl.Phoebe.ViewModels
         private readonly AppState appState;
         private readonly IWorkspaceData workspace;
 
-        public NewClientVM (AppState appState, Guid workspaceId)
+        public NewClientVM(AppState appState, Guid workspaceId)
         {
             workspace = appState.Workspaces[workspaceId];
             this.appState = appState;
             ServiceContainer.Resolve<ITracker> ().CurrentScreen = "New Client Screen";
         }
 
-        public void Dispose ()
+        public void Dispose()
         {
         }
 
-        public IClientData SaveClient (string clientName, RxChain.Continuation cont = null)
+        public IClientData SaveClient(string clientName, RxChain.Continuation cont = null)
         {
-            model = new ClientData {
+            model = new ClientData
+            {
                 SyncState = SyncState.CreatePending,
-                Id = Guid.NewGuid (),
+                Id = Guid.NewGuid(),
                 WorkspaceId = workspace.Id,
                 Name = clientName,
                 WorkspaceRemoteId = workspace.RemoteId.HasValue ? workspace.RemoteId.Value : 0
@@ -39,10 +40,10 @@ namespace Toggl.Phoebe.ViewModels
             // Save client name to make sure it doesn't change while iterating
             var existing =
                 appState.Clients.Values
-                .SingleOrDefault (
+                .SingleOrDefault(
                     r => r.WorkspaceId == model.WorkspaceId && r.Name == clientName);
             model = existing ?? model;
-            RxChain.Send (new DataMsg.ClientDataPut (model), cont);
+            RxChain.Send(new DataMsg.ClientDataPut(model), cont);
             return model;
         }
     }

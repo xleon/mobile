@@ -16,34 +16,40 @@ namespace Toggl.Joey.UI.Adapters
         public static readonly int FeedbackPageId = 4;
         private List<DrawerItem> rowItems;
 
-        public DrawerListAdapter ()
+        public DrawerListAdapter()
         {
-            rowItems = new List<DrawerItem> () {
-                new DrawerItem () {
+            rowItems = new List<DrawerItem> ()
+            {
+                new DrawerItem()
+                {
                     Id = TimerPageId,
                     TextResId = Resource.String.MainDrawerTimer,
                     ImageResId = Resource.Drawable.IcNavTimer,
                     IsEnabled = true,
                 },
-                new DrawerItem () {
+                new DrawerItem()
+                {
                     Id = ReportsPageId,
                     TextResId = Resource.String.MainDrawerReports,
                     ImageResId = Resource.Drawable.IcNavReports,
                     IsEnabled = true,
                 },
-                new DrawerItem () {
+                new DrawerItem()
+                {
                     Id = SettingsPageId,
                     TextResId = Resource.String.MainDrawerSettings,
                     ImageResId = Resource.Drawable.IcNavSettings,
                     IsEnabled = true,
                 },
-                new DrawerItem () {
+                new DrawerItem()
+                {
                     Id = FeedbackPageId,
                     TextResId = Resource.String.MainDrawerFeedback,
                     ImageResId = Resource.Drawable.IcNavFeedback,
                     IsEnabled = true,
                 },
-                new DrawerItem () {
+                new DrawerItem()
+                {
                     Id = LogoutPageId,
                     TextResId = Resource.String.MainDrawerLogout,
                     ImageResId = Resource.Drawable.IcNavLogout,
@@ -52,18 +58,19 @@ namespace Toggl.Joey.UI.Adapters
             };
         }
 
-        public override View GetView (int position, View convertView, ViewGroup parent)
+        public override View GetView(int position, View convertView, ViewGroup parent)
         {
             View view = convertView;
 
-            if (view == null) {
-                view = LayoutInflater.FromContext (parent.Context).Inflate (
+            if (view == null)
+            {
+                view = LayoutInflater.FromContext(parent.Context).Inflate(
                            Resource.Layout.MainDrawerListItem, parent, false);
-                view.Tag = new DrawerItemViewHolder (view);
+                view.Tag = new DrawerItemViewHolder(view);
             }
 
             var holder = (DrawerItemViewHolder)view.Tag;
-            holder.Bind (GetDrawerItem (position));
+            holder.Bind(GetDrawerItem(position));
             return view;
         }
 
@@ -72,30 +79,30 @@ namespace Toggl.Joey.UI.Adapters
             get { return rowItems.Count; }
         }
 
-        public override Java.Lang.Object GetItem (int position)
+        public override Java.Lang.Object GetItem(int position)
         {
             return null;
         }
 
-        public int GetItemPosition (int id)
+        public int GetItemPosition(int id)
         {
-            var idx = rowItems.FindIndex (i => i.Id == id);
+            var idx = rowItems.FindIndex(i => i.Id == id);
             return idx >= 0 ? idx + 1 : -1;
         }
 
-        private DrawerItem GetDrawerItem (int position)
+        private DrawerItem GetDrawerItem(int position)
         {
             return rowItems [position];
         }
 
-        public override long GetItemId (int position)
+        public override long GetItemId(int position)
         {
-            return GetDrawerItem (position).Id;
+            return GetDrawerItem(position).Id;
         }
 
-        public override bool IsEnabled (int position)
+        public override bool IsEnabled(int position)
         {
-            var item = GetDrawerItem (position);
+            var item = GetDrawerItem(position);
             return item != null && item.IsEnabled;
         }
 
@@ -114,20 +121,21 @@ namespace Toggl.Joey.UI.Adapters
 
             public TextView TitleTextView { get; private set; }
 
-            public DrawerItemViewHolder (View root) : base (root)
+            public DrawerItemViewHolder(View root) : base(root)
             {
                 IconImageView = root.FindViewById<ImageView> (Resource.Id.IconImageView);
-                TitleTextView = root.FindViewById<TextView> (Resource.Id.TitleTextView).SetFont (Font.RobotoLight);
+                TitleTextView = root.FindViewById<TextView> (Resource.Id.TitleTextView).SetFont(Font.RobotoLight);
             }
 
-            protected override void Rebind ()
+            protected override void Rebind()
             {
-                if (DataSource == null) {
+                if (DataSource == null)
+                {
                     return;
                 }
 
-                IconImageView.SetImageResource (DataSource.ImageResId);
-                TitleTextView.SetText (DataSource.TextResId);
+                IconImageView.SetImageResource(DataSource.ImageResId);
+                TitleTextView.SetText(DataSource.TextResId);
                 TitleTextView.Enabled = DataSource.IsEnabled;
             }
         }

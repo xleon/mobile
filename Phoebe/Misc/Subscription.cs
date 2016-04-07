@@ -8,10 +8,11 @@ namespace Toggl.Phoebe
         private readonly Action<T> listener;
         private readonly bool threadSafe;
 
-        internal Subscription (Action<T> listener, bool threadSafe)
+        internal Subscription(Action<T> listener, bool threadSafe)
         {
-            if (listener == null) {
-                throw new ArgumentNullException ("listener");
+            if (listener == null)
+            {
+                throw new ArgumentNullException("listener");
             }
             this.listener = listener;
             this.threadSafe = threadSafe;

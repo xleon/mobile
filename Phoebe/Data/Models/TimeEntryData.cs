@@ -6,7 +6,8 @@ using Newtonsoft.Json;
 
 namespace Toggl.Phoebe.Data.Models
 {
-    public enum TimeEntryState {
+    public enum TimeEntryState
+    {
         New,
         Running,
         Finished
@@ -29,28 +30,28 @@ namespace Toggl.Phoebe.Data.Models
         Guid ProjectId { get; }
         Guid TaskId { get; }
         IReadOnlyList<Guid> TagIds { get; }
-        ITimeEntryData With (Action<TimeEntryData> transform);
+        ITimeEntryData With(Action<TimeEntryData> transform);
     }
 
-    [Table ("TimeEntryModel")]
+    [Table("TimeEntryModel")]
     public class TimeEntryData : CommonData, ITimeEntryData
     {
-        public static ITimeEntryData Create (Action<TimeEntryData> transform = null, ITimeEntryData draft = null)
+        public static ITimeEntryData Create(Action<TimeEntryData> transform = null, ITimeEntryData draft = null)
         {
-            return CommonData.Create (transform, draft != null ? new TimeEntryData (draft) : null);
+            return CommonData.Create(transform, draft != null ? new TimeEntryData(draft) : null);
         }
 
         /// <summary>
         /// ATTENTION: This constructor should only be used by SQL and JSON serializers
         /// To create new objects, use the static Create method instead
         /// </summary>
-        public TimeEntryData ()
+        public TimeEntryData()
         {
             State = TimeEntryState.New;
             TagIds = new List<Guid> ();
         }
 
-        TimeEntryData (ITimeEntryData other) : base (other)
+        TimeEntryData(ITimeEntryData other) : base(other)
         {
             State = other.State;
             Description = other.Description;
@@ -69,14 +70,14 @@ namespace Toggl.Phoebe.Data.Models
             TagIds = new List<Guid> (other.TagIds);
         }
 
-        public override object Clone ()
+        public override object Clone()
         {
-            return new TimeEntryData (this);
+            return new TimeEntryData(this);
         }
 
-        public ITimeEntryData With (Action<TimeEntryData> transform)
+        public ITimeEntryData With(Action<TimeEntryData> transform)
         {
-            return base.With (transform);
+            return base.With(transform);
         }
 
         public TimeEntryState State { get; set; }
@@ -115,32 +116,44 @@ namespace Toggl.Phoebe.Data.Models
         [JsonIgnore]
         public string RawTagIds
         {
-            get {
-                return string.Join (";", TagIds.Select (x => x.ToString ()));
-            } set {
-                TagIds = value.Split (new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries)
-                         .Select (Guid.Parse)
-                         .ToList ();
+            get
+            {
+                return string.Join(";", TagIds.Select(x => x.ToString()));
+            }
+            set
+            {
+                TagIds = value.Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries)
+                         .Select(Guid.Parse)
+                         .ToList();
             }
         }
 
-        public static string GetFormattedDuration (UserData user, TimeSpan duration)
+        public static string GetFormattedDuration(UserData user, TimeSpan duration)
         {
-            string formattedString = duration.ToString (@"hh\:mm\:ss");
-            if (user == null) {
+            string formattedString = duration.ToString(@"hh\:mm\:ss");
+            if (user == null)
+            {
                 return formattedString;
             }
 
-            if (user.DurationFormat == DurationFormat.Classic) {
-                if (duration.TotalMinutes < 1) {
-                    formattedString = duration.ToString (@"s\ \s\e\c");
-                } else if (duration.TotalMinutes > 1 && duration.TotalMinutes < 60) {
-                    formattedString = duration.ToString (@"mm\:ss\ \m\i\n");
-                } else {
-                    formattedString = duration.ToString (@"hh\:mm\:ss");
+            if (user.DurationFormat == DurationFormat.Classic)
+            {
+                if (duration.TotalMinutes < 1)
+                {
+                    formattedString = duration.ToString(@"s\ \s\e\c");
                 }
-            } else if (user.DurationFormat == DurationFormat.Decimal) {
-                formattedString = string.Format ("{0:0.00} h", duration.TotalHours);
+                else if (duration.TotalMinutes > 1 && duration.TotalMinutes < 60)
+                {
+                    formattedString = duration.ToString(@"mm\:ss\ \m\i\n");
+                }
+                else
+                {
+                    formattedString = duration.ToString(@"hh\:mm\:ss");
+                }
+            }
+            else if (user.DurationFormat == DurationFormat.Decimal)
+            {
+                formattedString = string.Format("{0:0.00} h", duration.TotalHours);
             }
             return formattedString;
         }

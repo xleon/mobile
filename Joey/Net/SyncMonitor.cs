@@ -9,7 +9,7 @@ namespace Toggl.Joey.Net
     {
         //private Subscription<SyncStartedMessage> subscriptionSyncStarted;
 
-        public SyncMonitor ()
+        public SyncMonitor()
         {
             /*
             var bus = ServiceContainer.Resolve<MessageBus> ();
@@ -22,7 +22,7 @@ namespace Toggl.Joey.Net
             */
         }
 
-        public void Dispose ()
+        public void Dispose()
         {
             /*
             if (subscriptionSyncStarted != null) {
@@ -31,14 +31,14 @@ namespace Toggl.Joey.Net
                 subscriptionSyncStarted = null;
             }
             */
-            GC.SuppressFinalize (this);
+            GC.SuppressFinalize(this);
         }
 
-        private void StartSyncService ()
+        private void StartSyncService()
         {
             var ctx = ServiceContainer.Resolve<Context> ();
-            var intent = new Intent (ctx, typeof (SyncService));
-            ctx.StartService (intent);
+            var intent = new Intent(ctx, typeof(SyncService));
+            ctx.StartService(intent);
         }
 
         /*

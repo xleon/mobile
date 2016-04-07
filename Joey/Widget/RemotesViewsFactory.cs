@@ -9,12 +9,12 @@ using XPlatUtils;
 
 namespace Toggl.Joey.Widget
 {
-    [Service (Exported = false, Permission = Android.Manifest.Permission.BindRemoteviews)]
+    [Service(Exported = false, Permission = Android.Manifest.Permission.BindRemoteviews)]
     public class RemotesViewsFactoryService : RemoteViewsService
     {
-        public override IRemoteViewsFactory OnGetViewFactory (Intent intent)
+        public override IRemoteViewsFactory OnGetViewFactory(Intent intent)
         {
-            return new RemotesViewsFactory (ApplicationContext);
+            return new RemotesViewsFactory(ApplicationContext);
         }
     }
 
@@ -22,28 +22,28 @@ namespace Toggl.Joey.Widget
     {
         private Context context;
 
-        public RemotesViewsFactory (Context ctx)
+        public RemotesViewsFactory(Context ctx)
         {
             context = ctx;
         }
 
-        public long GetItemId (int position)
+        public long GetItemId(int position)
         {
             return position;
         }
 
-        public void OnCreate ()
+        public void OnCreate()
         {
             //itemList.AddRange (UpdateService.LastEntries);
         }
 
-        public void OnDestroy ()
+        public void OnDestroy()
         {
         }
 
-        public RemoteViews GetViewAt (int position)
+        public RemoteViews GetViewAt(int position)
         {
-            var remoteView = new RemoteViews (context.PackageName, Resource.Layout.widget_list_item);
+            var remoteView = new RemoteViews(context.PackageName, Resource.Layout.widget_list_item);
             /*
             var rowData = itemList [position];
 
@@ -85,34 +85,38 @@ namespace Toggl.Joey.Widget
         }
         */
 
-        public void OnDataSetChanged ()
+        public void OnDataSetChanged()
         {
         }
 
         public int Count
         {
-            get {
+            get
+            {
                 return 0;
             }
         }
 
         public bool HasStableIds
         {
-            get {
+            get
+            {
                 return true;
             }
         }
 
         public RemoteViews LoadingView
         {
-            get {
+            get
+            {
                 return (RemoteViews) null;
             }
         }
 
         public int ViewTypeCount
         {
-            get {
+            get
+            {
                 return 1;
             }
         }

@@ -21,74 +21,81 @@ namespace Toggl.Joey.UI.Views
         private const ShadowAttribute.Mode bottom = ShadowAttribute.Mode.Bottom;
         private const ShadowAttribute.Mode top = ShadowAttribute.Mode.Top;
 
-        public ShadowItemDecoration (Context context)
+        public ShadowItemDecoration(Context context)
         {
-            shadow = context.Resources.GetDrawable (Resource.Drawable.DropShadowVertical);
-            reverseShadow = context.Resources.GetDrawable (Resource.Drawable.DropShadowVerticalReverse);
+            shadow = context.Resources.GetDrawable(Resource.Drawable.DropShadowVertical);
+            reverseShadow = context.Resources.GetDrawable(Resource.Drawable.DropShadowVerticalReverse);
 
-            topShadowHeightInPixels = topShadowHeightInDps.DpsToPxls (context);
-            bottomShadowHeightInPixels = bottomShadowHeightInDps.DpsToPxls (context);
+            topShadowHeightInPixels = topShadowHeightInDps.DpsToPxls(context);
+            bottomShadowHeightInPixels = bottomShadowHeightInDps.DpsToPxls(context);
         }
 
-        public override void OnDraw (Canvas c, RecyclerView parent, RecyclerView.State state)
+        public override void OnDraw(Canvas c, RecyclerView parent, RecyclerView.State state)
         {
             var childCount = parent.ChildCount;
 
-            if (childCount == 0) {
+            if (childCount == 0)
+            {
                 return;
             }
 
-            for (int i = 0; i+1 < childCount; i++) {
-                var child = parent.GetChildAt (i);
-                var viewHolder = parent.GetChildViewHolder (child);
+            for (int i = 0; i + 1 < childCount; i++)
+            {
+                var child = parent.GetChildAt(i);
+                var viewHolder = parent.GetChildViewHolder(child);
 
-                Type type = viewHolder.GetType ();
-                object[] attributes = type.GetCustomAttributes (typeof (ShadowAttribute), false);
+                Type type = viewHolder.GetType();
+                object[] attributes = type.GetCustomAttributes(typeof(ShadowAttribute), false);
 
-                if (attributes.Length != 1) {
+                if (attributes.Length != 1)
+                {
                     continue;
                 }
 
                 ShadowAttribute shadowAttr = attributes [0] as ShadowAttribute;
 
-                if (ShouldDraw (child) && shadowAttr != null) {
+                if (ShouldDraw(child) && shadowAttr != null)
+                {
 
                     var m = shadowAttr.Modes;
                     var left = parent.PaddingLeft;
                     var right = child.Right + child.PaddingRight;
 
-                    if (m.HasFlag (top) && topShadowHeightInPixels > 0 && parent.GetChildAdapterPosition (child) != 0) {
+                    if (m.HasFlag(top) && topShadowHeightInPixels > 0 && parent.GetChildAdapterPosition(child) != 0)
+                    {
                         var shadowBottom = child.Top + topShadowHeightInPixels;
-                        shadow.SetBounds (left, child.Top, right, shadowBottom);
-                        shadow.Draw (c);
+                        shadow.SetBounds(left, child.Top, right, shadowBottom);
+                        shadow.Draw(c);
                     }
 
-                    if (m.HasFlag (bottom) && bottomShadowHeightInPixels > 0) {
+                    if (m.HasFlag(bottom) && bottomShadowHeightInPixels > 0)
+                    {
                         var reverseShadowTop = child.Bottom - bottomShadowHeightInPixels;
-                        reverseShadow.SetBounds (left, reverseShadowTop, right, child.Bottom);
-                        reverseShadow.Draw (c);
+                        reverseShadow.SetBounds(left, reverseShadowTop, right, child.Bottom);
+                        reverseShadow.Draw(c);
                     }
                 }
             }
         }
 
-        private bool ShouldDraw (View child)
+        private bool ShouldDraw(View child)
         {
-            if (child.Visibility != ViewStates.Visible || child.Alpha != 1.0f) {
+            if (child.Visibility != ViewStates.Visible || child.Alpha != 1.0f)
+            {
                 return false;
             }
             return true;
         }
     }
 
-    [AttributeUsage (AttributeTargets.Class)]
+    [AttributeUsage(AttributeTargets.Class)]
     public class ShadowAttribute : Attribute
     {
         [Flags]
         public enum Mode { Top = 1, Bottom = 2 };
         public readonly Mode Modes;
 
-        public ShadowAttribute (Mode modes)
+        public ShadowAttribute(Mode modes)
         {
             Modes = modes;
         }

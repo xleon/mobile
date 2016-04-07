@@ -17,83 +17,92 @@ namespace Toggl.Ross.ViewControllers
         private NewTagVM viewModel { get; set; }
         private IOnTagSelectedHandler handler;
 
-        public NewTagViewController (Guid workspaceId, IOnTagSelectedHandler handler)
+        public NewTagViewController(Guid workspaceId, IOnTagSelectedHandler handler)
         {
             Title = "NewTagTitle".Tr();
-            viewModel = new NewTagVM (StoreManager.Singleton.AppState, workspaceId);
+            viewModel = new NewTagVM(StoreManager.Singleton.AppState, workspaceId);
             this.handler = handler;
         }
 
         public override void LoadView()
         {
-            NavigationItem.RightBarButtonItem = new UIBarButtonItem (
+            NavigationItem.RightBarButtonItem = new UIBarButtonItem(
                 "NewTagAdd".Tr(), UIBarButtonItemStyle.Plain, OnAddTag)
-            .Apply (Style.NavLabelButton).Apply (Style.DisableNavLabelButton);
+            .Apply(Style.NavLabelButton).Apply(Style.DisableNavLabelButton);
             NavigationItem.RightBarButtonItem.Enabled = false;
 
-            var view = new UIView().Apply (Style.Screen);
+            var view = new UIView().Apply(Style.Screen);
 
-            view.Add (nameTextField = new TextField {
+            view.Add(nameTextField = new TextField
+            {
                 TranslatesAutoresizingMaskIntoConstraints = false,
-                AttributedPlaceholder = new NSAttributedString (
+                AttributedPlaceholder = new NSAttributedString(
                     "NewTagNameHint".Tr(),
                     foregroundColor: Color.Gray
                 ),
                 ShouldReturn = (tf) => tf.ResignFirstResponder(),
-            } .Apply (Style.NewProject.NameField));
-            nameTextField.EditingChanged += (sender, e) => ValidateTagName ();
+            } .Apply(Style.NewProject.NameField));
+            nameTextField.EditingChanged += (sender, e) => ValidateTagName();
 
-            view.AddConstraints (VerticalLinearLayout (view));
+            view.AddConstraints(VerticalLinearLayout(view));
 
             EdgesForExtendedLayout = UIRectEdge.None;
             View = view;
         }
 
-        public override void ViewDidAppear (bool animated)
+        public override void ViewDidAppear(bool animated)
         {
-            base.ViewDidAppear (animated);
+            base.ViewDidAppear(animated);
             nameTextField.BecomeFirstResponder();
         }
 
-        private void OnAddTag (object sender, EventArgs e)
+        private void OnAddTag(object sender, EventArgs e)
         {
-            var newTagData = viewModel.SaveTag (nameTextField.Text);
-            handler.OnCreateNewTag (newTagData);
+            var newTagData = viewModel.SaveTag(nameTextField.Text);
+            handler.OnCreateNewTag(newTagData);
         }
 
-        private IEnumerable<FluentLayout> VerticalLinearLayout (UIView container)
+        private IEnumerable<FluentLayout> VerticalLinearLayout(UIView container)
         {
             UIView prev = null;
 
-            var subviews = container.Subviews.Where (v => !v.Hidden).ToList();
-            foreach (var v in subviews) {
-                if (prev == null) {
-                    yield return v.AtTopOf (container, 10f);
-                } else {
-                    yield return v.Below (prev, 5f);
+            var subviews = container.Subviews.Where(v => !v.Hidden).ToList();
+            foreach (var v in subviews)
+            {
+                if (prev == null)
+                {
+                    yield return v.AtTopOf(container, 10f);
                 }
-                yield return v.Height().EqualTo (60f).SetPriority (UILayoutPriority.DefaultLow);
-                yield return v.Height().GreaterThanOrEqualTo (60f);
-                yield return v.AtLeftOf (container);
-                yield return v.AtRightOf (container);
+                else
+                {
+                    yield return v.Below(prev, 5f);
+                }
+                yield return v.Height().EqualTo(60f).SetPriority(UILayoutPriority.DefaultLow);
+                yield return v.Height().GreaterThanOrEqualTo(60f);
+                yield return v.AtLeftOf(container);
+                yield return v.AtRightOf(container);
 
                 prev = v;
             }
         }
 
-        private void ValidateTagName ()
+        private void ValidateTagName()
         {
             var valid = true;
             var name = nameTextField.Text;
 
-            if (string.IsNullOrWhiteSpace (name)) {
+            if (string.IsNullOrWhiteSpace(name))
+            {
                 valid = false;
             }
 
-            if (valid) {
-                NavigationItem.RightBarButtonItem.Apply (Style.NavLabelButton);
-            } else {
-                NavigationItem.RightBarButtonItem.Apply (Style.DisableNavLabelButton);
+            if (valid)
+            {
+                NavigationItem.RightBarButtonItem.Apply(Style.NavLabelButton);
+            }
+            else
+            {
+                NavigationItem.RightBarButtonItem.Apply(Style.DisableNavLabelButton);
             }
 
             NavigationItem.RightBarButtonItem.Enabled = valid;

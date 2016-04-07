@@ -8,21 +8,21 @@ namespace Toggl.Phoebe.Data
     public interface ISyncDataStore
     {
         TableQuery<T> Table<T> () where T : CommonData, new();
-        IReadOnlyList<ICommonData> Update (Action<ISyncDataStoreContext> worker);
-        void WipeTables ();
+        IReadOnlyList<ICommonData> Update(Action<ISyncDataStoreContext> worker);
+        void WipeTables();
 
-        int GetQueueSize (string queueId);
-        bool TryEnqueue (string queueId, string json);
-        bool TryDequeue (string queueId, out string json);
-        bool TryPeek (string queueId, out string json);
-        int ResetQueue (string queueId);
+        int GetQueueSize(string queueId);
+        bool TryEnqueue(string queueId, string json);
+        bool TryDequeue(string queueId, out string json);
+        bool TryPeek(string queueId, out string json);
+        int ResetQueue(string queueId);
     }
 
     public interface ISyncDataStoreContext
     {
-        void Put (ICommonData obj);
-        void Delete (ICommonData obj);
-        ICommonData GetByColumn (Type type, string colName, object colValue);
+        void Put(ICommonData obj);
+        void Delete(ICommonData obj);
+        ICommonData GetByColumn(Type type, string colName, object colValue);
         IReadOnlyList<ICommonData> UpdatedItems { get; }
         SQLiteConnection Connection { get; }
     }

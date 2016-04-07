@@ -13,31 +13,32 @@ namespace Toggl.Phoebe.Tests.Analytics
 
         protected override void StartNewSession()
         {
-            throw new ArgumentException (StartNewSessionException);
+            throw new ArgumentException(StartNewSessionException);
         }
 
-        protected override void SendTiming (long elapsedMilliseconds, string category, string variable, string label = null)
+        protected override void SendTiming(long elapsedMilliseconds, string category, string variable, string label = null)
         {
-            throw new ArgumentException (SendTimingExceptionMessage);
+            throw new ArgumentException(SendTimingExceptionMessage);
         }
 
-        protected override void SendEvent (string category, string action, string label = null, long value = 0L)
+        protected override void SendEvent(string category, string action, string label = null, long value = 0L)
         {
-            CurrentSendData = new SendData ();
+            CurrentSendData = new SendData();
             CurrentSendData.Category = category;
             CurrentSendData.Action = action;
             CurrentSendData.Label = label;
-            throw new ArgumentException (SendEventExceptionMessage);
+            throw new ArgumentException(SendEventExceptionMessage);
         }
 
-        protected override void SetCustomDimension (int idx, string value)
+        protected override void SetCustomDimension(int idx, string value)
         {
         }
 
         public override string CurrentScreen
         {
-            set {
-                throw new ArgumentException (StartNewSessionException);
+            set
+            {
+                throw new ArgumentException(StartNewSessionException);
             }
         }
 
@@ -51,7 +52,7 @@ namespace Toggl.Phoebe.Tests.Analytics
 
     public class FakeTracker : TestTracker
     {
-        protected override void SendEvent (string category, string action, string label = null, long value = 0L)
+        protected override void SendEvent(string category, string action, string label = null, long value = 0L)
         {
         }
     }

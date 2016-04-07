@@ -25,15 +25,17 @@ namespace Toggl.Ross.Data
 
         public NSUserDefaults UserDefaults
         {
-            get {
-                if (nsUserDefaults == null) {
-                    nsUserDefaults = new NSUserDefaults ("group." + NSBundle.MainBundle.BundleIdentifier, NSUserDefaultsType.SuiteName);
+            get
+            {
+                if (nsUserDefaults == null)
+                {
+                    nsUserDefaults = new NSUserDefaults("group." + NSBundle.MainBundle.BundleIdentifier, NSUserDefaultsType.SuiteName);
                 }
                 return nsUserDefaults;
             }
         }
 
-        public WidgetUpdateService ()
+        public WidgetUpdateService()
         {
             // Update auth state from platform service.
             //
@@ -44,8 +46,8 @@ namespace Toggl.Ross.Data
             //var authManager = ServiceContainer.Resolve<AuthManager>();
 
             //IsUserLogged = authManager.IsAuthenticated;
-            SetAppActivated (true);
-            SetAppOnBackground (false);
+            SetAppActivated(true);
+            SetAppOnBackground(false);
             rootController = UIApplication.SharedApplication.KeyWindow.RootViewController;
         }
 
@@ -72,11 +74,14 @@ namespace Toggl.Ross.Data
 
         public string RunningEntryDuration
         {
-            get {
+            get
+            {
                 return duration;
-            } set {
+            }
+            set
+            {
                 duration = value;
-                UserDefaults.SetString (duration, MillisecondsKey);
+                UserDefaults.SetString(duration, MillisecondsKey);
             }
         }
 
@@ -84,11 +89,14 @@ namespace Toggl.Ross.Data
 
         public bool IsUserLogged
         {
-            get {
+            get
+            {
                 return isLogged;
-            } set {
+            }
+            set
+            {
                 isLogged = value;
-                UserDefaults.SetBool (isLogged, IsUserLoggedKey);
+                UserDefaults.SetBool(isLogged, IsUserLoggedKey);
                 UpdateWidgetContent();
             }
         }
@@ -97,26 +105,29 @@ namespace Toggl.Ross.Data
 
         public Guid EntryIdStarted
         {
-            get {
+            get
+            {
                 Guid entryId;
-                Guid.TryParse (UserDefaults.StringForKey (StartedEntryKey), out entryId);
+                Guid.TryParse(UserDefaults.StringForKey(StartedEntryKey), out entryId);
                 return entryId;
-            } set {
+            }
+            set
+            {
                 entryIdStarted = value;
             }
         }
 
         #endregion
 
-        public void SetAppActivated (bool isActivated)
+        public void SetAppActivated(bool isActivated)
         {
-            UserDefaults.SetBool (isActivated, AppActiveEntryKey);
+            UserDefaults.SetBool(isActivated, AppActiveEntryKey);
             UpdateWidgetContent();
         }
 
-        public void SetAppOnBackground (bool isBackground)
+        public void SetAppOnBackground(bool isBackground)
         {
-            UserDefaults.SetBool (isBackground, AppBackgroundEntryKey);
+            UserDefaults.SetBool(isBackground, AppBackgroundEntryKey);
             UpdateWidgetContent();
         }
 
@@ -140,9 +151,10 @@ namespace Toggl.Ross.Data
 
         public void UpdateWidgetContent()
         {
-            if (ServiceContainer.Resolve<IPlatformUtils> ().IsWidgetAvailable) {
-                var controller = NCWidgetController.GetWidgetController ();
-                controller.SetHasContent (true, NSBundle.MainBundle.BundleIdentifier + ".today");
+            if (ServiceContainer.Resolve<IPlatformUtils> ().IsWidgetAvailable)
+            {
+                var controller = NCWidgetController.GetWidgetController();
+                controller.SetHasContent(true, NSBundle.MainBundle.BundleIdentifier + ".today");
             }
         }
     }

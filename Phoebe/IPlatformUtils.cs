@@ -34,6 +34,6 @@ namespace Toggl.Phoebe
         /// Run an action using the UI thread.
         /// </summary>
         /// <value>Detect if widget is available or not</value>
-        void DispatchOnUIThread  (Action action);
+        void DispatchOnUIThread(Action action);
     }
 }

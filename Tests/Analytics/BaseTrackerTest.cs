@@ -13,103 +13,118 @@ namespace Toggl.Phoebe.Tests.Analytics
     {
         private TestTracker tracker;
 
-        public override void SetUp ()
+        public override void SetUp()
         {
             base.SetUp();
             ServiceContainer.Register<ISettingsStore> (Mock.Of<ISettingsStore> (
                         (store) => store.ExperimentId == (string)null));
-            ServiceContainer.Register<ExperimentManager> (new ExperimentManager ());
-            tracker = new TestTracker ();
+            ServiceContainer.Register<ExperimentManager> (new ExperimentManager());
+            tracker = new TestTracker();
         }
 
         [Test]
-        [ExpectedException (typeof (ArgumentException))]
-        public void TestSendAppInitTime ()
+        [ExpectedException(typeof(ArgumentException))]
+        public void TestSendAppInitTime()
         {
-            tracker.SendAppInitTime (TimeSpan.FromMilliseconds (1000));
+            tracker.SendAppInitTime(TimeSpan.FromMilliseconds(1000));
         }
 
         [Test]
         public void TestAuthChanged()
         {
-            Assert.Throws<ArgumentException> (()=>SendAuthMessage (AuthChangeReason.Login), "Start a new session whenever the user changes.");
-            Assert.DoesNotThrow (()=>SendAuthMessage (AuthChangeReason.Signup), "Exception being signup where the user just created an account.");
+            Assert.Throws<ArgumentException> (() => SendAuthMessage(AuthChangeReason.Login), "Start a new session whenever the user changes.");
+            Assert.DoesNotThrow(() => SendAuthMessage(AuthChangeReason.Signup), "Exception being signup where the user just created an account.");
         }
 
-        private void SendAuthMessage (AuthChangeReason reason)
+        private void SendAuthMessage(AuthChangeReason reason)
         {
-            var authManager = new AuthManager ();
+            var authManager = new AuthManager();
             ServiceContainer.Register<AuthManager> (authManager);
-            MessageBus.Send (new AuthChangedMessage (authManager, reason));
+            MessageBus.Send(new AuthChangedMessage(authManager, reason));
         }
 
         [Test]
-        public void TestSendSettingsChangeEvent ()
+        public void TestSendSettingsChangeEvent()
         {
-            Assert.Throws<ArgumentException> (()=> tracker.SendSettingsChangeEvent (SettingName.AskForProject));
-            Assert.AreEqual (tracker.CurrentSendData.Label, "AskForProject");
+            Assert.Throws<ArgumentException> (() => tracker.SendSettingsChangeEvent(SettingName.AskForProject));
+            Assert.AreEqual(tracker.CurrentSendData.Label, "AskForProject");
 
-            try {
-                tracker.SendSettingsChangeEvent ((SettingName)100);
-            } catch (ArgumentException e) {
-                Assert.AreNotEqual (TestTracker.SendEventExceptionMessage, e.Message);
+            try
+            {
+                tracker.SendSettingsChangeEvent((SettingName)100);
+            }
+            catch (ArgumentException e)
+            {
+                Assert.AreNotEqual(TestTracker.SendEventExceptionMessage, e.Message);
             }
         }
 
         [Test]
-        public void TestSendAccountLoginEvent ()
+        public void TestSendAccountLoginEvent()
         {
-            Assert.Throws<ArgumentException> (()=> tracker.SendAccountLoginEvent (AccountCredentials.Password));
-            Assert.AreEqual (tracker.CurrentSendData.Label, "Password");
+            Assert.Throws<ArgumentException> (() => tracker.SendAccountLoginEvent(AccountCredentials.Password));
+            Assert.AreEqual(tracker.CurrentSendData.Label, "Password");
 
-            try {
-                tracker.SendAccountLoginEvent ((AccountCredentials)100);
-            } catch (ArgumentException e) {
-                Assert.AreNotEqual (TestTracker.SendEventExceptionMessage, e.Message);
+            try
+            {
+                tracker.SendAccountLoginEvent((AccountCredentials)100);
+            }
+            catch (ArgumentException e)
+            {
+                Assert.AreNotEqual(TestTracker.SendEventExceptionMessage, e.Message);
             }
         }
 
         [Test]
-        public void TestSendAccountCreateEvent ()
+        public void TestSendAccountCreateEvent()
         {
-            Assert.Throws<ArgumentException> (()=> tracker.SendAccountCreateEvent (AccountCredentials.Password));
-            Assert.AreEqual (tracker.CurrentSendData.Label, "Password");
+            Assert.Throws<ArgumentException> (() => tracker.SendAccountCreateEvent(AccountCredentials.Password));
+            Assert.AreEqual(tracker.CurrentSendData.Label, "Password");
 
-            try {
-                tracker.SendAccountCreateEvent ((AccountCredentials)100);
-            } catch (ArgumentException e) {
-                Assert.AreNotEqual (TestTracker.SendEventExceptionMessage, e.Message);
+            try
+            {
+                tracker.SendAccountCreateEvent((AccountCredentials)100);
+            }
+            catch (ArgumentException e)
+            {
+                Assert.AreNotEqual(TestTracker.SendEventExceptionMessage, e.Message);
             }
         }
 
         [Test]
-        [ExpectedException (typeof (ArgumentException))]
-        public void TestSendAccountLogoutEvent ()
+        [ExpectedException(typeof(ArgumentException))]
+        public void TestSendAccountLogoutEvent()
         {
-            tracker.SendAccountLogoutEvent ();
+            tracker.SendAccountLogoutEvent();
         }
 
         [Test]
-        public void TestSendTimerStartEvent ()
+        public void TestSendTimerStartEvent()
         {
-            Assert.Throws<ArgumentException> (()=> tracker.SendTimerStartEvent (TimerStartSource.AppNew));
+            Assert.Throws<ArgumentException> (() => tracker.SendTimerStartEvent(TimerStartSource.AppNew));
 
-            try {
-                tracker.SendTimerStartEvent ((TimerStartSource)100);
-            } catch (ArgumentException e) {
-                Assert.AreNotEqual (TestTracker.SendEventExceptionMessage, e.Message);
+            try
+            {
+                tracker.SendTimerStartEvent((TimerStartSource)100);
+            }
+            catch (ArgumentException e)
+            {
+                Assert.AreNotEqual(TestTracker.SendEventExceptionMessage, e.Message);
             }
         }
 
         [Test]
-        public void TestSendTimerStopEvent ()
+        public void TestSendTimerStopEvent()
         {
-            Assert.Throws<ArgumentException> (()=> tracker.SendTimerStopEvent (TimerStopSource.App));
+            Assert.Throws<ArgumentException> (() => tracker.SendTimerStopEvent(TimerStopSource.App));
 
-            try {
-                tracker.SendTimerStopEvent ((TimerStopSource)100);
-            } catch (ArgumentException e) {
-                Assert.AreNotEqual (TestTracker.SendEventExceptionMessage, e.Message);
+            try
+            {
+                tracker.SendTimerStopEvent((TimerStopSource)100);
+            }
+            catch (ArgumentException e)
+            {
+                Assert.AreNotEqual(TestTracker.SendEventExceptionMessage, e.Message);
             }
         }
     }

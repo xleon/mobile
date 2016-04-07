@@ -21,42 +21,42 @@ namespace Toggl.Chandler.UI.Views
 
         private float fadedAlpha;
 
-        public RecentListItemLayout (Context context) : base (context)
+        public RecentListItemLayout(Context context) : base(context)
         {
-            Initialize ();
+            Initialize();
         }
 
-        public RecentListItemLayout (Context context, IAttributeSet attrs) : base (context, attrs)
+        public RecentListItemLayout(Context context, IAttributeSet attrs) : base(context, attrs)
         {
-            Initialize ();
+            Initialize();
         }
 
-        public RecentListItemLayout (Context context, IAttributeSet attrs, int defStyle) : base (context, attrs, defStyle)
+        public RecentListItemLayout(Context context, IAttributeSet attrs, int defStyle) : base(context, attrs, defStyle)
         {
-            Initialize ();
+            Initialize();
         }
 
-        void Initialize ()
+        void Initialize()
         {
             fadedAlpha = 0.3f;
         }
 
-        protected override void OnFinishInflate ()
+        protected override void OnFinishInflate()
         {
             DescriptionTextView = FindViewById<TextView> (Resource.Id.RecentListDescription);
             ProjectTextView = FindViewById<TextView> (Resource.Id.RecentListProject);
             ColorView = FindViewById<View> (Resource.Id.ColorView);
-            base.OnFinishInflate ();
+            base.OnFinishInflate();
         }
 
-        public void OnCenterPosition (bool p0)
+        public void OnCenterPosition(bool p0)
         {
             DescriptionTextView.Alpha = 1f;
             ProjectTextView.Alpha = 1f;
             ColorView.Alpha = 1f;
         }
 
-        public void OnNonCenterPosition (bool p0)
+        public void OnNonCenterPosition(bool p0)
         {
             DescriptionTextView.Alpha = fadedAlpha;
             ProjectTextView.Alpha = fadedAlpha;

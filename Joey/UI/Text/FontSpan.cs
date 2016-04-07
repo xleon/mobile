@@ -10,36 +10,38 @@ namespace Toggl.Joey.UI.Text
     {
         private readonly Font font;
 
-        public FontSpan (Font font)
+        public FontSpan(Font font)
         {
             this.font = font;
         }
 
-        public override void UpdateDrawState (TextPaint p)
+        public override void UpdateDrawState(TextPaint p)
         {
-            ApplyFont (p);
+            ApplyFont(p);
         }
 
-        public override void UpdateMeasureState (TextPaint p)
+        public override void UpdateMeasureState(TextPaint p)
         {
-            ApplyFont (p);
+            ApplyFont(p);
         }
 
-        private void ApplyFont (TextPaint p)
+        private void ApplyFont(TextPaint p)
         {
             var oldTypeface = p.Typeface;
             var oldStyle = oldTypeface != null ? oldTypeface.Style : TypefaceStyle.Normal;
             var fakeStyle = oldStyle & ~font.Typeface.Style;
 
-            if ((fakeStyle & TypefaceStyle.Bold) != 0) {
+            if ((fakeStyle & TypefaceStyle.Bold) != 0)
+            {
                 p.FakeBoldText = true;
             }
 
-            if ((fakeStyle & TypefaceStyle.Italic) != 0) {
+            if ((fakeStyle & TypefaceStyle.Italic) != 0)
+            {
                 p.TextSkewX = -0.25f;
             }
 
-            p.SetTypeface (font.Typeface);
+            p.SetTypeface(font.Typeface);
         }
     }
 }

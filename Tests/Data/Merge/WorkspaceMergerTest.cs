@@ -9,18 +9,19 @@ namespace Toggl.Phoebe.Tests.Data.Merge
     public class WorkspaceMergerTest : MergeTest
     {
         [Test]
-        public void TestDefault ()
+        public void TestDefault()
         {
-            var workspaceId = Guid.NewGuid ();
+            var workspaceId = Guid.NewGuid();
 
             // Data before server push
-            var merger = new WorkspaceMerger (new WorkspaceData () {
+            var merger = new WorkspaceMerger(new WorkspaceData()
+            {
                 Id = workspaceId,
                 RemoteId = null,
                 RemoteRejected = false,
                 DeletedAt = null,
                 IsDirty = true,
-                ModifiedAt = new DateTime (2014, 1, 10, 10, 0, 0, DateTimeKind.Utc),
+                ModifiedAt = new DateTime(2014, 1, 10, 10, 0, 0, DateTimeKind.Utc),
                 Name = "Initial",
                 IsPremium = false,
                 DefaultRate = 10,
@@ -33,13 +34,14 @@ namespace Toggl.Phoebe.Tests.Data.Merge
             });
 
             // Data from server
-            merger.Add (new WorkspaceData () {
+            merger.Add(new WorkspaceData()
+            {
                 Id = workspaceId,
                 RemoteId = 1,
                 RemoteRejected = false,
                 DeletedAt = null,
                 IsDirty = false,
-                ModifiedAt = new DateTime (2014, 1, 10, 10, 0, 1, DateTimeKind.Utc),
+                ModifiedAt = new DateTime(2014, 1, 10, 10, 0, 1, DateTimeKind.Utc),
                 Name = "Initial",
                 IsPremium = true,
                 DefaultRate = 10,
@@ -52,13 +54,14 @@ namespace Toggl.Phoebe.Tests.Data.Merge
             });
 
             // Data changed by user in the mean time
-            merger.Add (new WorkspaceData () {
+            merger.Add(new WorkspaceData()
+            {
                 Id = workspaceId,
                 RemoteId = null,
                 RemoteRejected = false,
                 DeletedAt = null,
                 IsDirty = true,
-                ModifiedAt = new DateTime (2014, 1, 10, 10, 0, 2, DateTimeKind.Utc),
+                ModifiedAt = new DateTime(2014, 1, 10, 10, 0, 2, DateTimeKind.Utc),
                 Name = "Changed",
                 IsPremium = false,
                 DefaultRate = 10,
@@ -71,13 +74,14 @@ namespace Toggl.Phoebe.Tests.Data.Merge
             });
 
             // Merged version
-            AssertPropertiesEqual (new WorkspaceData () {
+            AssertPropertiesEqual(new WorkspaceData()
+            {
                 Id = workspaceId,
                 RemoteId = 1,
                 RemoteRejected = false,
                 DeletedAt = null,
                 IsDirty = true,
-                ModifiedAt = new DateTime (2014, 1, 10, 10, 0, 2, DateTimeKind.Utc),
+                ModifiedAt = new DateTime(2014, 1, 10, 10, 0, 2, DateTimeKind.Utc),
                 Name = "Changed",
                 IsPremium = true,
                 DefaultRate = 10,

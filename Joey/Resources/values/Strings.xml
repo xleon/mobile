@@ -77,8 +77,9 @@
     <string name="ProjectsNewProject">Create new project</string>
     <string name="ProjectsTasks">TASKS</string>
     <string name="ProjectsTitle">Projects</string>
-    <string name="ProjectsMostUsed">Most used projects</string>
+    <string name="ProjectsTop">Top Projects</string>
     <string name="ProjectsNoClient">No client</string>
+    <string name="ProjectsTasks">{0} tasks</string>
     <string name="ProjectsNamelessWorkspace">(nameless workspace)</string>
     <string name="NewProjectTitle">New project</string>
     <string name="NewProjectProjectFieldName">Project</string>

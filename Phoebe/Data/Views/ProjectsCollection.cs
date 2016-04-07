@@ -49,7 +49,6 @@ namespace Toggl.Phoebe.Data.Views
                                                v.clients.FirstOrDefault (c => c.Id == p.ClientId),
                                                v.tasks.Count (t => t.ProjectId == p.Id))
                                                     ).ToList ();
-
             // Create collection
             v.CreateSortedCollection (v.projects);
             return v;
@@ -128,7 +127,7 @@ namespace Toggl.Phoebe.Data.Views
             Reset (data);
         }
 
-        public void AddTasks (ProjectData project)
+        public bool AddTasks (ProjectData project)
         {
             // Remove previous tasks
             var oldTaskIndex = this.IndexOf (p => p is TaskData);
@@ -140,7 +139,10 @@ namespace Toggl.Phoebe.Data.Views
             var newTaskIndex = this.IndexOf (p => p.Id == project.Id) + 1;
             if (oldTaskIndex != newTaskIndex) {
                 InsertRange (tasks.Where (p => p.ProjectId == project.Id), newTaskIndex);
+                return true;
             }
+
+            return false;
         }
 
         public class SuperProjectData : ProjectData

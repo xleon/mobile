@@ -21,7 +21,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:layout_marginLeft="29dp"
+            android:layout_marginLeft="13dp"
             android:layout_marginRight="15dp"
             android:gravity="center_vertical"
             app:fadeLength="15dp">
@@ -45,14 +45,18 @@
                 android:alpha=".8"
                 android:layout_marginLeft="10dp" />
         </toggl.joey.ui.views.FadeLinearLayout>
-        <ImageButton
+        <Button
             android:id="@+id/TasksButton"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
-            android:src="@drawable/TasksButtonBackground"
             android:layout_gravity="center"
             android:paddingRight="25dp"
             android:paddingLeft="25dp"
+            android:textColor="#4dd965"
+            android:textSize="16sp"
+            android:textAllCaps="false"
+            android:drawableRight="@drawable/ic_arrow_down_green"
+            android:drawablePadding="6dp"
             android:background="@null" />
     </LinearLayout>
 </RelativeLayout>

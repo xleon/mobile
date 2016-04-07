@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Android.App;
 using Android.Content;
@@ -9,10 +10,12 @@ using Android.Views;
 using Android.Widget;
 using Toggl.Joey.UI.Activities;
 using Toggl.Joey.UI.Adapters;
+using Toggl.Joey.UI.Utils;
 using Toggl.Joey.UI.Views;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.ViewModels;
 using Toggl.Phoebe.Data.Views;
+using XPlatUtils;
 using ActionBar = Android.Support.V7.App.ActionBar;
 using Activity = Android.Support.V7.App.AppCompatActivity;
 using Fragment = Android.Support.V4.App.Fragment;
@@ -71,7 +74,6 @@ namespace Toggl.Joey.UI.Fragments
 
             recyclerView = view.FindViewById<RecyclerView> (Resource.Id.ProjectListRecyclerView);
             recyclerView.SetLayoutManager (new LinearLayoutManager (Activity));
-            recyclerView.AddItemDecoration (new ShadowItemDecoration (Activity));
             recyclerView.AddItemDecoration (new DividerItemDecoration (Activity, DividerItemDecoration.VerticalList));
 
             emptyStateLayout = view.FindViewById<LinearLayout> (Resource.Id.ProjectListEmptyState);
@@ -97,8 +99,9 @@ namespace Toggl.Joey.UI.Fragments
             base.OnViewCreated (view, savedInstanceState);
             viewModel = await ProjectListViewModel.Init (WorkspaceId);
 
-            var adapter = new ProjectListAdapter (recyclerView, viewModel.ProjectList);
+            var adapter = new ProjectListAdapter (recyclerView, viewModel);
             adapter.HandleItemSelection = OnItemSelected;
+
             recyclerView.SetAdapter (adapter);
 
             ConfigureUIViews ();
@@ -110,7 +113,7 @@ namespace Toggl.Joey.UI.Fragments
             // Set toolbar scrollable or not.
             var _params = new AppBarLayout.LayoutParams (toolBar.LayoutParameters);
 
-            if (viewModel.WorkspaceList.Any ()) {
+            if (viewModel.WorkspaceList.Any()) {
                 tabLayout.Visibility = ViewStates.Visible;
                 _params.ScrollFlags  = AppBarLayout.LayoutParams.ScrollFlagScroll | AppBarLayout.LayoutParams.ScrollFlagEnterAlways;
             } else {
@@ -154,7 +157,7 @@ namespace Toggl.Joey.UI.Fragments
             Guid taskId = Guid.Empty;
 
             if (m is ProjectData) {
-                if (! ((ProjectsCollection.SuperProjectData)m).IsEmpty) {
+                if (! (m is ProjectsCollection.SuperProjectData && ((ProjectsCollection.SuperProjectData)m).IsEmpty)) {
                     projectId = m.Id;
                 }
             } else if (m is TaskData) {

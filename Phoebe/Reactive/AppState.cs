@@ -236,10 +236,12 @@ namespace Toggl.Phoebe.Reactive
                     dataStore.Table<TagData> ().ForEach(x => tags.Add(x.Id, x));
                 }
             }
-            catch (Exception ex)
+            catch // (Exception ex)
             {
-                var logger = ServiceContainer.Resolve<ILogger> ();
-                logger.Error(typeof(AppState).Name, ex, "UserId in settings not found in db: {0}", ex.Message);
+                // TODO RX: logger.Error ends up calling AppState.Setting which is not initialised yet
+                //var logger = ServiceContainer.Resolve<ILogger> ();
+                //logger.Error(typeof(AppState).Name, ex, "UserId in settings not found in db: {0}", ex.Message);
+
                 // When data is corrupt and cannot find user
                 settings = settings.With(userId: Guid.Empty);
             }

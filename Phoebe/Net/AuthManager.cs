@@ -363,6 +363,7 @@ namespace Toggl.Phoebe.Net
             credStore.UserId = null;
             credStore.ApiToken = null;
             credStore.OfflineMode = false;
+            credStore.SyncLastRun = null;
 
             IsAuthenticated = false;
             Token = null;

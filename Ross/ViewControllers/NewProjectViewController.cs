@@ -128,7 +128,9 @@ namespace Toggl.Ross.ViewControllers
 
         private async void OnSetBtnPressed(object sender, EventArgs e)
         {
-            // TODO Disable Set button?
+            // Protect againts double touch!
+            NavigationItem.RightBarButtonItem.Enabled = false;
+
             var projectName = nameTextField.Text;
             var existsName = ViewModel.ExistProjectWithName(projectName);
             if (existsName)
@@ -147,6 +149,7 @@ namespace Toggl.Ross.ViewControllers
                     }
                 };
                 alert.Show();
+                NavigationItem.RightBarButtonItem.Enabled = true;
                 return;
             }
 

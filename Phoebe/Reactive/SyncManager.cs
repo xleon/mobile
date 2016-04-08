@@ -187,8 +187,10 @@ namespace Toggl.Phoebe.Reactive
             foreach (var req in syncMsg.ServerRequests.Where(x => x is ServerRequest.CRUD == false))
                 requestManager.OnNext(Tuple.Create(req, syncMsg.State));
 
+            // Call message continuation before execute long ops.
             if (syncMsg.Continuation != null)
                 syncMsg.Continuation.Invoke(syncMsg.State, remoteObjects, enqueuedItems);
+
         }
 
         async Task<bool> TryEmptyQueue(List<CommonData> remoteObjects, AppState state, bool isConnected)

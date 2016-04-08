@@ -70,6 +70,9 @@ namespace Toggl.Ross.ViewControllers
 
         private async void OnNavigationBarAddClicked(object sender, EventArgs e)
         {
+            // Protect againts double touch!
+            NavigationItem.RightBarButtonItem.Enabled = false;
+
             var clientData = await ViewModel.SaveClientAsync(NameTextField.Text);
             handler.OnClientSelected(clientData);
         }

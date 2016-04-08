@@ -229,7 +229,7 @@ namespace Toggl.Phoebe.Tests.Reactive
                 x.DurationOnly = true;
                 x.StartTime = startTime;
                 x.StopTime = startTime.AddMinutes(1);
-                x.Taggss = new List<Guid> ();
+                x.Tags = new List<string> ();
                 x.TaskRemoteId = null;
                 x.UserRemoteId = userRemoteId;
                 x.WorkspaceRemoteId = workspaceRemoteId;

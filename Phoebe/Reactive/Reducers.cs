@@ -193,6 +193,7 @@ namespace Toggl.Phoebe.Reactive
         {
             var entryData = (msg as DataMsg.TimeEntryPut).Data.ForceLeft();
             var dataStore = ServiceContainer.Resolve<ISyncDataStore>();
+            // TODO Rx Poor use of "DataMsg.TimeEntryPut" and the plain TagNames property?
             var tagList = (msg as DataMsg.TimeEntryPut).TagNames;
 
             var updated = dataStore.Update(ctx =>

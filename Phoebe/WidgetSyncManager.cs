@@ -79,7 +79,7 @@ namespace Toggl.Phoebe
         public async Task ContinueTimeEntry (Guid timeEntryId)
         {
             var entryModel = new TimeEntryModel (timeEntryId);
-            await TimeEntryModel.ContinueAsync (entryModel.Data);
+            await TimeEntryModel.StartAsync (entryModel.Data);
             ServiceContainer.Resolve<ITracker>().SendTimerStartEvent (TimerStartSource.WidgetStart);
         }
 
@@ -122,7 +122,7 @@ namespace Toggl.Phoebe
                         Description = entry.Description,
                         Color = ProjectModel.HexColors [ project.Color % ProjectModel.HexColors.Length],
                         IsRunning = entry.State == TimeEntryState.Running,
-                        TimeValue = (entry.StopTime - entry.StartTime).ToString(),
+                        TimeValue = GetFormattedDuration ((TimeSpan) (entry.StopTime - entry.StartTime)),
                         Duration = (entry.StopTime.HasValue ? entry.StopTime.Value : Time.UtcNow) - entry.StartTime,
                     });
 
@@ -139,6 +139,30 @@ namespace Toggl.Phoebe
                 // Dispathc ended message.
                 messageBus.Send<SyncWidgetMessage> (new SyncWidgetMessage (this));
             }
+        }
+
+        public static string GetFormattedDuration (TimeSpan duration)
+        {
+            string formattedString = String.Format ("{0}:{1}", (int)duration.TotalHours, duration.ToString (@"mm\:ss"));
+
+            var user = ServiceContainer.Resolve<AuthManager> ().User;
+
+            if (user == null) {
+                return formattedString;
+            }
+
+            if (user.DurationFormat == DurationFormat.Classic) {
+                if (duration.TotalMinutes < 1) {
+                    formattedString = duration.ToString (@"s\ \s\e\c");
+                } else if (duration.TotalMinutes > 1 && duration.TotalMinutes < 60) {
+                    formattedString = duration.ToString (@"mm\:ss\ \m\i\n");
+                } else {
+                    formattedString = String.Format ("{0}:{1}", (int)duration.TotalHours, duration.ToString (@"mm\:ss"));
+                }
+            } else if (user.DurationFormat == DurationFormat.Decimal) {
+                formattedString = String.Format ("{0:0.00} h", duration.TotalHours);
+            }
+            return formattedString;
         }
 
         private void OnAuthPropertyChanged (object sender, PropertyChangedEventArgs args)

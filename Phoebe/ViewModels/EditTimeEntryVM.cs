@@ -15,31 +15,26 @@ namespace Toggl.Phoebe.ViewModels
 {
     public class EditTimeEntryVM : ViewModelBase, IDisposable
     {
-        internal static readonly string DefaultTag = "mobile";
-
         private IDisposable subscriptionState, subscriptionTimer;
         private RichTimeEntry richData;
         private RichTimeEntry previousData;
 
         public EditTimeEntryVM(AppState appState, Guid timeEntryId, bool isManual = false)
         {
-            List<Guid> tagList;
             IsManual = isManual;
 
             if (timeEntryId == Guid.Empty)
             {
                 richData = isManual ? new RichTimeEntry(appState.GetTimeEntryDraft(), appState) : appState.ActiveEntry;
-                tagList = GetDefaultTagList(appState, richData.Data).Select(x => x.Id).ToList();
             }
             else
             {
                 richData = appState.TimeEntries[timeEntryId];
-                tagList = new List<Guid> (richData.Data.TagIds);
             }
 
             UpdateView(x =>
             {
-                x.TagIds = tagList;
+                x.Tags = new List<string> (richData.Data.Tags);
                 if (IsManual)
                 {
                     x.StartTime = Time.UtcNow.AddMinutes(-5);
@@ -51,7 +46,7 @@ namespace Toggl.Phoebe.ViewModels
             // Save previous state.
             previousData = IsManual
                            // Hack to force tag saving even if there're no other changes
-                           ? new RichTimeEntry(richData.Data.With(x => x.TagIds = new List<Guid> ()), appState)
+                           ? new RichTimeEntry(richData.Data.With(x => x.Tags = new List<string> ()), appState)
                            : new RichTimeEntry(richData.Data, richData.Info);
 
             subscriptionState = StoreManager
@@ -126,7 +121,7 @@ namespace Toggl.Phoebe.ViewModels
         public string ProjectName { get { return richData.Info.ProjectData.Name ?? string.Empty; } }
         public string TaskName { get { return richData.Info.TaskData.Name ?? string.Empty; } }
         public string ClientName { get { return richData.Info.ClientData.Name ?? string.Empty; } }
-        public IReadOnlyList<ITagData> TagList { get { return richData.Info.Tags; } }
+        public IReadOnlyList<string> Tags { get { return richData.Data.Tags; } }
 
         #endregion
 
@@ -179,9 +174,9 @@ namespace Toggl.Phoebe.ViewModels
             //ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Change Stop Time";
         }
 
-        public void ChangeTagList(IEnumerable<Guid> newTags)
+        public void ChangeTagList(IEnumerable<string> newTags)
         {
-            UpdateView(x => x.TagIds = newTags.ToList(), nameof(TagList));
+            UpdateView(x => x.Tags = newTags.ToList(), nameof(Tags));
         }
 
         public void ChangeDescription(string description)
@@ -203,7 +198,7 @@ namespace Toggl.Phoebe.ViewModels
         {
             if (!previousData.Data.PublicInstancePropertiesEqual(richData.Data))
             {
-                RxChain.Send(new DataMsg.TimeEntryPut(richData.Data, TagList.Select(x => x.Name)));
+                RxChain.Send(new DataMsg.TimeEntryPut(richData.Data, Tags));
                 previousData = richData;
             }
         }
@@ -272,32 +267,6 @@ namespace Toggl.Phoebe.ViewModels
                 x.TaskId = taskId;
                 x.TaskRemoteId = taskRemoteId;
             });
-        }
-
-        private static List<ITagData> GetDefaultTagList(AppState appState, ITimeEntryData data)
-        {
-            if (!appState.Settings.UseDefaultTag)
-            {
-                return new List<ITagData> ();
-            }
-
-            var defaultTagList =
-                appState.Tags.Values.Where(
-                    r => r.Name == DefaultTag && r.WorkspaceId == data.WorkspaceId).ToList();
-
-            if (defaultTagList.Count == 0)
-            {
-                defaultTagList = new List<ITagData>
-                {
-                    TagData.Create(x => {
-                        x.Name = DefaultTag;
-                        x.WorkspaceId = data.WorkspaceId;
-                        x.WorkspaceRemoteId = data.WorkspaceRemoteId;
-                    })
-                };
-                RxChain.Send(new DataMsg.TagsPut(defaultTagList));
-            }
-            return defaultTagList;
         }
     }
 }

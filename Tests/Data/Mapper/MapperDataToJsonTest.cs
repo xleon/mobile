@@ -287,7 +287,7 @@ namespace Toggl.Phoebe.Tests.Data.Mapper
         [Test]
         public void TestTimeEntryJsonMap()
         {
-            var tags = new System.Collections.Generic.List<Guid> ();
+            var tags = new System.Collections.Generic.List<string> ();
             var duration = TimeSpan.FromMinutes(3);
             var startTime = new DateTime(DateTime.Now.Ticks);
             var stopTime = startTime + duration;
@@ -301,7 +301,7 @@ namespace Toggl.Phoebe.Tests.Data.Mapper
                 x.DurationOnly = true;
                 x.StartTime = startTime;
                 x.StopTime = stopTime;
-                x.TagIds = tags;
+                x.Tags = tags;
                 x.TaskRemoteId = null;
                 x.UserRemoteId = 333;
                 x.WorkspaceRemoteId = 222;

@@ -115,6 +115,7 @@ namespace Toggl.Phoebe.Data
             public TimeEntryPut(ITimeEntryData data)
             {
                 Data = Either<ITimeEntryData, Exception>.Left(data);
+                TagNames = data.Tags;
             }
 
             public TimeEntryPut(ITimeEntryData data, IEnumerable<string> tagNames)

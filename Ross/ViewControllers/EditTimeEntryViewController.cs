@@ -40,7 +40,7 @@ namespace Toggl.Ross.ViewControllers
         // to avoid weak references to be removed
         private Binding<string, string> durationBinding, projectBinding, clientBinding, descriptionBinding, taskBinding, projectColorBinding;
         private Binding<DateTime, DateTime> startTimeBinding, stopTimeBinding;
-        private Binding<IReadOnlyList<ITagData>, IReadOnlyList<ITagData>> tagBinding;
+        private Binding<IReadOnlyList<string>, IReadOnlyList<string>> tagBinding;
         private Binding<bool, bool> isBillableBinding, isRunningBinding, isPremiumBinding;
 
         protected EditTimeEntryVM ViewModel { get; set; }
@@ -153,9 +153,9 @@ namespace Toggl.Ross.ViewControllers
             projectColorBinding = this.SetBinding(() => ViewModel.ProjectColorHex, () => projectButton.ProjectColorHex);
             taskBinding = this.SetBinding(() => ViewModel.TaskName, () => projectButton.TaskName);
             clientBinding = this.SetBinding(() => ViewModel.ClientName, () => projectButton.ClientName);
-            tagBinding = this.SetBinding(() => ViewModel.TagList).WhenSourceChanges(() =>
+            tagBinding = this.SetBinding(() => ViewModel.Tags).WhenSourceChanges(() =>
             {
-                FeedTags(ViewModel.TagList.Select(tag => tag.Name).ToList(), tagsButton);
+                FeedTags(ViewModel.Tags.ToList(), tagsButton);
             });
             descriptionBinding = this.SetBinding(() => ViewModel.Description, () => descriptionTextField.Text);
             isPremiumBinding = this.SetBinding(() => ViewModel.IsPremium, () => billableSwitch.Hidden).ConvertSourceToTarget(isPremium => !isPremium);
@@ -265,7 +265,7 @@ namespace Toggl.Ross.ViewControllers
 
         private void OnTagsButtonTouchUpInside(object sender, EventArgs e)
         {
-            var controller = new TagSelectionViewController(ViewModel.WorkspaceId, ViewModel.TagList, this);
+            var controller = new TagSelectionViewController(ViewModel.WorkspaceId, ViewModel.Tags, this);
             NavigationController.PushViewController(controller, true);
         }
 
@@ -347,17 +347,17 @@ namespace Toggl.Ross.ViewControllers
         #endregion
 
         #region IUpdateTagList implementation
-        public void OnCreateNewTag(ITagData newTagData)
+        public void OnCreateNewTag(string newTag)
         {
-            var newTagList = ViewModel.TagList.ToList();
-            newTagList.Add(newTagData);
-            ViewModel.ChangeTagList(newTagList.Select(t => t.Id));
+            var newTagList = ViewModel.Tags.ToList();
+            newTagList.Add(newTag);
+            ViewModel.ChangeTagList(newTagList);
             NavigationController.PopToViewController(this, true);
         }
 
-        public void OnModifyTagList(List<ITagData> newTagList)
+        public void OnModifyTagList(List<string> newTagList)
         {
-            ViewModel.ChangeTagList(newTagList.Select(t => t.Id));
+            ViewModel.ChangeTagList(newTagList);
             NavigationController.PopToViewController(this, true);
         }
         #endregion

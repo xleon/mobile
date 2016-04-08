@@ -153,23 +153,29 @@ namespace Toggl.Ross.ViewControllers
 
         }
 
-        private void OnActionButtonTouchUpInside(object sender, EventArgs e)
+        private async void OnActionButtonTouchUpInside(object sender, EventArgs e)
         {
             // Send experiment data.
             ViewModel.ReportExperiment(OBMExperimentManager.StartButtonActionKey,
                                        OBMExperimentManager.ClickActionValue);
-            ViewModel.StartStopTimeEntry();
+
             if (!ViewModel.IsEntryRunning)
             {
+                var te = await ViewModel.StartNewTimeEntryAsync();
+
                 // Show next viewController.
                 var controllers = new List<UIViewController>(NavigationController.ViewControllers);
-                var editController = new EditTimeEntryViewController(ViewModel.ActiveEntry.Data.Id);
+                var editController = new EditTimeEntryViewController(te.Id);
                 controllers.Add(editController);
                 if (StoreManager.Singleton.AppState.Settings.ChooseProjectForNew)
                 {
-                    controllers.Add(new ProjectSelectionViewController(ViewModel.ActiveEntry.Data.WorkspaceId, editController));
+                    controllers.Add(new ProjectSelectionViewController(te.WorkspaceId, editController));
                 }
                 NavigationController.SetViewControllers(controllers.ToArray(), true);
+            }
+            else
+            {
+                ViewModel.StopTimeEntry();
             }
         }
 
@@ -561,7 +567,7 @@ namespace Toggl.Ross.ViewControllers
 
             private void RebindTags(ITimeEntryHolder dataSource)
             {
-                var hasTags = dataSource.Entry.Data.TagIds.Count > 0;
+                var hasTags = dataSource.Entry.Data.Tags.Count > 0;
                 var isBillable = dataSource.Entry.Data.IsBillable;
 
                 if (hasTags && isBillable)

@@ -193,15 +193,16 @@ namespace Toggl.Phoebe.Reactive
         {
             var entryData = (msg as DataMsg.TimeEntryPut).Data.ForceLeft();
             var dataStore = ServiceContainer.Resolve<ISyncDataStore>();
+            // TODO Rx Poor use of "DataMsg.TimeEntryPut" and the plain TagNames property?
             var tagList = (msg as DataMsg.TimeEntryPut).TagNames;
 
             var updated = dataStore.Update(ctx =>
             {
-                // Update time entry tags
+                // ATTENTION Create tags in a
+                // different workspace if they don't exists.
                 if (tagList.Any())
                 {
                     var existingTags = state.Tags.Values.Where(x => x.WorkspaceId == entryData.WorkspaceId);
-                    List<Guid> tagIds = new List<Guid> ();
                     foreach (var item in tagList)
                     {
                         if (!existingTags.Any(x => x.Name == item))
@@ -213,15 +214,8 @@ namespace Toggl.Phoebe.Reactive
                                 x.WorkspaceRemoteId = entryData.WorkspaceRemoteId;
                             });
                             ctx.Put(newTag);
-                            // Add the last added id
-                            tagIds.Add(ctx.UpdatedItems.Last().Id);
-                        }
-                        else
-                        {
-                            tagIds.Add(existingTags.First(x => x.Name == item).Id);
                         }
                     }
-                    entryData.With(x => x.TagIds = tagIds);
                 }
                 // TODO: Entry sanity check
                 ctx.Put(entryData);
@@ -358,6 +352,7 @@ namespace Toggl.Phoebe.Reactive
                     x.State = TimeEntryState.Running;
                     x.StartTime = Time.UtcNow.Truncate(TimeSpan.TicksPerSecond);
                     x.StopTime = null;
+                    x.Tags = state.Settings.UseDefaultTag ? TimeEntryData.DefaultTags : new List<string> ();
                 }));
             });
 
@@ -455,8 +450,11 @@ namespace Toggl.Phoebe.Reactive
                         if (newData.CompareTo(oldData) >= 0)
                         {
                             newData.Id = oldData.Id;
-                            var data = BuildLocalRelationships(state, newData);  // Set local Id values.
-                            PutOrDelete(ctx, data);
+                            if (newData.DeletedAt != null)
+                                DestroyLocalRelationships(state, newData, ctx);
+                            else
+                                newData = BuildLocalRelationships(state, newData);  // Set local Id values.
+                            PutOrDelete(ctx, newData);
                         }
                         else
                         {
@@ -473,21 +471,67 @@ namespace Toggl.Phoebe.Reactive
                         PutOrDelete(ctx, newData);
                     }
 
-                    // TODO RX Create a single update method
-                    var updatedList = new List<ICommonData> {newData};
+                    // TODO RX Create a single update method for state.
                     state = state.With(
-                                workspaces: state.Update(state.Workspaces, updatedList),
-                                projects: state.Update(state.Projects, updatedList),
-                                workspaceUsers: state.Update(state.WorkspaceUsers, updatedList),
-                                projectUsers: state.Update(state.ProjectUsers, updatedList),
-                                clients: state.Update(state.Clients, updatedList),
-                                tasks: state.Update(state.Tasks, updatedList),
-                                tags: state.Update(state.Tags, updatedList),
-                                timeEntries: state.UpdateTimeEntries(updatedList)
+                                workspaces: state.Update(state.Workspaces, ctx.UpdatedItems),
+                                projects: state.Update(state.Projects, ctx.UpdatedItems),
+                                workspaceUsers: state.Update(state.WorkspaceUsers, ctx.UpdatedItems),
+                                projectUsers: state.Update(state.ProjectUsers, ctx.UpdatedItems),
+                                clients: state.Update(state.Clients, ctx.UpdatedItems),
+                                tasks: state.Update(state.Tasks, ctx.UpdatedItems),
+                                tags: state.Update(state.Tags, ctx.UpdatedItems),
+                                timeEntries: state.UpdateTimeEntries(ctx.UpdatedItems)
                             );
                 }
             });
             return state;
+        }
+
+        static void DestroyLocalRelationships(AppState state, CommonData removedData, ISyncDataStoreContext ctx)
+        {
+            if (removedData is IClientData)
+            {
+                state.Projects.Values.Where(x => x.ClientRemoteId == removedData.RemoteId)
+                .Select(x => x.With(p =>
+                {
+                    p.ClientRemoteId = null;
+                    p.ClientId = Guid.Empty;
+                }))
+                .ForEach(x => ctx.Put(x));
+            }
+
+            if (removedData is IProjectData)
+            {
+                state.TimeEntries.Values.Where(x => x.Data.ProjectRemoteId == removedData.RemoteId)
+                .Select(x => x.Data.With(t =>
+                {
+                    t.TaskId = Guid.Empty;
+                    t.TaskRemoteId = null;
+                    t.ProjectId = Guid.Empty;
+                    t.ProjectRemoteId = null;
+                })).ForEach(ctx.Put);
+            }
+
+            if (removedData is ITagData)
+            {
+                var removedTag = (ITagData)removedData;
+                state.TimeEntries.Values.Where(x => x.Data.Tags.Contains(removedTag.Name))
+                .Select(x => x.Data.With(t =>
+                {
+                    t.Tags = new List<string> (t.Tags.Where(n => n != removedTag.Name));
+                })).ForEach(ctx.Put);
+            }
+
+            if (removedData is IWorkspaceData)
+            {
+                // TODO Ask what to do in this cases.
+            }
+
+            if (removedData is ITaskData)
+            {
+                // TODO Ask what to do in this cases.
+            }
+
         }
 
         static CommonData BuildLocalRelationships(AppState state, CommonData data)

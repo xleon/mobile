@@ -29,13 +29,15 @@ namespace Toggl.Phoebe.Data.Models
         Guid WorkspaceId { get; }
         Guid ProjectId { get; }
         Guid TaskId { get; }
-        IReadOnlyList<Guid> TagIds { get; }
+        IReadOnlyList<string> Tags { get; }
         ITimeEntryData With(Action<TimeEntryData> transform);
     }
 
     [Table("TimeEntryModel")]
     public class TimeEntryData : CommonData, ITimeEntryData
     {
+        public static readonly List<string> DefaultTags = new List<string> {"mobile"};
+
         public static ITimeEntryData Create(Action<TimeEntryData> transform = null, ITimeEntryData draft = null)
         {
             return CommonData.Create(transform, draft != null ? new TimeEntryData(draft) : null);
@@ -48,7 +50,7 @@ namespace Toggl.Phoebe.Data.Models
         public TimeEntryData()
         {
             State = TimeEntryState.New;
-            TagIds = new List<Guid> ();
+            Tags = new List<string> ();
         }
 
         TimeEntryData(ITimeEntryData other) : base(other)
@@ -67,7 +69,7 @@ namespace Toggl.Phoebe.Data.Models
             WorkspaceRemoteId = other.WorkspaceRemoteId;
             ProjectRemoteId = other.ProjectRemoteId;
             TaskRemoteId = other.TaskRemoteId;
-            TagIds = new List<Guid> (other.TagIds);
+            Tags = new List<string> (other.Tags);
         }
 
         public override object Clone()
@@ -109,22 +111,20 @@ namespace Toggl.Phoebe.Data.Models
         public Guid TaskId { get; set; }
 
         [Ignore]
-        public List<Guid> TagIds { get; set; }
+        public List<string> Tags { get; set; }
 
-        IReadOnlyList<Guid> ITimeEntryData.TagIds => TagIds ?? new List<Guid> ();
+        IReadOnlyList<string> ITimeEntryData.Tags => Tags ?? new List<string> ();
 
         [JsonIgnore]
-        public string RawTagIds
+        public string RawTags
         {
             get
             {
-                return string.Join(";", TagIds.Select(x => x.ToString()));
+                return string.Join(";", Tags.Select(x => x));
             }
             set
             {
-                TagIds = value.Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries)
-                         .Select(Guid.Parse)
-                         .ToList();
+                Tags = value.Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries).ToList();
             }
         }
 

@@ -12,6 +12,7 @@ using Toggl.Phoebe.Reactive;
 using Toggl.Phoebe.ViewModels.Timer;
 using XPlatUtils;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace Toggl.Phoebe.ViewModels
 {
@@ -145,20 +146,26 @@ namespace Toggl.Phoebe.ViewModels
             RxChain.Send(new DataMsg.UpdateSetting(nameof(SettingsState.ShowWelcome), false));
         }
 
-        public void StartStopTimeEntry()
+        public Task<ITimeEntryData> StartNewTimeEntryAsync()
+        {
+            var tcs = new TaskCompletionSource<ITimeEntryData> ();
+            var entry = ActiveEntry.Data;
+
+            RxChain.Send(new DataMsg.TimeEntryContinue(entry), new RxChain.Continuation((state, sent, queued) =>
+            {
+                ServiceContainer.Resolve<ITracker> ().SendTimerStartEvent(TimerStartSource.AppNew);
+                tcs.SetResult(ActiveEntry.Data);
+            }));
+
+            return tcs.Task;
+        }
+
+        public void StopTimeEntry()
         {
             // TODO RX: Protect from requests in short time (double click...)?
             var entry = ActiveEntry.Data;
-            if (entry.State == TimeEntryState.Running)
-            {
-                RxChain.Send(new DataMsg.TimeEntryStop(entry));
-                ServiceContainer.Resolve<ITracker> ().SendTimerStopEvent(TimerStopSource.App);
-            }
-            else
-            {
-                RxChain.Send(new DataMsg.TimeEntryContinue(entry, true));
-                ServiceContainer.Resolve<ITracker> ().SendTimerStartEvent(TimerStartSource.AppNew);
-            }
+            RxChain.Send(new DataMsg.TimeEntryStop(entry));
+            ServiceContainer.Resolve<ITracker> ().SendTimerStopEvent(TimerStopSource.App);
         }
 
         public void RemoveTimeEntry(int index)

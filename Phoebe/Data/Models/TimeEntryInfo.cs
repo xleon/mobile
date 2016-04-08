@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using XPlatUtils;
+﻿using System.Collections.Generic;
 
 namespace Toggl.Phoebe.Data.Models
 {

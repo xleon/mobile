@@ -22,5 +22,9 @@
 	<false/>
 	<key>IS_SIGNIN_ENABLED</key>
 	<true/>
+	<key>GOOGLE_APP_ID</key>
+	<string>{GOOGLE_APP_ID}</string>
+	<key>PROJECT_ID</key>
+	<string>{GOOGLE_PROJECT_ID}</string>    
 </dict>
 </plist>

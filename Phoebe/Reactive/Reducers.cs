@@ -96,6 +96,10 @@ namespace Toggl.Phoebe.Reactive
             var req = (msg as DataMsg.ServerRequest).Data;
 
             var reqInfo = state.RequestInfo.With(running: state.RequestInfo.Running.Append(req).ToList());
+
+            if (req is ServerRequest.Authenticate)
+                reqInfo = reqInfo.With(authResult: AuthResult.None);
+
             if (req is ServerRequest.GetChanges)
                 reqInfo = reqInfo.With(getChangesLastRun: state.Settings.GetChangesLastRun);
 
@@ -288,27 +292,26 @@ namespace Toggl.Phoebe.Reactive
             return (msg as DataMsg.UserDataPut).Data.Match(
                        userData =>
             {
-
-                // Create user and workspace at the same time,
-                // workspace created with default data and will be
-                // updated in the next sync.
                 var dataStore = ServiceContainer.Resolve<ISyncDataStore> ();
                 var updated = dataStore.Update(ctx => { ctx.Put(userData); });
+                var runningState = state.RequestInfo.Running.Where(x => !(x is ServerRequest.Authenticate)).ToList();
 
                 // This will throw an exception if user hasn't been correctly updated
                 var userDataInDb = updated.OfType<UserData> ().Single();
 
+
                 return DataSyncMsg.Create(state.With(
                                               user: userDataInDb,
-                                              requestInfo: state.RequestInfo.With(authResult: AuthResult.Success),
+                                              requestInfo: state.RequestInfo.With(authResult: AuthResult.Success, running: runningState),
                                               workspaces: state.Update(state.Workspaces, updated),
                                               settings: state.Settings.With(userId: userDataInDb.Id)));
             },
             ex =>
             {
+                var runningState = state.RequestInfo.Running.Where(x => !(x is ServerRequest.Authenticate)).ToList();
                 return DataSyncMsg.Create(state.With(
                                               user: new UserData(),
-                                              requestInfo: state.RequestInfo.With(authResult: ex.AuthResult)));
+                                              requestInfo: state.RequestInfo.With(authResult: ex.AuthResult, running: runningState)));
             });
         }
 

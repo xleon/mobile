@@ -133,14 +133,10 @@ namespace Toggl.Ross.ViewControllers
                         break;
 
                     case AuthResult.Success:
-                        // TODO RX: Start the initial sync for the user
-                        //ServiceContainer.Resolve<ISyncManager> ().Run ();
-                        // Start the initial sync for the user
                         break;
 
                     // Error cases
                     default:
-                        IsAuthenticating = false;
                         if (ViewModel.CurrentLoginMode == LoginVM.LoginMode.Login)
                         {
                             if (ViewModel.AuthResult == AuthResult.InvalidCredentials)

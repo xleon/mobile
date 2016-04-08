@@ -39,7 +39,7 @@ namespace Toggl.Phoebe
         public static readonly string AppStoreUrl = "itms-apps://itunes.com/apps/toggl";
         public static readonly string XamarinInsightsApiKey = "{XAMARIN_INSIGHTS_API_KEY_IOS}";
         public static readonly string TestFairyApiToken = "{TESTFAIRY_API_TOKEN}";
-        public static readonly string GoogleReverseClientUrl = "{REVERSED_CLIENT_ID}";
+        public static readonly string GoogleClientId = "{GOOGLE_CLIENT_ID}";
 #endif
         #endregion
     }

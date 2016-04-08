@@ -172,7 +172,6 @@ namespace Toggl.Ross.ViewControllers
 
                     // Error cases
                     default:
-                        IsAuthenticating = false;
                         if (viewModel.CurrentLoginMode == LoginVM.LoginMode.Login)
                         {
                             if (viewModel.AuthResult == AuthResult.InvalidCredentials)

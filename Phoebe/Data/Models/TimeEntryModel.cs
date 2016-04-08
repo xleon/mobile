@@ -868,7 +868,7 @@ namespace Toggl.Phoebe.Data.Models
                 } else if (duration.TotalMinutes > 1 && duration.TotalMinutes < 60) {
                     formattedString = duration.ToString (@"mm\:ss\ \m\i\n");
                 } else {
-                    formattedString = duration.ToString (@"hh\:mm\:ss");
+                    formattedString = String.Format ("{0}:{1}", (int)duration.TotalHours, duration.ToString (@"mm\:ss"));
                 }
             } else if (user.DurationFormat == DurationFormat.Decimal) {
                 formattedString = String.Format ("{0:0.00} h", duration.TotalHours);

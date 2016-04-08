@@ -13,39 +13,39 @@ namespace Toggl.Phoebe.Data.Models.Old.DB_VERSION_0
         public long? RemoteId { get; set; }
         public bool RemoteRejected { get; set; }
 
-        protected void Upgrade (Models.CommonData data)
+        protected void Upgrade(Models.CommonData data)
         {
             data.Id = Id;
             data.RemoteId = RemoteId;
             data.ModifiedAt = ModifiedAt;
             data.DeletedAt = DeletedAt;
             data.SyncState = IsDirty
-                            ? (RemoteId.HasValue ? SyncState.UpdatePending : SyncState.CreatePending)
-                            : SyncState.Synced;
+                             ? (RemoteId.HasValue ? SyncState.UpdatePending : SyncState.CreatePending)
+                             : SyncState.Synced;
         }
     }
 
-    [Table ("ClientModel")]
+    [Table("ClientModel")]
     public class ClientData : CommonData
     {
         public string Name { get; set; }
         public Guid WorkspaceId { get; set; }
 
-        public Models.ClientData Upgrade (ISyncDataStoreContext ctx)
+        public Models.ClientData Upgrade(ISyncDataStoreContext ctx)
         {
-            var data = new Models.ClientData ();
-            Upgrade (data);
+            var data = new Models.ClientData();
+            Upgrade(data);
             data.Name = Name;
 
             data.WorkspaceId = WorkspaceId;
-            var ws = ctx.Connection.Table<WorkspaceData> ().Where (x => x.Id == WorkspaceId).FirstOrDefault ();
+            var ws = ctx.Connection.Table<WorkspaceData> ().Where(x => x.Id == WorkspaceId).FirstOrDefault();
             data.WorkspaceRemoteId = ws?.RemoteId ?? 0;
 
             return data;
         }
     }
 
-    [Table ("ProjectModel")]
+    [Table("ProjectModel")]
     public class ProjectData : CommonData
     {
         public string Name { get; set; }
@@ -58,10 +58,10 @@ namespace Toggl.Phoebe.Data.Models.Old.DB_VERSION_0
         public Guid WorkspaceId { get; set; }
         public Guid? ClientId { get; set; }
 
-        public Models.ProjectData Upgrade (ISyncDataStoreContext ctx)
+        public Models.ProjectData Upgrade(ISyncDataStoreContext ctx)
         {
-            var data = new Models.ProjectData ();
-            Upgrade (data);
+            var data = new Models.ProjectData();
+            Upgrade(data);
             data.Name = Name;
             data.Color = Color;
             data.IsActive = IsActive;
@@ -71,12 +71,13 @@ namespace Toggl.Phoebe.Data.Models.Old.DB_VERSION_0
             data.UseTasksEstimate = UseTasksEstimate;
 
             data.WorkspaceId = WorkspaceId;
-            var ws = ctx.Connection.Table<WorkspaceData> ().Where (x => x.Id == WorkspaceId).FirstOrDefault ();
+            var ws = ctx.Connection.Table<WorkspaceData> ().Where(x => x.Id == WorkspaceId).FirstOrDefault();
             data.WorkspaceRemoteId = ws?.RemoteId ?? 0;
 
-			data.ClientId = ClientId ?? Guid.Empty;
-            if (ClientId.HasValue) {
-                var cl = ctx.Connection.Table<ClientData> ().Where (x => x.Id == ClientId).FirstOrDefault ();
+            data.ClientId = ClientId ?? Guid.Empty;
+            if (ClientId.HasValue)
+            {
+                var cl = ctx.Connection.Table<ClientData> ().Where(x => x.Id == ClientId).FirstOrDefault();
                 data.ClientRemoteId = cl?.RemoteId;
             }
 
@@ -84,7 +85,7 @@ namespace Toggl.Phoebe.Data.Models.Old.DB_VERSION_0
         }
     }
 
-    [Table ("ProjectUserModel")]
+    [Table("ProjectUserModel")]
     public class ProjectUserData : CommonData
     {
         public bool IsManager { get; set; }
@@ -92,46 +93,46 @@ namespace Toggl.Phoebe.Data.Models.Old.DB_VERSION_0
         public Guid ProjectId { get; set; }
         public Guid UserId { get; set; }
 
-        public Models.ProjectUserData Upgrade (ISyncDataStoreContext ctx)
+        public Models.ProjectUserData Upgrade(ISyncDataStoreContext ctx)
         {
-            var data = new Models.ProjectUserData ();
-            Upgrade (data);
+            var data = new Models.ProjectUserData();
+            Upgrade(data);
             data.IsManager = IsManager;
             data.HourlyRate = HourlyRate;
 
             data.ProjectId = ProjectId;
-            var pr = ctx.Connection.Table<ProjectData> ().Where (x => x.Id == ProjectId).FirstOrDefault ();
+            var pr = ctx.Connection.Table<ProjectData> ().Where(x => x.Id == ProjectId).FirstOrDefault();
             data.ProjectRemoteId = pr?.RemoteId ?? 0;
 
             data.UserId = UserId;
-            var usr = ctx.Connection.Table<UserData> ().Where (x => x.Id == UserId).FirstOrDefault ();
+            var usr = ctx.Connection.Table<UserData> ().Where(x => x.Id == UserId).FirstOrDefault();
             data.UserRemoteId = usr?.RemoteId ?? 0;
 
             return data;
         }
     }
 
-    [Table ("TagModel")]
+    [Table("TagModel")]
     public class TagData : CommonData
     {
         public string Name { get; set; }
         public Guid WorkspaceId { get; set; }
 
-        public Models.TagData Upgrade (ISyncDataStoreContext ctx)
+        public Models.TagData Upgrade(ISyncDataStoreContext ctx)
         {
-            var data = new Models.TagData ();
-            Upgrade (data);
+            var data = new Models.TagData();
+            Upgrade(data);
             data.Name = Name;
 
             data.WorkspaceId = WorkspaceId;
-            var ws = ctx.Connection.Table<WorkspaceData> ().Where (x => x.Id == WorkspaceId).FirstOrDefault ();
+            var ws = ctx.Connection.Table<WorkspaceData> ().Where(x => x.Id == WorkspaceId).FirstOrDefault();
             data.WorkspaceRemoteId = ws?.RemoteId ?? 0;
 
             return data;
         }
     }
 
-    [Table ("TaskModel")]
+    [Table("TaskModel")]
     public class TaskData : CommonData
     {
         public string Name { get; set; }
@@ -140,27 +141,27 @@ namespace Toggl.Phoebe.Data.Models.Old.DB_VERSION_0
         public Guid WorkspaceId { get; set; }
         public Guid ProjectId { get; set; }
 
-        public Models.TaskData Upgrade (ISyncDataStoreContext ctx)
+        public Models.TaskData Upgrade(ISyncDataStoreContext ctx)
         {
-            var data = new Models.TaskData ();
-            Upgrade (data);
+            var data = new Models.TaskData();
+            Upgrade(data);
             data.Name = Name;
             data.IsActive = IsActive;
             data.Estimate = Estimate;
 
             data.WorkspaceId = WorkspaceId;
-            var ws = ctx.Connection.Table<WorkspaceData> ().Where (x => x.Id == WorkspaceId).FirstOrDefault ();
+            var ws = ctx.Connection.Table<WorkspaceData> ().Where(x => x.Id == WorkspaceId).FirstOrDefault();
             data.WorkspaceRemoteId = ws?.RemoteId ?? 0;
 
             data.ProjectId = ProjectId;
-            var pr = ctx.Connection.Table<ProjectData> ().Where (x => x.Id == ProjectId).FirstOrDefault ();
+            var pr = ctx.Connection.Table<ProjectData> ().Where(x => x.Id == ProjectId).FirstOrDefault();
             data.ProjectRemoteId = pr?.RemoteId ?? 0;
 
             return data;
         }
     }
 
-    [Table ("TimeEntryModel")]
+    [Table("TimeEntryModel")]
     public class TimeEntryData : CommonData
     {
         public TimeEntryState State { get; set; }
@@ -174,10 +175,10 @@ namespace Toggl.Phoebe.Data.Models.Old.DB_VERSION_0
         public Guid? ProjectId { get; set; }
         public Guid? TaskId { get; set; }
 
-        public Models.TimeEntryData Upgrade (ISyncDataStoreContext ctx)
+        public Models.TimeEntryData Upgrade(ISyncDataStoreContext ctx)
         {
-            var data = new Models.TimeEntryData ();
-            Upgrade (data);
+            var data = new Models.TimeEntryData();
+            Upgrade(data);
             data.State = State;
             data.Description = Description;
             data.StartTime = StartTime;
@@ -188,22 +189,24 @@ namespace Toggl.Phoebe.Data.Models.Old.DB_VERSION_0
             // TODO: TagIds
 
             data.UserId = UserId;
-            var usr = ctx.Connection.Table<UserData> ().Where (x => x.Id == UserId).FirstOrDefault ();
+            var usr = ctx.Connection.Table<UserData> ().Where(x => x.Id == UserId).FirstOrDefault();
             data.UserRemoteId = usr?.RemoteId ?? 0;
 
             data.WorkspaceId = WorkspaceId;
-            var ws = ctx.Connection.Table<WorkspaceData> ().Where (x => x.Id == WorkspaceId).FirstOrDefault ();
+            var ws = ctx.Connection.Table<WorkspaceData> ().Where(x => x.Id == WorkspaceId).FirstOrDefault();
             data.WorkspaceRemoteId = ws?.RemoteId ?? 0;
 
             data.ProjectId = ProjectId ?? Guid.Empty;
-            if (ProjectId.HasValue) {
-                var pr = ctx.Connection.Table<ProjectData> ().Where (x => x.Id == ProjectId).FirstOrDefault ();
+            if (ProjectId.HasValue)
+            {
+                var pr = ctx.Connection.Table<ProjectData> ().Where(x => x.Id == ProjectId).FirstOrDefault();
                 data.ProjectRemoteId = pr?.RemoteId;
             }
 
             data.TaskId = TaskId ?? Guid.Empty;
-            if (TaskId.HasValue) {
-                var task = ctx.Connection.Table<TaskData> ().Where (x => x.Id == TaskId).FirstOrDefault ();
+            if (TaskId.HasValue)
+            {
+                var task = ctx.Connection.Table<TaskData> ().Where(x => x.Id == TaskId).FirstOrDefault();
                 data.TaskRemoteId = task?.RemoteId;
             }
 
@@ -211,7 +214,7 @@ namespace Toggl.Phoebe.Data.Models.Old.DB_VERSION_0
         }
     }
 
-    [Table ("UserModel")]
+    [Table("UserModel")]
     public class UserData : CommonData
     {
         public string Name { get; set; }
@@ -231,10 +234,10 @@ namespace Toggl.Phoebe.Data.Models.Old.DB_VERSION_0
         public int ExperimentNumber { get; set; }
         public Guid DefaultWorkspaceId { get; set; }
 
-        public Models.UserData Upgrade (ISyncDataStoreContext ctx)
+        public Models.UserData Upgrade(ISyncDataStoreContext ctx)
         {
-            var data = new Models.UserData ();
-            Upgrade (data);
+            var data = new Models.UserData();
+            Upgrade(data);
             data.Name = Name;
             data.Email = Email;
             data.StartOfWeek = StartOfWeek;
@@ -254,14 +257,14 @@ namespace Toggl.Phoebe.Data.Models.Old.DB_VERSION_0
             // TODO: Get GoogleAccessToken & ApiToken from Platform Settings
 
             data.DefaultWorkspaceId = DefaultWorkspaceId;
-            var ws = ctx.Connection.Table<WorkspaceData> ().Where (x => x.Id == DefaultWorkspaceId).FirstOrDefault ();
+            var ws = ctx.Connection.Table<WorkspaceData> ().Where(x => x.Id == DefaultWorkspaceId).FirstOrDefault();
             data.DefaultWorkspaceRemoteId = ws?.RemoteId ?? 0;
 
             return data;
         }
     }
 
-    [Table ("WorkspaceModel")]
+    [Table("WorkspaceModel")]
     public class WorkspaceData : CommonData
     {
         public string Name { get; set; }
@@ -274,10 +277,10 @@ namespace Toggl.Phoebe.Data.Models.Old.DB_VERSION_0
         public int RoundingPercision { get; set; }
         public string LogoUrl { get; set; }
 
-        public Models.WorkspaceData Upgrade (ISyncDataStoreContext ctx)
+        public Models.WorkspaceData Upgrade(ISyncDataStoreContext ctx)
         {
-            var data = new Models.WorkspaceData ();
-            Upgrade (data);
+            var data = new Models.WorkspaceData();
+            Upgrade(data);
             data.Name = Name;
             data.IsPremium = IsPremium;
             data.DefaultRate = DefaultRate;
@@ -289,15 +292,15 @@ namespace Toggl.Phoebe.Data.Models.Old.DB_VERSION_0
             data.LogoUrl = LogoUrl;
 
             // TODO
-			//data.OnlyAdminsMayCreateProjects
+            //data.OnlyAdminsMayCreateProjects
             //data.OnlyAdminsSeeBillableRates
-            //data.IsAdmin 
+            //data.IsAdmin
 
             return data;
         }
     }
 
-    [Table ("WorkspaceUserModel")]
+    [Table("WorkspaceUserModel")]
     public class WorkspaceUserData : CommonData
     {
         public bool IsAdmin { get; set; }
@@ -305,19 +308,19 @@ namespace Toggl.Phoebe.Data.Models.Old.DB_VERSION_0
         public Guid WorkspaceId { get; set; }
         public Guid UserId { get; set; }
 
-        public Models.WorkspaceUserData Upgrade (ISyncDataStoreContext ctx)
+        public Models.WorkspaceUserData Upgrade(ISyncDataStoreContext ctx)
         {
-            var data = new Models.WorkspaceUserData ();
-            Upgrade (data);
+            var data = new Models.WorkspaceUserData();
+            Upgrade(data);
             data.IsAdmin = IsAdmin;
             data.IsActive = IsActive;
 
             data.UserId = UserId;
-            var usr = ctx.Connection.Table<UserData> ().Where (x => x.Id == UserId).FirstOrDefault ();
+            var usr = ctx.Connection.Table<UserData> ().Where(x => x.Id == UserId).FirstOrDefault();
             data.UserRemoteId = usr?.RemoteId ?? 0;
 
             data.WorkspaceId = WorkspaceId;
-            var ws = ctx.Connection.Table<WorkspaceData> ().Where (x => x.Id == WorkspaceId).FirstOrDefault ();
+            var ws = ctx.Connection.Table<WorkspaceData> ().Where(x => x.Id == WorkspaceId).FirstOrDefault();
             data.WorkspaceRemoteId = ws?.RemoteId ?? 0;
 
             return data;

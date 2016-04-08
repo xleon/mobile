@@ -132,8 +132,9 @@ namespace Toggl.Ross
         {
             if (systemVersion > minVersionWidget)
             {
-                var widgetService = ServiceContainer.Resolve<WidgetUpdateService>();
-                widgetService.SetAppOnBackground(true);
+                // TODO TODO TODO : Deactivate widget completely!
+                //var widgetService = ServiceContainer.Resolve<WidgetUpdateService>();
+                //widgetService.SetAppOnBackground(true);
             }
         }
 

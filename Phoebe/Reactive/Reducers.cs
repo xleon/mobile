@@ -356,7 +356,8 @@ namespace Toggl.Phoebe.Reactive
                 }));
             });
 
-            return DataSyncMsg.Create(updated, state.With(timeEntries: state.UpdateTimeEntries(updated)));
+            return DataSyncMsg.Create(updated, state.With(timeEntries: state.UpdateTimeEntries(updated),
+                                      settings: state.Settings.With(showWelcome: false)));
         }
 
         static DataSyncMsg<AppState> TimeEntryStop(AppState state, DataMsg msg)

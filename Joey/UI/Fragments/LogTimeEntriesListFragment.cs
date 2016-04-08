@@ -270,7 +270,7 @@ namespace Toggl.Joey.UI.Fragments
             }
 
             View emptyView = emptyMessageView;
-            var isWelcome = ViewModel.IsWelcomeMessageShown();
+            var isWelcome = ViewModel.ShowWelcomeScreen();
             var hasItems = ViewModel.Collection.Count > 0;
             var isInExperiment = ViewModel.IsInExperiment();
 

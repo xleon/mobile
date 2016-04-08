@@ -400,6 +400,7 @@ namespace Toggl.Phoebe.Reactive
         private static readonly int ReportsCurrentItemDefault = 0;
         private static readonly string ProjectSortDefault = "Clients";
         private static readonly string InstallIdDefault = string.Empty;
+        private static readonly bool ShowWelcomeDefault = true;
         // iOS only Default values
         private static readonly string RossPreferredStartViewDefault = string.Empty;
         private static readonly bool RossReadDurOnlyNoticeDefault = false;
@@ -409,7 +410,7 @@ namespace Toggl.Phoebe.Reactive
         private static readonly string GcmAppVersionDefault = string.Empty;
         private static readonly bool IdleNotificationDefault = true;
         private static readonly bool ShowNotificationDefault = true;
-        private static readonly bool ShowWelcomeDefault = false;
+
 
         // Common values
         public Guid UserId {get; private set; }
@@ -422,6 +423,8 @@ namespace Toggl.Phoebe.Reactive
         public int ReportsCurrentItem { get; private set; }
         public string ProjectSort { get; private set; }
         public string InstallId  { get; private set; }
+        // Show welcome screen or not the first time user start app.
+        public bool ShowWelcome { get; private set; }
         // iOS only  values
         public string RossPreferredStartView { get; private set; }
         public bool RossReadDurOnlyNotice { get; private set; }
@@ -431,7 +434,6 @@ namespace Toggl.Phoebe.Reactive
         public string GcmAppVersion { get; private set; }
         public bool IdleNotification { get; private set; }
         public bool ShowNotification { get; private set; }
-        public bool ShowWelcome { get; private set; }
 
         public static SettingsState Init()
         {
@@ -449,6 +451,7 @@ namespace Toggl.Phoebe.Reactive
                 settings.ReportsCurrentItem = ReportsCurrentItemDefault;
                 settings.ProjectSort = ProjectSortDefault;
                 settings.InstallId = InstallIdDefault;
+                settings.ShowWelcome = ShowWelcomeDefault;
                 // iOS only  values
                 settings.RossPreferredStartView = RossPreferredStartViewDefault;
                 settings.RossReadDurOnlyNotice = RossReadDurOnlyNoticeDefault;
@@ -458,7 +461,6 @@ namespace Toggl.Phoebe.Reactive
                 settings.GcmAppVersion = GcmAppVersionDefault;
                 settings.IdleNotification = IdleNotificationDefault;
                 settings.ShowNotification = ShowNotificationDefault;
-                settings.ShowNotification = ShowWelcomeDefault;
                 return settings;
             }
             return Newtonsoft.Json.JsonConvert.DeserializeObject<SettingsState> (Settings.SerializedSettings,

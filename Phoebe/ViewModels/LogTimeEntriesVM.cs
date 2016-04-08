@@ -141,9 +141,6 @@ namespace Toggl.Phoebe.ViewModels
                 RxChain.Send(new DataMsg.TimeEntryContinue(timeEntryHolder.Entry.Data));
                 ServiceContainer.Resolve<ITracker> ().SendTimerStartEvent(TimerStartSource.AppContinue);
             }
-
-            // Set ShowWelcome setting to false.
-            RxChain.Send(new DataMsg.UpdateSetting(nameof(SettingsState.ShowWelcome), false));
         }
 
         public Task<ITimeEntryData> StartNewTimeEntryAsync()
@@ -189,7 +186,7 @@ namespace Toggl.Phoebe.ViewModels
             return OBMExperimentManager.IncludedInExperiment(StoreManager.Singleton.AppState.User);
         }
 
-        public bool IsWelcomeMessageShown()
+        public bool ShowWelcomeScreen()
         {
             return StoreManager.Singleton.AppState.Settings.ShowWelcome;
         }

@@ -4,12 +4,9 @@ using Cirrious.FluentLayouts.Touch;
 using CoreGraphics;
 using Foundation;
 using Toggl.Phoebe.Data;
-using Toggl.Phoebe.Net;
 using Toggl.Phoebe.Reactive;
-using Toggl.Ross.Data;
 using Toggl.Ross.Theme;
 using UIKit;
-using XPlatUtils;
 
 namespace Toggl.Ross.ViewControllers
 {
@@ -128,7 +125,7 @@ namespace Toggl.Ross.ViewControllers
             ConfigureUserData();
         }
 
-        private void ConfigureUserData()
+        public void ConfigureUserData()
         {
             var userData = StoreManager.Singleton.AppState.User;
             usernameLabel.Text = userData.Name;

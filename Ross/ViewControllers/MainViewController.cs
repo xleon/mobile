@@ -41,14 +41,6 @@ namespace Toggl.Ross.ViewControllers
         public override void ViewWillAppear(bool animated)
         {
             base.ViewWillAppear(animated);
-            // ATTENTION Suscription to state (settings) changes inside
-            // the view. This will be replaced for "router"
-            // modified in the reducers.
-            stateObserver = StoreManager.Singleton
-                            .Observe(x => x.State.Settings.UserId)
-                            .StartWith(StoreManager.Singleton.AppState.Settings.UserId)
-                            .DistinctUntilChanged()
-                            .Subscribe(userGuid => ResetRootViewController(userGuid));
         }
 
         public override void ViewDidAppear(bool animated)
@@ -58,6 +50,15 @@ namespace Toggl.Ross.ViewControllers
             Application.MarkLaunched();
             menu = new LeftViewController();
             View.Window.InsertSubview(menu.View, 0);
+
+            // ATTENTION Suscription to state (settings) changes inside
+            // the view. This will be replaced for "router"
+            // modified in the reducers.
+            stateObserver = StoreManager.Singleton
+                            .Observe(x => x.State.Settings.UserId)
+                            .StartWith(StoreManager.Singleton.AppState.Settings.UserId)
+                            .DistinctUntilChanged()
+                            .Subscribe(userGuid => ResetRootViewController(userGuid));
         }
 
         public override void ViewDidLoad()
@@ -216,6 +217,7 @@ namespace Toggl.Ross.ViewControllers
                 // TODO Rx a Fullsync is triggered.
                 // Evaluate if it is the best place or not.
                 RxChain.Send(new ServerRequest.GetChanges());
+                menu.ConfigureUserData();
                 vc = new LogViewController();
                 MenuEnabled = true;
             }

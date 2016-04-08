@@ -762,7 +762,7 @@ namespace Toggl.Phoebe.Net
         public Task<UserJson> CreateUser(UserJson jsonObject)
         {
             var url = new Uri(v8Url, jsonObject.GoogleAccessToken != null ? "signups?app_name=toggl_mobile" : "signups");
-            jsonObject.CreatedWith = Platform.DefaultCreatedWith;
+            jsonObject.CreatedWith = String.Format("{0}-obm-{1}", Platform.DefaultCreatedWith, OBMExperimentManager.ExperimentNumber);
             return CreateObject(string.Empty, url, jsonObject);
         }
 
@@ -914,7 +914,7 @@ namespace Toggl.Phoebe.Net
                 RequestUri = url,
                 Content = new StringContent(json, Encoding.UTF8, "application/json")
             });
-            var response = await SendAsync(httpReq).ConfigureAwait(false);
+            await SendAsync(httpReq).ConfigureAwait(false);
         }
 
         // Validator to bypass the cert requirement

@@ -97,7 +97,6 @@ namespace Toggl.Ross.ViewControllers
         public override void ViewDidLoad()
         {
             base.ViewDidLoad();
-
             EdgesForExtendedLayout = UIRectEdge.None;
             TableView.RegisterClassForCellReuse(typeof(TimeEntryCell), EntryCellId);
             TableView.RegisterClassForCellReuse(typeof(SectionCell), SectionCellId);

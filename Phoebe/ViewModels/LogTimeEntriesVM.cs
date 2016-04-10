@@ -148,7 +148,7 @@ namespace Toggl.Phoebe.ViewModels
             var tcs = new TaskCompletionSource<ITimeEntryData> ();
             var entry = ActiveEntry.Data;
 
-            RxChain.Send(new DataMsg.TimeEntryContinue(entry), new RxChain.Continuation((state, sent, queued) =>
+            RxChain.Send(new DataMsg.TimeEntryContinue(entry), new RxChain.Continuation((state) =>
             {
                 ServiceContainer.Resolve<ITracker> ().SendTimerStartEvent(TimerStartSource.AppNew);
                 tcs.SetResult(ActiveEntry.Data);

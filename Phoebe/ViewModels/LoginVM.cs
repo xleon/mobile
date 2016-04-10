@@ -45,7 +45,6 @@ namespace Toggl.Phoebe.ViewModels
             {
                 AuthResult = reqInfo.AuthResult;
                 IsAuthenticating = reqInfo.Running.Any(x => x is ServerRequest.Authenticate);
-                Console.WriteLine("Auth : " + IsAuthenticating);
             });
         }
 

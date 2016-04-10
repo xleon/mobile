@@ -64,6 +64,10 @@ namespace Toggl.Phoebe.Data.Models
         {
             var newItem = (T)Clone();
             newItem.ModifiedAt = Time.UtcNow;
+            if (newItem.SyncState == SyncState.CreatePending)
+            {
+                Console.WriteLine(this.SyncState + " " + newItem.SyncState);
+            }
             newItem.SyncState = SyncState.UpdatePending;
             transform(newItem);
             return newItem;

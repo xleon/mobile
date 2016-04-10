@@ -181,9 +181,32 @@ namespace Toggl.Phoebe.Reactive
                                               requestInfo: reqInfo,
                                               settings: state.Settings.With(getChangesLastRun: serverMsg.Timestamp)));
             },
-            (ServerRequest.GetCurrentState _) =>
+            (ServerRequest.GetCurrentState req) =>
             {
-                throw new NotImplementedException();
+                state = UpdateStateWithNewData(state, receivedData);
+
+                // Update user
+                var dataStore = ServiceContainer.Resolve<ISyncDataStore>();
+                UserData user = serverMsg.User;
+                user.Id = state.User.Id;
+                user.DefaultWorkspaceId = state.Workspaces.Values.Single(x => x.RemoteId == user.DefaultWorkspaceRemoteId).Id;
+                // TODO: OBM data that comes in user object from this changes
+                // is totally wrong. In that way, we should keep this info before
+                // before process the object.
+                user.ExperimentIncluded = state.User.ExperimentIncluded;
+                user.ExperimentNumber = state.User.ExperimentNumber;
+
+                var userUpdated = (UserData)dataStore.Update(ctx => ctx.Put(user)).Single();
+
+                var reqInfo = state.RequestInfo.With(
+                                  hadErrors: false,
+                                  running: state.RequestInfo.Running.Where(x => x != req).ToList(),
+                                  getChangesLastRun: serverMsg.Timestamp);
+
+                return DataSyncMsg.Create(state.With(
+                                              user: userUpdated,
+                                              requestInfo: reqInfo,
+                                              settings: state.Settings.With(getChangesLastRun: serverMsg.Timestamp)));
             },
             (ServerRequest.Authenticate _) =>
             {
@@ -299,8 +322,12 @@ namespace Toggl.Phoebe.Reactive
                 // This will throw an exception if user hasn't been correctly updated
                 var userDataInDb = updated.OfType<UserData> ().Single();
 
+                // ATTENTION After succesful login, send
+                // a request to get data state from server.
+                var req = new ServerRequest.GetCurrentState();
+                runningState.Add(req);
 
-                return DataSyncMsg.Create(state.With(
+                return DataSyncMsg.Create(req, state.With(
                                               user: userDataInDb,
                                               requestInfo: state.RequestInfo.With(authResult: AuthResult.Success, running: runningState),
                                               workspaces: state.Update(state.Workspaces, updated),

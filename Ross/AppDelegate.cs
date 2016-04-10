@@ -253,9 +253,7 @@ namespace Toggl.Ross
 
         public void DispatchOnUIThread(Action action)
         {
-            Console.WriteLine(action.Target);
-            //InvokeOnMainThread (action);
-
+            Console.WriteLine("Invoke call, remove!!! " + action.Target);
         }
 
         #endregion

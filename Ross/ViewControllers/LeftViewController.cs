@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Net.Http;
+using System.Threading.Tasks;
 using Cirrious.FluentLayouts.Touch;
 using CoreGraphics;
 using Foundation;
-using Toggl.Phoebe.Data;
-using Toggl.Phoebe.Reactive;
 using Toggl.Ross.Theme;
 using UIKit;
 
@@ -12,13 +12,17 @@ namespace Toggl.Ross.ViewControllers
 {
     public sealed class LeftViewController : UIViewController
     {
+        private static string DefaultUserName = "Loading...";
+        private static string DefaultUserEmail = "Loading...";
+        private static string DefaultImage = "profile.png";
+        private static string DefaultRemoteImage = "https://assets.toggl.com/images/profile.png";
+
         public static readonly int TimerPageId = 0;
         public static readonly int ReportsPageId = 1;
         public static readonly int SettingsPageId = 2;
         public static readonly int FeedbackPageId = 3;
         public static readonly int LogoutPageId = 4;
 
-        private TogglWindow window;
         private UIButton logButton;
         private UIButton reportsButton;
         private UIButton settingsButton;
@@ -31,23 +35,19 @@ namespace Toggl.Ross.ViewControllers
         private UIImageView userAvatarImage;
         private UIImageView separatorLineImage;
         private const int horizMargin = 15;
-
-
-        private UIPanGestureRecognizer _panGesture;
-        private CGPoint draggingPoint;
         private const int menuOffset = 60;
-        private const int velocityTreshold = 100;
+        private Action<int> buttonSelector;
+
+
+        public LeftViewController(Action<int> buttonSelector)
+        {
+            this.buttonSelector = buttonSelector;
+        }
 
         public override void LoadView()
         {
             base.LoadView();
-            window = AppDelegate.TogglWindow;
             View.BackgroundColor = UIColor.White;
-
-            _panGesture = new UIPanGestureRecognizer(OnPanGesture)
-            {
-                CancelsTouchesInView = true
-            };
 
             menuButtons = new[]
             {
@@ -89,7 +89,6 @@ namespace Toggl.Ross.ViewControllers
 
             View.SubviewsDoNotTranslateAutoresizingMaskIntoConstraints();
             View.AddConstraints(MakeConstraints(View));
-            View.AddGestureRecognizer(_panGesture);
         }
 
         public override void ViewDidLoad()
@@ -122,31 +121,62 @@ namespace Toggl.Ross.ViewControllers
                 View.AddSubview(separatorLineImage);
             }
 
-            ConfigureUserData();
+            // Set default values
+            ConfigureUserData(DefaultUserName, DefaultUserEmail, DefaultImage);
         }
 
-        public void ConfigureUserData()
+        public async void ConfigureUserData(string name, string email, string imageUrl)
         {
-            var userData = StoreManager.Singleton.AppState.User;
-            usernameLabel.Text = userData.Name;
-            emailLabel.Text = userData.Email;
-
+            usernameLabel.Text = name;
+            emailLabel.Text = email;
             UIImage image;
+
+            if (imageUrl == DefaultImage || imageUrl == DefaultRemoteImage)
+            {
+                userAvatarImage.Image = UIImage.FromFile(DefaultImage);
+                return;
+            }
 
             // Try to download the image from server
             // if user doesn't have image configured or
             // there is not connection, use a local image.
             try
             {
-                var url = new NSUrl(userData.ImageUrl);
-                var data = NSData.FromUrl(url);
-                image = UIImage.LoadFromData(data);
+                image = await LoadImage(imageUrl);
             }
             catch
             {
-                image = UIImage.FromFile("profile.png");
+                image = UIImage.FromFile(DefaultImage);
             }
+
             userAvatarImage.Image = image;
+        }
+
+        private void OnMenuButtonTouchUpInside(object sender, EventArgs e)
+        {
+            if (buttonSelector == null)
+                return;
+
+            if (sender == logButton)
+            {
+                buttonSelector.Invoke(TimerPageId);
+            }
+            else if (sender == reportsButton)
+            {
+                buttonSelector.Invoke(ReportsPageId);
+            }
+            else if (sender == settingsButton)
+            {
+                buttonSelector.Invoke(SettingsPageId);
+            }
+            else if (sender == feedbackButton)
+            {
+                buttonSelector.Invoke(FeedbackPageId);
+            }
+            else
+            {
+                buttonSelector.Invoke(LogoutPageId);
+            }
         }
 
         public nfloat MaxDraggingX
@@ -162,56 +192,6 @@ namespace Toggl.Ross.ViewControllers
             get
             {
                 return 0;
-            }
-        }
-
-        private void OnPanGesture(UIPanGestureRecognizer recognizer)
-        {
-            var translation = recognizer.TranslationInView(recognizer.View);
-            var movement = translation.X - draggingPoint.X;
-            var main = window.RootViewController as MainViewController;
-            var currentX = main.View.Frame.X;
-
-            switch (recognizer.State)
-            {
-                case UIGestureRecognizerState.Began:
-                    draggingPoint = translation;
-                    break;
-
-                case UIGestureRecognizerState.Changed:
-                    var newX = currentX;
-                    newX += movement;
-                    if (newX > MinDraggingX && newX < MaxDraggingX)
-                    {
-                        main.MoveToLocation(newX);
-                    }
-                    draggingPoint = translation;
-                    break;
-
-                case UIGestureRecognizerState.Ended:
-                    if (Math.Abs(translation.X) >= velocityTreshold)
-                    {
-                        if (translation.X < 0)
-                        {
-                            main.CloseMenu();
-                        }
-                        else
-                        {
-                            main.OpenMenu();
-                        }
-                    }
-                    else
-                    {
-                        if (Math.Abs(currentX) < (View.Frame.Width - menuOffset) / 2)
-                        {
-                            main.CloseMenu();
-                        }
-                        else
-                        {
-                            main.OpenMenu();
-                        }
-                    }
-                    break;
             }
         }
 
@@ -244,33 +224,17 @@ namespace Toggl.Ross.ViewControllers
             }
         }
 
-        private void OnMenuButtonTouchUpInside(object sender, EventArgs e)
+        private async Task<UIImage> LoadImage(string imageUrl)
         {
-            var main = window.RootViewController as MainViewController;
-            if (sender == logButton)
-            {
-                if (main.ViewControllers.Length > 1 && main.ViewControllers[0] is LogViewController)
-                {
-                    main.PopViewController(true);
-                }
-            }
-            else if (sender == reportsButton)
-            {
-                main.PushViewController(new ReportsViewController(), true);
-            }
-            else if (sender == settingsButton)
-            {
-                main.PushViewController(new SettingsViewController(), true);
-            }
-            else if (sender == feedbackButton)
-            {
-                main.PushViewController(new FeedbackViewController(), true);
-            }
-            else
-            {
-                RxChain.Send(new DataMsg.ResetState());
-            }
-            main.CloseMenu();
+            var httpClient = new HttpClient();
+
+            Task<byte[]> contentsTask = httpClient.GetByteArrayAsync(imageUrl);
+
+            // await! control returns to the caller and the task continues to run on another thread
+            var contents = await contentsTask;
+
+            // load from bytes
+            return UIImage.LoadFromData(NSData.FromArray(contents));
         }
     }
 }

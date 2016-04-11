@@ -6,17 +6,23 @@ namespace Toggl.Phoebe.Logging
 {
     public class LogClient : ILoggerClient
     {
+        public LogClient (Action platformInitAction)
+        {
+            if (platformInitAction != null) {
+                platformInitAction();
+            }
+        }
+
         #region ILoggerClient implementation
 
         public void SetUser (string id, string email = null, string name = null)
         {
             if (id != null) {
-                var traits = new Dictionary<string, string>
-                {
+                var traits = new Dictionary<string, string> {
                     { Insights.Traits.Email, email },
                     { Insights.Traits.Name, name },
                 };
-                Insights.Identify(id, traits);
+                Insights.Identify (id, traits);
             }
         }
 
@@ -32,18 +38,19 @@ namespace Toggl.Phoebe.Logging
                 }
             }
 
-            if (severity == ErrorSeverity.Info)
-            {
-                Insights.Track("Info", extraData);
-            }
-            else
-            {
+            if (severity == ErrorSeverity.Info) {
+                Insights.Track ("Info", extraData);
+            } else {
                 var reportSeverity = severity == ErrorSeverity.Warning
-                    ? Insights.Severity.Warning : Insights.Severity.Error;
-                
-                Insights.Report(e, extraData, reportSeverity);
+                                     ? Insights.Severity.Warning : Insights.Severity.Error;
+
+                Insights.Report (e, extraData, reportSeverity);
             }
         }
+
+        public string DeviceId { get; set; }
+
+        public List<string> ProjectNamespaces { get; set; }
 
         #endregion
 

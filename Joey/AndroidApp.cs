@@ -1,9 +1,9 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using Android.App;
 using Android.Content;
 using Android.Net;
-using Mindscape.Raygun4Net;
 using SQLite.Net.Interop;
 using SQLite.Net.Platform.XamarinAndroid;
 using Toggl.Joey.Analytics;
@@ -17,6 +17,7 @@ using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Logging;
 using Toggl.Phoebe.Net;
+using Xamarin;
 using XPlatUtils;
 
 namespace Toggl.Joey
@@ -50,11 +51,6 @@ namespace Toggl.Joey
 
         private void RegisterComponents ()
         {
-            // Attach bug tracker
-            #if (!DEBUG)
-            RaygunClient.Attach (Build.RaygunApiKey);
-            #endif
-
             // Register platform service.
             ServiceContainer.Register<IPlatformUtils> (this);
             ServiceContainer.Register<SettingsStore> (() => new SettingsStore (Context));
@@ -74,7 +70,18 @@ namespace Toggl.Joey
             ServiceContainer.Register<SyncMonitor> ();
             ServiceContainer.Register<GcmRegistrationManager> ();
             ServiceContainer.Register<AndroidNotificationManager> ();
-            ServiceContainer.Register<ILoggerClient> (() => new LogClient ());
+            ServiceContainer.Register<ILoggerClient> (delegate {
+                return new LogClient (delegate {
+                    #if DEBUG
+                    Insights.Initialize (Insights.DebugModeKey, this);
+                    #else
+                    Insights.Initialize (Build.XamInsightsApiKey, this);
+                    #endif
+                }) {
+                    DeviceId = ServiceContainer.Resolve<SettingsStore> ().InstallId,
+                    ProjectNamespaces = new List<string> () { "Toggl." },
+                };
+            });
             ServiceContainer.Register<ITracker> (() => new Tracker (this));
             ServiceContainer.Register<INetworkPresence> (() => new NetworkPresence (Context, (ConnectivityManager)GetSystemService (ConnectivityService)));
         }

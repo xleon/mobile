@@ -57,6 +57,7 @@ namespace Toggl.Phoebe.Reactive
 
         public const string QueueId = "SYNC_OUT";
         public static SyncManager Singleton { get; private set; }
+        private static string DuplicatedNameMessage = "Name has already been taken";
 
         public static void Init()
         {
@@ -300,19 +301,34 @@ namespace Toggl.Phoebe.Reactive
             {
                 // TODO RX: Check the rejection reason: if an item is being specifically rejected,
                 // discard it so it doesn't block the syncing of other items
+                // In V9, the ERROR message will arrive properly normalized.
                 if (ex is UnsuccessfulRequestException)
                 {
                     var exception = (UnsuccessfulRequestException)ex;
                     if (exception.StatusCode == System.Net.HttpStatusCode.BadRequest)
                     {
-                        // Clean from queue and from local DB.
+                        if (exception.Message.Contains(DuplicatedNameMessage))
+                        {
+                            // ATTENTION Due the lack of a proper way to get data
+                            // when a name conflicts occurs, we download new json only
+                            // and update the tag properly.
+                            var response = await GetNameDuplicated(data, state);
+                            var resData = mapper.Map(response);
+                            resData.Id = data.Id;
+                            remoteObjects.Add(resData);
+                        }
                         return;
                     }
+
+                    if (exception.StatusCode == System.Net.HttpStatusCode.InternalServerError)
+                        return;
                 }
 
                 throw;
             }
         }
+
+        #region Auth methods
 
         async Task LoginAsync(string username, string password)
         {
@@ -401,6 +417,10 @@ namespace Toggl.Phoebe.Reactive
             RxChain.Send(new DataMsg.UserDataPut(
                              authResult, userJson != null ? mapper.Map<UserData> (userJson) : null));
         }
+
+        #endregion
+
+        #region Download methods
 
         async Task GetChanges(ServerRequest request, AppState state)
         {
@@ -500,7 +520,7 @@ namespace Toggl.Phoebe.Reactive
                             var projectJson = newProjects.FirstOrDefault(x => x.RemoteId == entry.ProjectRemoteId);
                             if (projectJson == null)
                             {
-                                projectJson = await client.Get<ProjectJson> (authToken, entry.ProjectRemoteId.Value);
+                                projectJson = await client.Get<ProjectJson>(authToken, entry.ProjectRemoteId.Value);
                                 newProjects.Add(projectJson);
                             }
                             clientRemoteId = (projectJson as ProjectJson).ClientRemoteId;
@@ -511,7 +531,7 @@ namespace Toggl.Phoebe.Reactive
                             if (state.Clients.Values.All(x => x.RemoteId != clientRemoteId) &&
                                     newClients.All(x => x.RemoteId != clientRemoteId))
                             {
-                                newClients.Add(await client.Get<ClientJson> (authToken, clientRemoteId.Value));
+                                newClients.Add(await client.Get<ClientJson>(authToken, clientRemoteId.Value));
                             }
                         }
                     }
@@ -521,7 +541,7 @@ namespace Toggl.Phoebe.Reactive
                         if (state.Tasks.Values.All(x => x.RemoteId != entry.TaskRemoteId) &&
                                 newTasks.All(x => x.RemoteId != entry.TaskRemoteId))
                         {
-                            newTasks.Add(await client.Get<TaskJson> (authToken, entry.TaskRemoteId.Value));
+                            newTasks.Add(await client.Get<TaskJson>(authToken, entry.TaskRemoteId.Value));
                         }
                     }
                 }
@@ -559,6 +579,10 @@ namespace Toggl.Phoebe.Reactive
                 RxChain.Send(new DataMsg.ServerResponse(request, exc));
             }
         }
+
+        #endregion
+
+        #region Utils
 
         CommonJson PrepareForSync(ICommonData data, List<CommonData> remoteObjects, AppState state)
         {
@@ -605,7 +629,7 @@ namespace Toggl.Phoebe.Reactive
                 }
                 if (pr.ClientId != Guid.Empty && !pr.ClientRemoteId.HasValue)
                 {
-                    pr.ClientRemoteId = GetRemoteId<ClientData> (pr.ClientId, remoteObjects, state);
+                    pr.ClientRemoteId = GetRemoteId<ClientData>(pr.ClientId, remoteObjects, state);
                 }
                 return pr;
             }
@@ -627,7 +651,7 @@ namespace Toggl.Phoebe.Reactive
                 }
                 if (ts.ProjectRemoteId == 0)
                 {
-                    ts.ProjectRemoteId = GetRemoteId<ProjectData> (ts.ProjectId, remoteObjects, state);
+                    ts.ProjectRemoteId = GetRemoteId<ProjectData>(ts.ProjectId, remoteObjects, state);
                 }
                 return ts;
             }
@@ -636,7 +660,7 @@ namespace Toggl.Phoebe.Reactive
                 var t = (TagData)data.Clone();
                 if (t.WorkspaceRemoteId == 0)
                 {
-                    t.WorkspaceRemoteId = GetRemoteId<TagData> (t.WorkspaceId, remoteObjects, state);
+                    t.WorkspaceRemoteId = GetRemoteId<TagData>(t.WorkspaceId, remoteObjects, state);
                 }
                 return t;
             }
@@ -667,11 +691,11 @@ namespace Toggl.Phoebe.Reactive
                 var ws = (WorkspaceUserData)data.Clone();
                 if (ws.WorkspaceRemoteId == 0)
                 {
-                    ws.WorkspaceRemoteId = GetRemoteId<ProjectData> (ws.WorkspaceId, remoteObjects, state);
+                    ws.WorkspaceRemoteId = GetRemoteId<ProjectData>(ws.WorkspaceId, remoteObjects, state);
                 }
                 if (ws.UserRemoteId == 0)
                 {
-                    ws.UserRemoteId = GetRemoteId<UserData> (ws.UserId, remoteObjects, state);
+                    ws.UserRemoteId = GetRemoteId<UserData>(ws.UserId, remoteObjects, state);
                 }
                 return ws;
             }
@@ -738,5 +762,54 @@ namespace Toggl.Phoebe.Reactive
             }
             return res.Value;
         }
+
+        private ICommonData ToUpdatePending(ICommonData data)
+        {
+            if (data is ITimeEntryData)
+                return ((ITimeEntryData)data).With(x => x.DeletedAt = Time.UtcNow);
+
+            if (data is IClientData)
+                return ((IClientData)data).With(x => x.DeletedAt = Time.UtcNow);
+
+            if (data is IProjectData)
+                return ((IProjectData)data).With(x => x.DeletedAt = Time.UtcNow);
+
+            if (data is ITagData)
+                return ((ITagData)data).With(x => x.DeletedAt = Time.UtcNow);
+
+            return data;
+        }
+
+        private async Task<CommonJson> GetNameDuplicated(ICommonData data, AppState state)
+        {
+            var auth = state.User.ApiToken;
+            var since = state.RequestInfo.GetChangesLastRun;
+
+            if (data is ITagData)
+            {
+                var remoteWorkspaceId = state.Workspaces [((ITagData)data).WorkspaceId].RemoteId;
+                var tags = await client.GetSince<TagJson> (auth, since);
+                return tags.FirstOrDefault(x => x.Name == ((ITagData)data).Name && x.WorkspaceRemoteId == remoteWorkspaceId);
+            }
+
+            if (data is IProjectData)
+            {
+                var remoteWorkspaceId = state.Workspaces [((IProjectData)data).WorkspaceId].RemoteId;
+                var projects = await client.GetSince<ProjectJson> (auth, since);
+                return projects.FirstOrDefault(x => x.Name == ((IProjectData)data).Name && x.WorkspaceRemoteId == remoteWorkspaceId);
+            }
+
+            if (data is IClientData)
+            {
+                var remoteWorkspaceId = state.Workspaces [((IClientData)data).WorkspaceId].RemoteId;
+                var clients = await client.GetSince<ClientJson> (auth, since);
+                return clients.FirstOrDefault(x => x.Name == ((IClientData)data).Name && x.WorkspaceRemoteId == remoteWorkspaceId);
+            }
+
+            throw new Exception("Type not supported. Sync Duplicated. Type: " + data.GetType());
+
+        }
+
+        #endregion
     }
 }

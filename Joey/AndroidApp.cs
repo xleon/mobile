@@ -75,7 +75,7 @@ namespace Toggl.Joey
                     #if DEBUG
                     Insights.Initialize (Insights.DebugModeKey, this);
                     #else
-                    Insights.Initialize (Build.XamInsightsApiKey, this);
+                    Insights.Initialize (Build.XamarinInsightsApiKey, this);
                     #endif
                 }) {
                     DeviceId = ServiceContainer.Resolve<SettingsStore> ().InstallId,

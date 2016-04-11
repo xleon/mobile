@@ -372,7 +372,6 @@
     <Compile Include="Theme\Style.Settings.cs">
       <DependentUpon>Style.cs</DependentUpon>
     </Compile>
-    <Compile Include="Net\NetworkPresence.cs" />
     <Compile Include="TogglWindow.cs" />
     <Compile Include="Theme\Style.Feedback.cs">
       <DependentUpon>Style.cs</DependentUpon>

@@ -163,6 +163,12 @@
     <Reference Include="PropertyChanged">
       <HintPath>..\packages\PropertyChanged.Fody.1.51.0\Lib\portable-net4+sl4+wp8+win8+wpa81+MonoAndroid16+MonoTouch40\PropertyChanged.dll</HintPath>
     </Reference>
+    <Reference Include="Plugin.Connectivity">
+      <HintPath>..\packages\Xam.Plugin.Connectivity.2.1.2\lib\MonoAndroid10\Plugin.Connectivity.dll</HintPath>
+    </Reference>
+    <Reference Include="Plugin.Connectivity.Abstractions">
+      <HintPath>..\packages\Xam.Plugin.Connectivity.2.1.2\lib\MonoAndroid10\Plugin.Connectivity.Abstractions.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -185,8 +191,6 @@
     <Compile Include="UI\Utils\BindableViewHolder.cs" />
     <Compile Include="UI\Views\TextViewExtensions.cs" />
     <Compile Include="UI\Utils\Font.cs" />
-    <Compile Include="Net\SyncService.cs" />
-    <Compile Include="Net\SyncMonitor.cs" />
     <Compile Include="UI\Fragments\BaseDialogFragment.cs" />
     <Compile Include="UI\Text\FontSpan.cs" />
     <Compile Include="UI\Fragments\SettingsListFragment.cs" />
@@ -194,7 +198,6 @@
     <Compile Include="UI\Activities\EditTimeEntryActivity.cs" />
     <Compile Include="UI\Fragments\EditTimeEntryFragment.cs" />
     <Compile Include="UI\Utils\DateTimeExtensions.cs" />
-    <Compile Include="Net\NetworkPresence.cs" />
     <Compile Include="UI\Fragments\FeedbackFragment.cs" />
     <Compile Include="UI\Views\FadeDrawable.cs" />
     <Compile Include="UI\Views\FadeLinearLayout.cs" />

@@ -311,7 +311,7 @@ namespace Toggl.Phoebe.Reactive
                         {
                             // ATTENTION Due the lack of a proper way to get data
                             // when a name conflicts occurs, we download new json only
-                            // and update the tag properly.
+                            // and update the object properly.
                             var response = await GetNameDuplicated(data, state);
                             var resData = mapper.Map(response);
                             resData.Id = data.Id;

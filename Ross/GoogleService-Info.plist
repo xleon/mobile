@@ -5,9 +5,9 @@
 	<key>TRACKING_ID</key>
 	<string>{GOOGLE_ANALYTICS_ID}</string>
 	<key>CLIENT_ID</key>
-	<string>{CLIENT_ID}</string>
+	<string>{GOOGLE_CLIENT_ID}</string>
 	<key>REVERSED_CLIENT_ID</key>
-	<string>{REVERSED_CLIENT_ID}</string>
+	<string>{GOOGLE_REVERSED_CLIENT_ID}</string>
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>

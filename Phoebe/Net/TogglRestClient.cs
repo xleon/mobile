@@ -127,6 +127,28 @@ namespace Toggl.Phoebe.Net
             }
         }
 
+        public async Task<List<T>> GetSince<T> (string authToken, DateTime? since)
+        where T : CommonJson
+        {
+            var type = typeof(T);
+            if (type == typeof(TagJson))
+            {
+                return (List<T>)(object)await GetTagsSince(authToken, since);
+            }
+            else if (type == typeof(ProjectJson))
+            {
+                return (List<T>)(object)await GetProjectsSince(authToken, since);
+            }
+            else if (type == typeof(ClientJson))
+            {
+                return (List<T>)(object)await GetClientsSince(authToken, since);
+            }
+            else
+            {
+                throw new NotSupportedException(string.Format("Listing of {0} is not supported.", type));
+            }
+        }
+
         public async Task<List<T>> List<T> (string authToken)
         where T : CommonJson
         {
@@ -484,6 +506,16 @@ namespace Toggl.Phoebe.Net
             return DeleteObject(authToken, url);
         }
 
+        public async Task<List<ClientJson>> GetClientsSince(string authToken, DateTime? since)
+        {
+            since = null;
+            var httpReq = GetV9SinceRequest(authToken, "me/projects", since);
+            var httpResp = await SendAsync(httpReq).ConfigureAwait(false);
+            var respData = await httpResp.Content.ReadAsStringAsync().ConfigureAwait(false);
+            var wrap = JsonConvert.DeserializeObject<List<ClientJson>> (respData);
+            return wrap;
+        }
+
         #endregion
 
         #region Project methods
@@ -529,6 +561,16 @@ namespace Toggl.Phoebe.Net
             var url = new Uri(v8Url, string.Format("projects/{0}",
                                                    string.Join(",", jsonObjects.Select((model) => model.RemoteId.Value.ToString()))));
             return DeleteObjects(authToken, url);
+        }
+
+        public async Task<List<ProjectJson>> GetProjectsSince(string authToken, DateTime? since)
+        {
+            since = null;
+            var httpReq = GetV9SinceRequest(authToken, "me/projects", since);
+            var httpResp = await SendAsync(httpReq).ConfigureAwait(false);
+            var respData = await httpResp.Content.ReadAsStringAsync().ConfigureAwait(false);
+            var wrap = JsonConvert.DeserializeObject<List<ProjectJson>> (respData);
+            return wrap;
         }
 
         #endregion
@@ -695,6 +737,16 @@ namespace Toggl.Phoebe.Net
         {
             var url = new Uri(v8Url, string.Format("tags/{0}", jsonObject.RemoteId.Value.ToString()));
             return DeleteObject(authToken, url);
+        }
+
+        public async Task<List<TagJson>> GetTagsSince(string authToken, DateTime? since)
+        {
+            since = null;
+            var httpReq = GetV9SinceRequest(authToken, "me/tags", since);
+            var httpResp = await SendAsync(httpReq).ConfigureAwait(false);
+            var respData = await httpResp.Content.ReadAsStringAsync().ConfigureAwait(false);
+            var wrap = JsonConvert.DeserializeObject<List<TagJson>> (respData);
+            return wrap;
         }
 
         #endregion
@@ -923,6 +975,22 @@ namespace Toggl.Phoebe.Net
         public static bool Validator(object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors)
         {
             return true;
+        }
+
+        private HttpRequestMessage GetV9SinceRequest(string authToken, string relUrl, DateTime? since)
+        {
+            since.ToUtc();
+            if (since.HasValue)
+            {
+                relUrl = string.Format("{0}&since={1}", relUrl, (long)(since.Value - UnixStart).TotalSeconds);
+            }
+            var url = new Uri(v9Url, relUrl);
+            var httpReq = SetupRequest(authToken, new HttpRequestMessage()
+            {
+                Method = HttpMethod.Get,
+                RequestUri = url,
+            });
+            return httpReq;
         }
 
         private class Wrapper<T>

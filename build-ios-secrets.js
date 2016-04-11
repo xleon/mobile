@@ -11,8 +11,8 @@ replacer.replaceSecrets("Phoebe/Build.cs", {
 
 replacer.replaceSecrets("Ross/GoogleService-Info.plist", {
 	// "string to replace" : "secret env variable"
-	"{CLIENT_ID}" : "CLIENT_ID",
-	"{REVERSED_CLIENT_ID}" : "REVERSED_CLIENT_ID",
+	"{GOOGLE_CLIENT_ID}" : "GOOGLE_CLIENT_ID",
+	"{GOOGLE_REVERSED_CLIENT_ID}" : "GOOGLE_REVERSED_CLIENT_ID",
 	"{GOOGLE_ANALYTICS_ID}" : "GOOGLE_ANALYTICS_ID",
     "{GOOGLE_APP_ID}": "GOOGLE_APP_ID",
     "{GOOGLE_PROJECT_ID}": "GOOGLE_PROJECT_ID",
@@ -20,5 +20,5 @@ replacer.replaceSecrets("Ross/GoogleService-Info.plist", {
 
 replacer.replaceSecrets("Ross/Info.plist", {
 	// "string to replace" : "secret env variable"
-	"{REVERSED_CLIENT_ID}" : "REVERSED_CLIENT_ID",
+	"{GOOGLE_REVERSED_CLIENT_ID}" : "GOOGLE_REVERSED_CLIENT_ID",
 });

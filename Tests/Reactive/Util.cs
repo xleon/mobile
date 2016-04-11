@@ -176,6 +176,11 @@ namespace Toggl.Phoebe.Tests.Reactive
         {
             throw new NotImplementedException();
         }
+
+        public Task<List<T>> GetSince<T>(string authToken, DateTime ? since) where T : CommonJson
+        {
+            throw new NotImplementedException();
+        }
     }
 
     public class TrackerMock : ITracker
@@ -272,16 +277,6 @@ namespace Toggl.Phoebe.Tests.Reactive
             {
                 return isConnected;
             }
-        }
-
-        public void RegisterSyncWhenNetworkPresent()
-        {
-            throw new NotImplementedException();
-        }
-
-        public void UnregisterSyncWhenNetworkPresent()
-        {
-            throw new NotImplementedException();
         }
 
         public void SetNetworkConnection(bool isConnected)

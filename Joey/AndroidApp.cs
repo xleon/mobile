@@ -64,7 +64,6 @@ namespace Toggl.Joey
             // Register Joey components:
             ServiceContainer.Register<ILogger> (() => new Logger());
             ServiceContainer.Register<Context> (this);
-            ServiceContainer.Register<SyncMonitor> ();
             ServiceContainer.Register<GcmRegistrationManager> ();
             ServiceContainer.Register<AndroidNotificationManager> ();
             ServiceContainer.Register<ILoggerClient> (() => new LogClient());
@@ -89,7 +88,6 @@ namespace Toggl.Joey
             }
 
             componentsInitialized = true;
-            ServiceContainer.Resolve<SyncMonitor> ();
             ServiceContainer.Resolve<GcmRegistrationManager> ();
             ServiceContainer.Resolve<AndroidNotificationManager> ();
         }

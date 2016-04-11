@@ -184,6 +184,12 @@
     <Reference Include="TestFairy.iOS">
       <HintPath>..\packages\TestFairy.Xamarin-iOS.1.7.2\lib\Xamarin.iOS10\TestFairy.iOS.dll</HintPath>
     </Reference>
+    <Reference Include="Plugin.Connectivity">
+      <HintPath>..\packages\Xam.Plugin.Connectivity.2.1.2\lib\Xamarin.iOS10\Plugin.Connectivity.dll</HintPath>
+    </Reference>
+    <Reference Include="Plugin.Connectivity.Abstractions">
+      <HintPath>..\packages\Xam.Plugin.Connectivity.2.1.2\lib\Xamarin.iOS10\Plugin.Connectivity.Abstractions.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <BundleResource Include="Resources\en.lproj\Localizable.strings" />
@@ -366,7 +372,6 @@
     <Compile Include="Theme\Style.Settings.cs">
       <DependentUpon>Style.cs</DependentUpon>
     </Compile>
-    <Compile Include="Net\NetworkPresence.cs" />
     <Compile Include="TogglWindow.cs" />
     <Compile Include="Theme\Style.Feedback.cs">
       <DependentUpon>Style.cs</DependentUpon>

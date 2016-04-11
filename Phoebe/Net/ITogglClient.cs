@@ -17,6 +17,9 @@ namespace Toggl.Phoebe.Net
         Task<T> Get<T> (string authToken, long id)
         where T : CommonJson;
 
+        Task<List<T>> GetSince<T> (string authToken, DateTime? since)
+        where T : CommonJson;
+
         Task<List<T>> List<T> (string authToken)
         where T : CommonJson;
 

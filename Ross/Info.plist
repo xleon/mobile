@@ -47,7 +47,7 @@
 			<string>Editor</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>{REVERSED_CLIENT_ID}</string>
+				<string>{GOOGLE_REVERSED_CLIENT_ID}</string>
 			</array>
 			<key>CFBundleURLName</key>
 			<string>com.toggl.timer</string>

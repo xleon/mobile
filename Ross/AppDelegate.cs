@@ -19,6 +19,7 @@ using Toggl.Ross.Net;
 using Toggl.Ross.ViewControllers;
 using Toggl.Ross.Views;
 using UIKit;
+using Xamarin;
 using XPlatUtils;
 
 namespace Toggl.Ross
@@ -40,7 +41,6 @@ namespace Toggl.Ross
 
             // Attach bug tracker
             #if (!DEBUG)
-            RaygunClient.Attach (Build.RaygunApiKey);
             TestFairy.Begin (Build.TestFairyApiToken);
             #endif
 
@@ -157,12 +157,23 @@ namespace Toggl.Ross
             ServiceContainer.Register<ExperimentManager> (() => new ExperimentManager (
                 typeof (Toggl.Phoebe.Analytics.Experiments),
                 typeof (Toggl.Ross.Analytics.Experiments)));
-            ServiceContainer.Register<ILoggerClient> (() => new LogClient ());
+            ServiceContainer.Register<ILoggerClient> (initialiseLogClient);
             ServiceContainer.Register<ITracker> (() => new Tracker());
             ServiceContainer.Register<INetworkPresence> (() => new NetworkPresence ());
             ServiceContainer.Register<NetworkIndicatorManager> ();
             ServiceContainer.Register<TagChipCache> ();
             ServiceContainer.Register<APNSManager> ();
+        }
+
+        private static ILoggerClient initialiseLogClient()
+        {
+#if DEBUG
+            Insights.Initialize(Insights.DebugModeKey);
+#else
+            Insights.Initialize(Build.XamarinInsightsApiKey);
+#endif
+
+            return new LogClient();
         }
 
         private void SetupGoogleServices ()

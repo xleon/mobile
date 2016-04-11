@@ -19,7 +19,8 @@ using UIKit;
 
 namespace Toggl.Ross.ViewControllers
 {
-    public class LogViewController : UITableViewController
+    public class
+        LogViewController : UITableViewController
     {
         private const string DefaultDurationText = " 00:00:00 ";
         readonly static NSString EntryCellId = new NSString("EntryCellId");
@@ -96,7 +97,6 @@ namespace Toggl.Ross.ViewControllers
         public override void ViewDidLoad()
         {
             base.ViewDidLoad();
-
             EdgesForExtendedLayout = UIRectEdge.None;
             TableView.RegisterClassForCellReuse(typeof(TimeEntryCell), EntryCellId);
             TableView.RegisterClassForCellReuse(typeof(SectionCell), SectionCellId);
@@ -241,14 +241,14 @@ namespace Toggl.Ross.ViewControllers
             }
 
             UIView emptyView = defaultEmptyView; // Default empty view.
-            var isWelcome = ViewModel.IsWelcomeMessageShown();
+            var showWelcome = ViewModel.ShowWelcomeScreen();
             var hasItems = ViewModel.Collection.Count > 0;
             var isInExperiment = ViewModel.IsInExperiment();
 
             // According to settings, show welcome message or no.
-            ((SimpleEmptyView)emptyView).Title = isWelcome ? "LogWelcomeTitle".Tr() : "LogEmptyTitle".Tr();
+            ((SimpleEmptyView)emptyView).Title = showWelcome ? "LogWelcomeTitle".Tr() : "LogEmptyTitle".Tr();
 
-            if (isWelcome && isInExperiment)
+            if (showWelcome && isInExperiment)
             {
                 emptyView = obmEmptyView;
             }

@@ -172,7 +172,6 @@ namespace Toggl.Ross.ViewControllers
 
                     // Error cases
                     default:
-                        IsAuthenticating = false;
                         if (viewModel.CurrentLoginMode == LoginVM.LoginMode.Login)
                         {
                             if (viewModel.AuthResult == AuthResult.InvalidCredentials)
@@ -209,6 +208,7 @@ namespace Toggl.Ross.ViewControllers
             var enabled = !IsAuthenticating
                           && !string.IsNullOrWhiteSpace(emailTextField.Text) && emailTextField.Text.Contains("@")
                           && !string.IsNullOrWhiteSpace(passwordTextField.Text) && passwordTextField.Text.Length >= 6;
+            passwordActionButton.SetTitle("SignupSignupButtonText".Tr(), UIControlState.Disabled);
             passwordActionButton.Enabled = enabled;
         }
 

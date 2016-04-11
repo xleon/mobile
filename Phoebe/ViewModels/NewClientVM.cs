@@ -47,7 +47,7 @@ namespace Toggl.Phoebe.ViewModels
                 return Task.FromResult(existing);
             }
 
-            RxChain.Send(new DataMsg.ClientDataPut(model), new RxChain.Continuation((state, sent, queued) =>
+            RxChain.Send(new DataMsg.ClientDataPut(model), new RxChain.Continuation((state) =>
             {
                 var clientData = state.Clients.Values.First(x => x.WorkspaceId == model.WorkspaceId && x.Name == model.Name);
                 tcs.SetResult(clientData);

@@ -9,15 +9,26 @@ namespace Toggl.Phoebe.Reactive
     {
         public class Continuation
         {
-            Action<AppState, IEnumerable<ICommonData>, IEnumerable<SyncManager.QueueItem>> _cont;
+            readonly Action<AppState, IEnumerable<ICommonData>, IEnumerable<SyncManager.QueueItem>> _testCont;
+            readonly Action<AppState> _cont;
+            public bool LocalOnly { get; private set; }
+
+            public Continuation(Action<AppState> cont)
+            {
+                _cont = cont;
+                LocalOnly = true;
+            }
 
             public Continuation(Action<AppState, IEnumerable<ICommonData>, IEnumerable<SyncManager.QueueItem>> cont)
             {
-                _cont = cont;
+                _testCont = cont;
+                LocalOnly = false;
             }
 
             public void Invoke(AppState state, IEnumerable<ICommonData> remoteObjects, IEnumerable<SyncManager.QueueItem> enqueuedItems) =>
-            _cont(state, remoteObjects, enqueuedItems);
+            _testCont(state, remoteObjects, enqueuedItems);
+
+            public void Invoke(AppState state) => _cont(state);
         }
 
         public enum InitMode

@@ -141,9 +141,6 @@ namespace Toggl.Phoebe.ViewModels
                 RxChain.Send(new DataMsg.TimeEntryContinue(timeEntryHolder.Entry.Data));
                 ServiceContainer.Resolve<ITracker> ().SendTimerStartEvent(TimerStartSource.AppContinue);
             }
-
-            // Set ShowWelcome setting to false.
-            RxChain.Send(new DataMsg.UpdateSetting(nameof(SettingsState.ShowWelcome), false));
         }
 
         public Task<ITimeEntryData> StartNewTimeEntryAsync()
@@ -151,10 +148,10 @@ namespace Toggl.Phoebe.ViewModels
             var tcs = new TaskCompletionSource<ITimeEntryData> ();
             var entry = ActiveEntry.Data;
 
-            RxChain.Send(new DataMsg.TimeEntryContinue(entry), new RxChain.Continuation((state, sent, queued) =>
+            RxChain.Send(new DataMsg.TimeEntryContinue(entry), new RxChain.Continuation((state) =>
             {
                 ServiceContainer.Resolve<ITracker> ().SendTimerStartEvent(TimerStartSource.AppNew);
-                tcs.SetResult(ActiveEntry.Data);
+                tcs.SetResult(StoreManager.Singleton.AppState.ActiveEntry.Data);
             }));
 
             return tcs.Task;
@@ -163,8 +160,7 @@ namespace Toggl.Phoebe.ViewModels
         public void StopTimeEntry()
         {
             // TODO RX: Protect from requests in short time (double click...)?
-            var entry = ActiveEntry.Data;
-            RxChain.Send(new DataMsg.TimeEntryStop(entry));
+            RxChain.Send(new DataMsg.TimeEntryStop(StoreManager.Singleton.AppState.ActiveEntry.Data));
             ServiceContainer.Resolve<ITracker> ().SendTimerStopEvent(TimerStopSource.App);
         }
 
@@ -189,7 +185,7 @@ namespace Toggl.Phoebe.ViewModels
             return OBMExperimentManager.IncludedInExperiment(StoreManager.Singleton.AppState.User);
         }
 
-        public bool IsWelcomeMessageShown()
+        public bool ShowWelcomeScreen()
         {
             return StoreManager.Singleton.AppState.Settings.ShowWelcome;
         }

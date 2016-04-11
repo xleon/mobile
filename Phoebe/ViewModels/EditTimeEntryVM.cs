@@ -15,46 +15,40 @@ namespace Toggl.Phoebe.ViewModels
 {
     public class EditTimeEntryVM : ViewModelBase, IDisposable
     {
-        private IDisposable subscriptionState, subscriptionTimer;
+        private IDisposable subscriptionTimer, subscriptionState;
         private RichTimeEntry richData;
         private RichTimeEntry previousData;
 
-        public EditTimeEntryVM(AppState appState, Guid timeEntryId, bool isManual = false)
+        public EditTimeEntryVM(AppState appState, Guid timeEntryId)
         {
-            IsManual = isManual;
+            IsManual = timeEntryId == Guid.Empty;
 
-            if (timeEntryId == Guid.Empty)
+            if (IsManual)
             {
-                richData = isManual ? new RichTimeEntry(appState.GetTimeEntryDraft(), appState) : appState.ActiveEntry;
+                richData = new RichTimeEntry(appState.GetTimeEntryDraft(), appState);
+                UpdateView(x =>
+                {
+                    x.Tags = new List<string>(richData.Data.Tags);
+                    x.StartTime = Time.UtcNow.AddMinutes(-5);
+                    x.StopTime = Time.UtcNow;
+                    x.State = TimeEntryState.Finished;
+                });
+                previousData = new RichTimeEntry(richData.Data.With(x => x.Tags = new List<string>()), appState);
             }
             else
             {
                 richData = appState.TimeEntries[timeEntryId];
-            }
-
-            UpdateView(x =>
-            {
-                x.Tags = new List<string> (richData.Data.Tags);
-                if (IsManual)
+                previousData = new RichTimeEntry(richData.Data, richData.Info);
+                subscriptionState = StoreManager
+                                    .Singleton
+                                    .Observe(x => x.State.TimeEntries[timeEntryId])
+                                    .ObserveOn(SynchronizationContext.Current)
+                                    .Subscribe(newTimeEntryData =>
                 {
-                    x.StartTime = Time.UtcNow.AddMinutes(-5);
-                    x.StopTime = Time.UtcNow;
-                    x.State = TimeEntryState.Finished;
-                }
-            });
-
-            // Save previous state.
-            previousData = IsManual
-                           // Hack to force tag saving even if there're no other changes
-                           ? new RichTimeEntry(richData.Data.With(x => x.Tags = new List<string> ()), appState)
-                           : new RichTimeEntry(richData.Data, richData.Info);
-
-            subscriptionState = StoreManager
-                                .Singleton
-                                .Observe(x => x.State)
-                                .ObserveOn(SynchronizationContext.Current)
-                                .StartWith(appState)
-                                .Subscribe(s => appState = s);
+                    richData = newTimeEntryData;
+                    previousData = new RichTimeEntry(richData.Data, richData.Info);
+                });
+            }
 
             subscriptionTimer = Observable.Timer(TimeSpan.FromMilliseconds(1000 - Time.Now.Millisecond),
                                                  TimeSpan.FromSeconds(1))
@@ -66,7 +60,8 @@ namespace Toggl.Phoebe.ViewModels
 
         public void Dispose()
         {
-            subscriptionState.Dispose();
+            if (subscriptionState != null)
+                subscriptionState.Dispose();
             subscriptionTimer.Dispose();
         }
 

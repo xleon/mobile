@@ -45,9 +45,9 @@ namespace Toggl.Ross.ViewControllers
 
         protected EditTimeEntryVM ViewModel { get; set; }
 
-        public EditTimeEntryViewController(Guid dataId, bool isManual = false)
+        public EditTimeEntryViewController(Guid dataId)
         {
-            ViewModel = new EditTimeEntryVM(StoreManager.Singleton.AppState, dataId, isManual);
+            ViewModel = new EditTimeEntryVM(StoreManager.Singleton.AppState, dataId);
         }
 
         public override void LoadView()

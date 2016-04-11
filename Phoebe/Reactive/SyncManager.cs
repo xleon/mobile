@@ -95,6 +95,8 @@ namespace Toggl.Phoebe.Reactive
                              DownloadEntries(x.Item1, x.Item2),
                              (ServerRequest.GetChanges _) =>
                              GetChanges(x.Item1, x.Item2),
+                             (ServerRequest.GetCurrentState _) =>
+                             GetChanges(x.Item1, x.Item2),
                              (ServerRequest.Authenticate req) =>
             {
                 switch (req.Operation)
@@ -152,6 +154,10 @@ namespace Toggl.Phoebe.Reactive
             var enqueuedItems = new List<QueueItem> ();
             var isConnected = networkPresence.IsNetworkPresent;
 
+            // Call message continuation before execute remote ops.
+            if (syncMsg.Continuation != null && syncMsg.Continuation.LocalOnly)
+                syncMsg.Continuation.Invoke(syncMsg.State);
+
             // Try to empty queue first
             bool queueEmpty = await TryEmptyQueue(remoteObjects, syncMsg.State, isConnected);
 
@@ -187,14 +193,14 @@ namespace Toggl.Phoebe.Reactive
             foreach (var req in syncMsg.ServerRequests.Where(x => x is ServerRequest.CRUD == false))
                 requestManager.OnNext(Tuple.Create(req, syncMsg.State));
 
-            // Call message continuation before execute long ops.
-            if (syncMsg.Continuation != null)
+            // Mostly used for test pourposes.
+            if (syncMsg.Continuation != null && !syncMsg.Continuation.LocalOnly)
                 syncMsg.Continuation.Invoke(syncMsg.State, remoteObjects, enqueuedItems);
-
         }
 
         async Task<bool> TryEmptyQueue(List<CommonData> remoteObjects, AppState state, bool isConnected)
         {
+            // Clean the queue when a logout is detected
             var authToken = state.User.ApiToken;
             if (string.IsNullOrEmpty(authToken) && dataStore.GetQueueSize(QueueId) > 0)
             {
@@ -290,10 +296,20 @@ namespace Toggl.Phoebe.Reactive
                     }
                 }
             }
-            catch
+            catch (Exception ex)
             {
                 // TODO RX: Check the rejection reason: if an item is being specifically rejected,
                 // discard it so it doesn't block the syncing of other items
+                if (ex is UnsuccessfulRequestException)
+                {
+                    var exception = (UnsuccessfulRequestException)ex;
+                    if (exception.StatusCode == System.Net.HttpStatusCode.BadRequest)
+                    {
+                        // Clean from queue and from local DB.
+                        return;
+                    }
+                }
+
                 throw;
             }
         }
@@ -328,7 +344,7 @@ namespace Toggl.Phoebe.Reactive
             {
                 GoogleAccessToken = accessToken,
                 Timezone = Time.TimeZoneId,
-            }), AuthChangeReason.SignupGoogle); //, AccountCredentials.Google);
+            }), AuthChangeReason.SignupGoogle); //, AccountCredentials.Google
         }
 
         async Task AuthenticateAsync(
@@ -389,11 +405,20 @@ namespace Toggl.Phoebe.Reactive
         async Task GetChanges(ServerRequest request, AppState state)
         {
             string authToken = state.User.ApiToken;
-            DateTime? sinceDate = state.RequestInfo.GetChangesLastRun;
-            // If Since value is less than two months
-            // Use null and let server pick the correct value
-            if (sinceDate < DateTime.Now.Date.AddMonths(-2))
+            DateTime? sinceDate;
+
+            if (request is ServerRequest.GetChanges)
             {
+                sinceDate = state.RequestInfo.GetChangesLastRun;
+                // ATTENTION sinceDate should be less
+                // than two month ago. Server requirements.
+                if (sinceDate < DateTime.Now.Date.AddDays(-60))
+                    sinceDate = DateTime.Now.Date.AddDays(-60);
+            }
+            else
+            {
+                // Request state of Data in server.
+                // passing null value.
                 sinceDate = null;
             }
 

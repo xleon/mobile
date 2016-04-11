@@ -130,8 +130,6 @@ namespace Toggl.Ross.ViewControllers
                         break;
 
                     case AuthResult.Success:
-                        // TODO RX: Start the initial sync for the user
-                        //ServiceContainer.Resolve<ISyncManager> ().Run ();
                         break;
 
                     // Error cases

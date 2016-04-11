@@ -39,7 +39,7 @@ namespace Toggl.Phoebe.ViewModels
             subscription = StoreManager
                            .Singleton
                            .Observe(x => x.State.RequestInfo)
-                           .DistinctUntilChanged()
+                           .DistinctUntilChanged(x => x.AuthResult)
                            .ObserveOn(SynchronizationContext.Current)
                            .SubscribeSimple(reqInfo =>
             {

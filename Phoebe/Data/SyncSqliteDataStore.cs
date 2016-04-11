@@ -36,17 +36,76 @@ namespace Toggl.Phoebe.Data
 
         public SyncSqliteDataStore(string dbPath, ISQLitePlatform platformInfo)
         {
-            var cnnString = new SQLiteConnectionString(dbPath, true);
-            this.cnn = new SQLiteConnectionWithLock(platformInfo, cnnString);
+            this.cnn = this.initDatabaseConnection(dbPath, platformInfo);
 
             CreateTables();
             CleanOldDraftEntry();
         }
 
+        private SQLiteConnectionWithLock initDatabaseConnection(string dbPath, ISQLitePlatform platformInfo)
+        {
+            var cnnString = new SQLiteConnectionString(dbPath, true);
+            var connection = new SQLiteConnectionWithLock(platformInfo, cnnString);
+
+            var version = getVersion(connection);
+            if (version != DB_VERSION)
+            {
+                connection = this.migrateDatabase(connection, platformInfo);
+            }
+
+
+
+            return connection;
+        }
+
+        private SQLiteConnectionWithLock migrateDatabase(SQLiteConnection connection, ISQLitePlatform platformInfo)
+        {
+            var migrateFromDB = connection;
+            var version = getVersion(migrateFromDB);
+
+            while (true)
+            {
+                // migrate to next version and replace connection
+                var migrator = DatabaseMigrator.ForVersion(version);
+
+
+                if (migrator == null)
+                {
+                    throw new Exception($"Do not know how to migrate database version {version} (app's version is {DB_VERSION})");
+                }
+
+                // TODO: may need to use on-disk database
+                var newDB = new SQLiteConnection(platformInfo, "Data Source=:memory:");
+
+                migrator.Migrate(migrateFromDB, newDB);
+                migrateFromDB.Close();
+
+                var newVersion = getVersion(newDB);
+
+                if (newVersion <= version || newVersion > DB_VERSION)
+                {
+                    throw new Exception($"Database migrator upgraded from {version} to {newVersion} (app's version is {DB_VERSION}).");
+                }
+
+                if (newVersion == DB_VERSION)
+                {
+                    // TODO: reached our goal, return! (save to disk if needed)
+                    // return newDB;
+                }
+
+                migrateFromDB = newDB;
+            }
+        }
+
+        private static int getVersion(SQLiteConnection connection)
+        {
+            var data = connection.Table<MetaData>().Where(x => x.Id == nameof(DB_VERSION)).FirstOrDefault();
+            return data?.Convert<int>() ?? 0;
+        }
+
         public int GetVersion()
         {
-            var data = cnn.Table<MetaData> ().Where(x => x.Id == nameof(DB_VERSION)).FirstOrDefault();
-            return data?.Convert<int> () ?? 0;
+            return getVersion(this.cnn);
         }
 
         private void CreateTables()
@@ -204,10 +263,10 @@ namespace Toggl.Phoebe.Data
 
         public class SyncSqliteDataStoreContext : ISyncDataStoreContext
         {
-            readonly SQLiteConnectionWithLock conn;
+            readonly SQLiteConnection conn;
             readonly List<ICommonData> updated;
 
-            public SyncSqliteDataStoreContext(SQLiteConnectionWithLock conn)
+            public SyncSqliteDataStoreContext(SQLiteConnection conn)
             {
                 this.conn = conn;
                 this.updated = new List<ICommonData>();
@@ -243,6 +302,10 @@ namespace Toggl.Phoebe.Data
 
             // TODO: RX Find an elegant way to
             // replace this method.
+            // Paul found a possible solution when looking at this:
+            // double dispatch/visitor pattern. (feel free to ask for details/implementation)
+            // (if such a 'complex' solution is needed at all.
+            // this method is only used in one place at the time of writing)
             public ICommonData GetByColumn(Type type, string colName, object colValue)
             {
                 IEnumerable<ICommonData> res;

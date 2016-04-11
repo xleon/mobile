@@ -125,6 +125,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)Helpers\ServiceContainer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Helpers\Settings.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Data\Models\Old\DB_VERSION_0.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Data\DatabaseMigrator.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="$(MSBuildThisFileDirectory)Data\Models\Old\" />

@@ -1,7 +1,30 @@
 ﻿using System;
+using System.Collections.Generic;
 using SQLite.Net.Attributes;
 namespace Toggl.Phoebe.Data.Models.Old.DB_VERSION_0
 {
+    class Migrator : DatabaseMigrator
+    {
+        public Migrator()
+        : base(0, 1)
+        {
+        }
+
+        protected override IEnumerable<Action<UpgradeContext>> upgraders =>
+        new Action<UpgradeContext>[]
+        {
+            c => c.Upgrade<ClientData, Models.ClientData>(),
+            c => c.Upgrade<ProjectData, Models.ProjectData>(),
+            c => c.Upgrade<ProjectUserData, Models.ProjectUserData>(),
+            c => c.Upgrade<TagData, Models.TagData>(),
+            c => c.Upgrade<TaskData, Models.TaskData>(),
+            c => c.Upgrade<TimeEntryData, Models.TimeEntryData>(),
+            c => c.Upgrade<UserData, Models.UserData>(),
+            c => c.Upgrade<WorkspaceData, Models.WorkspaceData>(),
+            c => c.Upgrade<WorkspaceUserData, Models.WorkspaceUserData>(),
+        };
+    }
+
     public abstract class CommonData
     {
         [PrimaryKey, AutoIncrement]
@@ -26,7 +49,7 @@ namespace Toggl.Phoebe.Data.Models.Old.DB_VERSION_0
     }
 
     [Table("ClientModel")]
-    public class ClientData : CommonData
+    public class ClientData : CommonData, IUpgradesTo<Models.ClientData>
     {
         public string Name { get; set; }
         public Guid WorkspaceId { get; set; }
@@ -46,7 +69,7 @@ namespace Toggl.Phoebe.Data.Models.Old.DB_VERSION_0
     }
 
     [Table("ProjectModel")]
-    public class ProjectData : CommonData
+    public class ProjectData : CommonData, IUpgradesTo<Models.ProjectData>
     {
         public string Name { get; set; }
         public int Color { get; set; }
@@ -86,7 +109,7 @@ namespace Toggl.Phoebe.Data.Models.Old.DB_VERSION_0
     }
 
     [Table("ProjectUserModel")]
-    public class ProjectUserData : CommonData
+    public class ProjectUserData : CommonData, IUpgradesTo<Models.ProjectUserData>
     {
         public bool IsManager { get; set; }
         public int HourlyRate { get; set; }
@@ -113,7 +136,7 @@ namespace Toggl.Phoebe.Data.Models.Old.DB_VERSION_0
     }
 
     [Table("TagModel")]
-    public class TagData : CommonData
+    public class TagData : CommonData, IUpgradesTo<Models.TagData>
     {
         public string Name { get; set; }
         public Guid WorkspaceId { get; set; }
@@ -133,7 +156,7 @@ namespace Toggl.Phoebe.Data.Models.Old.DB_VERSION_0
     }
 
     [Table("TaskModel")]
-    public class TaskData : CommonData
+    public class TaskData : CommonData, IUpgradesTo<Models.TaskData>
     {
         public string Name { get; set; }
         public bool IsActive { get; set; }
@@ -162,7 +185,7 @@ namespace Toggl.Phoebe.Data.Models.Old.DB_VERSION_0
     }
 
     [Table("TimeEntryModel")]
-    public class TimeEntryData : CommonData
+    public class TimeEntryData : CommonData, IUpgradesTo<Models.TimeEntryData>
     {
         public TimeEntryState State { get; set; }
         public string Description { get; set; }
@@ -215,7 +238,7 @@ namespace Toggl.Phoebe.Data.Models.Old.DB_VERSION_0
     }
 
     [Table("UserModel")]
-    public class UserData : CommonData
+    public class UserData : CommonData, IUpgradesTo<Models.UserData>
     {
         public string Name { get; set; }
         public string Email { get; set; }
@@ -265,7 +288,7 @@ namespace Toggl.Phoebe.Data.Models.Old.DB_VERSION_0
     }
 
     [Table("WorkspaceModel")]
-    public class WorkspaceData : CommonData
+    public class WorkspaceData : CommonData, IUpgradesTo<Models.WorkspaceData>
     {
         public string Name { get; set; }
         public bool IsPremium { get; set; }
@@ -301,7 +324,7 @@ namespace Toggl.Phoebe.Data.Models.Old.DB_VERSION_0
     }
 
     [Table("WorkspaceUserModel")]
-    public class WorkspaceUserData : CommonData
+    public class WorkspaceUserData : CommonData, IUpgradesTo<Models.WorkspaceUserData>
     {
         public bool IsAdmin { get; set; }
         public bool IsActive { get; set; }

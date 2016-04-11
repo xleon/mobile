@@ -64,6 +64,16 @@ namespace Toggl.Ross.ViewControllers
             };
             fadeView.AddGestureRecognizer(tapGesture);
             View.Add(fadeView);
+
+            // ATTENTION Suscription to state (settings) changes inside
+            // the view. This will be replaced for "router"
+            // modified in the reducers.
+            stateObserver = StoreManager.Singleton
+                            .Observe(x => x.State.User)
+                            .StartWith(StoreManager.Singleton.AppState.User)
+                            .ObserveOn(SynchronizationContext.Current)
+                            .DistinctUntilChanged(x => x.Id)
+                            .Subscribe(userData => ResetRootViewController(userData));
         }
 
         public override void ViewDidAppear(bool animated)
@@ -80,26 +90,22 @@ namespace Toggl.Ross.ViewControllers
             };
             menu.View.AddGestureRecognizer(leftPanGestue);
 
-            // ATTENTION Suscription to state (settings) changes inside
-            // the view. This will be replaced for "router"
-            // modified in the reducers.
-            stateObserver = StoreManager.Singleton
-                            .Observe(x => x.State.User)
-                            .StartWith(StoreManager.Singleton.AppState.User)
-                            .ObserveOn(SynchronizationContext.Current)
-                            .DistinctUntilChanged(x => x.Id)
-                            .Subscribe(userData => ResetRootViewController(userData));
+            var user = StoreManager.Singleton.AppState.User;
+            menu.ConfigureUserData(user.Name, user.Email, user.ImageUrl);
         }
 
         public override void ViewWillDisappear(bool animated)
         {
-            stateObserver.Dispose();
+            // Dispose elements created when ViewDidAppear.
+            menu.View.RemoveGestureRecognizer(leftPanGestue);
+            menu.View.RemoveFromSuperview();
+            menu.Dispose();
+            leftPanGestue.Dispose();
             base.ViewWillDisappear(animated);
         }
 
         private void ResetRootViewController(IUserData userData)
         {
-
             UIViewController vc = null;
             bool isUserLogged = userData.Id != Guid.Empty;
             bool emptyStack = ViewControllers.Length < 1;
@@ -119,8 +125,9 @@ namespace Toggl.Ross.ViewControllers
                 MenuEnabled = false;
             }
 
-            SetViewControllers(new[] { vc }, !emptyStack);
-            menu.ConfigureUserData(userData.Name, userData.Email, userData.ImageUrl);
+            if (menu != null)
+                menu.ConfigureUserData(userData.Name, userData.Email, userData.ImageUrl);
+            SetViewControllers(new [] { vc }, !emptyStack);
         }
 
         private void OnMenuButtonSelected(int btnId)

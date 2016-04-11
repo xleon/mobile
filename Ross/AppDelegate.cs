@@ -5,6 +5,7 @@ using Google.Core;
 using Google.SignIn;
 using SQLite.Net.Interop;
 using SQLite.Net.Platform.XamarinIOS;
+using TestFairyLib;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Logging;
@@ -142,8 +143,8 @@ namespace Toggl.Ross
         {
             if (systemVersion > minVersionWidget)
             {
-                var widgetService = ServiceContainer.Resolve<WidgetUpdateService>();
-                widgetService.SetAppActivated(false);
+                //var widgetService = ServiceContainer.Resolve<WidgetUpdateService>();
+                //widgetService.SetAppActivated(false);
             }
         }
 
@@ -188,16 +189,16 @@ namespace Toggl.Ross
 
         private void SetupGoogleServices()
         {
-            // Set up Google Analytics
-            // the tracker ID isn't detected automatically from GoogleService-info.plist
-            // so, it's passed manually. Waiting for new versions of the library.
-            var gaiInstance = Google.Analytics.Gai.SharedInstance;
-            gaiInstance.DefaultTracker = gaiInstance.GetTracker(Build.GoogleAnalyticsId);
-
             NSError configureError;
             Context.SharedInstance.Configure(out configureError);
             if (configureError != null)
             {
+                // Set up Google Analytics
+                // the tracker ID isn't detected automatically from GoogleService-info.plist
+                // so, it's passed manually. Waiting for new versions of the library.
+                var gaiInstance = Google.Analytics.Gai.SharedInstance;
+                gaiInstance.DefaultTracker = gaiInstance.GetTracker(Build.GoogleAnalyticsId);
+
                 var log = ServiceContainer.Resolve<ILogger> ();
                 SignIn.SharedInstance.ClientID = Build.GoogleClientId;
                 log.Info("AppDelegate", string.Format("Error configuring the Google context: {0}", configureError));
@@ -253,7 +254,6 @@ namespace Toggl.Ross
 
         public void DispatchOnUIThread(Action action)
         {
-            Console.WriteLine("Invoke call, remove!!! " + action.Target);
         }
 
         #endregion

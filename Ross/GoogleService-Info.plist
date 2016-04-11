@@ -25,6 +25,6 @@
 	<key>GOOGLE_APP_ID</key>
 	<string>{GOOGLE_APP_ID}</string>
 	<key>PROJECT_ID</key>
-	<string>{GOOGLE_PROJECT_ID}</string>    
+	<string>{GOOGLE_PROJECT_ID}</string>
 </dict>
 </plist>

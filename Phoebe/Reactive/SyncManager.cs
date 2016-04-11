@@ -191,7 +191,7 @@ namespace Toggl.Phoebe.Reactive
                 RxChain.Send(DataMsg.ServerResponse.CRUD(remoteObjects));
 
             foreach (var req in syncMsg.ServerRequests.Where(x => x is ServerRequest.CRUD == false))
-            requestManager.OnNext(Tuple.Create(req, syncMsg.State));
+                requestManager.OnNext(Tuple.Create(req, syncMsg.State));
 
             // Mostly used for test pourposes.
             if (syncMsg.Continuation != null && !syncMsg.Continuation.LocalOnly)
@@ -306,7 +306,6 @@ namespace Toggl.Phoebe.Reactive
                     if (exception.StatusCode == System.Net.HttpStatusCode.BadRequest)
                     {
                         // Clean from queue and from local DB.
-                        //var deletedFromLocal =
                         return;
                     }
                 }
@@ -345,7 +344,7 @@ namespace Toggl.Phoebe.Reactive
             {
                 GoogleAccessToken = accessToken,
                 Timezone = Time.TimeZoneId,
-            }), AuthChangeReason.SignupGoogle); //, AccountCredentials.Google);
+            }), AuthChangeReason.SignupGoogle); //, AccountCredentials.Google
         }
 
         async Task AuthenticateAsync(
@@ -419,6 +418,7 @@ namespace Toggl.Phoebe.Reactive
             else
             {
                 // Request state of Data in server.
+                // passing null value.
                 sinceDate = null;
             }
 
@@ -738,57 +738,5 @@ namespace Toggl.Phoebe.Reactive
             }
             return res.Value;
         }
-        /*
-        CommonData GetOutOfSyncData(Guid localId, AppState state, Type typ)
-        {
-            ICommonData res = null;
-
-            if (typ == typeof(WorkspaceData))
-            {
-                res = state.Workspaces[localId].With(x => x.DeletedAt = Time.UtcNow);
-            }
-            else if (typ == typeof(ClientData))
-            {
-                res = state.Clients[localId].RemoteId;
-            }
-            else if (typ == typeof(ProjectData))
-            {
-                res = state.Projects[localId].RemoteId;
-            }
-            else if (typ == typeof(TaskData))
-            {
-                res = state.Tasks[localId].RemoteId;
-            }
-            else if (typ == typeof(TagData))
-            {
-                res = state.Tags[localId].RemoteId;
-            }
-            else if (typ == typeof(TimeEntryData))
-            {
-                res = state.TimeEntries[localId].Data.RemoteId;
-            }
-            else if (typ == typeof(UserData))
-            {
-                res = state.User.RemoteId;
-            }
-            else if (typ == typeof(WorkspaceUserData))
-            {
-                res = state.WorkspaceUsers[localId].RemoteId;
-            }
-            else if (typ == typeof(ProjectUserData))
-            {
-                res = state.ProjectUsers[localId].RemoteId;
-            }
-
-            if (!res.HasValue)
-            {
-                // Stop sending messages and wait for state update
-                // TODO RX: Keep a cache to check if the same error is repeating many times?
-                // Publish more info about this bug
-                throw new Exception("RemoteId missing. Type: " + typ.FullName);
-            }
-            return res.Value;
-        }
-        */
     }
 }

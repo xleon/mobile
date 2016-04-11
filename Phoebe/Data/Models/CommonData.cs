@@ -64,10 +64,8 @@ namespace Toggl.Phoebe.Data.Models
         {
             var newItem = (T)Clone();
             newItem.ModifiedAt = Time.UtcNow;
-            if (newItem.SyncState == SyncState.CreatePending)
-            {
-                Console.WriteLine(this.SyncState + " " + newItem.SyncState);
-            }
+            // TODO Rx @alfonso What happen if a Common Obj
+            // pass from Created to Updated?
             newItem.SyncState = SyncState.UpdatePending;
             transform(newItem);
             return newItem;

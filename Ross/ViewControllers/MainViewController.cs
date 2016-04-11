@@ -40,6 +40,7 @@ namespace Toggl.Ross.ViewControllers
 
             View.Apply(Style.Screen);
             NavigationBar.Apply(Style.NavigationBar);
+            Delegate = new NavDelegate();
 
             mainPanGesture = new UIPanGestureRecognizer(OnMainPanGesture)
             {
@@ -311,5 +312,36 @@ namespace Toggl.Ross.ViewControllers
         }
 
         #endregion
+
+        private class NavDelegate : UINavigationControllerDelegate
+        {
+            public UIPercentDrivenInteractiveTransition InteractiveTransition { get; set; }
+
+            public override IUIViewControllerAnimatedTransitioning GetAnimationControllerForOperation(UINavigationController navigationController, UINavigationControllerOperation operation, UIViewController fromViewController, UIViewController toViewController)
+            {
+                if (toViewController is DurationChangeViewController)
+                {
+                    var durationController = (DurationChangeViewController)toViewController;
+                    durationController.PreviousControllerType = fromViewController.GetType();
+                    return new DurationChangeViewController.PushAnimator();
+                }
+                if (fromViewController is DurationChangeViewController)
+                {
+                    var durationController = (DurationChangeViewController)fromViewController;
+                    if (durationController.PreviousControllerType == toViewController.GetType())
+                    {
+                        return new DurationChangeViewController.PopAnimator();
+                    }
+                    durationController.PreviousControllerType = null;
+                }
+                return null;
+            }
+
+            public override IUIViewControllerInteractiveTransitioning GetInteractionControllerForAnimationController(UINavigationController navigationController, IUIViewControllerAnimatedTransitioning animationController)
+            {
+                return InteractiveTransition;
+            }
+        }
     }
+
 }

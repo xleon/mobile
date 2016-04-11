@@ -151,7 +151,7 @@ namespace Toggl.Phoebe.ViewModels
             RxChain.Send(new DataMsg.TimeEntryContinue(entry), new RxChain.Continuation((state) =>
             {
                 ServiceContainer.Resolve<ITracker> ().SendTimerStartEvent(TimerStartSource.AppNew);
-                tcs.SetResult(ActiveEntry.Data);
+                tcs.SetResult(StoreManager.Singleton.AppState.ActiveEntry.Data);
             }));
 
             return tcs.Task;
@@ -160,8 +160,7 @@ namespace Toggl.Phoebe.ViewModels
         public void StopTimeEntry()
         {
             // TODO RX: Protect from requests in short time (double click...)?
-            var entry = ActiveEntry.Data;
-            RxChain.Send(new DataMsg.TimeEntryStop(entry));
+            RxChain.Send(new DataMsg.TimeEntryStop(StoreManager.Singleton.AppState.ActiveEntry.Data));
             ServiceContainer.Resolve<ITracker> ().SendTimerStopEvent(TimerStopSource.App);
         }
 

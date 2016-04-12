@@ -53,6 +53,11 @@ namespace Toggl.Phoebe.Data.ViewModels
             return authRes;
         }
 
+        public async Task<bool> UserHasEntries ()
+        {
+            var store = ServiceContainer.Resolve<IDataStore> ();
+            return await store.HasAnyEntries ();
+        }
         public async Task<AuthResult> TrySignupGoogleAsync (string token)
         {
             var authManager = ServiceContainer.Resolve<AuthManager> ();

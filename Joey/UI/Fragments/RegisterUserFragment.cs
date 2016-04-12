@@ -21,6 +21,7 @@ using Toggl.Joey.UI.Activities;
 using Toggl.Joey.UI.Utils;
 using Toggl.Joey.UI.Views;
 using Toggl.Phoebe.Analytics;
+using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.ViewModels;
 using Toggl.Phoebe.Logging;
 using Toggl.Phoebe.Net;
@@ -103,11 +104,15 @@ namespace Toggl.Joey.UI.Fragments
             return view;
         }
 
-        void LoginButtonClick (object sender, EventArgs e)
+        public async void LoginButtonClick (object sender, EventArgs e)
         {
-
-            var confirm = new AreYouSureDialogFragment ();
-            confirm.Show (FragmentManager, "confirm_reset_dialog");
+            var hasEntries = await ViewModel.UserHasEntries ();
+            if (hasEntries) {
+                var confirm = new AreYouSureDialogFragment ();
+                confirm.Show (FragmentManager, "confirm_reset_dialog");
+            } else {
+                ((MainDrawerActivity)Activity).ForgetCurrentUser ();
+            }
         }
 
         public class AreYouSureDialogFragment : DialogFragment

@@ -176,6 +176,14 @@ namespace Toggl.Phoebe.Data
                    .ExecuteNonQuery ();
         }
 
+        public async static Task<bool> HasAnyEntries (this IDataStore ds)
+        {
+            var teTable = await ds.GetTableNameAsync<TimeEntryData>();
+            Console.WriteLine ("teTable: {0}", teTable);
+            var query = string.Format ("SELECT COUNT(*) FROM {0};", teTable);
+            return await ds.ExecuteScalarAsync<bool> (query, 1);
+        }
+
         private class ColumnRow<T>
         {
             public T Value { get; set; }

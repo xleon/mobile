@@ -167,11 +167,11 @@ namespace Toggl.Ross
 
         private static ILoggerClient initialiseLogClient()
         {
-#if DEBUG
-            Insights.Initialize(Insights.DebugModeKey);
-#else
-            Insights.Initialize(Build.XamarinInsightsApiKey);
-#endif
+            #if DEBUG
+            Insights.Initialize (Insights.DebugModeKey);
+            #else
+            Insights.Initialize (Build.XamarinInsightsApiKey);
+            #endif
 
             return new LogClient();
         }

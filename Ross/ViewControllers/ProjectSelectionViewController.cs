@@ -461,7 +461,7 @@ namespace Toggl.Ross.ViewControllers
                     cell.Accessory = UITableViewCellAccessory.None;
                 }
                 TableView.CellAt(indexPath).Accessory = UITableViewCellAccessory.Checkmark;
-
+                DismissViewController(true, null);
             }
 
             [Export("adaptivePresentationStyleForPresentationController:")]

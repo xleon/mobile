@@ -411,6 +411,7 @@ namespace Toggl.Ross.ViewControllers
             private void OnContinueTimeEntry(TimeEntryCell cell)
             {
                 var indexPath = TableView.IndexPathForCell(cell);
+                TableView.ScrollToRow(NSIndexPath.FromRowSection(0, 0), UITableViewScrollPosition.Top, true);
                 VM.ContinueTimeEntry(indexPath.Row);
             }
 

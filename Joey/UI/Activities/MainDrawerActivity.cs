@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using Android.App;
+using Android.Content;
 using Android.Content.PM;
 using Android.OS;
 using Android.Support.V4.App;
@@ -245,6 +246,15 @@ namespace Toggl.Joey.UI.Activities
         {
             authManager.Forget ();
             StartAuthActivity ();
+        }
+
+        public void DirectToLogin ()
+        {
+            ServiceContainer.Resolve<AuthManager> ().Forget();
+            var intent = new Intent (this, typeof (LoginActivity));
+            intent.AddFlags (ActivityFlags.ClearTop);
+            StartActivity (intent);
+            Finish ();
         }
 
         private void OpenFragment (Fragment fragment)

@@ -126,6 +126,9 @@ namespace Toggl.Phoebe.Data
 
         private static int getVersion(SQLiteConnection connection)
         {
+            var tableInfo = connection.GetTableInfo(nameof(MetaData));
+            if (tableInfo == null || tableInfo.Count == 0)
+                return 0;
             var data = connection.Table<MetaData>().Where(x => x.Id == nameof(DB_VERSION)).FirstOrDefault();
             return data?.Convert<int>() ?? 0;
         }

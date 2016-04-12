@@ -115,14 +115,19 @@ namespace Toggl.Phoebe
                             Color = ProjectModel.HexColors.Length - 1,
                         };
                     }
-
+                    TimeSpan duration;
+                    if (entry.StopTime.HasValue) {
+                        duration = entry.StopTime.Value - entry.StartTime;
+                    } else {
+                        duration = Phoebe.Time.UtcNow - entry.StartTime;
+                    }
                     widgetEntries.Add (new WidgetEntryData {
                         Id = entry.Id.ToString(),
                         ProjectName = project.Name,
                         Description = entry.Description,
                         Color = ProjectModel.HexColors [ project.Color % ProjectModel.HexColors.Length],
                         IsRunning = entry.State == TimeEntryState.Running,
-                        TimeValue = GetFormattedDuration ((TimeSpan) (entry.StopTime - entry.StartTime)),
+                        TimeValue = GetFormattedDuration (duration),
                         Duration = (entry.StopTime.HasValue ? entry.StopTime.Value : Time.UtcNow) - entry.StartTime,
                     });
 

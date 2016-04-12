@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Android.App;
 using Android.Content;
 using Android.Graphics;
+using Android.OS;
 using Android.Widget;
 using Toggl.Phoebe;
 using XPlatUtils;
@@ -68,8 +69,12 @@ namespace Toggl.Joey.Widget
             // set if is running
             if (rowData.IsRunning) {
                 remoteView.SetImageViewResource (Resource.Id.WidgetContinueImageButton, Resource.Drawable.IcWidgetStop);
+                remoteView.SetViewVisibility (Resource.Id.DurationChronometer, Android.Views.ViewStates.Visible);
+                remoteView.SetViewVisibility (Resource.Id.DurationTextView, Android.Views.ViewStates.Gone);
             } else {
                 remoteView.SetImageViewResource (Resource.Id.WidgetContinueImageButton, Resource.Drawable.IcWidgetPlay);
+                remoteView.SetViewVisibility (Resource.Id.DurationChronometer, Android.Views.ViewStates.Gone);
+                remoteView.SetViewVisibility (Resource.Id.DurationTextView, Android.Views.ViewStates.Visible);
             }
 
             // set color
@@ -84,6 +89,19 @@ namespace Toggl.Joey.Widget
                 Resource.Id.ProjectTextView,
                 String.IsNullOrWhiteSpace (rowData.ProjectName) ? context.Resources.GetString (Resource.String.RunningWidgetNoProject) : rowData.ProjectName);
             remoteView.SetTextViewText (Resource.Id.DurationTextView, rowData.TimeValue);
+
+            var time = (long)rowData.Duration.TotalMilliseconds;
+
+            // Format chronometer correctly.
+            string format = "00:%s";
+            if (time >= 3600000 && time < 36000000) {
+                format = "0%s";
+            } else if (time >= 36000000) {
+                format = "%s";
+            }
+            var baseTime = SystemClock.ElapsedRealtime ();
+            remoteView.SetChronometer (Resource.Id.DurationChronometer, baseTime - (long)rowData.Duration.TotalMilliseconds, format, true);
+
 
             return remoteView;
         }

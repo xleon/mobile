@@ -37,6 +37,7 @@ namespace Toggl.Ross.ViewControllers
         private Binding<LogTimeEntriesVM.LoadInfoType, LogTimeEntriesVM.LoadInfoType> loadInfoBinding, loadMoreBinding;
         private Binding<int, int> hasItemsBinding;
         private Binding<string, string> durationBinding;
+        private Binding<Tuple<string, Guid>, Tuple<string, Guid>> constrainErrorBinding;
         private Binding<bool, bool> syncBinding, hasErrorBinding, isRunningBinding;
         private Binding<ObservableCollection<IHolder>, ObservableCollection<IHolder>> collectionBinding;
 
@@ -122,6 +123,7 @@ namespace Toggl.Ross.ViewControllers
             loadInfoBinding = this.SetBinding(() => ViewModel.LoadInfo).WhenSourceChanges(SetFooterState);
             hasItemsBinding = this.SetBinding(() => ViewModel.Collection.Count).WhenSourceChanges(SetCollectionState);
             loadMoreBinding = this.SetBinding(() => ViewModel.LoadInfo).WhenSourceChanges(LoadMoreIfNeeded);
+            constrainErrorBinding = this.SetBinding(() => ViewModel.LastCRUDError).WhenSourceChanges(ShowConstrainError);
             collectionBinding = this.SetBinding(() => ViewModel.Collection).WhenSourceChanges(() =>
             {
                 TableView.Source = new TimeEntriesSource(this, ViewModel);
@@ -270,6 +272,25 @@ namespace Toggl.Ross.ViewControllers
         {
             var main = AppDelegate.TogglWindow.RootViewController as MainViewController;
             main.ToggleMenu();
+        }
+
+        private void ShowConstrainError()
+        {
+            if (ViewModel.LastCRUDError != null)
+            {
+                var alert = new UIAlertView(
+                    "RequiredfieldMessage".Tr(),
+                    ViewModel.LastCRUDError.Item1,
+                    null, "RequiredfieldEditBtn".Tr());
+                alert.Clicked += (sender, e) =>
+                {
+                    var controllers = new List<UIViewController>(NavigationController.ViewControllers);
+                    var editController = new EditTimeEntryViewController(ViewModel.LastCRUDError.Item2);
+                    controllers.Add(editController);
+                    NavigationController.SetViewControllers(controllers.ToArray(), true);
+                };
+                alert.Show();
+            }
         }
 
         #region TableViewSource

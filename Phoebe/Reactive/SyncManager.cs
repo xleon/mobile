@@ -58,6 +58,7 @@ namespace Toggl.Phoebe.Reactive
         public const string QueueId = "SYNC_OUT";
         public static SyncManager Singleton { get; private set; }
         private static string DuplicatedNameMessage = "Name has already been taken";
+        private static string TimeEntryConstrainMessage = "This entry can't be saved";
 
         public static void Init()
         {
@@ -160,7 +161,7 @@ namespace Toggl.Phoebe.Reactive
                 syncMsg.Continuation.Invoke(syncMsg.State);
 
             // Try to empty queue first
-            bool queueEmpty = await TryEmptyQueue(remoteObjects, syncMsg.State, isConnected);
+            var queueEmpty = await TryEmptyQueue(remoteObjects, syncMsg.State, isConnected);
 
             // Deal with messages
             foreach (var data in syncMsg.ServerRequests.OfType<ServerRequest.CRUD> ().SelectMany(x => x.Items))
@@ -312,11 +313,32 @@ namespace Toggl.Phoebe.Reactive
                             // ATTENTION Due the lack of a proper way to get data
                             // when a name conflicts occurs, we download new json only
                             // and update the object properly.
-                            var response = await GetNameDuplicated(data, state);
+                            var response = await GetRemoteJsonForDuplicatedName(data, state);
                             var resData = mapper.Map(response);
                             resData.Id = data.Id;
                             remoteObjects.Add(resData);
+                            logInfo("Requested extra info because duplicated: " + resData.GetType() + " remoteId: " + resData.RemoteId);
+                            return;
                         }
+
+                        if (exception.Message.Contains(TimeEntryConstrainMessage))
+                        {
+                            // ATTENTION For errors related with the time entry restrictions
+                            // show the message and remove it from queue.
+                            var errorMsg = GetReadableErrorMessage(exception.Message, data);
+                            var exc = new DataMsg.ServerResponse.TimeConstrainsException(errorMsg, data.Id);
+                            RxChain.Send(new DataMsg.ServerResponse(new ServerRequest.CRUD(remoteObjects), exc));
+                            return;
+                        }
+                    }
+
+                    if (exception.StatusCode == System.Net.HttpStatusCode.NotFound)
+                    {
+                        // ATTENTION If objects are not present in server and at the same time
+                        // are present in local, for data sanity is better to pass them
+                        // as deleted to local state.
+                        remoteObjects.Add((CommonData)UpdateToDeletePending(data));
+                        logInfo("Object not found: " + data.GetType() +  " remoteId:" + data.RemoteId);
                         return;
                     }
 
@@ -763,32 +785,49 @@ namespace Toggl.Phoebe.Reactive
             return res.Value;
         }
 
-        private ICommonData ToUpdatePending(ICommonData data)
+        private ICommonData UpdateToCreatePending(ICommonData data)
         {
             if (data is ITimeEntryData)
-                return ((ITimeEntryData)data).With(x => x.DeletedAt = Time.UtcNow);
+                return ((ITimeEntryData)data).With(x => { x.SyncState = SyncState.CreatePending; x.RemoteId = null;});
 
             if (data is IClientData)
-                return ((IClientData)data).With(x => x.DeletedAt = Time.UtcNow);
+                return ((IClientData)data).With(x => { x.SyncState = SyncState.CreatePending; x.RemoteId = null;});
 
             if (data is IProjectData)
-                return ((IProjectData)data).With(x => x.DeletedAt = Time.UtcNow);
+                return ((IProjectData)data).With(x => { x.SyncState = SyncState.CreatePending; x.RemoteId = null;});
 
             if (data is ITagData)
-                return ((ITagData)data).With(x => x.DeletedAt = Time.UtcNow);
+                return ((ITagData)data).With(x => { x.SyncState = SyncState.CreatePending; x.RemoteId = null;});
 
             return data;
         }
 
-        private async Task<CommonJson> GetNameDuplicated(ICommonData data, AppState state)
+        private ICommonData UpdateToDeletePending(ICommonData data)
+        {
+            if (data is ITimeEntryData)
+                return ((ITimeEntryData)data).With(x => x.DeletedAt = Time.Now);
+
+            if (data is IClientData)
+                return ((IClientData)data).With(x => x.DeletedAt = Time.Now);
+
+            if (data is IProjectData)
+                return ((IProjectData)data).With(x => x.DeletedAt = Time.Now);
+
+            if (data is ITagData)
+                return ((ITagData)data).With(x => x.DeletedAt = Time.Now);
+
+            return data;
+        }
+
+        private async Task<CommonJson> GetRemoteJsonForDuplicatedName(ICommonData data, AppState state)
         {
             var auth = state.User.ApiToken;
             var since = state.RequestInfo.GetChangesLastRun;
 
             if (data is ITagData)
             {
-                var remoteWorkspaceId = state.Workspaces [((ITagData)data).WorkspaceId].RemoteId;
-                var tags = await client.GetSince<TagJson> (auth, since);
+                var remoteWorkspaceId = state.Workspaces[((ITagData)data).WorkspaceId].RemoteId;
+                var tags = await client.GetSince<TagJson>(auth, since);
                 return tags.FirstOrDefault(x => x.Name == ((ITagData)data).Name && x.WorkspaceRemoteId == remoteWorkspaceId);
             }
 
@@ -808,6 +847,17 @@ namespace Toggl.Phoebe.Reactive
 
             throw new Exception("Type not supported. Sync Duplicated. Type: " + data.GetType());
 
+        }
+
+        private string GetReadableErrorMessage(string msg, ICommonData data)
+        {
+            var separatorIndex = msg.IndexOf("- ", StringComparison.Ordinal);
+            var reason = msg.Substring(separatorIndex + 2, msg.Length - separatorIndex - 4);
+            var readableMsg = "The time entry started at: " + ((ITimeEntryData)data).StartTime.ToLocalTime().ToShortTimeString()
+                              + " with duration " + ((ITimeEntryData)data).GetDuration().Truncate(TimeSpan.TicksPerSecond)
+                              + " can't be saved.";
+            readableMsg = readableMsg + "\n\n" + char.ToUpper(reason[0]) + reason.Substring(1) + ".";
+            return readableMsg;
         }
 
         #endregion

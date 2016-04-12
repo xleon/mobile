@@ -48,8 +48,15 @@
                 android:textColor="@android:color/white"
                 android:layout_marginRight="5dp"
                 android:layout_marginTop="10dp"
-                style="@style/TimeEntryListItem.Text.Duration"
-                android:text="04:15:34" />
+                style="@style/TimeEntryListItem.Text.Duration" />
+            <Chronometer
+                android:id="@+id/DurationChronometer"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@android:color/white"
+                android:layout_marginRight="5dp"
+                android:layout_marginTop="10dp"
+                style="@style/TimeEntryListItem.Text.Duration" />
         </LinearLayout>
         <LinearLayout
             android:layout_width="match_parent"

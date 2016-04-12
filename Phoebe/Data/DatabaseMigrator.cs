@@ -18,7 +18,7 @@ namespace Toggl.Phoebe.Data
             new DatabaseMigrator[]
         {
             new Models.Old.DB_VERSION_0.Migrator()
-        } .ToDictionary(m => m.oldVersion);
+        } .ToDictionary(m => m.OldVersion);
 
         #endregion
 
@@ -31,13 +31,13 @@ namespace Toggl.Phoebe.Data
 
         #region implementation
 
-        private readonly int oldVersion;
-        private readonly int newVersion;
+        public int OldVersion { get; }
+        public int NewVersion { get; }
 
         protected DatabaseMigrator(int oldVersion, int newVersion)
         {
-            this.oldVersion = oldVersion;
-            this.newVersion = newVersion;
+            this.OldVersion = oldVersion;
+            this.NewVersion = newVersion;
         }
 
         protected abstract IEnumerable<Action<UpgradeContext>> upgraders { get; }
@@ -46,7 +46,7 @@ namespace Toggl.Phoebe.Data
         {
             var upgradeContext = new UpgradeContext(oldDB, newDB);
 
-            configureDatabaseForVersion(newDB, this.newVersion);
+            configureDatabaseForVersion(newDB, this.NewVersion);
 
             foreach (var upgrader in this.upgraders)
             {

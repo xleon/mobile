@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using SQLite.Net;
 using SQLite.Net.Interop;
@@ -38,63 +39,89 @@ namespace Toggl.Phoebe.Data
         {
             this.cnn = this.initDatabaseConnection(dbPath, platformInfo);
 
-            CreateTables();
             CleanOldDraftEntry();
         }
 
         private SQLiteConnectionWithLock initDatabaseConnection(string dbPath, ISQLitePlatform platformInfo)
         {
+            var dbFileExisted = File.Exists(dbPath);
+
             var cnnString = new SQLiteConnectionString(dbPath, true);
             var connection = new SQLiteConnectionWithLock(platformInfo, cnnString);
 
-            var version = getVersion(connection);
-            if (version != DB_VERSION)
+            if (dbFileExisted)
             {
-                connection = this.migrateDatabase(connection, platformInfo);
+                var version = getVersion(connection);
+                if (version != DB_VERSION)
+                {
+                    this.migrateDatabase(connection, platformInfo, dbPath);
+                    connection = new SQLiteConnectionWithLock(platformInfo, cnnString);
+                }
             }
-
-
+            else
+            {
+                CreateTables();
+            }
 
             return connection;
         }
 
-        private SQLiteConnectionWithLock migrateDatabase(SQLiteConnection connection, ISQLitePlatform platformInfo)
+        private void migrateDatabase(SQLiteConnection connection, ISQLitePlatform platformInfo, string dbPath)
         {
             var migrateFromDB = connection;
             var version = getVersion(migrateFromDB);
 
+            var tempDBPath = dbPath + ".migrated";
+
             while (true)
             {
-                // migrate to next version and replace connection
                 var migrator = DatabaseMigrator.ForVersion(version);
 
+                var expectedNewVersion = migrator.NewVersion;
 
-                if (migrator == null)
-                {
-                    throw new Exception($"Do not know how to migrate database version {version} (app's version is {DB_VERSION})");
-                }
+                validateMigrator(version, migrator);
 
-                // TODO: may need to use on-disk database
-                var newDB = new SQLiteConnection(platformInfo, "Data Source=:memory:");
+                var newDB = new SQLiteConnection(platformInfo, expectedNewVersion == DB_VERSION
+                                                 ? tempDBPath
+                                                 : "Data Source =: memory:");
 
                 migrator.Migrate(migrateFromDB, newDB);
                 migrateFromDB.Close();
 
                 var newVersion = getVersion(newDB);
 
-                if (newVersion <= version || newVersion > DB_VERSION)
-                {
-                    throw new Exception($"Database migrator upgraded from {version} to {newVersion} (app's version is {DB_VERSION}).");
-                }
+                validateMigratedVersion(version, expectedNewVersion, newVersion);
 
                 if (newVersion == DB_VERSION)
                 {
-                    // TODO: reached our goal, return! (save to disk if needed)
-                    // return newDB;
+                    newDB.Close();
+                    var dbDeletionPath = dbPath + ".old";
+                    File.Move(dbPath, dbDeletionPath);
+                    File.Move(tempDBPath, dbPath);
+                    File.Delete(dbDeletionPath);
+                    return;
                 }
 
                 migrateFromDB = newDB;
             }
+        }
+
+        static void validateMigratedVersion(int oldVersion, int expectedNewVersion, int newVersion)
+        {
+            if (newVersion != expectedNewVersion)
+                throw new Exception($"Expected new database version {expectedNewVersion}, but was {newVersion}");
+
+            if (newVersion <= oldVersion || newVersion > DB_VERSION)
+                throw new Exception($"Database migrator upgraded from {oldVersion} to {newVersion} (app's version is {DB_VERSION}).");
+        }
+
+        static void validateMigrator(int oldVersion, DatabaseMigrator migrator)
+        {
+            if (migrator == null)
+                throw new Exception($"Do not know how to migrate database version {oldVersion} (app's version is {DB_VERSION})");
+
+            if (migrator.OldVersion != oldVersion)
+                throw new Exception($"received wrong database migrator");
         }
 
         private static int getVersion(SQLiteConnection connection)

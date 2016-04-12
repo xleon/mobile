@@ -14,16 +14,4 @@
         android:paddingTop="8dp"
         android:paddingBottom="8dp"
         android:clipToPadding="true" />
-    <Button
-        android:id="@+id/DeleteDataButton"
-        android:layout_width="210dp"
-        android:layout_height="50dp"
-        android:textAllCaps="true"
-        android:layout_marginLeft="20dp"
-        android:layout_marginRight="20dp"
-        android:layout_marginTop="30dp"
-        android:background="@color/material_gray"
-        android:textColor="@android:color/white"
-        android:text="@string/SettingsClearNoUserData"
-        android:layout_gravity="center_horizontal" />
 </LinearLayout>

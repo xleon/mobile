@@ -21,6 +21,7 @@ using Toggl.Joey.UI.Activities;
 using Toggl.Joey.UI.Utils;
 using Toggl.Joey.UI.Views;
 using Toggl.Phoebe.Analytics;
+using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.ViewModels;
 using Toggl.Phoebe.Logging;
 using Toggl.Phoebe.Net;
@@ -43,6 +44,7 @@ namespace Toggl.Joey.UI.Fragments
         private Button PasswordToggleButton;
         private Button RegisterButton;
         private Button GoogleRegisterButton;
+        private Button LoginButton;
         private ImageView SpinningImage;
         private LinearLayout RegisterSuccessLayout;
         private Button SuccessTimerButton;
@@ -63,6 +65,7 @@ namespace Toggl.Joey.UI.Fragments
             PasswordInputLayout = v.FindViewById<TextInputLayout> (Resource.Id.CreateUserPasswordLayout);
             PasswordEditText = v.FindViewById<EditText> (Resource.Id.CreateUserPasswordEditText).SetFont (Font.Roboto);
             RegisterButton = v.FindViewById<Button> (Resource.Id.CreateUserButton).SetFont (Font.Roboto);
+            LoginButton = v.FindViewById<Button> (Resource.Id.LoginButton);
             SpinningImage = v.FindViewById<ImageView> (Resource.Id.RegisterLoadingImageView);
             RegisterFormLayout = v.FindViewById<LinearLayout> (Resource.Id.RegisterForm);
             RegisterSuccessLayout = v.FindViewById<LinearLayout> (Resource.Id.RegisterSuccessScreen);
@@ -93,11 +96,45 @@ namespace Toggl.Joey.UI.Fragments
             RegisterButton.Click += OnRegisterButtonClick;
             GoogleRegisterButton.Click += OnGoogleRegisterButtonClick;
             SuccessTimerButton.Click += GoToTimerButtonClick;
+            LoginButton.Click += LoginButtonClick;
 
             SyncRegisterButton ();
 
             ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Register";
             return view;
+        }
+
+        public async void LoginButtonClick (object sender, EventArgs e)
+        {
+            var hasEntries = await ViewModel.UserHasEntries ();
+            if (hasEntries) {
+                var confirm = new AreYouSureDialogFragment ();
+                confirm.Show (FragmentManager, "confirm_reset_dialog");
+            } else {
+                ((MainDrawerActivity)Activity).ForgetCurrentUser ();
+            }
+        }
+
+        public class AreYouSureDialogFragment : DialogFragment
+        {
+            public override Dialog OnCreateDialog (Bundle savedInstanceState)
+            {
+                return new AlertDialog.Builder (Activity)
+                       .SetTitle (Resource.String.SettingsClearDataTitle)
+                       .SetMessage (Resource.String.SettingsClearDataText)
+                       .SetPositiveButton (Resource.String.SettingsClearDataOKButton, OnOkButtonClicked)
+                       .SetNegativeButton (Resource.String.SettingsClearDataCancelButton, OnCancelButtonClicked)
+                       .Create ();
+            }
+
+            private void OnCancelButtonClicked (object sender, DialogClickEventArgs args)
+            {
+            }
+
+            private void OnOkButtonClicked (object sender, DialogClickEventArgs args)
+            {
+                ((MainDrawerActivity)Activity).ForgetCurrentUser ();
+            }
         }
 
         public override void OnViewCreated (View view, Bundle savedInstanceState)

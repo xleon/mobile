@@ -33,6 +33,18 @@ namespace Toggl.Phoebe.Data
 
         public sealed class ServerResponse : DataMsg
         {
+            public class TimeConstrainsException : Exception
+            {
+                public string ReadableMsg { get; }
+                public Guid CommonDataId { get; }
+
+                public TimeConstrainsException(string msg, Guid dataId)
+                {
+                    ReadableMsg = msg;
+                    CommonDataId = dataId;
+                }
+            }
+
             public Data.ServerRequest Request { get; private set; }
 
             public UserData User { get; private set; }

@@ -982,7 +982,7 @@ namespace Toggl.Phoebe.Net
             since.ToUtc();
             if (since.HasValue)
             {
-                relUrl = string.Format("{0}&since={1}", relUrl, (long)(since.Value - UnixStart).TotalSeconds);
+                relUrl = string.Format("{0}?since={1}", relUrl, (long)(since.Value - UnixStart).TotalSeconds);
             }
             var url = new Uri(v9Url, relUrl);
             var httpReq = SetupRequest(authToken, new HttpRequestMessage()

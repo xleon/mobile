@@ -28,7 +28,7 @@ namespace Toggl.Ross.Views
 
             titleLabel.Frame = new CGRect(
                 (Frame.Width - titleSize.Width) / 2,
-                arrowHeight - titleSize.Height - messageSize.Height,
+                arrowHeight - titleSize.Height / 2,
                 titleSize.Width,
                 titleSize.Height
             );

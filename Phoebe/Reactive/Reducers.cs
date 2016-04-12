@@ -95,7 +95,10 @@ namespace Toggl.Phoebe.Reactive
         {
             var req = (msg as DataMsg.ServerRequest).Data;
 
-            var reqInfo = state.RequestInfo.With(running: state.RequestInfo.Running.Append(req).ToList());
+            var reqInfo = state.RequestInfo.With(
+                              hadErrors: false,
+                              errorInfo: null,
+                              running: state.RequestInfo.Running.Append(req).ToList());
 
             if (req is ServerRequest.Authenticate)
                 reqInfo = reqInfo.With(authResult: AuthResult.None);
@@ -142,13 +145,17 @@ namespace Toggl.Phoebe.Reactive
                        receivedData => serverMsg.Request.MatchType(
                            (ServerRequest.CRUD _) =>
             {
+                var reqInfo = state.RequestInfo.With(
+                                  errorInfo: null,
+                                  hadErrors: false);
                 state = UpdateStateWithNewData(state, receivedData);
-                return DataSyncMsg.Create(state);
+                return DataSyncMsg.Create(state.With(requestInfo: reqInfo));
             },
             (ServerRequest.DownloadEntries req) =>
             {
                 state = UpdateStateWithNewData(state, receivedData);
                 var reqInfo = state.RequestInfo.With(
+                                  errorInfo: null,
                                   running: state.RequestInfo.Running.Where(x => x != req).ToList(),
                                   hasMore: receivedData.OfType<TimeEntryData> ().Any(),
                                   hadErrors: false);
@@ -172,6 +179,7 @@ namespace Toggl.Phoebe.Reactive
                 var userUpdated = (UserData)dataStore.Update(ctx => ctx.Put(user)).Single();
 
                 var reqInfo = state.RequestInfo.With(
+                                  errorInfo: null,
                                   hadErrors: false,
                                   running: state.RequestInfo.Running.Where(x => x != req).ToList(),
                                   getChangesLastRun: serverMsg.Timestamp);
@@ -199,6 +207,7 @@ namespace Toggl.Phoebe.Reactive
                 var userUpdated = (UserData)dataStore.Update(ctx => ctx.Put(user)).Single();
 
                 var reqInfo = state.RequestInfo.With(
+                                  errorInfo: null,
                                   hadErrors: false,
                                   running: state.RequestInfo.Running.Where(x => x != req).ToList(),
                                   getChangesLastRun: serverMsg.Timestamp);
@@ -215,7 +224,15 @@ namespace Toggl.Phoebe.Reactive
             }),
             ex =>
             {
+                var errorInfo = state.RequestInfo.ErrorInfo;
+                if (ex is DataMsg.ServerResponse.TimeConstrainsException)
+                {
+                    var exc = (DataMsg.ServerResponse.TimeConstrainsException)ex;
+                    errorInfo = new Tuple<string, Guid> (exc.ReadableMsg, exc.CommonDataId);
+                }
+
                 var reqInfo = state.RequestInfo.With(
+                                  errorInfo: errorInfo,
                                   running: state.RequestInfo.Running.Where(x => x != serverMsg.Request).ToList(),
                                   hadErrors: true);
                 return DataSyncMsg.Create(state.With(requestInfo: reqInfo));

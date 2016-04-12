@@ -11,7 +11,7 @@ namespace Toggl.Ross.Theme
             {
                 v.Font = UIFont.FromName("HelveticaNeue-Light", 35f);
                 v.TextAlignment = UITextAlignment.Center;
-                v.TextColor = Color.LightGray;
+                v.TextColor = Color.Gray;
             }
 
             public static void MessageLabel(UILabel v)
@@ -19,7 +19,7 @@ namespace Toggl.Ross.Theme
                 v.Font = UIFont.FromName("HelveticaNeue-Light", 17f);
                 v.Lines = 5;
                 v.TextAlignment = UITextAlignment.Center;
-                v.TextColor = Color.LightGray;
+                v.TextColor = Color.Gray;
             }
 
             public static void ArrowImageView(UIImageView v)

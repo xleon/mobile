@@ -316,6 +316,12 @@ namespace Toggl.Phoebe.Reactive
         public bool HadErrors { get; private set; }
 
         /// <summary>
+        /// Error info received formed by a readable message
+        /// and a Guid of the wrong time entry.
+        /// </summary>
+        public Tuple<string, Guid> ErrorInfo { get; private set; }
+
+        /// <summary>
         /// Date used by DownloadEntries
         /// </summary>
         public DateTime DownloadFrom { get; private set; }
@@ -347,20 +353,21 @@ namespace Toggl.Phoebe.Reactive
                 var getChangesLastRun = Time.UtcNow.AddDays(-5);
 
                 return new RequestInfo(
-                           new List<ServerRequest> (), true, false,
+                           new List<ServerRequest> (), true, false, null,
                            downloadFrom, downloadFrom,
                            getChangesLastRun, AuthResult.None);
             }
         }
 
         public RequestInfo(
-            IReadOnlyList<ServerRequest> running, bool hasMore, bool hadErrors,
+            IReadOnlyList<ServerRequest> running, bool hasMore, bool hadErrors, Tuple<string, Guid> errorInfo,
             DateTime downloadFrom, DateTime nextDownloadFrom,
             DateTime getChangesLastRun, AuthResult authResult)
         {
             Running = running;
             HasMoreEntries = hasMore;
             HadErrors = hadErrors;
+            ErrorInfo = errorInfo;
             DownloadFrom = downloadFrom;
             NextDownloadFrom = nextDownloadFrom;
             GetChangesLastRun = getChangesLastRun;
@@ -371,6 +378,7 @@ namespace Toggl.Phoebe.Reactive
             IReadOnlyList<ServerRequest> running = null,
             bool? hasMore = null,
             bool? hadErrors = null,
+            Tuple<string, Guid> errorInfo = null,
             DateTime? downloadFrom = null,
             DateTime? nextDownloadFrom = null,
             DateTime? getChangesLastRun = null,
@@ -380,6 +388,7 @@ namespace Toggl.Phoebe.Reactive
                        running != null ? running : Running,
                        hasMore.HasValue ? hasMore.Value : HasMoreEntries,
                        hadErrors.HasValue ? hadErrors.Value : HadErrors,
+                       errorInfo != null ? errorInfo : new Tuple<string, Guid> (string.Empty, Guid.Empty),
                        downloadFrom.HasValue ? downloadFrom.Value : DownloadFrom,
                        nextDownloadFrom.HasValue ? nextDownloadFrom.Value : NextDownloadFrom,
                        getChangesLastRun.HasValue ? getChangesLastRun.Value : GetChangesLastRun,

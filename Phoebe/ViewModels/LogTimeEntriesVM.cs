@@ -38,6 +38,7 @@ namespace Toggl.Phoebe.ViewModels
         private readonly SynchronizationContext uiContext;
         private IDisposable durationSubscriber;
 
+        public Tuple<string, Guid> LastCRUDError { get; private set; }
         public bool IsFullSyncing { get; private set; }
         public bool HasSyncErrors { get; private set; }
         public bool IsGroupedMode { get; private set; }
@@ -112,8 +113,6 @@ namespace Toggl.Phoebe.ViewModels
 
         public void TriggerFullSync()
         {
-            IsFullSyncing = true;
-            HasSyncErrors = false;
             RxChain.Send(new ServerRequest.GetChanges());
         }
 
@@ -189,6 +188,7 @@ namespace Toggl.Phoebe.ViewModels
         {
             return StoreManager.Singleton.AppState.Settings.ShowWelcome;
         }
+
         #endregion
 
         private void UpdateState(SettingsState settings, RichTimeEntry activeTimeEntry, RequestInfo reqInfo)
@@ -199,8 +199,12 @@ namespace Toggl.Phoebe.ViewModels
             }
 
             // Check full Sync info
-            HasSyncErrors = reqInfo.HadErrors;
-            IsFullSyncing = reqInfo.Running.Any(x => x is ServerRequest.GetChanges);
+            IsFullSyncing = reqInfo.Running.Any(x => (x is ServerRequest.GetChanges || x is ServerRequest.GetCurrentState));
+            HasSyncErrors = reqInfo.HadErrors && IsFullSyncing;
+
+            // Crud error
+            if (reqInfo.HadErrors && reqInfo.ErrorInfo != null)
+                LastCRUDError = reqInfo.ErrorInfo;
 
             var newLoadInfo = new LoadInfoType(
                 reqInfo.Running.Any(x => x is ServerRequest.DownloadEntries),

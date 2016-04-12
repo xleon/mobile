@@ -152,7 +152,7 @@
     <string name="SettingsGeneralShowNotificationDesc">Show the running entry as a notification.</string>
     <string name="SettingsClearNoUserData">Clear data</string>
     <string name="SettingsClearDataTitle">Are you sure?</string>
-    <string name="SettingsClearDataText">All your data will be erased.</string>
+    <string name="SettingsClearDataText">All current data will be lost.</string>
     <string name="SettingsClearDataOKButton">Clear everything</string>
     <string name="SettingsClearDataCancelButton">Cancel</string>
     <string name="ForcedUpgradeDialogTitle">Update time!</string>

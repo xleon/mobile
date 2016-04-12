@@ -17,22 +17,10 @@ namespace Toggl.Joey.UI.Fragments
     // Need to use ordinary ListFragment here as PreferenceFragment isn't available in support library.
     public class SettingsListFragment : ListFragment
     {
-        private Button DeleteDataButton;
-
         public override View OnCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
         {
             var view = inflater.Inflate (Resource.Layout.SettingsListFragment, container, false);
-            DeleteDataButton = view.FindViewById<Button> (Resource.Id.DeleteDataButton);
-            var authManager = ServiceContainer.Resolve<AuthManager> ();
-            DeleteDataButton.Visibility = authManager.OfflineMode ? ViewStates.Visible : ViewStates.Gone;
-            DeleteDataButton.Click += DeleteDataButtonClick;
             return view;
-        }
-
-        private void DeleteDataButtonClick (object sender, System.EventArgs e)
-        {
-            var confirm = new AreYouSureDialogFragment ();
-            confirm.Show (FragmentManager, "confirm_reset_dialog");
         }
 
         public override void OnViewCreated (View view, Bundle savedInstanceState)
@@ -52,29 +40,6 @@ namespace Toggl.Joey.UI.Fragments
         {
             base.OnStart ();
             ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Settings";
-        }
-
-
-        public class AreYouSureDialogFragment : DialogFragment
-        {
-            public override Dialog OnCreateDialog (Bundle savedInstanceState)
-            {
-                return new AlertDialog.Builder (Activity)
-                       .SetTitle (Resource.String.SettingsClearDataTitle)
-                       .SetMessage (Resource.String.SettingsClearDataText)
-                       .SetPositiveButton (Resource.String.SettingsClearDataOKButton, OnOkButtonClicked)
-                       .SetNegativeButton (Resource.String.SettingsClearDataCancelButton, OnCancelButtonClicked)
-                       .Create ();
-            }
-
-            private void OnCancelButtonClicked (object sender, DialogClickEventArgs args)
-            {
-            }
-
-            private void OnOkButtonClicked (object sender, DialogClickEventArgs args)
-            {
-                ((MainDrawerActivity)Activity).ForgetCurrentUser ();
-            }
         }
     }
 }

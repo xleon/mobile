@@ -49,7 +49,6 @@ namespace Toggl.Joey.UI.Fragments
         public TogglField ProjectField { get; private set; }
         public TogglField DescriptionField { get; private set; }
         public TogglTagsField TagsField { get; private set; }
-        public IMenuItem SaveMenuItem { get; private set; }
 
         private View editTimeEntryContent;
         private View editTimeEntryProgressBar;
@@ -194,9 +193,6 @@ namespace Toggl.Joey.UI.Fragments
                 BillableCheckBox.Text = label;
             });
 
-            // Configure option menu.
-            ConfigureOptionMenu ();
-
             // If project list needs to be opened?
             var settingsStore = ServiceContainer.Resolve<SettingsStore> ();
             if (settingsStore.ChooseProjectForNew && LogTimeEntriesListFragment.NewTimeEntry) {
@@ -290,20 +286,10 @@ namespace Toggl.Joey.UI.Fragments
             ViewModel.ChangeTimeEntryDuration (newDuration);
         }
 
-        IMenu menu;
-        MenuInflater inflater;
-
-        public override void OnCreateOptionsMenu (IMenu menu, MenuInflater inflater)
-        {
-            this.menu = menu;
-            this.inflater = inflater;
-            ConfigureOptionMenu ();
-        }
-
         public override bool OnOptionsItemSelected (IMenuItem item)
         {
             // Ugly null check
-            if (item == SaveMenuItem && ViewModel != null) {
+            if (ViewModel != null) {
                 ViewModel.SaveManual ();
             }
 
@@ -316,18 +302,6 @@ namespace Toggl.Joey.UI.Fragments
             Guid result;
             Guid.TryParse (data.GetStringExtra (id), out result);
             return result;
-        }
-
-        // Because the viewModel needs time to be created,
-        // this method is called from two points
-        private void ConfigureOptionMenu ()
-        {
-            if (ViewModel != null && menu != null) {
-                if (ViewModel.IsManual) {
-                    inflater.Inflate (Resource.Menu.SaveItemMenu, menu);
-                    SaveMenuItem = menu.FindItem (Resource.Id.saveItem);
-                }
-            }
         }
     }
 }

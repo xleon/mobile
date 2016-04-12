@@ -111,7 +111,7 @@ namespace Toggl.Joey.UI.Fragments
                 var confirm = new AreYouSureDialogFragment ();
                 confirm.Show (FragmentManager, "confirm_reset_dialog");
             } else {
-                ((MainDrawerActivity)Activity).ForgetCurrentUser ();
+                ((MainDrawerActivity)Activity).DirectToLogin ();
             }
         }
 
@@ -133,7 +133,7 @@ namespace Toggl.Joey.UI.Fragments
 
             private void OnOkButtonClicked (object sender, DialogClickEventArgs args)
             {
-                ((MainDrawerActivity)Activity).ForgetCurrentUser ();
+                ((MainDrawerActivity)Activity).DirectToLogin ();
             }
         }
 

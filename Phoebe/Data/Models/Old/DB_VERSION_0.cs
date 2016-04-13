@@ -211,9 +211,21 @@ namespace Toggl.Phoebe.Data.Models.Old.DB_VERSION_0
             data.IsBillable = IsBillable;
 
             // TODO: SQLite.Net does not support joins with Linq. Has to be replaced.
-            data.Tags = ctx.Connection.Table<TimeEntryTagData>().Where(t => t.TimeEntryId == this.Id)
-                        .Join(ctx.Connection.Table<TagData>(), t => t.TagId, t => t.Id, (t, tag) => tag.Name)
-                        .ToList();
+            //data.Tags = ctx.Connection.Table<TimeEntryTagData>().Where(t => t.TimeEntryId == this.Id)
+            //            .Join(ctx.Connection.Table<TagData>(), t => t.TagId, t => t.Id, (t, tag) => tag.Name)
+            //            .ToList();
+
+
+            // TODO: Not quite working yet, throws: "SQLite.Net.SQLiteException : no such column: TimeEntryTagModel.TagId"
+            data.Tags = ctx.Connection.Query<string>(
+                            string.Format(
+                                "SELECT {0}.Name FROM {0} INNER JOIN (SELECT * FROM {1} WHERE {1}.TimeEntryId = '{2}') ON {0}.Id = {1}.TagId",
+                                "TagModel",
+                                "TimeEntryTagModel",
+                                this.Id
+                            )
+
+                        ).ToList();
 
             data.UserId = UserId;
             var usr = ctx.Connection.Table<UserData> ().Where(x => x.Id == UserId).FirstOrDefault();

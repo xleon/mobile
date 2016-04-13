@@ -60,7 +60,7 @@ namespace Toggl.Phoebe.Data
             }
             else
             {
-                CreateTables();
+                CreateTables(connection);
             }
 
             return connection;
@@ -138,16 +138,20 @@ namespace Toggl.Phoebe.Data
             return getVersion(this.cnn);
         }
 
-        private void CreateTables()
+        private static void CreateTables(SQLiteConnection connection)
         {
+            // TODO: the migration logic in principle knows what tables are needed
+            // and how to set the version number. they could be used to get rid of
+            // this method and of GetDataModels() below
+
             // Meta Data: DB Version, etc
-            cnn.CreateTable<MetaData> ();
-            cnn.InsertOrIgnore(MetaData.Create(nameof(DB_VERSION), DB_VERSION));
+            connection.CreateTable<MetaData> ();
+            connection.InsertOrIgnore(MetaData.Create(nameof(DB_VERSION), DB_VERSION));
 
             // Data Models: Time Entries, etc
             foreach (var t in GetDataModels())
             {
-                cnn.CreateTable(t);
+                connection.CreateTable(t);
             }
         }
 

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using SQLite.Net.Attributes;
 namespace Toggl.Phoebe.Data.Models.Old.DB_VERSION_0
 {
@@ -209,7 +210,9 @@ namespace Toggl.Phoebe.Data.Models.Old.DB_VERSION_0
             data.DurationOnly = DurationOnly;
             data.IsBillable = IsBillable;
 
-            // TODO: TagIds
+            data.Tags = ctx.Connection.Table<TimeEntryTagData>().Where(t => t.TimeEntryId == this.Id)
+                        .Join(ctx.Connection.Table<TagData>(), t => t.TagId, t => t.Id, (t, tag) => tag.Name)
+                        .ToList();
 
             data.UserId = UserId;
             var usr = ctx.Connection.Table<UserData> ().Where(x => x.Id == UserId).FirstOrDefault();
@@ -235,6 +238,13 @@ namespace Toggl.Phoebe.Data.Models.Old.DB_VERSION_0
 
             return data;
         }
+    }
+
+    [Table("TimeEntryTagModel")]
+    public class TimeEntryTagData : CommonData
+    {
+        public Guid TimeEntryId { get; set; }
+        public Guid TagId { get; set; }
     }
 
     [Table("UserModel")]

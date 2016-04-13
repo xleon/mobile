@@ -21,6 +21,8 @@ using XPlatUtils;
 using ActionBarDrawerToggle = Android.Support.V7.App.ActionBarDrawerToggle;
 using Fragment = Android.Support.V4.App.Fragment;
 using Toolbar = Android.Support.V7.Widget.Toolbar;
+using FragmentManager = Android.Support.V4.App.FragmentManager;
+using DialogFragment = Android.Support.V4.App.DialogFragment;
 
 namespace Toggl.Joey.UI.Activities
 {
@@ -248,6 +250,33 @@ namespace Toggl.Joey.UI.Activities
             StartAuthActivity ();
         }
 
+        public void LoginAction ()
+        {
+            var confirm = new AreYouSureDialogFragment ();
+            confirm.Show (FragmentManager, "confirm_reset_dialog");
+        }
+
+        public class AreYouSureDialogFragment : DialogFragment
+        {
+            public override Dialog OnCreateDialog (Bundle savedInstanceState)
+            {
+                return new AlertDialog.Builder (Activity)
+                       .SetTitle (Resource.String.SettingsClearDataTitle)
+                       .SetMessage (Resource.String.SettingsClearDataText)
+                       .SetPositiveButton (Resource.String.SettingsClearDataOKButton, OnOkButtonClicked)
+                       .SetNegativeButton (Resource.String.SettingsClearDataCancelButton, OnCancelButtonClicked)
+                       .Create ();
+            }
+
+            private void OnCancelButtonClicked (object sender, DialogClickEventArgs args)
+            {
+            }
+
+            private void OnOkButtonClicked (object sender, DialogClickEventArgs args)
+            {
+                ((MainDrawerActivity)Activity).DirectToLogin ();
+            }
+        }
         public void DirectToLogin ()
         {
             ServiceContainer.Resolve<AuthManager> ().Forget();
@@ -302,6 +331,8 @@ namespace Toggl.Joey.UI.Activities
                 OpenPage (DrawerListAdapter.FeedbackPageId);
             } else if (e.Id == DrawerListAdapter.RegisterUserPageId) {
                 OpenPage (DrawerListAdapter.RegisterUserPageId);
+            } else if (e.Id == DrawerListAdapter.LoginPageId) {
+                LoginAction ();
             }
 
 

@@ -65,13 +65,6 @@ namespace Toggl.Joey.UI.Adapters
                     VMode = VisibilityMode.Normal,
                 },
                 new DrawerItem () {
-                    Id = RegisterUserPageId,
-                    TextResId = Resource.String.MainDrawerSignup,
-                    ImageResId = Resource.Drawable.IcNavSignup,
-                    IsEnabled = true,
-                    VMode = VisibilityMode.Offline,
-                },
-                new DrawerItem () {
                     Id = LoginPageId,
                     TextResId = Resource.String.MainDrawerLogin,
                     ImageResId = Resource.Drawable.IcNavLogout,

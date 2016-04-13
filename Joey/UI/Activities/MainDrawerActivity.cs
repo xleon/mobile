@@ -51,6 +51,7 @@ namespace Toggl.Joey.UI.Activities
         private AuthManager authManager;
         private DrawerListAdapter drawerAdapter;
         private ToolbarModes toolbarMode;
+        private bool OpenInSignup = false;
 
         private ListView DrawerListView { get; set; }
 
@@ -250,40 +251,26 @@ namespace Toggl.Joey.UI.Activities
             StartAuthActivity ();
         }
 
-        public void LoginAction ()
+        public void OpenLogin ()
         {
-            var confirm = new AreYouSureDialogFragment ();
-            confirm.Show (FragmentManager, "confirm_reset_dialog");
-        }
-
-        public class AreYouSureDialogFragment : DialogFragment
-        {
-            public override Dialog OnCreateDialog (Bundle savedInstanceState)
-            {
-                return new AlertDialog.Builder (Activity)
-                       .SetTitle (Resource.String.SettingsClearDataTitle)
-                       .SetMessage (Resource.String.SettingsClearDataText)
-                       .SetPositiveButton (Resource.String.SettingsClearDataOKButton, OnOkButtonClicked)
-                       .SetNegativeButton (Resource.String.SettingsClearDataCancelButton, OnCancelButtonClicked)
-                       .Create ();
-            }
-
-            private void OnCancelButtonClicked (object sender, DialogClickEventArgs args)
-            {
-            }
-
-            private void OnOkButtonClicked (object sender, DialogClickEventArgs args)
-            {
-                ((MainDrawerActivity)Activity).DirectToLogin ();
-            }
-        }
-        public void DirectToLogin ()
-        {
-            ServiceContainer.Resolve<AuthManager> ().Forget();
             var intent = new Intent (this, typeof (LoginActivity));
-            intent.AddFlags (ActivityFlags.ClearTop);
-            StartActivity (intent);
-            Finish ();
+            StartActivityForResult (intent, LoginActivity.LoginRequestCode);
+        }
+
+        protected override void OnActivityResult (int requestCode, Result resultCode, Intent data)
+        {
+            if (requestCode == LoginActivity.LoginRequestCode && resultCode == Result.Ok) {
+                OpenInSignup = true;
+            }
+        }
+
+        protected override void OnResumeActivity ()
+        {
+            if (OpenInSignup) {
+                OpenPage (DrawerListAdapter.RegisterUserPageId);
+                OpenInSignup = false;
+            }
+            base.OnResumeActivity ();
         }
 
         private void OpenFragment (Fragment fragment)
@@ -320,21 +307,17 @@ namespace Toggl.Joey.UI.Activities
 
             if (e.Id == DrawerListAdapter.TimerPageId) {
                 OpenPage (DrawerListAdapter.TimerPageId);
-
             } else if (e.Id == DrawerListAdapter.LogoutPageId) {
-                ForgetCurrentUser();
+                ForgetCurrentUser ();
             } else if (e.Id == DrawerListAdapter.ReportsPageId) {
                 OpenPage (DrawerListAdapter.ReportsPageId);
             } else if (e.Id == DrawerListAdapter.SettingsPageId) {
                 OpenPage (DrawerListAdapter.SettingsPageId);
             } else if (e.Id == DrawerListAdapter.FeedbackPageId) {
                 OpenPage (DrawerListAdapter.FeedbackPageId);
-            } else if (e.Id == DrawerListAdapter.RegisterUserPageId) {
-                OpenPage (DrawerListAdapter.RegisterUserPageId);
             } else if (e.Id == DrawerListAdapter.LoginPageId) {
-                LoginAction ();
+                OpenLogin ();
             }
-
 
             DrawerLayout.CloseDrawers ();
         }

@@ -1,6 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using Foundation;
+using GalaSoft.MvvmLight.Views;
 using Google.Core;
 using Google.SignIn;
 using SQLite.Net.Interop;
@@ -44,10 +45,32 @@ namespace Toggl.Ross
 #endif
 
             // Component initialisation.
-            RegisterComponents();
+            // Register platform info first.
+            ServiceContainer.Register<IPlatformUtils> (this);
 
-            // Setup Google sign in
-            SetupGoogleServices();
+            // Register Phoebe services
+            Services.Register();
+
+            // Override default implementation
+            ServiceContainer.Register<ITimeProvider> (() => new NSTimeProvider());
+
+            // Register Ross components:
+            ServiceContainer.Register<ILogger> (() => new Logger());
+            if (systemVersion > minVersionWidget)
+            {
+                //ServiceContainer.Register<WidgetUpdateService> (() => new WidgetUpdateService());
+                //ServiceContainer.Register<IWidgetUpdateService> (() => ServiceContainer.Resolve<WidgetUpdateService> ());
+            }
+            ServiceContainer.Register<ExperimentManager> (() => new ExperimentManager(
+                typeof(Phoebe.Analytics.Experiments),
+                typeof(Analytics.Experiments)));
+            ServiceContainer.Register<ILoggerClient> (initialiseLogClient);
+            ServiceContainer.Register<ITracker> (() => new Tracker());
+            ServiceContainer.Register<INetworkPresence> (() => new NetworkPresence());
+            ServiceContainer.Register<NetworkIndicatorManager> ();
+            ServiceContainer.Register<TagChipCache> ();
+            ServiceContainer.Register<APNSManager> ();
+            ServiceContainer.Register<IDialogService> (() => new DialogService());
 
             Theme.Style.Initialize();
 
@@ -59,6 +82,9 @@ namespace Toggl.Ross
 
             // This needs some services, like ITimeProvider, so run it at the end
             RxChain.Init(AppState.Init());
+
+            // Setup Google sign in
+            SetupGoogleServices();
 
             // Start app
             window = new TogglWindow(UIScreen.MainScreen.Bounds);
@@ -146,35 +172,6 @@ namespace Toggl.Ross
                 //var widgetService = ServiceContainer.Resolve<WidgetUpdateService>();
                 //widgetService.SetAppActivated(false);
             }
-        }
-
-        private void RegisterComponents()
-        {
-            // Register platform info first.
-            ServiceContainer.Register<IPlatformUtils> (this);
-
-            // Register Phoebe services
-            Services.Register();
-
-            // Override default implementation
-            ServiceContainer.Register<ITimeProvider> (() => new NSTimeProvider());
-
-            // Register Ross components:
-            ServiceContainer.Register<ILogger> (() => new Logger());
-            if (systemVersion > minVersionWidget)
-            {
-                //ServiceContainer.Register<WidgetUpdateService> (() => new WidgetUpdateService());
-                //ServiceContainer.Register<IWidgetUpdateService> (() => ServiceContainer.Resolve<WidgetUpdateService> ());
-            }
-            ServiceContainer.Register<ExperimentManager> (() => new ExperimentManager(
-                typeof(Phoebe.Analytics.Experiments),
-                typeof(Analytics.Experiments)));
-            ServiceContainer.Register<ILoggerClient> (initialiseLogClient);
-            ServiceContainer.Register<ITracker> (() => new Tracker());
-            ServiceContainer.Register<INetworkPresence> (() => new NetworkPresence());
-            ServiceContainer.Register<NetworkIndicatorManager> ();
-            ServiceContainer.Register<TagChipCache> ();
-            ServiceContainer.Register<APNSManager> ();
         }
 
         private static ILoggerClient initialiseLogClient()

@@ -221,9 +221,9 @@ namespace Toggl.Emma.Views
             hexValue = hexValue.TrimStart('#');
 
             int rgb;
-            if (!Int32.TryParse(hexValue, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out rgb))
+            if (!int.TryParse(hexValue, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out rgb))
             {
-                throw new ArgumentException("Invalid hex string.", "hexValue");
+                throw new ArgumentException("Invalid hex string.", nameof(hexValue));
             }
 
             switch (hexValue.Length)
@@ -243,7 +243,7 @@ namespace Toggl.Emma.Views
                                alpha
                            );
                 default:
-                    throw new ArgumentException("Invalid hex string.", "hexValue");
+                    throw new ArgumentException("Invalid hex string.", nameof(hexValue));
             }
         }
     }
@@ -251,17 +251,12 @@ namespace Toggl.Emma.Views
     public class WidgetEntryData
     {
         public string Id { get; set; }
-
         public string ProjectName { get; set; }
-
         public string Description { get; set; }
-
-        public string TimeValue { get; set; }
-
+        public string ClientName { get; set; }
         public string Color { get; set; }
-
         public bool IsRunning { get; set; }
-
-        public bool IsEmpty { get; set; }
+        public DateTime StartTime { get; set; }
+        public DateTime StopTime { get; set; }
     }
 }

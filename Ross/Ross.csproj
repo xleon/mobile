@@ -408,7 +408,7 @@
     <Compile Include="Views\ReportView.cs" />
     <Compile Include="ViewControllers\NewTagViewController.cs" />
     <Compile Include="FluentLayoutExtensions.cs" />
-    <Compile Include="Data\WidgetUpdateService.cs" />
+    <Compile Include="Widget\WidgetService.cs" />
     <Compile Include="Views\TableViewRefreshView.cs" />
     <Compile Include="ViewControllers\WebViewController.cs" />
     <Compile Include="Net\APNSManager.cs" />

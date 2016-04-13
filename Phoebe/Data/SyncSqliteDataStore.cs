@@ -44,7 +44,7 @@ namespace Toggl.Phoebe.Data
 
         private SQLiteConnectionWithLock initDatabaseConnection(string dbPath, ISQLitePlatform platformInfo)
         {
-            var dbFileExisted = File.Exists(dbPath);
+            var dbFileExisted = File.Exists(dbPath) && new FileInfo(dbPath).Length > 0;
 
             var cnnString = new SQLiteConnectionString(dbPath, true);
             var connection = new SQLiteConnectionWithLock(platformInfo, cnnString);

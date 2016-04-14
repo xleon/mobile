@@ -1,5 +1,4 @@
 using System;
-using System.Threading.Tasks;
 using Foundation;
 using GalaSoft.MvvmLight.Views;
 using Google.Core;
@@ -9,15 +8,16 @@ using SQLite.Net.Platform.XamarinIOS;
 using TestFairyLib;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Analytics;
+using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Logging;
 using Toggl.Phoebe.Net;
 using Toggl.Phoebe.Reactive;
 using Toggl.Ross.Analytics;
-using Toggl.Ross.Data;
 using Toggl.Ross.Logging;
 using Toggl.Ross.Net;
 using Toggl.Ross.ViewControllers;
 using Toggl.Ross.Views;
+using Toggl.Ross.Widget;
 using UIKit;
 using Xamarin;
 using XPlatUtils;
@@ -56,11 +56,6 @@ namespace Toggl.Ross
 
             // Register Ross components:
             ServiceContainer.Register<ILogger> (() => new Logger());
-            if (systemVersion > minVersionWidget)
-            {
-                //ServiceContainer.Register<WidgetUpdateService> (() => new WidgetUpdateService());
-                //ServiceContainer.Register<IWidgetUpdateService> (() => ServiceContainer.Resolve<WidgetUpdateService> ());
-            }
             ServiceContainer.Register<ExperimentManager> (() => new ExperimentManager(
                 typeof(Phoebe.Analytics.Experiments),
                 typeof(Analytics.Experiments)));
@@ -71,7 +66,6 @@ namespace Toggl.Ross
             ServiceContainer.Register<TagChipCache> ();
             ServiceContainer.Register<APNSManager> ();
             ServiceContainer.Register<IDialogService> (() => new DialogService());
-
             Theme.Style.Initialize();
 
             // Make sure critical services are running are running:
@@ -82,6 +76,12 @@ namespace Toggl.Ross
 
             // This needs some services, like ITimeProvider, so run it at the end
             RxChain.Init(AppState.Init());
+
+            // Order matters
+            if (systemVersion > minVersionWidget)
+            {
+                ServiceContainer.Register(() => new WidgetService());
+            }
 
             // Setup Google sign in
             SetupGoogleServices();
@@ -111,12 +111,16 @@ namespace Toggl.Ross
 
         public override void DidReceiveRemoteNotification(UIApplication application, NSDictionary userInfo, Action<UIBackgroundFetchResult> completionHandler)
         {
+            /*
             Task.Run(async() =>
             {
                 var service = ServiceContainer.Resolve<APNSManager> ();
                 await service.DidReceiveRemoteNotificationAsync(application, userInfo, completionHandler);
             });
+            */
         }
+
+        #region Widget management
 
         public override void OnActivated(UIApplication application)
         {
@@ -127,9 +131,7 @@ namespace Toggl.Ross
 
             if (systemVersion > minVersionWidget)
             {
-                // ServiceContainer.Resolve<WidgetSyncManager>();
-                // var widgetService = ServiceContainer.Resolve<WidgetUpdateService>();
-                // widgetService.SetAppOnBackground (false);
+                ServiceContainer.Resolve<WidgetService>().SetAppOnBackground(false);
             }
         }
 
@@ -137,19 +139,29 @@ namespace Toggl.Ross
         {
             if (systemVersion > minVersionWidget)
             {
-                if (url.AbsoluteString.Contains(WidgetUpdateService.TodayUrlPrefix))
+                if (url.AbsoluteString.Contains(WidgetService.TodayUrlPrefix))
                 {
-                    /*
-                    var widgetManager = ServiceContainer.Resolve<WidgetSyncManager>();
-                    if (url.AbsoluteString.Contains (WidgetUpdateService.StartEntryUrlPrefix)) {
-                        widgetManager.StartStopTimeEntry();
-                    } else {
-                        var nsUserDefaults = new NSUserDefaults ("group.com.toggl.timer", NSUserDefaultsType.SuiteName);
-                        var guid = nsUserDefaults.StringForKey (WidgetUpdateService.StartedEntryKey);
-                        widgetManager.ContinueTimeEntry (Guid.Parse (guid));
+                    if (url.AbsoluteString.Contains(WidgetService.StartEntryUrlPrefix))
+                    {
+                        RxChain.Send(new DataMsg.TimeEntryStart());
+                    }
+                    else
+                    {
+                        try
+                        {
+                            var nsUserDefaults = new NSUserDefaults("group.com.toggl.timer", NSUserDefaultsType.SuiteName);
+                            var guidStr = nsUserDefaults.StringForKey(WidgetService.StartedEntryKey);
+                            var guid = Guid.Parse(guidStr);
+                            var te = StoreManager.Singleton.AppState.TimeEntries [guid];
+                            RxChain.Send(new DataMsg.TimeEntryContinue(te.Data));
+                        }
+                        catch (Exception ex)
+                        {
+                            var logger = ServiceContainer.Resolve<ILogger> ();
+                            logger.Error("iOS Widget", ex, "Error starting unexisting time entry.");
+                        }
                     }
                     return true;
-                    */
                 }
             }
             return SignIn.SharedInstance.HandleUrl(url, sourceApplication, annotation);
@@ -159,9 +171,7 @@ namespace Toggl.Ross
         {
             if (systemVersion > minVersionWidget)
             {
-                // TODO TODO TODO : Deactivate widget completely!
-                //var widgetService = ServiceContainer.Resolve<WidgetUpdateService>();
-                //widgetService.SetAppOnBackground(true);
+                ServiceContainer.Resolve<WidgetService>().SetAppOnBackground(true);
             }
         }
 
@@ -169,10 +179,11 @@ namespace Toggl.Ross
         {
             if (systemVersion > minVersionWidget)
             {
-                //var widgetService = ServiceContainer.Resolve<WidgetUpdateService>();
-                //widgetService.SetAppActivated(false);
+                ServiceContainer.Resolve<WidgetService>().SetAppActivated(false);
             }
         }
+
+        #endregion
 
         private static ILoggerClient initialiseLogClient()
         {

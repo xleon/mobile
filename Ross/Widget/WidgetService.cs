@@ -17,6 +17,7 @@ namespace Toggl.Ross.Widget
 {
     public class WidgetService : IDisposable
     {
+        public static string StartedEntryKey = "started_entry_key";
         public static string TimeEntriesKey = "time_entries_key";
         public static string AppActiveEntryKey = "app_active_entry_key";
         public static string AppBackgroundEntryKey = "app_bg_entry_key";
@@ -40,7 +41,7 @@ namespace Toggl.Ross.Widget
             }
         }
 
-        public WidgetService(AppState state)
+        public WidgetService()
         {
             SetAppActivated(true);
             SetAppOnBackground(false);

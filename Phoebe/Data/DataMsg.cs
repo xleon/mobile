@@ -85,6 +85,10 @@ namespace Toggl.Phoebe.Data
         {
         }
 
+        public sealed class TimeEntryStart : DataMsg
+        {
+        }
+
         public sealed class TimeEntryStop : DataMsg
         {
             public Either<ITimeEntryData, Exception> Data

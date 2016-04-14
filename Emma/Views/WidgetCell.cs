@@ -12,11 +12,8 @@ namespace Toggl.Emma.Views
     public class WidgetCell : UITableViewCell
     {
         private const string defaultTimeValue = "  00:00:00";
-
         public static NSString WidgetProjectCellId = new NSString("WidgetCellId");
-
         public event EventHandler StartBtnPressed;
-
         private WidgetEntryData data;
 
         public WidgetEntryData Data
@@ -49,7 +46,9 @@ namespace Toggl.Emma.Views
                 var attribs = new UIStringAttributes { Font = timeLabel.Font };
                 timeLabel.Bounds = new CGRect(CGPoint.Empty, nsString.GetSizeUsingAttributes(attribs));
 
-                timeLabel.Text = string.IsNullOrEmpty(value.TimeValue) ? defaultTimeValue : value.TimeValue;
+                var duration = GetDuration(data.StartTime, data.StopTime);
+                var durationStr = string.Format("{0:D2}:{1:mm}:{1:ss}", (int)duration.TotalHours, duration);
+                timeLabel.Text = durationStr;
 
                 // Set color
                 colorBox.BackgroundColor = (data.IsEmpty) ? UIColor.Clear : UIColorFromHex(data.Color);
@@ -246,10 +245,27 @@ namespace Toggl.Emma.Views
                     throw new ArgumentException("Invalid hex string.", nameof(hexValue));
             }
         }
+
+        public static TimeSpan GetDuration(DateTime startTime, DateTime stopTime)
+        {
+            var now = DateTime.UtcNow;
+            if (startTime == DateTime.MinValue)
+            {
+                return TimeSpan.Zero;
+            }
+
+            var duration = stopTime - startTime;
+            if (duration < TimeSpan.Zero)
+            {
+                duration = TimeSpan.Zero;
+            }
+            return duration;
+        }
     }
 
     public class WidgetEntryData
     {
+        public bool IsEmpty {get; set;}
         public string Id { get; set; }
         public string ProjectName { get; set; }
         public string Description { get; set; }

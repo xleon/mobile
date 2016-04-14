@@ -44,13 +44,19 @@ namespace Toggl.Phoebe.ViewModels
             {
                 richData = appState.TimeEntries[timeEntryId];
                 previousData = new RichTimeEntry(richData.Data, richData.Info);
+                // TODO Rx First ugly code or patch from
+                // Unidirectional era. Why the DistinctUntilChanged doesn't
+                // work correctly? We should manage RemoteId-LocalId in
+                // a better way.
                 subscriptionState = StoreManager
                                     .Singleton
-                                    .Observe(x => x.State.TimeEntries[timeEntryId])
+                                    .Observe(x => x.State.TimeEntries [timeEntryId])
+                                    .DistinctUntilChanged(x => x.Data.RemoteId)
                                     .ObserveOn(SynchronizationContext.Current)
-                                    .Subscribe(newTimeEntryData =>
+                                    .Subscribe(syncedRichData =>
                 {
-                    richData = newTimeEntryData;
+                    if (!richData.Data.RemoteId.HasValue && syncedRichData.Data.RemoteId.HasValue)
+                        richData = syncedRichData;
                 });
             }
 
@@ -206,12 +212,7 @@ namespace Toggl.Phoebe.ViewModels
 
         public void Save()
         {
-            // TODO Rx Asking.
-            // Exclude sync (inherited) properties from comparison with old
-            // data 'previousData'. Maybe a clear way to compare properties is needed.
-            if (!previousData.Data.PublicInstancePropertiesEqual(richData.Data,
-                    nameof(CommonData.ModifiedAt), nameof(CommonData.RemoteId),
-                    nameof(CommonData.DeletedAt), nameof(CommonData.SyncState)))
+            if (HasTimeEntryChanged(previousData.Data, richData.Data))
             {
                 RxChain.Send(new DataMsg.TimeEntryPut(richData.Data, Tags));
                 previousData = richData;
@@ -271,7 +272,7 @@ namespace Toggl.Phoebe.ViewModels
 
         private void SetNewTask(Guid taskId)
         {
-            if (richData.Data.ProjectId == taskId)
+            if (richData.Data.TaskId == taskId)
             {
                 return;
             }
@@ -281,7 +282,7 @@ namespace Toggl.Phoebe.ViewModels
             {
                 x.TaskId = taskId;
                 x.TaskRemoteId = taskRemoteId;
-            });
+            }, nameof(TaskName));
         }
 
         private async System.Threading.Tasks.Task<bool> IsStartStopTimeCorrect(DateTime newDateTime, bool isStart)
@@ -300,6 +301,30 @@ namespace Toggl.Phoebe.ViewModels
             }
 
             return true;
+        }
+
+        private bool HasTimeEntryChanged(ITimeEntryData previous, ITimeEntryData current)
+        {
+            if (previous.StartTime != current.StartTime)
+                return true;
+            if (previous.StopTime != current.StopTime)
+                return true;
+            if (previous.IsBillable != current.IsBillable)
+                return true;
+            if (previous.ProjectId != current.ProjectId)
+                return true;
+            if (previous.Description != current.Description)
+            {
+                if (string.IsNullOrEmpty(previous.Description) &&
+                        string.IsNullOrEmpty(current.Description))
+                    return false;
+                return true;
+            }
+            if (!previous.Tags.SequenceEqual(current.Tags))
+                return true;
+            if (previous.TaskId != current.TaskId)
+                return true;
+            return false;
         }
     }
 }

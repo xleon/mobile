@@ -350,8 +350,8 @@ namespace Toggl.Joey.UI.Activities
             }
             var authManager = ServiceContainer.Resolve<AuthManager> ();
 
-            var hasEntries = await ViewModel.UserHasEntries ();
-            if (authManager.OfflineMode && hasEntries) {
+            var settings = ServiceContainer.Resolve<ISettingsStore> ();
+            if (authManager.OfflineMode && settings.HasEntries) {
                 var confirm = new AreYouSureDialogFragment ();
                 confirm.Show (FragmentManager, "confirm_reset_dialog");
             } else if (authManager.OfflineMode) {

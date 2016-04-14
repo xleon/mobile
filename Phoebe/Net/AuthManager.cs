@@ -201,6 +201,7 @@ namespace Toggl.Phoebe.Net
                 credStore.UserId = userData.Id;
                 credStore.ApiToken = userJson.ApiToken;
                 credStore.OfflineMode = userData.Name == OfflineUserName;
+                credStore.HasEntries = false;
 
                 User = userData;
                 Token = userJson.ApiToken;
@@ -364,6 +365,7 @@ namespace Toggl.Phoebe.Net
             credStore.ApiToken = null;
             credStore.OfflineMode = false;
             credStore.SyncLastRun = null;
+            credStore.HasEntries = false;
 
             IsAuthenticated = false;
             Token = null;

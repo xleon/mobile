@@ -11,6 +11,7 @@ namespace Toggl.Phoebe.Data
         IReadOnlyList<ICommonData> Update(Action<ISyncDataStoreContext> worker);
         void WipeTables();
 
+        int GetVersion();
         int GetQueueSize(string queueId);
         bool TryEnqueue(string queueId, string json);
         bool TryDequeue(string queueId, out string json);

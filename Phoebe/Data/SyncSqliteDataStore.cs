@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using SQLite.Net;
 using SQLite.Net.Interop;
@@ -9,23 +10,148 @@ namespace Toggl.Phoebe.Data
 {
     public class SyncSqliteDataStore : ISyncDataStore
     {
+        public const int DB_VERSION = 1;
+
+        public class MetaData
+        {
+            [SQLite.Net.Attributes.PrimaryKey]
+            public string Id { get; set; }
+            public string Json { get; set; }
+
+            public T Convert<T> ()
+            {
+                return Newtonsoft.Json.JsonConvert.DeserializeObject<T> (Json);
+            }
+
+            public static MetaData Create<T> (string id, T data)
+            {
+                return new MetaData
+                {
+                    Id = id,
+                    Json = Newtonsoft.Json.JsonConvert.SerializeObject(data)
+                };
+            }
+        }
+
         readonly SQLiteConnectionWithLock cnn;
 
         public SyncSqliteDataStore(string dbPath, ISQLitePlatform platformInfo)
         {
-            var cnnString = new SQLiteConnectionString(dbPath, true);
-            this.cnn = new SQLiteConnectionWithLock(platformInfo, cnnString);
+            this.cnn = this.initDatabaseConnection(dbPath, platformInfo);
 
-            CreateTables();
             CleanOldDraftEntry();
         }
 
-        private void CreateTables()
+        private SQLiteConnectionWithLock initDatabaseConnection(string dbPath, ISQLitePlatform platformInfo)
         {
-            var dataObjects = DiscoverDataModels();
-            foreach (var t in dataObjects)
+            var dbFileExisted = File.Exists(dbPath) && new FileInfo(dbPath).Length > 0;
+
+            var cnnString = new SQLiteConnectionString(dbPath, true);
+            var connection = new SQLiteConnectionWithLock(platformInfo, cnnString);
+
+            if (dbFileExisted)
             {
-                cnn.CreateTable(t);
+                var version = getVersion(connection);
+                if (version != DB_VERSION)
+                {
+                    this.migrateDatabase(connection, platformInfo, dbPath);
+                    connection = new SQLiteConnectionWithLock(platformInfo, cnnString);
+                }
+            }
+            else
+            {
+                CreateTables(connection);
+            }
+
+            return connection;
+        }
+
+        private void migrateDatabase(SQLiteConnection connection, ISQLitePlatform platformInfo, string dbPath)
+        {
+            var migrateFromDB = connection;
+            var version = getVersion(migrateFromDB);
+
+            var tempDBPath = dbPath + ".migrated";
+
+            while (true)
+            {
+                var migrator = DatabaseMigrator.ForVersion(version);
+
+                var expectedNewVersion = migrator.NewVersion;
+
+                validateMigrator(version, migrator);
+
+                var newDB = new SQLiteConnection(platformInfo, expectedNewVersion == DB_VERSION
+                                                 ? tempDBPath
+                                                 : "Data Source =: memory:");
+
+                migrator.Migrate(migrateFromDB, newDB);
+                migrateFromDB.Close();
+
+                var newVersion = getVersion(newDB);
+
+                validateMigratedVersion(version, expectedNewVersion, newVersion);
+
+                if (newVersion == DB_VERSION)
+                {
+                    newDB.Close();
+                    var dbDeletionPath = dbPath + ".old";
+                    File.Move(dbPath, dbDeletionPath);
+                    File.Move(tempDBPath, dbPath);
+                    File.Delete(dbDeletionPath);
+                    return;
+                }
+
+                migrateFromDB = newDB;
+            }
+        }
+
+        static void validateMigratedVersion(int oldVersion, int expectedNewVersion, int newVersion)
+        {
+            if (newVersion != expectedNewVersion)
+                throw new Exception($"Expected new database version {expectedNewVersion}, but was {newVersion}");
+
+            if (newVersion <= oldVersion || newVersion > DB_VERSION)
+                throw new Exception($"Database migrator upgraded from {oldVersion} to {newVersion} (app's version is {DB_VERSION}).");
+        }
+
+        static void validateMigrator(int oldVersion, DatabaseMigrator migrator)
+        {
+            if (migrator == null)
+                throw new Exception($"Do not know how to migrate database version {oldVersion} (app's version is {DB_VERSION})");
+
+            if (migrator.OldVersion != oldVersion)
+                throw new Exception($"received wrong database migrator");
+        }
+
+        private static int getVersion(SQLiteConnection connection)
+        {
+            var tableInfo = connection.GetTableInfo(nameof(MetaData));
+            if (tableInfo == null || tableInfo.Count == 0)
+                return 0;
+            var data = connection.Table<MetaData>().Where(x => x.Id == nameof(DB_VERSION)).FirstOrDefault();
+            return data?.Convert<int>() ?? 0;
+        }
+
+        public int GetVersion()
+        {
+            return getVersion(this.cnn);
+        }
+
+        private static void CreateTables(SQLiteConnection connection)
+        {
+            // TODO: the migration logic in principle knows what tables are needed
+            // and how to set the version number. they could be used to get rid of
+            // this method and of GetDataModels() below
+
+            // Meta Data: DB Version, etc
+            connection.CreateTable<MetaData> ();
+            connection.InsertOrIgnore(MetaData.Create(nameof(DB_VERSION), DB_VERSION));
+
+            // Data Models: Time Entries, etc
+            foreach (var t in GetDataModels())
+            {
+                connection.CreateTable(t);
             }
         }
 
@@ -36,19 +162,19 @@ namespace Toggl.Phoebe.Data
             cnn.Table<TimeEntryData>().Delete(t => t.State == TimeEntryState.New);
         }
 
-        internal static List<Type> DiscoverDataModels()
+        internal static List<Type> GetDataModels()
         {
-            return new List<Type>()
+            return new List<Type>
             {
                 typeof(UserData),
-                       typeof(WorkspaceData),
-                       typeof(WorkspaceUserData),
-                       typeof(ProjectData),
-                       typeof(ProjectUserData),
-                       typeof(ClientData),
-                       typeof(TaskData),
-                       typeof(TagData),
-                       typeof(TimeEntryData)
+                typeof(WorkspaceData),
+                typeof(WorkspaceUserData),
+                typeof(ProjectData),
+                typeof(ProjectUserData),
+                typeof(ClientData),
+                typeof(TaskData),
+                typeof(TagData),
+                typeof(TimeEntryData)
             };
         }
 
@@ -73,9 +199,10 @@ namespace Toggl.Phoebe.Data
 
         public void WipeTables()
         {
-            var dataObjects = DiscoverDataModels();
+            var dataTypes = GetDataModels();
+            dataTypes.Add(typeof(MetaData));
 
-            foreach (var t in dataObjects)
+            foreach (var t in dataTypes)
             {
                 var map = cnn.GetMapping(t);
                 var query = string.Format("DELETE FROM \"{0}\"", map.TableName);
@@ -170,10 +297,10 @@ namespace Toggl.Phoebe.Data
 
         public class SyncSqliteDataStoreContext : ISyncDataStoreContext
         {
-            readonly SQLiteConnectionWithLock conn;
+            readonly SQLiteConnection conn;
             readonly List<ICommonData> updated;
 
-            public SyncSqliteDataStoreContext(SQLiteConnectionWithLock conn)
+            public SyncSqliteDataStoreContext(SQLiteConnection conn)
             {
                 this.conn = conn;
                 this.updated = new List<ICommonData>();
@@ -209,6 +336,10 @@ namespace Toggl.Phoebe.Data
 
             // TODO: RX Find an elegant way to
             // replace this method.
+            // Paul found a possible solution when looking at this:
+            // double dispatch/visitor pattern. (feel free to ask for details/implementation)
+            // (if such a 'complex' solution is needed at all.
+            // this method is only used in one place at the time of writing)
             public ICommonData GetByColumn(Type type, string colName, object colValue)
             {
                 IEnumerable<ICommonData> res;

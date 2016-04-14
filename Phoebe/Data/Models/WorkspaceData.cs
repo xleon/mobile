@@ -22,7 +22,7 @@ namespace Toggl.Phoebe.Data.Models
         bool OnlyAdminsMayCreateProjects { get; }
         bool OnlyAdminsSeeBillableRates { get; }
         RoundingMode RoundingMode { get; }
-        int RoundingPercision { get; }
+        int RoundingPrecision { get; }
         string LogoUrl { get; }
         bool IsAdmin { get; }
         IWorkspaceData With(Action<WorkspaceData> transform);
@@ -55,7 +55,7 @@ namespace Toggl.Phoebe.Data.Models
             ProjectCreationPrivileges = other.ProjectCreationPrivileges;
             BillableRatesVisibility = other.BillableRatesVisibility;
             RoundingMode = other.RoundingMode;
-            RoundingPercision = other.RoundingPercision;
+            RoundingPrecision = other.RoundingPrecision;
             LogoUrl = other.LogoUrl;
             IsAdmin = other.IsAdmin;
         }
@@ -88,7 +88,7 @@ namespace Toggl.Phoebe.Data.Models
 
         public RoundingMode RoundingMode { get; set; }
 
-        public int RoundingPercision { get; set; }
+        public int RoundingPrecision { get; set; }
 
         public string LogoUrl { get; set; }
 

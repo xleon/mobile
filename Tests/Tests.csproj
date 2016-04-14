@@ -118,9 +118,11 @@
     </Reference>
     <Reference Include="Plugin.Connectivity">
       <HintPath>..\packages\Xam.Plugin.Connectivity.2.1.2\lib\net45\Plugin.Connectivity.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="Plugin.Connectivity.Abstractions">
       <HintPath>..\packages\Xam.Plugin.Connectivity.2.1.2\lib\net45\Plugin.Connectivity.Abstractions.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="PropertyChanged">
       <HintPath>..\packages\PropertyChanged.Fody.1.51.0\Lib\portable-net4+sl4+wp8+win8+wpa81+MonoAndroid16+MonoTouch40\PropertyChanged.dll</HintPath>
@@ -143,12 +145,16 @@
     <Compile Include="Reactive\Util.cs" />
     <Compile Include="Data\DataTest.cs" />
     <Compile Include="Data\Mapper\MapperDataToJsonTest.cs" />
+    <Compile Include="Data\Migration\MigrateV0toV1Test.cs" />
   </ItemGroup>
   <ItemGroup Condition="$(DefineConstants.Contains('STAGING'))">
     <Compile Include="Staging\**\*.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Data\Migration\" />
   </ItemGroup>
   <Import Project="..\Phoebe\Phoebe.Shared.projitems" Label="Shared" Condition="Exists('..\Phoebe\Phoebe.Shared.projitems')" />
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />

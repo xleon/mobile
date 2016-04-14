@@ -106,35 +106,7 @@ namespace Toggl.Joey.UI.Fragments
 
         public async void LoginButtonClick (object sender, EventArgs e)
         {
-            var hasEntries = await ViewModel.UserHasEntries ();
-            if (hasEntries) {
-                var confirm = new AreYouSureDialogFragment ();
-                confirm.Show (FragmentManager, "confirm_reset_dialog");
-            } else {
-                ((MainDrawerActivity)Activity).DirectToLogin ();
-            }
-        }
-
-        public class AreYouSureDialogFragment : DialogFragment
-        {
-            public override Dialog OnCreateDialog (Bundle savedInstanceState)
-            {
-                return new AlertDialog.Builder (Activity)
-                       .SetTitle (Resource.String.SettingsClearDataTitle)
-                       .SetMessage (Resource.String.SettingsClearDataText)
-                       .SetPositiveButton (Resource.String.SettingsClearDataOKButton, OnOkButtonClicked)
-                       .SetNegativeButton (Resource.String.SettingsClearDataCancelButton, OnCancelButtonClicked)
-                       .Create ();
-            }
-
-            private void OnCancelButtonClicked (object sender, DialogClickEventArgs args)
-            {
-            }
-
-            private void OnOkButtonClicked (object sender, DialogClickEventArgs args)
-            {
-                ((MainDrawerActivity)Activity).DirectToLogin ();
-            }
+            ((MainDrawerActivity)Activity).OpenLogin ();
         }
 
         public override void OnViewCreated (View view, Bundle savedInstanceState)

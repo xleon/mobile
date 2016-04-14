@@ -41,6 +41,7 @@ namespace Toggl.Joey.UI.Activities
     {
         private const string LogTag = "LoginActivity";
         public static string ValidateEmailRegexp = "^[^<>\\\\#$@\\s]+@[^<>\\\\#$@\\s]*[^<>\\\\#$\\.\\s@]{1}?\\.{1}?[^<>\\\\#$\\.@\\s]{1}?[^<>\\\\#$@\\s]+$";
+        public const int LoginRequestCode = 10;
 
         private static readonly string ExtraShowPassword = "com.toggl.timer.show_password";
         private Mode? lastScreen;
@@ -105,7 +106,7 @@ namespace Toggl.Joey.UI.Activities
         protected override bool StartAuthActivity ()
         {
             var authManager = ServiceContainer.Resolve<AuthManager> ();
-            if (authManager.IsAuthenticated) {
+            if (authManager.IsAuthenticated && !authManager.OfflineMode) {
                 // Try to avoid flickering of buttons during activity transition by
                 // faking that we're still authenticating
 
@@ -284,6 +285,10 @@ namespace Toggl.Joey.UI.Activities
 
         private void OnModeToggleButtonClick (object sender, EventArgs e)
         {
+            if (ServiceContainer.Resolve<AuthManager> ().OfflineMode) {
+                SetResult (Result.Ok);
+                Finish ();
+            }
             CurrentMode = CurrentMode == Mode.Login ? Mode.Signup : Mode.Login;
             SyncContent ();
         }
@@ -327,6 +332,8 @@ namespace Toggl.Joey.UI.Activities
 
         private async void OnLoginButtonClick (object sender, EventArgs e)
         {
+
+
             // Small UI trick to permit OBM testers
             // interact with the staging API
             if (EmailEditText.Text == "staging") {
@@ -341,8 +348,16 @@ namespace Toggl.Joey.UI.Activities
                 return;
 
             }
+            var authManager = ServiceContainer.Resolve<AuthManager> ();
 
-            if (CurrentMode == Mode.Login) {
+            var hasEntries = await ViewModel.UserHasEntries ();
+            if (authManager.OfflineMode && hasEntries) {
+                var confirm = new AreYouSureDialogFragment ();
+                confirm.Show (FragmentManager, "confirm_reset_dialog");
+            } else if (authManager.OfflineMode) {
+                ServiceContainer.Resolve<AuthManager> ().Forget ();
+                await TryLoginPasswordAsync ();
+            } else if (CurrentMode == Mode.Login) {
                 await TryLoginPasswordAsync ();
             } else {
                 await TrySignupPasswordAsync ();
@@ -683,6 +698,28 @@ namespace Toggl.Joey.UI.Activities
             }
         }
 
+        public class AreYouSureDialogFragment : DialogFragment
+        {
+            public override Dialog OnCreateDialog (Bundle savedInstanceState)
+            {
+                return new AlertDialog.Builder (Activity)
+                       .SetTitle (Resource.String.SettingsClearDataTitle)
+                       .SetMessage (Resource.String.SettingsClearDataText)
+                       .SetPositiveButton (Resource.String.SettingsClearDataOKButton, OnOkButtonClicked)
+                       .SetNegativeButton (Resource.String.SettingsClearDataCancelButton, OnCancelButtonClicked)
+                       .Create ();
+            }
+
+            private void OnCancelButtonClicked (object sender, DialogClickEventArgs args)
+            {
+            }
+
+            private async void OnOkButtonClicked (object sender, DialogClickEventArgs args)
+            {
+                ServiceContainer.Resolve<AuthManager> ().Forget ();
+                await ((LoginActivity)Activity).TryLoginPasswordAsync();
+            }
+        }
 
         public class ErrorDialogFragment : DialogFragment
         {

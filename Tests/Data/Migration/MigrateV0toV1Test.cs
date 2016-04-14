@@ -279,7 +279,8 @@ namespace Toggl.Phoebe.Tests.Data.Migration
                 Description = timeEntryDescription,
                 WorkspaceId = workspaceID,
                 ProjectId = projectID,
-                TaskId = taskId
+                TaskId = taskId,
+                State = V1.TimeEntryState.Finished
             },
             new V0.TimeEntryTagData { TimeEntryId = timeEntryId, TagId = tagId }
             );

@@ -82,6 +82,7 @@ namespace Toggl.Phoebe.Reactive
                    .Add(typeof(DataMsg.TimeEntryPut), TimeEntryPut)
                    .Add(typeof(DataMsg.TimeEntriesRemove), TimeEntryRemove)
                    .Add(typeof(DataMsg.TimeEntryContinue), TimeEntryContinue)
+                   .Add(typeof(DataMsg.TimeEntryStart), TimeEntryStart)
                    .Add(typeof(DataMsg.TimeEntryStop), TimeEntryStop)
                    .Add(typeof(DataMsg.TagsPut), TagsPut)
                    .Add(typeof(DataMsg.ClientDataPut), ClientDataPut)
@@ -399,6 +400,37 @@ namespace Toggl.Phoebe.Reactive
                     draft = entryData;
                 }
 
+                ctx.Put(TimeEntryData.Create(draft: draft, transform: x =>
+                {
+                    x.RemoteId = null;
+                    x.State = TimeEntryState.Running;
+                    x.StartTime = Time.UtcNow.Truncate(TimeSpan.TicksPerSecond);
+                    x.StopTime = null;
+                    x.Tags = state.Settings.UseDefaultTag ? TimeEntryData.DefaultTags : new List<string> ();
+                }));
+            });
+
+            return DataSyncMsg.Create(updated, state.With(timeEntries: state.UpdateTimeEntries(updated),
+                                      settings: state.Settings.With(showWelcome: false)));
+        }
+
+        static DataSyncMsg<AppState> TimeEntryStart(AppState state, DataMsg msg)
+        {
+            var dataStore = ServiceContainer.Resolve <ISyncDataStore> ();
+            var updated = dataStore.Update(ctx =>
+            {
+                // Stop ActiveEntry if necessary
+                var prev = state.ActiveEntry.Data;
+                if (prev.Id != Guid.Empty && prev.State == TimeEntryState.Running)
+                {
+                    ctx.Put(prev.With(x =>
+                    {
+                        x.State = TimeEntryState.Finished;
+                        x.StopTime = Time.UtcNow;
+                    }));
+                }
+
+                ITimeEntryData draft = state.GetTimeEntryDraft();
                 ctx.Put(TimeEntryData.Create(draft: draft, transform: x =>
                 {
                     x.RemoteId = null;

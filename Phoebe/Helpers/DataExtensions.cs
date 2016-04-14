@@ -329,6 +329,9 @@ namespace Toggl.Phoebe.Helpers
                     var selfSeq = selfValue as System.Collections.IEnumerable;
                     var toSeq = toValue as System.Collections.IEnumerable;
 
+                    var selfStr = selfValue as string;
+                    var toStr = toValue as string;
+
                     if (selfSeq != null && toSeq != null)
                     {
                         var bothFinished = false;
@@ -355,6 +358,16 @@ namespace Toggl.Phoebe.Helpers
                                     return false;
                                 }
                             }
+                        }
+                    }
+                    else if (selfStr != null || toStr != null)
+                    {
+                        if (string.IsNullOrEmpty(selfStr) && string.IsNullOrEmpty(toStr))
+                            return true;
+
+                        if (areDifferent(selfStr, toStr))
+                        {
+                            return false;
                         }
                     }
                     else if (areDifferent(selfValue, toValue))

@@ -59,6 +59,7 @@ namespace Toggl.Phoebe.Reactive
         public static SyncManager Singleton { get; private set; }
         private static string DuplicatedNameMessage = "Name has already been taken";
         private static string TimeEntryConstrainMessage = "This entry can't be saved";
+        private static string TimeEntryUnmetConstrainst = "time entry has unmet constraints";
 
         public static void Init()
         {
@@ -273,9 +274,11 @@ namespace Toggl.Phoebe.Reactive
                     switch (data.SyncState)
                     {
                         case SyncState.CreatePending:
+                            Console.WriteLine("Remote created :" + data.GetType() + " " + data.Id);
                             response = await client.Create(authToken, json);
                             break;
                         case SyncState.UpdatePending:
+                            Console.WriteLine("Remote update :" + data.GetType() + " " + data.Id);
                             response = await client.Update(authToken, json);
                             break;
                         default:
@@ -286,6 +289,7 @@ namespace Toggl.Phoebe.Reactive
                     var resData = mapper.Map(response);
                     resData.Id = data.Id;
                     remoteObjects.Add(resData);
+                    Console.WriteLine("Remote received :" + resData.GetType() + " " + resData.RemoteId + " " + resData.Id);
                 }
                 else
                 {
@@ -321,7 +325,8 @@ namespace Toggl.Phoebe.Reactive
                             return;
                         }
 
-                        if (exception.Message.Contains(TimeEntryConstrainMessage))
+                        if (exception.Message.Contains(TimeEntryConstrainMessage) ||
+                                exception.Message.Contains(TimeEntryUnmetConstrainst))
                         {
                             // ATTENTION For errors related with the time entry restrictions
                             // show the message and remove it from queue.
@@ -624,6 +629,7 @@ namespace Toggl.Phoebe.Reactive
             if (data is TimeEntryData)
             {
                 var te = (TimeEntryData)data.Clone();
+
                 if (te.UserRemoteId == 0)
                 {
                     te.UserRemoteId = GetRemoteId<UserData> (te.UserId, remoteObjects, state);
@@ -780,7 +786,7 @@ namespace Toggl.Phoebe.Reactive
                 // Stop sending messages and wait for state update
                 // TODO RX: Keep a cache to check if the same error is repeating many times?
                 // Publish more info about this bug
-                throw new Exception("RemoteId missing. Type: " + typ.FullName);
+                throw new Exception("RemoteId missing. Type: " + typ.FullName + " " + localId);
             }
             return res.Value;
         }

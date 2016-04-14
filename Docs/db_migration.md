@@ -44,7 +44,7 @@ The main changes between the old and new schemas are:
   to JSON.
 - **TimeEntryTagData**: This data type and the corresponding
   table have been eliminated
-- **Tag info in TimeEntryData**: TBD
+- **Tag info in TimeEntryData**: Now saves as `List<string> Tags which is stored in RawTags in the database`
 
 
 ## DONE
@@ -53,20 +53,20 @@ The main changes between the old and new schemas are:
 - To simplify the reading from the version 0 schema, the old
   models have been included in `unidirectional` in the
   `Toggl.Phoebe.Data.Models.Old.DB_VERSION_0` namespace.
-- An `Upgrade` method has been added to the old models.
-  This method converts the data type into the new format.
+- Old models now inherit from `IUpgradesTo<NewModelType>` which has an `Upgrade` method. This method converts the data type into the new format.
+- Implemented the process described at the beginning of the
+  document: check db version on start, trigger migration
+  if old and replacing old db with the new one.
+- Added **tag info** to `TimeEntryData` in new schema.
+
 
 ## PENDING
 
-- Implement the process described at the beginning of the
-  document: check db version on start, trigger migration
-  if old and replacing old db with the new one.
 - Add `GoogleAccessToken` and `ApiToken` to `UserData` in
   the new schema. This info must be obtained from platform
   settings.
 - New properties of `WorkspaceData`: `OnlyAdminsMayCreateProjects`,
   `OnlyAdminsSeeBillableRates` and `IsAdmin`
-- Add **tag info** to `TimeEntryData` in new schema.
 - Some properties that were nullable before (`Guid?`) are now
   just Guid (like `TimeEntryData.ProjectId`), decide if
   this change must be extended to other properties,

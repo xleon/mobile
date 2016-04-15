@@ -51,6 +51,8 @@ namespace Toggl.Ross
             // Register Phoebe services
             Services.Register();
 
+            ServiceContainer.Register<ISettingsStore>(() => new OldSettingsStore());
+
             // Override default implementation
             ServiceContainer.Register<ITimeProvider> (() => new NSTimeProvider());
 

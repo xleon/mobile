@@ -446,36 +446,66 @@ namespace Toggl.Phoebe.Reactive
         public bool IdleNotification { get; private set; }
         public bool ShowNotification { get; private set; }
 
+        private SettingsState()
+        {
+            UserId = UserIdDefault;
+            GetChangesLastRun = GetChangesLastRunDefault;
+            UseDefaultTag = UseDefaultTagDefault;
+            LastAppVersion = LastAppVersionDefault;
+            LastReportZoom = LastReportZoomDefault;
+            GroupedEntries = GroupedEntriesDefault;
+            ChooseProjectForNew = ChooseProjectForNewDefault;
+            ReportsCurrentItem = ReportsCurrentItemDefault;
+            ProjectSort = ProjectSortDefault;
+            InstallId = InstallIdDefault;
+            ShowWelcome = ShowWelcomeDefault;
+            // iOS only  values
+            RossPreferredStartView = RossPreferredStartViewDefault;
+            RossReadDurOnlyNotice = RossReadDurOnlyNoticeDefault;
+            RossIgnoreSyncErrorsUntil = RossIgnoreSyncErrorsUntilDefault;
+            // Android only  values
+            GcmRegistrationId = GcmRegistrationIdDefault;
+            GcmAppVersion = GcmAppVersionDefault;
+            IdleNotification = IdleNotificationDefault;
+            ShowNotification = ShowNotificationDefault;
+        }
+
         public static SettingsState Init()
         {
             // If saved is empty, return default.
-            if (Settings.SerializedSettings == string.Empty)
+            if (Settings.SerializedSettings != string.Empty)
+                return initLoadSettings();
+
+            var oldSettings = ServiceContainer.Resolve<ISettingsStore>();
+            if (oldSettings.UserId != null && oldSettings.UserId != Guid.Empty)
+                return initFromOldSettings(oldSettings);
+
+            return initDefault();
+        }
+
+        static SettingsState initLoadSettings()
+        {
+            return Newtonsoft.Json.JsonConvert.DeserializeObject<SettingsState>(
+                       Settings.SerializedSettings, Settings.GetNonPublicPropertiesResolverSettings());
+        }
+
+        static SettingsState initFromOldSettings(ISettingsStore old)
+        {
+            return new SettingsState
             {
-                var settings = new SettingsState();
-                settings.UserId = UserIdDefault;
-                settings.GetChangesLastRun = GetChangesLastRunDefault;
-                settings.UseDefaultTag = UseDefaultTagDefault;
-                settings.LastAppVersion = LastAppVersionDefault;
-                settings.LastReportZoom = LastReportZoomDefault;
-                settings.GroupedEntries = GroupedEntriesDefault;
-                settings.ChooseProjectForNew = ChooseProjectForNewDefault;
-                settings.ReportsCurrentItem = ReportsCurrentItemDefault;
-                settings.ProjectSort = ProjectSortDefault;
-                settings.InstallId = InstallIdDefault;
-                settings.ShowWelcome = ShowWelcomeDefault;
-                // iOS only  values
-                settings.RossPreferredStartView = RossPreferredStartViewDefault;
-                settings.RossReadDurOnlyNotice = RossReadDurOnlyNoticeDefault;
-                settings.RossIgnoreSyncErrorsUntil = RossIgnoreSyncErrorsUntilDefault;
-                // Android only  values
-                settings.GcmRegistrationId = GcmRegistrationIdDefault;
-                settings.GcmAppVersion = GcmAppVersionDefault;
-                settings.IdleNotification = IdleNotificationDefault;
-                settings.ShowNotification = ShowNotificationDefault;
-                return settings;
-            }
-            return Newtonsoft.Json.JsonConvert.DeserializeObject<SettingsState> (Settings.SerializedSettings,
-                    Settings.GetNonPublicPropertiesResolverSettings());
+                UserId = old.UserId.Value,
+                UseDefaultTag = old.UseDefaultTag,
+                LastAppVersion = old.LastAppVersion,
+                LastReportZoom = old.LastReportZoomViewed ?? LastReportZoomDefault,
+                GroupedEntries = old.GroupedTimeEntries,
+                ProjectSort = old.SortProjectsBy,
+                ShowWelcome = old.ShowWelcome,
+            };
+        }
+
+        static SettingsState initDefault()
+        {
+            return new SettingsState();
         }
 
         private T updateNullable<T> (T? value, T @default, Func<T, T> update)
@@ -512,6 +542,7 @@ namespace Toggl.Phoebe.Reactive
             bool? showNotification = null,
             bool? showWelcome = null)
         {
+            // TODO: Maybe it makes more sense for this to call initDefault()?
             var copy = Init();
             updateNullable(userId, copy.UserId, x => copy.UserId = x);
             updateNullable(getChangesLastRun, copy.GetChangesLastRun, x => copy.GetChangesLastRun = x);

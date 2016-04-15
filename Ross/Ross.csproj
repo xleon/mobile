@@ -423,6 +423,7 @@
     </Compile>
     <Compile Include="Views\StatusView.cs" />
     <Compile Include="DataSources\PlainObservableCollectionViewSource.cs" />
+    <Compile Include="OldSettingsStore.cs" />
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>

@@ -27,5 +27,7 @@ namespace Toggl.Phoebe.Data
         bool IsStagingMode { get; set; }
 
         bool ShowWelcome { get; set; }
+
+        bool HasEntries { get; set; }
     }
 }

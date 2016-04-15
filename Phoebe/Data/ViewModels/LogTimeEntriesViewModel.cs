@@ -282,6 +282,7 @@ namespace Toggl.Phoebe.Data.ViewModels
         {
             ServiceContainer.Resolve<IPlatformUtils> ().DispatchOnUIThread (() => {
                 HasItems = (Collection.Count > 0) ? CollectionState.NotEmpty : CollectionState.Empty;
+                ServiceContainer.Resolve<ISettingsStore> ().HasEntries = Collection.Count > 0;
             });
         }
 

@@ -36,6 +36,7 @@ namespace Toggl.Joey.Data
         private const string PhoebeShowWelcomeKey = "showWelcomeKey";
         private const string PhoebeShowOverlay = "gotWelcomeMessage";
         private const string FirstTimeEntryFocusKey = "firsTimeEntry";
+        private const string HasEntriesKey = "hasEntries";
 
         private static string GetPropertyName<T> (Expression<Func<SettingsStore, T>> expr)
         {
@@ -352,6 +353,17 @@ namespace Toggl.Joey.Data
             set {
                 SetInt (FirstTimeEntryFocusKey, value ? 1 : 0);
                 OnSettingChanged (PropertyFirstTimeEntryFocus);
+            }
+        }
+
+        public static readonly string PropertyHasEntries = GetPropertyName (s => s.HasEntries);
+
+        public bool HasEntries
+        {
+            get { return GetInt (HasEntriesKey) == 1; }
+            set {
+                SetInt (HasEntriesKey, value ? 1 : 0);
+                OnSettingChanged (PropertyHasEntries);
             }
         }
     }

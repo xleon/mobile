@@ -70,6 +70,38 @@ namespace XPlatUtils
             services[typeof(T)] = service;
         }
 
+        public static bool TryResolve<T>(out T t)
+        {
+            object o;
+            var result = TryResolve(typeof(T), out o);
+            t = (T)o;
+            return result;
+        }
+        public static bool TryResolve(Type type, out object service)
+        {
+            //Scoped services
+            if (scopedServices.Count > 0)
+            {
+                var services = scopedServices.Peek();
+
+                if (services.TryGetValue(type, out service))
+                {
+                    return true;
+                }
+            }
+
+            //Non-scoped services
+            Lazy<object> lazyService;
+            if (services.TryGetValue(type, out lazyService))
+            {
+                service = lazyService.Value;
+                return true;
+            }
+
+            service = null;
+            return false;
+        }
+
         /// <summary>
         /// Resolves the type, throwing an exception if not found
         /// </summary>

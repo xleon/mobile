@@ -476,8 +476,9 @@ namespace Toggl.Phoebe.Reactive
             if (Settings.SerializedSettings != string.Empty)
                 return initLoadSettings();
 
-            var oldSettings = ServiceContainer.Resolve<ISettingsStore>();
-            if (oldSettings.UserId != null && oldSettings.UserId != Guid.Empty)
+            ISettingsStore oldSettings;
+            if (ServiceContainer.TryResolve(out oldSettings) &&
+                    oldSettings.UserId != null && oldSettings.UserId != Guid.Empty)
                 return initFromOldSettings(oldSettings);
 
             return initDefault();

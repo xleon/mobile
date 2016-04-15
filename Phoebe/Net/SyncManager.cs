@@ -257,8 +257,8 @@ namespace Toggl.Phoebe.Net
                     SqlExtensions.UpdateTable<ProjectUserData> (ctx, userId);
 
                     // Delete old data.
-                    SqlExtensions.DeleteTable<UserData> (ctx, Tuple.Create ("Name", (object)"Workspace"));
-                    SqlExtensions.DeleteTable<WorkspaceData> (ctx, Tuple.Create ("Name", (object)"offlineUser"));
+                    SqlExtensions.DeleteTable<UserData> (ctx, Tuple.Create ("Name", (object)"offlineUser"));
+                    SqlExtensions.DeleteTable<WorkspaceData> (ctx, Tuple.Create ("Name", (object)"Workspace"));
                 });
 
             } catch (Exception e) {

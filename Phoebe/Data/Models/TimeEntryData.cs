@@ -120,11 +120,11 @@ namespace Toggl.Phoebe.Data.Models
         {
             get
             {
-                return string.Join(";", Tags.Select(x => x));
+                return string.Join("\t", Tags);
             }
             set
             {
-                Tags = value.Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries).ToList();
+                Tags = value.Split(new char[] { '\t' }, StringSplitOptions.RemoveEmptyEntries).ToList();
             }
         }
 

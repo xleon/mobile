@@ -10,6 +10,7 @@ using Toggl.Phoebe;
 using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Logging;
+using Toggl.Phoebe.Misc;
 using Toggl.Phoebe.Net;
 using Toggl.Phoebe.Reactive;
 using Toggl.Ross.Analytics;
@@ -51,7 +52,8 @@ namespace Toggl.Ross
             // Register Phoebe services
             Services.Register();
 
-            ServiceContainer.Register<ISettingsStore>(() => new OldSettingsStore());
+            // Used for migration
+            ServiceContainer.Register<IOldSettingsStore>(() => new OldSettingsStore());
 
             // Override default implementation
             ServiceContainer.Register<ITimeProvider> (() => new NSTimeProvider());

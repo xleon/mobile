@@ -10,9 +10,9 @@ namespace Toggl.Joey.Data
 {
     /// <summary>
     /// Settings store for storing Android runtime settings. It also stores settings for Phoebe, but the
-    /// <see cref="ISettingsStore"/> interface is implemented explicitly.
+    /// <see cref="IOldSettingsStore"/> interface is implemented explicitly.
     /// </summary>
-    public class SettingsStore : ISettingsStore
+    public class SettingsStore : IOldSettingsStore
     {
         private const string PreferenceName = "togglSettings";
         private const string PhoebeUserIdKey = "phoebeUserId";

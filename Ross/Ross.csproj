@@ -290,11 +290,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Main.cs" />
-    <Compile Include="NSTimeProvider.cs" />
     <Compile Include="AppDelegate.cs" />
     <Compile Include="ViewControllers\MainViewController.cs" />
     <Compile Include="ViewControllers\LoginViewController.cs" />
-    <Compile Include="StringExtensions.cs" />
     <Compile Include="Theme\Style.Common.cs">
       <DependentUpon>Style.cs</DependentUpon>
     </Compile>
@@ -315,7 +313,6 @@
       <DependentUpon>Style.cs</DependentUpon>
     </Compile>
     <Compile Include="Theme\Image.cs" />
-    <Compile Include="DispatchQueueExtensions.cs" />
     <Compile Include="Views\PasswordTextField.cs" />
     <Compile Include="Views\BindableTableViewCell.cs" />
     <Compile Include="Theme\Style.NavMenu.cs">
@@ -342,8 +339,6 @@
       <DependentUpon>Style.cs</DependentUpon>
     </Compile>
     <Compile Include="Views\TextField.cs" />
-    <Compile Include="ObjectExtensions.cs" />
-    <Compile Include="NSDateExtensions.cs" />
     <Compile Include="ViewControllers\ProjectSelectionViewController.cs" />
     <Compile Include="ViewControllers\FeedbackViewController.cs" />
     <Compile Include="Theme\Style.ProjectList.cs">
@@ -366,7 +361,6 @@
     <Compile Include="Theme\Style.DurationEdit.cs">
       <DependentUpon>Style.cs</DependentUpon>
     </Compile>
-    <Compile Include="UIImageEffects.cs" />
     <Compile Include="Theme\Style.EmptyView.cs">
       <DependentUpon>Style.cs</DependentUpon>
     </Compile>
@@ -378,7 +372,6 @@
     <Compile Include="Theme\Style.Settings.cs">
       <DependentUpon>Style.cs</DependentUpon>
     </Compile>
-    <Compile Include="TogglWindow.cs" />
     <Compile Include="Theme\Style.Feedback.cs">
       <DependentUpon>Style.cs</DependentUpon>
     </Compile>
@@ -407,7 +400,6 @@
     <Compile Include="Views\InfiniteScrollView.cs" />
     <Compile Include="Views\ReportView.cs" />
     <Compile Include="ViewControllers\NewTagViewController.cs" />
-    <Compile Include="FluentLayoutExtensions.cs" />
     <Compile Include="Widget\WidgetService.cs" />
     <Compile Include="Views\TableViewRefreshView.cs" />
     <Compile Include="ViewControllers\WebViewController.cs" />
@@ -423,7 +415,14 @@
     </Compile>
     <Compile Include="Views\StatusView.cs" />
     <Compile Include="DataSources\PlainObservableCollectionViewSource.cs" />
-    <Compile Include="OldSettingsStore.cs" />
+    <Compile Include="Misc\UIImageEffects.cs" />
+    <Compile Include="Misc\TogglWindow.cs" />
+    <Compile Include="Misc\FluentLayoutExtensions.cs" />
+    <Compile Include="Misc\NSDateExtensions.cs" />
+    <Compile Include="Misc\ObjectExtensions.cs" />
+    <Compile Include="Misc\OldSettingsStore.cs" />
+    <Compile Include="Misc\NSTimeProvider.cs" />
+    <Compile Include="Misc\StringExtensions.cs" />
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>
@@ -470,6 +469,9 @@
   <ItemGroup>
     <ITunesArtwork Include="iTunesArtwork" />
     <ITunesArtwork Include="iTunesArtwork%402x" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Misc\" />
   </ItemGroup>
   <Import Project="..\Phoebe\Phoebe.Shared.projitems" Label="Shared" Condition="Exists('..\Phoebe\Phoebe.Shared.projitems')" />
   <Import Project="$(MSBuildExtensionsPath)\Xamarin\iOS\Xamarin.iOS.CSharp.targets" />

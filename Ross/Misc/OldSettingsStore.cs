@@ -2,13 +2,11 @@
 using System.Linq.Expressions;
 using Foundation;
 using Toggl.Phoebe;
-using Toggl.Phoebe.Analytics;
-using Toggl.Phoebe.Data;
-using XPlatUtils;
+using Toggl.Phoebe.Misc;
 
 namespace Toggl.Ross
 {
-    public class OldSettingsStore : ISettingsStore
+    public class OldSettingsStore : IOldSettingsStore
     {
         private const string PhoebeUserIdKey = "phoebeUserId";
         private const string PhoebeApiTokenKey = "phoebeApiToken";
@@ -18,8 +16,6 @@ namespace Toggl.Ross
         private const string PhoebeExperimentIdKey = "phoebeExperimentId";
         private const string PhoebeLastReportZoomKey = "lastReportZoomKey";
         private const string PhoebeGroupedEntriesKey = "groupedEntriesKey";
-        private const string RossInstallIdKey = "rossInstallId";
-        private const string RossPreferredStartViewKey = "rossPreferredStartView";
         private const string RossChooseProjectForNewKey = "rossChooseProjectForNew";
         private const string RossReadDurOnlyNoticeKey = "rossReadDurOnlyNotice";
         private const string RossIgnoreSyncErrorsUntilKey = "rossIgnoreSyncErrorsUntil";
@@ -36,7 +32,7 @@ namespace Toggl.Ross
         protected Guid? GetGuid(string key)
         {
             var val = (string)(NSString)NSUserDefaults.StandardUserDefaults[key];
-            if (String.IsNullOrEmpty(val))
+            if (string.IsNullOrEmpty(val))
             {
                 return null;
             }
@@ -120,36 +116,11 @@ namespace Toggl.Ross
             NSUserDefaults.StandardUserDefaults.Synchronize();
         }
 
-        protected void OnSettingChanged(string name)
-        {
-            var bus = ServiceContainer.Resolve<MessageBus>();
-            bus.Send(new SettingChangedMessage(this, name));
-        }
-
         public static readonly string PropertyUserId = GetPropertyName(s => s.UserId);
 
         public Guid? UserId
         {
             get { return GetGuid(PhoebeUserIdKey); }
-            set
-            {
-                SetGuid(PhoebeUserIdKey, value);
-                OnSettingChanged(PropertyUserId);
-            }
-        }
-
-        public string InstallId
-        {
-            get
-            {
-                var val = GetString(RossInstallIdKey);
-                if (String.IsNullOrEmpty(val))
-                {
-                    val = Guid.NewGuid().ToString();
-                    SetString(RossInstallIdKey, val);
-                }
-                return val;
-            }
         }
 
         public static readonly string PropertyApiToken = GetPropertyName(s => s.ApiToken);
@@ -157,11 +128,6 @@ namespace Toggl.Ross
         public string ApiToken
         {
             get { return GetString(PhoebeApiTokenKey); }
-            set
-            {
-                SetString(PhoebeApiTokenKey, value);
-                OnSettingChanged(PropertyApiToken);
-            }
         }
 
         public static readonly string PropertySyncLastRun = GetPropertyName(s => s.SyncLastRun);
@@ -169,11 +135,6 @@ namespace Toggl.Ross
         public DateTime? SyncLastRun
         {
             get { return GetDateTime(PhoebeSyncLastRunKey); }
-            set
-            {
-                SetDateTime(PhoebeSyncLastRunKey, value);
-                OnSettingChanged(PropertySyncLastRun);
-            }
         }
 
         public static readonly string PropertyUseDefaultTag = GetPropertyName(s => s.UseDefaultTag);
@@ -181,23 +142,11 @@ namespace Toggl.Ross
         public bool UseDefaultTag
         {
             get { return (GetInt(PhoebeUseDefaultTagKey) ?? 1) == 1; }
-            set
-            {
-                SetInt(PhoebeUseDefaultTagKey, value ? 1 : 0);
-                OnSettingChanged(PropertyUseDefaultTag);
-                ServiceContainer.Resolve<ITracker>().SendSettingsChangeEvent(SettingName.DefaultMobileTag);
-            }
         }
 
         public bool GroupedTimeEntries
         {
             get { return GetInt(PhoebeGroupedEntriesKey) == 1; }
-            set
-            {
-                SetInt(PhoebeGroupedEntriesKey, value ? 1 : 0);
-                OnSettingChanged(PhoebeGroupedEntriesKey);
-                ServiceContainer.Resolve<ITracker>().SendSettingsChangeEvent(SettingName.GroupedTimeEntries);
-            }
         }
 
         public static readonly string PropertyLastAppVersion = GetPropertyName(s => s.LastAppVersion);
@@ -205,7 +154,6 @@ namespace Toggl.Ross
         public string LastAppVersion
         {
             get { return GetString(PhoebeLastAppVersionKey); }
-            set { SetString(PhoebeLastAppVersionKey, value); }
         }
 
         public static readonly string PropertyExperimentId = GetPropertyName(s => s.ExperimentId);
@@ -213,23 +161,6 @@ namespace Toggl.Ross
         public string ExperimentId
         {
             get { return GetString(PhoebeExperimentIdKey); }
-            set
-            {
-                SetString(PhoebeExperimentIdKey, value);
-                OnSettingChanged(PropertyExperimentId);
-            }
-        }
-
-        public static readonly string PropertyPreferredStartView = GetPropertyName(s => s.PreferredStartView);
-
-        public string PreferredStartView
-        {
-            get { return GetString(RossPreferredStartViewKey); }
-            set
-            {
-                SetString(RossPreferredStartViewKey, value);
-                OnSettingChanged(PropertyPreferredStartView);
-            }
         }
 
         public static readonly string PropertyChooseProjectForNew = GetPropertyName(s => s.ChooseProjectForNew);
@@ -237,12 +168,6 @@ namespace Toggl.Ross
         public bool ChooseProjectForNew
         {
             get { return GetInt(RossChooseProjectForNewKey) == 1; }
-            set
-            {
-                SetInt(RossChooseProjectForNewKey, value ? 1 : 0);
-                OnSettingChanged(PropertyChooseProjectForNew);
-                ServiceContainer.Resolve<ITracker>().SendSettingsChangeEvent(SettingName.AskForProject);
-            }
         }
 
         public static readonly string PropertyReadDurOnlyNotice = GetPropertyName(s => s.ReadDurOnlyNotice);
@@ -250,11 +175,6 @@ namespace Toggl.Ross
         public bool ReadDurOnlyNotice
         {
             get { return GetInt(RossReadDurOnlyNoticeKey) == 1; }
-            set
-            {
-                SetInt(RossReadDurOnlyNoticeKey, value ? 1 : 0);
-                OnSettingChanged(PropertyReadDurOnlyNotice);
-            }
         }
 
         public static readonly string PropertyIgnoreSyncErrorsUntil = GetPropertyName(s => s.IgnoreSyncErrorsUntil);
@@ -262,11 +182,6 @@ namespace Toggl.Ross
         public DateTime? IgnoreSyncErrorsUntil
         {
             get { return GetDateTime(RossIgnoreSyncErrorsUntilKey); }
-            set
-            {
-                SetDateTime(RossIgnoreSyncErrorsUntilKey, value);
-                OnSettingChanged(PropertyIgnoreSyncErrorsUntil);
-            }
         }
 
         public static readonly string PropertyLastReportZoomViewed = GetPropertyName(s => s.LastReportZoomViewed);
@@ -274,11 +189,6 @@ namespace Toggl.Ross
         public int? LastReportZoomViewed
         {
             get { return GetInt(PhoebeLastReportZoomKey); }
-            set
-            {
-                SetInt(PhoebeLastReportZoomKey, value);
-                OnSettingChanged(PropertyLastReportZoomViewed);
-            }
         }
 
         public static readonly string PropertyProjectSort = GetPropertyName(s => s.SortProjectsBy);
@@ -286,10 +196,6 @@ namespace Toggl.Ross
         public string SortProjectsBy
         {
             get { return (GetString(PhoebeProjectSortKey)); }
-            set
-            {
-                SetString(PhoebeProjectSortKey, value);
-            }
         }
 
         public static readonly string PropertyIsStagingMode = GetPropertyName(s => s.IsStagingMode);
@@ -297,11 +203,6 @@ namespace Toggl.Ross
         public bool IsStagingMode
         {
             get { return GetInt(PhoebeIsStagingKey) == 1; }
-            set
-            {
-                SetInt(PhoebeIsStagingKey, value ? 1 : 0);
-                OnSettingChanged(PropertyIsStagingMode);
-            }
         }
 
         public static readonly string PropertyShowWelcome = GetPropertyName(s => s.ShowWelcome);
@@ -309,10 +210,6 @@ namespace Toggl.Ross
         public bool ShowWelcome
         {
             get { return (GetInt(PhoebeShowWelcomeKey) ?? 1) == 1; }
-            set
-            {
-                SetInt(PhoebeShowWelcomeKey, value ? 1 : 0);
-            }
         }
 
         public bool OfflineMode
@@ -321,10 +218,56 @@ namespace Toggl.Ross
             {
                 return false;
             }
-            set
+        }
+
+        public bool RossReadDurOnlyNotice
+        {
+            get
             {
-                SetInt(PhoebeIsOfflineKey, value ? 1 : 0);
+                return ReadDurOnlyNotice;
             }
         }
+
+        #region Android dummy properties
+        public int ReportsCurrentItem
+        {
+            get
+            {
+                return 0;
+            }
+        }
+
+        public string GcmRegistrationId
+        {
+            get
+            {
+                return string.Empty;
+            }
+        }
+
+        public string GcmAppVersion
+        {
+            get
+            {
+                return string.Empty;
+            }
+        }
+
+        public bool IdleNotification
+        {
+            get
+            {
+                return false;
+            }
+        }
+
+        public bool ShowNotification
+        {
+            get
+            {
+                return false;
+            }
+        }
+        #endregion
     }
 }

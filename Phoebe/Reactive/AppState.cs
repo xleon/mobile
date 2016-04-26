@@ -4,9 +4,9 @@ using System.Collections.Generic;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Helpers;
-using Toggl.Phoebe.Logging;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
+using Toggl.Phoebe.Misc;
 
 namespace Toggl.Phoebe.Reactive
 {
@@ -413,9 +413,7 @@ namespace Toggl.Phoebe.Reactive
         private static readonly string InstallIdDefault = string.Empty;
         private static readonly bool ShowWelcomeDefault = true;
         // iOS only Default values
-        private static readonly string RossPreferredStartViewDefault = string.Empty;
         private static readonly bool RossReadDurOnlyNoticeDefault = false;
-        private static readonly DateTime RossIgnoreSyncErrorsUntilDefault = DateTime.MinValue;
         // Android only Default values
         private static readonly string GcmRegistrationIdDefault = string.Empty;
         private static readonly string GcmAppVersionDefault = string.Empty;
@@ -437,9 +435,7 @@ namespace Toggl.Phoebe.Reactive
         // Show welcome screen or not the first time user start app.
         public bool ShowWelcome { get; private set; }
         // iOS only  values
-        public string RossPreferredStartView { get; private set; }
         public bool RossReadDurOnlyNotice { get; private set; }
-        public DateTime RossIgnoreSyncErrorsUntil { get; private set; }
         // Android only  values
         public string GcmRegistrationId { get; private set; }
         public string GcmAppVersion { get; private set; }
@@ -460,9 +456,7 @@ namespace Toggl.Phoebe.Reactive
             InstallId = InstallIdDefault;
             ShowWelcome = ShowWelcomeDefault;
             // iOS only  values
-            RossPreferredStartView = RossPreferredStartViewDefault;
             RossReadDurOnlyNotice = RossReadDurOnlyNoticeDefault;
-            RossIgnoreSyncErrorsUntil = RossIgnoreSyncErrorsUntilDefault;
             // Android only  values
             GcmRegistrationId = GcmRegistrationIdDefault;
             GcmAppVersion = GcmAppVersionDefault;
@@ -476,7 +470,7 @@ namespace Toggl.Phoebe.Reactive
             if (Settings.SerializedSettings != string.Empty)
                 return initLoadSettings();
 
-            ISettingsStore oldSettings;
+            IOldSettingsStore oldSettings;
             if (ServiceContainer.TryResolve(out oldSettings) &&
                     oldSettings.UserId != null && oldSettings.UserId != Guid.Empty)
                 return initFromOldSettings(oldSettings);
@@ -490,7 +484,7 @@ namespace Toggl.Phoebe.Reactive
                        Settings.SerializedSettings, Settings.GetNonPublicPropertiesResolverSettings());
         }
 
-        static SettingsState initFromOldSettings(ISettingsStore old)
+        static SettingsState initFromOldSettings(IOldSettingsStore old)
         {
             return new SettingsState
             {
@@ -501,6 +495,15 @@ namespace Toggl.Phoebe.Reactive
                 GroupedEntries = old.GroupedTimeEntries,
                 ProjectSort = old.SortProjectsBy,
                 ShowWelcome = old.ShowWelcome,
+                ChooseProjectForNew = old.ChooseProjectForNew,
+                GetChangesLastRun = old.SyncLastRun.HasValue ? old.SyncLastRun.Value : DateTime.MinValue,
+                // iOS only values
+                RossReadDurOnlyNotice = old.RossReadDurOnlyNotice,
+                // Android only values
+                GcmRegistrationId = old.GcmRegistrationId,
+                GcmAppVersion = old.GcmAppVersion,
+                IdleNotification = old.IdleNotification,
+                ShowNotification = old.ShowNotification
             };
         }
 
@@ -533,7 +536,6 @@ namespace Toggl.Phoebe.Reactive
             string projectSort = null,
             string installId = null,
             // iOS only  values
-            string rossPreferredStartView = null,
             bool? rossReadDurOnlyNotice = null,
             DateTime? rossIgnoreSyncErrorsUntil = null,
             // Android only  values
@@ -544,6 +546,9 @@ namespace Toggl.Phoebe.Reactive
             bool? showWelcome = null)
         {
             // TODO: Maybe it makes more sense for this to call initDefault()?
+            // Answer: we update values respecting to the last state saved.
+            // initDefault returns default state.
+
             var copy = Init();
             updateNullable(userId, copy.UserId, x => copy.UserId = x);
             updateNullable(getChangesLastRun, copy.GetChangesLastRun, x => copy.GetChangesLastRun = x);
@@ -556,9 +561,7 @@ namespace Toggl.Phoebe.Reactive
             updateReference(projectSort, copy.ProjectSort, x => copy.ProjectSort = x);
             updateReference(installId, copy.InstallId, x => copy.InstallId = x);
             // iOS only  values
-            updateReference(rossPreferredStartView, copy.RossPreferredStartView, x => copy.RossPreferredStartView = x);
             updateNullable(rossReadDurOnlyNotice, copy.RossReadDurOnlyNotice, x => copy.RossReadDurOnlyNotice = x);
-            updateNullable(rossIgnoreSyncErrorsUntil, copy.RossIgnoreSyncErrorsUntil, x => copy.RossIgnoreSyncErrorsUntil = x);
             // Android only  values
             updateReference(gcmRegistrationId, copy.GcmRegistrationId, x => copy.GcmRegistrationId = x);
             updateReference(gcmAppVersion, copy.GcmAppVersion, x => copy.GcmAppVersion = x);

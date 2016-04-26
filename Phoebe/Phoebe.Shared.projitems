@@ -54,9 +54,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)Data\DataMsg.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Data\Duration.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Data\ISyncDataStore.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Data\ISettingsStore.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Data\SettingChangedMessage.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Data\StartStopMessage.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Data\SyncSqliteDataStore.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Data\Diff\Diff.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Data\Json\ActionJson.cs" />
@@ -127,6 +124,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)Data\Models\Old\DB_VERSION_0.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Data\DatabaseMigrator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Data\DatabaseHelper.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Misc\IOldSettingsStore.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="$(MSBuildThisFileDirectory)Data\Models\Old\" />

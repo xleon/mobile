@@ -95,7 +95,7 @@ namespace Toggl.Joey.UI.Activities
             DrawerEmail = DrawerUserView.FindViewById<TextView> (Resource.Id.EmailTextView);
             DrawerImage = DrawerUserView.FindViewById<ProfileImageView> (Resource.Id.IconProfileImageView);
             if (!ServiceContainer.Resolve<AuthManager>().OfflineMode) {
-                DrawerListView.AddHeaderView(DrawerUserView);
+                DrawerListView.AddHeaderView (DrawerUserView);
             }
             DrawerListView.Adapter = drawerAdapter = new DrawerListAdapter ();
             DrawerListView.ItemClick += OnDrawerListViewItemClick;

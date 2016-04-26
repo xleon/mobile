@@ -75,21 +75,40 @@ namespace Toggl.Phoebe.Data.Utils
             // iOS requierement.
             diffs = Diff.SortRemoveEvents<IHolder,DateHolder> (diffs);
 
+            // If diff index aren't inside collection, return.
+
             // CollectionChanged events must be fired on UI thread
             ServiceContainer.Resolve<IPlatformUtils>().DispatchOnUIThread (() => {
                 foreach (var diff in diffs) {
                     switch (diff.Type) {
                     case DiffType.Add:
-                        Insert (diff.NewIndex, diff.NewItem);
+                        if (diff.NewIndex < Items.Count &&
+                                diff.NewIndex > -1) {
+                            Insert (diff.NewIndex, diff.NewItem);
+                        } else if (diff.NewIndex == Items.Count) {
+                            Add (diff.NewItem);
+                        }
+
                         break;
                     case DiffType.Remove:
-                        RemoveAt (diff.NewIndex);
+                        if (diff.NewIndex < Items.Count &&
+                                diff.NewIndex > -1) {
+                            RemoveAt (diff.NewIndex);
+                        }
                         break;
                     case DiffType.Replace:
-                        this[diff.NewIndex] = diff.NewItem;
+                        if (diff.NewIndex < Items.Count &&
+                                diff.NewIndex > -1) {
+                            this[diff.NewIndex] = diff.NewItem;
+                        }
                         break;
                     case DiffType.Move:
-                        Move (diff.OldIndex, diff.NewIndex, diff.NewItem);
+                        if (diff.OldIndex > -1 &&
+                                diff.NewIndex > -1 &&
+                                diff.OldIndex < Items.Count &&
+                                diff.NewIndex < Items.Count) {
+                            Move (diff.OldIndex, diff.NewIndex, diff.NewItem);
+                        }
                         break;
                     }
                 }

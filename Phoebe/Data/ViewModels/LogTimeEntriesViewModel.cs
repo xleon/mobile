@@ -10,6 +10,7 @@ using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Utils;
+using Toggl.Phoebe.Logging;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
 
@@ -228,8 +229,13 @@ namespace Toggl.Phoebe.Data.ViewModels
                 if (data.State == TimeEntryState.Running) {
                     Description = string.IsNullOrEmpty (data.Description) ? string.Empty : data.Description;
                     if (data.ProjectId != null) {
-                        var prj = await TimeEntryModel.GetProjectDataAsync (data.ProjectId.Value);
-                        ProjectName = prj.Name;
+                        try {
+                            var prj = await TimeEntryModel.GetProjectDataAsync (data.ProjectId.Value);
+                            ProjectName = prj.Name;
+                        } catch (Exception ex) {
+                            var logger = ServiceContainer.Resolve<ILogger>();
+                            logger.Warning ("LogTimeEntriesViewModel", ex, "Error reading project.");
+                        }
                     } else {
                         ProjectName = string.Empty;
                     }

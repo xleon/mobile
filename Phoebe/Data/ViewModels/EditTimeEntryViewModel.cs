@@ -8,6 +8,7 @@ using PropertyChanged;
 using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data.DataObjects;
 using Toggl.Phoebe.Data.Models;
+using Toggl.Phoebe.Logging;
 using XPlatUtils;
 
 namespace Toggl.Phoebe.Data.ViewModels
@@ -243,31 +244,37 @@ namespace Toggl.Phoebe.Data.ViewModels
                 }
 
                 if (data.ProjectId.HasValue) {
-                    var project = await TimeEntryModel.GetProjectDataAsync (data.ProjectId.Value);
-                    ProjectName = project.Name;
-                    ProjectColorHex = ProjectModel.HexColors [project.Color % ProjectModel.HexColors.Length];
+                    try {
+                        var project = await TimeEntryModel.GetProjectDataAsync (data.ProjectId.Value);
+                        ProjectName = project.Name;
+                        ProjectColorHex = ProjectModel.HexColors[project.Color % ProjectModel.HexColors.Length];
 
-                    if (project.ClientId.HasValue) {
-                        var client = await TimeEntryModel.GetClientDataAsync (project.ClientId.Value);
-                        ClientName = client.Name;
-                    } else {
-                        ClientName = string.Empty;
+                        if (project.ClientId.HasValue) {
+                            var client = await TimeEntryModel.GetClientDataAsync (project.ClientId.Value);
+                            ClientName = client.Name;
+                        } else {
+                            ClientName = string.Empty;
+                        }
+
+                        if (data.TaskId.HasValue) {
+                            var task = await TimeEntryModel.GetTaskDataAsync (data.TaskId.Value);
+                            TaskName = task.Name;
+                        } else {
+                            TaskName = string.Empty;
+                        }
+
+                        // TODO: Workspace, Billable and Tags should change!?
+                        if (data.WorkspaceId != project.WorkspaceId) {
+                            data.WorkspaceId = project.WorkspaceId;
+                            workspace = await TimeEntryModel.GetWorkspaceDataAsync (project.WorkspaceId);
+                            data.IsBillable = workspace.IsPremium ? IsBillable : false;
+                            TagList = await UpdateTagsWithWorkspace (data.Id, data.WorkspaceId, TagList);
+                        }
+                    } catch (Exception ex) {
+                        var logger = ServiceContainer.Resolve<ILogger>();
+                        logger.Warning ("EditTimeEntryViewModel", ex, "Error reading project.");
                     }
 
-                    if (data.TaskId.HasValue) {
-                        var task = await TimeEntryModel.GetTaskDataAsync (data.TaskId.Value);
-                        TaskName = task.Name;
-                    } else {
-                        TaskName = string.Empty;
-                    }
-
-                    // TODO: Workspace, Billable and Tags should change!?
-                    if (data.WorkspaceId != project.WorkspaceId) {
-                        data.WorkspaceId = project.WorkspaceId;
-                        workspace = await TimeEntryModel.GetWorkspaceDataAsync (project.WorkspaceId);
-                        data.IsBillable = workspace.IsPremium ? IsBillable : false;
-                        TagList = await UpdateTagsWithWorkspace (data.Id, data.WorkspaceId, TagList);
-                    }
                 } else {
                     ProjectName = string.Empty;
                     ClientName = string.Empty;

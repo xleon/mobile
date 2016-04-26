@@ -71,6 +71,7 @@ namespace XPlatUtils
         }
 
         public static bool TryResolve<T>(out T t)
+        where T : class
         {
             object o;
             var result = TryResolve(typeof(T), out o);

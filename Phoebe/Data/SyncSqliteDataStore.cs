@@ -51,10 +51,10 @@ namespace Toggl.Phoebe.Data
 
             if (dbFileExisted)
             {
-                var version = getVersion(connection);
+                var version = DatabaseHelper.GetVersion(connection);
                 if (version != DB_VERSION)
                 {
-                    this.migrateDatabase(connection, platformInfo, dbPath);
+                    DatabaseHelper.Migrate(connection, platformInfo, dbPath, DB_VERSION);
                     connection = new SQLiteConnectionWithLock(platformInfo, cnnString);
                 }
             }
@@ -66,76 +66,9 @@ namespace Toggl.Phoebe.Data
             return connection;
         }
 
-        private void migrateDatabase(SQLiteConnection connection, ISQLitePlatform platformInfo, string dbPath)
-        {
-            var migrateFromDB = connection;
-            var version = getVersion(migrateFromDB);
-
-            var tempDBPath = dbPath + ".migrated";
-
-            while (true)
-            {
-                var migrator = DatabaseMigrator.ForVersion(version);
-
-                var expectedNewVersion = migrator.NewVersion;
-
-                validateMigrator(version, migrator);
-
-                var newDB = new SQLiteConnection(platformInfo, expectedNewVersion == DB_VERSION
-                                                 ? tempDBPath
-                                                 : "Data Source =: memory:");
-
-                migrator.Migrate(migrateFromDB, newDB);
-                migrateFromDB.Close();
-
-                var newVersion = getVersion(newDB);
-
-                validateMigratedVersion(version, expectedNewVersion, newVersion);
-
-                if (newVersion == DB_VERSION)
-                {
-                    newDB.Close();
-                    var dbDeletionPath = dbPath + ".old";
-                    File.Move(dbPath, dbDeletionPath);
-                    File.Move(tempDBPath, dbPath);
-                    File.Delete(dbDeletionPath);
-                    return;
-                }
-
-                migrateFromDB = newDB;
-            }
-        }
-
-        static void validateMigratedVersion(int oldVersion, int expectedNewVersion, int newVersion)
-        {
-            if (newVersion != expectedNewVersion)
-                throw new Exception($"Expected new database version {expectedNewVersion}, but was {newVersion}");
-
-            if (newVersion <= oldVersion || newVersion > DB_VERSION)
-                throw new Exception($"Database migrator upgraded from {oldVersion} to {newVersion} (app's version is {DB_VERSION}).");
-        }
-
-        static void validateMigrator(int oldVersion, DatabaseMigrator migrator)
-        {
-            if (migrator == null)
-                throw new Exception($"Do not know how to migrate database version {oldVersion} (app's version is {DB_VERSION})");
-
-            if (migrator.OldVersion != oldVersion)
-                throw new Exception($"received wrong database migrator");
-        }
-
-        private static int getVersion(SQLiteConnection connection)
-        {
-            var tableInfo = connection.GetTableInfo(nameof(MetaData));
-            if (tableInfo == null || tableInfo.Count == 0)
-                return 0;
-            var data = connection.Table<MetaData>().Where(x => x.Id == nameof(DB_VERSION)).FirstOrDefault();
-            return data?.Convert<int>() ?? 0;
-        }
-
         public int GetVersion()
         {
-            return getVersion(this.cnn);
+            return DatabaseHelper.GetVersion(this.cnn);
         }
 
         private static void CreateTables(SQLiteConnection connection)

@@ -512,18 +512,6 @@ namespace Toggl.Phoebe.Reactive
             return new SettingsState();
         }
 
-        private T updateNullable<T> (T? value, T @default, Func<T, T> update)
-        where T : struct
-        {
-            return value.HasValue ? update(value.Value) : @default;
-        }
-
-        private T updateReference<T> (T value, T @default, Func<T, T> update)
-        where T : class
-        {
-            return value != null ? update(value) : @default;
-        }
-
         public SettingsState With(
             Guid? userId = null,
             DateTime? getChangesLastRun = null,
@@ -550,24 +538,24 @@ namespace Toggl.Phoebe.Reactive
             // initDefault returns default state.
 
             var copy = Init();
-            updateNullable(userId, copy.UserId, x => copy.UserId = x);
-            updateNullable(getChangesLastRun, copy.GetChangesLastRun, x => copy.GetChangesLastRun = x);
-            updateNullable(useTag, copy.UseDefaultTag, x => copy.UseDefaultTag = x);
-            updateReference(lastAppVersion, copy.LastAppVersion, x => copy.LastAppVersion = x);
-            updateNullable(lastReportZoom, copy.LastReportZoom, x => copy.LastReportZoom = x);
-            updateNullable(groupedEntries, copy.GroupedEntries, x => copy.GroupedEntries = x);
-            updateNullable(chooseProjectForNew, copy.ChooseProjectForNew, x => copy.ChooseProjectForNew = x);
-            updateNullable(reportsCurrentItem, copy.ReportsCurrentItem, x => copy.ReportsCurrentItem = x);
-            updateReference(projectSort, copy.ProjectSort, x => copy.ProjectSort = x);
-            updateReference(installId, copy.InstallId, x => copy.InstallId = x);
+            copy.UserId = userId ?? copy.UserId;
+            copy.GetChangesLastRun = getChangesLastRun ?? copy.GetChangesLastRun;
+            copy.UseDefaultTag = useTag ?? copy.UseDefaultTag;
+            copy.LastAppVersion = lastAppVersion ?? copy.LastAppVersion;
+            copy.LastReportZoom = lastReportZoom ?? copy.LastReportZoom;
+            copy.GroupedEntries = groupedEntries ?? copy.GroupedEntries;
+            copy.ChooseProjectForNew = chooseProjectForNew ?? copy.ChooseProjectForNew;
+            copy.ReportsCurrentItem = reportsCurrentItem ?? copy.ReportsCurrentItem;
+            copy.ProjectSort = projectSort ?? copy.ProjectSort;
+            copy.InstallId = installId ?? copy.InstallId;
             // iOS only  values
-            updateNullable(rossReadDurOnlyNotice, copy.RossReadDurOnlyNotice, x => copy.RossReadDurOnlyNotice = x);
+            copy.RossReadDurOnlyNotice = rossReadDurOnlyNotice ?? copy.RossReadDurOnlyNotice;
             // Android only  values
-            updateReference(gcmRegistrationId, copy.GcmRegistrationId, x => copy.GcmRegistrationId = x);
-            updateReference(gcmAppVersion, copy.GcmAppVersion, x => copy.GcmAppVersion = x);
-            updateNullable(idleNotification, copy.IdleNotification, x => copy.IdleNotification = x);
-            updateNullable(showNotification, copy.ShowNotification, x => copy.ShowNotification = x);
-            updateNullable(showWelcome, copy.ShowWelcome, x => copy.ShowWelcome = x);
+            copy.GcmRegistrationId = gcmRegistrationId ?? copy.GcmRegistrationId;
+            copy.GcmAppVersion = gcmAppVersion ?? copy.GcmAppVersion;
+            copy.IdleNotification = idleNotification ?? copy.IdleNotification;
+            copy.ShowNotification = showNotification ?? copy.ShowNotification;
+            copy.ShowWelcome = showWelcome ?? copy.ShowWelcome;
 
             // Save new copy serialized
             Settings.SerializedSettings = Newtonsoft.Json.JsonConvert.SerializeObject(copy);

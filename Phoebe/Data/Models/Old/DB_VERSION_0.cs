@@ -2,6 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using SQLite.Net.Attributes;
+using Toggl.Phoebe.Misc;
+using XPlatUtils;
+
 namespace Toggl.Phoebe.Data.Models.Old.DB_VERSION_0
 {
     class Migrator : DatabaseMigrator
@@ -293,6 +296,12 @@ namespace Toggl.Phoebe.Data.Models.Old.DB_VERSION_0
             data.ExperimentNumber = ExperimentNumber;
 
             // TODO: Get GoogleAccessToken & ApiToken from Platform Settings
+            // @paul @alfonso in that way?
+            IOldSettingsStore oldSettings;
+            if (ServiceContainer.TryResolve(out oldSettings))
+            {
+                data.ApiToken = oldSettings.ApiToken;
+            }
 
             data.DefaultWorkspaceId = DefaultWorkspaceId;
             var ws = ctx.Connection.Table<WorkspaceData> ().Where(x => x.Id == DefaultWorkspaceId).FirstOrDefault();

@@ -63,5 +63,7 @@
 	<array>
 		<string>remote-notification</string>
 	</array>
+	<key>CFBundleName</key>
+	<string>Toggl Timer</string>
 </dict>
 </plist>

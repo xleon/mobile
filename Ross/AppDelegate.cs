@@ -49,11 +49,11 @@ namespace Toggl.Ross
             // Register platform info first.
             ServiceContainer.Register<IPlatformUtils> (this);
 
-            // Register Phoebe services
-            Services.Register();
-
             // Used for migration
             ServiceContainer.Register<IOldSettingsStore>(() => new OldSettingsStore());
+
+            // Register Phoebe services
+            Services.Register();
 
             // Override default implementation
             ServiceContainer.Register<ITimeProvider> (() => new NSTimeProvider());

@@ -6,16 +6,17 @@ namespace Toggl.Phoebe.Misc
     {
         // Common values
         Guid? UserId { get; }
+        string ApiToken { get; }
         DateTime? SyncLastRun { get; }
         bool UseDefaultTag { get; }
         string LastAppVersion { get; }
         string ExperimentId { get; }
         int? LastReportZoomViewed { get; }
         bool GroupedTimeEntries { get; }
+        bool ChooseProjectForNew { get; }
         string SortProjectsBy { get; }
         bool IsStagingMode { get; }
         bool ShowWelcome { get; }
-        bool ChooseProjectForNew { get; }
         int ReportsCurrentItem { get; }
         // iOS Only
         bool RossReadDurOnlyNotice { get; }

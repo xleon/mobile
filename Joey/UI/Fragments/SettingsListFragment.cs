@@ -1,4 +1,5 @@
-﻿using Android.App;
+﻿using System;
+using Android.App;
 using Android.Content;
 using Android.OS;
 using Android.Views;
@@ -17,6 +18,14 @@ namespace Toggl.Joey.UI.Fragments
     // Need to use ordinary ListFragment here as PreferenceFragment isn't available in support library.
     public class SettingsListFragment : ListFragment
     {
+        public SettingsListFragment()
+        {
+        }
+
+        public SettingsListFragment(IntPtr jref, Android.Runtime.JniHandleOwnership xfer) : base (jref, xfer)
+        {
+        }
+
         public override View OnCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
         {
             var view = inflater.Inflate (Resource.Layout.SettingsListFragment, container, false);

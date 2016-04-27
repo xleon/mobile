@@ -38,6 +38,16 @@ namespace Toggl.Joey.UI.Activities
 
         public IntroViewModel ViewModel { get; private set; }
 
+        // Explanation of native constructor
+        // http://stackoverflow.com/questions/10593022/monodroid-error-when-calling-constructor-of-custom-view-twodscrollview/10603714#10603714
+        public IntroActivity(IntPtr a, Android.Runtime.JniHandleOwnership b) : base (a, b)
+        {
+        }
+
+        public IntroActivity()
+        {
+        }
+
         protected override void OnCreateActivity (Bundle state)
         {
             base.OnCreateActivity (state);

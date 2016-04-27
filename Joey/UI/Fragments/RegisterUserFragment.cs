@@ -59,6 +59,14 @@ namespace Toggl.Joey.UI.Fragments
 
         public RegisterUserViewModel ViewModel { get; private set;}
 
+        public RegisterUserFragment()
+        {
+        }
+
+        public RegisterUserFragment(IntPtr jref, Android.Runtime.JniHandleOwnership xfer) : base (jref, xfer)
+        {
+        }
+
         private void FindViews (View v)
         {
             EmailEditText = v.FindViewById<EditText> (Resource.Id.CreateUserEmailEditText).SetFont (Font.Roboto);

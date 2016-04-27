@@ -67,6 +67,10 @@ namespace Toggl.Joey.UI.Fragments
             Arguments = args;
         }
 
+        public ReportsFragment(IntPtr jref, Android.Runtime.JniHandleOwnership xfer) : base (jref, xfer)
+        {
+        }
+
         public override View OnCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
         {
             var pagerFragment = ParentFragment as ReportsPagerFragment;

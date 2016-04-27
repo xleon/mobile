@@ -96,12 +96,12 @@ namespace Toggl.Joey.UI.Fragments
             ValidateTagName();
         }
 
-        private void OnPositiveButtonClicked(object sender, DialogClickEventArgs e)
+        private async void OnPositiveButtonClicked(object sender, DialogClickEventArgs e)
         {
-            var newTagData = viewModel.SaveTag(nameEditText.Text);
+            var newTagData = await viewModel.SaveTagAsync(nameEditText.Text);
             if (updateTagHandler != null)
             {
-                updateTagHandler.OnCreateNewTag(newTagData);
+                updateTagHandler.OnCreateNewTag(newTagData.Name);
             }
         }
 

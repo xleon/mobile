@@ -6,6 +6,7 @@ using Android.Net;
 using Mindscape.Raygun4Net;
 using SQLite.Net.Interop;
 using SQLite.Net.Platform.XamarinAndroid;
+using Xamarin;
 using Toggl.Joey.Analytics;
 using Toggl.Joey.Logging;
 using Toggl.Joey.Net;
@@ -49,14 +50,16 @@ namespace Toggl.Joey
         private void RegisterComponents()
         {
             // Attach bug tracker
-#if (!DEBUG)
-            RaygunClient.Attach(Build.RaygunApiKey);
+#if DEBUG
+            Insights.Initialize(Insights.DebugModeKey, Context);
+#else
+            Insights.Initialize(Build.XamarinInsightsApiKey, Context);
 #endif
 
             // Register platform service.
             ServiceContainer.Register<IPlatformUtils> (this);
             ServiceContainer.Register<ITimeProvider> (() => new DefaultTimeProvider());
-            ServiceContainer.Register<INetworkPresence> (() => new NetworkPresence(Context, (ConnectivityManager)GetSystemService(ConnectivityService)));
+            ServiceContainer.Register<INetworkPresence> (() => new NetworkPresence());
 
             // Register Phoebe services.
             Services.Register();

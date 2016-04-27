@@ -27,7 +27,7 @@ namespace Toggl.Phoebe
 #if __ANDROID__
         public static readonly string AppIdentifier = "TogglJoey";
         public static readonly string GcmSenderId = "{GMC_SENDER_ID}";
-        public static readonly string RaygunApiKey = "{RAYGUN_API_KEY_ANDROID}";
+        public static readonly string XamarinInsightsApiKey = "{XAMARIN_INSIGHTS_API_KEY_ANDROID}";
         public static readonly string GooglePlayUrl = "https://play.google.com/store/apps/details?id=com.toggl.timer";
 #endif
         #endregion

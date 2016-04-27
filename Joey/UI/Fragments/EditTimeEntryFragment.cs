@@ -30,7 +30,7 @@ namespace Toggl.Joey.UI.Fragments
         // to avoid weak references to be removed
         private Binding<string, string> durationBinding, projectBinding, clientBinding, descriptionBinding;
         private Binding<DateTime, string> startTimeBinding, stopTimeBinding;
-        private Binding<IReadOnlyList<ITagData>, List<string>> tagBinding;
+        private Binding<IReadOnlyList<string>, IReadOnlyList<string>> tagBinding;
         private Binding<bool, ViewStates> isPremiumBinding;
         private Binding<bool, bool> isBillableBinding, billableBinding, isRunningBinding, saveMenuBinding, syncErrorBinding;
 
@@ -179,8 +179,7 @@ namespace Toggl.Joey.UI.Fragments
                               .ConvertSourceToTarget(dateTime => dateTime.ToDeviceTimeString());
             projectBinding = this.SetBinding(() => ViewModel.ProjectName, () => ProjectField.TextField.Text);
             clientBinding = this.SetBinding(() => ViewModel.ClientName, () => ProjectField.AssistViewTitle);
-            tagBinding = this.SetBinding(() => ViewModel.Tags, () => TagsField.TagNames)
-                         .ConvertSourceToTarget(tagList => tagList.Select(tag => tag.Name).ToList());
+            tagBinding = this.SetBinding(() => ViewModel.Tags, () => TagsField.TagNames);
             descriptionBinding = this.SetBinding(() => ViewModel.Description, () => DescriptionField.TextField.Text);
             isPremiumBinding = this.SetBinding(() => ViewModel.IsPremium, () => BillableCheckBox.Visibility)
                                .ConvertSourceToTarget(isVisible => isVisible ? ViewStates.Visible : ViewStates.Gone);
@@ -200,18 +199,14 @@ namespace Toggl.Joey.UI.Fragments
             // Configure option menu.
             ConfigureOptionMenu();
 
-            // If project list needs to be opened?
-            // TODO: RX Restore from Settings
-            /*
-            var settingsStore = ServiceContainer.Resolve<SettingsStore> ();
-            var startedByFAB = false;
-            // TODO: Needs startedByFAB
-            if (settingsStore.ChooseProjectForNew && startedByFAB) {
-                // TODO RX: Modification of global state, must be done by a reducer
-                //LogTimeEntriesListFragment.NewTimeEntryStartedByFAB = false;
-                OpenProjectListActivity ();
+            // Does project list need to be opened?
+            if (Activity.Intent.GetBooleanExtra(EditTimeEntryActivity.StartedByFab, false))
+            {
+                // Remove the argument so this code is not triggered when EditTimeEntryActivity
+                // is launched again after returning from ProjectListActivity
+                Activity.Intent.RemoveExtra(EditTimeEntryActivity.StartedByFab);
+                OpenProjectListActivity();
             }
-            */
 
             // Finally set content visible.
             editTimeEntryContent.Visibility = ViewStates.Visible;
@@ -257,7 +252,7 @@ namespace Toggl.Joey.UI.Fragments
 
         private void OnTagsEditTextClick(object sender, EventArgs e)
         {
-            ChooseTimeEntryTagsDialogFragment.NewInstance(ViewModel.WorkspaceId, ViewModel.Tags.Select(tag => tag.Id).ToList())
+            ChooseTimeEntryTagsDialogFragment.NewInstance(ViewModel.WorkspaceId, ViewModel.Tags)
             .SetOnModifyTagListHandler(this)
             .Show(FragmentManager, "tags_dialog");
         }
@@ -274,16 +269,16 @@ namespace Toggl.Joey.UI.Fragments
             }
         }
 
-        public void OnCreateNewTag(ITagData newTagData)
+        public void OnCreateNewTag(string newTagData)
         {
             var newTagList = ViewModel.Tags.ToList();
-            newTagList.Add(newTagData.Name);
+            newTagList.Add(newTagData);
             ViewModel.ChangeTagList(newTagList);
         }
 
-        public void OnModifyTagList(List<ITagData> newTagList)
+        public void OnModifyTagList(List<string> newTagList)
         {
-            ViewModel.ChangeTagList(newTagList.Select(t => t.Name));
+            ViewModel.ChangeTagList(newTagList);
         }
 
         public void OnChangeDuration(TimeSpan newDuration)
@@ -306,7 +301,7 @@ namespace Toggl.Joey.UI.Fragments
             // Ugly null check
             if (item == SaveMenuItem && ViewModel != null)
             {
-                ViewModel.SaveManual();
+                ViewModel.Save();
             }
 
             Activity.OnBackPressed();

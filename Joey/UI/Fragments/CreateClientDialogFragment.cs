@@ -93,9 +93,9 @@ namespace Toggl.Joey.UI.Fragments
             ValidateClientName();
         }
 
-        private void OnPositiveButtonClicked(object sender, DialogClickEventArgs e)
+        private async void OnPositiveButtonClicked(object sender, DialogClickEventArgs e)
         {
-            var clientData = ViewModel.SaveClient(NameEditText.Text);
+            var clientData = await ViewModel.SaveClientAsync(NameEditText.Text);
             if (clientSelectedHandler != null)
             {
                 clientSelectedHandler.OnClientSelected(clientData);

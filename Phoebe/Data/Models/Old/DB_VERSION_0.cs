@@ -29,7 +29,7 @@ namespace Toggl.Phoebe.Data.Models.Old.DB_VERSION_0
         };
     }
 
-    public abstract class CommonData
+    public abstract class CommonData : IIdentificable
     {
         [PrimaryKey, AutoIncrement]
         public Guid Id { get; set; }

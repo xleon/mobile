@@ -12,6 +12,19 @@ namespace Toggl.Phoebe.Data
         T Upgrade(ISyncDataStoreContext context);
     }
 
+    interface IIdentificable
+    {
+        Guid Id { get; }
+        long? RemoteId { get; }
+    }
+
+    class MigrationException : Exception
+    {
+        public MigrationException(string message, Exception inner = null) : base(message, inner)
+        {
+        }
+    }
+
     abstract class DatabaseMigrator
     {
         #region known migrators
@@ -79,13 +92,23 @@ namespace Toggl.Phoebe.Data
             }
 
             public void Upgrade<TOld, TNew>()
-            where TOld : class, IUpgradesTo<TNew>
+            where TOld : class, IUpgradesTo<TNew>, IIdentificable
             {
+                var i = 0;
                 newDB.CreateTable<TNew>();
                 var list = new List<TNew>();
                 foreach (var oldObj in oldDB.Table<TOld>())
                 {
-                    list.Add(oldObj.Upgrade(this.context));
+                    try
+                    {
+                        list.Add(oldObj.Upgrade(this.context));
+                    }
+                    catch (Exception ex)
+                    {
+                        var msg = $"Cannot upgrade {typeof(TOld).Name}: Index {i} - Id {oldObj.Id} - RemoteId {oldObj.RemoteId}";
+                        throw new MigrationException(msg, ex);
+                    }
+                    i++;
                 }
                 newDB.InsertAll(list);
             }

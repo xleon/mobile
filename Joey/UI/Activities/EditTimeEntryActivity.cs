@@ -18,6 +18,7 @@ namespace Toggl.Joey.UI.Activities
         private static readonly string fragmentTag = "edit_fragment";
 
         public static readonly string IsGrouped = "com.toggl.timer.grouped_edit";
+        public static readonly string StartedByFab = "com.toggl.timer.started_by_fab";
         public static readonly string OpenProjects = "com.toggl.timer.open_projects";
         public static readonly string ExtraTimeEntryId = "com.toggl.timer.time_entry_id";
         public static readonly string ExtraGroupedTimeEntriesGuids = "com.toggl.timer.grouped_time_entry_id";

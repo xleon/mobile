@@ -34,18 +34,11 @@ namespace Toggl.Joey.UI.Fragments
             }
         }
 
-        private List<Guid> ExistingTagIds
+        private IList<string> ExistingTags
         {
             get
             {
-                //var tagIds = new List <Guid> ();
-                var strList = Arguments.GetStringArrayList(SelectedTagNamesArgument);
-                return strList.Select(idstr =>
-                {
-                    Guid guid;
-                    Guid.TryParse(idstr, out guid);
-                    return guid;
-                }).ToList();
+                return Arguments.GetStringArrayList(SelectedTagNamesArgument);
             }
         }
 
@@ -57,14 +50,13 @@ namespace Toggl.Joey.UI.Fragments
         {
         }
 
-        public static ChooseTimeEntryTagsDialogFragment NewInstance(Guid workspaceId, List<Guid> tagIds)
+        public static ChooseTimeEntryTagsDialogFragment NewInstance(Guid workspaceId, IReadOnlyList<string> tagStrings)
         {
             var fragment = new ChooseTimeEntryTagsDialogFragment();
 
             var args = new Bundle();
             args.PutString(WorkspaceIdArgument, workspaceId.ToString());
-            var tagIdsStrings = tagIds.Select(t => t.ToString()).ToList();
-            args.PutStringArrayList(SelectedTagNamesArgument, tagIdsStrings);
+            args.PutStringArrayList(SelectedTagNamesArgument, tagStrings.ToList());
             fragment.Arguments = args;
 
             return fragment;
@@ -73,7 +65,7 @@ namespace Toggl.Joey.UI.Fragments
         public override void OnCreate(Bundle savedInstanceState)
         {
             base.OnCreate(savedInstanceState);
-            viewModel = new TagListVM(StoreManager.Singleton.AppState, WorkspaceId, ExistingTagIds);
+            viewModel = new TagListVM(StoreManager.Singleton.AppState, WorkspaceId);
         }
 
         public override void OnDestroy()
@@ -142,19 +134,15 @@ namespace Toggl.Joey.UI.Fragments
             return view;
         }
 
-        private List<ITagData> SelectedTags
+        private List<string> SelectedTags
         {
             get
             {
-                var list = new List<ITagData> ();
-                for (int i = 0; i < viewModel.TagCollection.Count; i++)
-                {
-                    if (listView.CheckedItemPositions.Get(i))
-                    {
-                        list.Add(viewModel.TagCollection [i]);
-                    }
-                }
-                return list;
+                return viewModel
+                    .TagCollection
+                    .Where((_, i) => listView.CheckedItemPositions.Get(i))
+                    .Select(tag => tag.Name)
+                    .ToList();
             }
         }
 
@@ -166,13 +154,13 @@ namespace Toggl.Joey.UI.Fragments
             }
 
             // Set correct dialog Adapter
-            var list = ExistingTagIds;
+            var list = ExistingTags;
             listView.Adapter = viewModel.TagCollection.GetAdapter(GetTagView);
             listView.ClearChoices();
 
             for (int i = 0; i < viewModel.TagCollection.Count; i++)
             {
-                if (list.Contains(viewModel.TagCollection [i].Id))
+                if (list.Contains(viewModel.TagCollection [i].Name))
                 {
                     listView.SetItemChecked(i, true);
                 }

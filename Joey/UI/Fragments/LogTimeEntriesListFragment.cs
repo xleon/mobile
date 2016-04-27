@@ -119,13 +119,32 @@ namespace Toggl.Joey.UI.Fragments
         }
 
 
-        public void StartStopClick(object sender, EventArgs e)
+        public async void StartStopClick(object sender, EventArgs e)
         {
-            // TODO RX: Send experiment data.
             ViewModel.ReportExperiment(OBMExperimentManager.StartButtonActionKey,
                                        OBMExperimentManager.ClickActionValue);
-            var startedByFAB = ViewModel.ActiveEntry.Data.State != TimeEntryState.Running;
-            ViewModel.StartStopTimeEntry(startedByFAB);
+
+            if (!ViewModel.IsEntryRunning)
+            {
+                var te = await ViewModel.StartNewTimeEntryAsync();
+
+                var ids = new List<string> { te.Id.ToString() };
+                var intent = new Intent(Activity, typeof(EditTimeEntryActivity));
+                intent.PutStringArrayListExtra(EditTimeEntryActivity.ExtraGroupedTimeEntriesGuids, ids);
+                intent.PutExtra(EditTimeEntryActivity.IsGrouped, false);
+
+                if (StoreManager.Singleton.AppState.Settings.ChooseProjectForNew)
+                {
+                    var startedByFAB = ViewModel.ActiveEntry.Data.State != TimeEntryState.Running;
+                    intent.PutExtra(EditTimeEntryActivity.StartedByFab, startedByFAB);
+                }
+
+                StartActivity(intent);
+            }
+            else
+            {
+                ViewModel.StopTimeEntry();
+            }
         }
 
         public override void OnDestroyView()

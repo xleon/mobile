@@ -54,7 +54,13 @@ namespace Toggl.Phoebe.Data
                 var version = DatabaseHelper.GetVersion(connection);
                 if (version != DB_VERSION)
                 {
-                    DatabaseHelper.Migrate(connection, platformInfo, dbPath, DB_VERSION);
+                    var success = DatabaseHelper.Migrate(connection, platformInfo, dbPath, DB_VERSION);
+                    if (!success)
+                    {
+                        // TODO RX: Error report has been already sent at this point, send also automatic feedback?
+                        // Besides that, show an error message to the user like "Couldn't update local data,
+                        // please try again later. If the problem persists, reinstall the application".
+                    }
                     connection = new SQLiteConnectionWithLock(platformInfo, cnnString);
                 }
             }

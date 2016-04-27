@@ -119,7 +119,7 @@ namespace Toggl.Joey.UI.Fragments
             }, 100);
         }
 
-        private void SaveButtonHandler(object sender, EventArgs e)
+        private async void SaveButtonHandler(object sender, EventArgs e)
         {
             // TODO: Deactivate Save btn.
             // If name is empty.
@@ -147,7 +147,7 @@ namespace Toggl.Joey.UI.Fragments
             }
 
             // Save project and send result.
-            var newProjectData = ViewModel.SaveProject(projectName, ColorPicker.Adapter.SelectedColor);
+            var newProjectData = await ViewModel.SaveProjectAsync(projectName, ColorPicker.Adapter.SelectedColor);
             var resultIntent = new Intent();
             resultIntent.PutExtra(BaseActivity.IntentProjectIdArgument, newProjectData.Id.ToString());
             Activity.SetResult(Result.Ok, resultIntent);

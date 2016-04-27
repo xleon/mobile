@@ -493,7 +493,7 @@ namespace Toggl.Phoebe.Reactive
                 LastAppVersion = old.LastAppVersion,
                 LastReportZoom = old.LastReportZoomViewed ?? LastReportZoomDefault,
                 GroupedEntries = old.GroupedTimeEntries,
-                ProjectSort = old.SortProjectsBy,
+                ProjectSort = ProjectSortDefault, // Set default value
                 ShowWelcome = old.ShowWelcome,
                 ChooseProjectForNew = old.ChooseProjectForNew,
                 GetChangesLastRun = old.SyncLastRun.HasValue ? old.SyncLastRun.Value : DateTime.MinValue,

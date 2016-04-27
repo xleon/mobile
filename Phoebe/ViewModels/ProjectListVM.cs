@@ -28,10 +28,14 @@ namespace Toggl.Phoebe.ViewModels
         public ProjectListVM(AppState appState, Guid workspaceId)
         {
             ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Select Project";
-
             CurrentWorkspaceId = workspaceId;
-            var savedSort = Enum.Parse(typeof(ProjectsCollectionVM.SortProjectsBy), appState.Settings.ProjectSort);
-            ProjectList = new ProjectsCollectionVM(appState, (ProjectsCollectionVM.SortProjectsBy)savedSort, workspaceId);
+
+            // Try to read sort from settings.
+            ProjectsCollectionVM.SortProjectsBy savedSort;
+            if (!Enum.TryParse(appState.Settings.ProjectSort, out savedSort))
+                savedSort = ProjectsCollectionVM.SortProjectsBy.Clients;
+
+            ProjectList = new ProjectsCollectionVM(appState, savedSort, workspaceId);
             WorkspaceList = appState.Workspaces.Values.OrderBy(r => r.Name).ToList();
             CurrentWorkspaceIndex = WorkspaceList.IndexOf(p => p.Id == workspaceId);
 

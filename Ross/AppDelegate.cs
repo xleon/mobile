@@ -10,6 +10,7 @@ using Toggl.Phoebe;
 using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Logging;
+using Toggl.Phoebe.Misc;
 using Toggl.Phoebe.Net;
 using Toggl.Phoebe.Reactive;
 using Toggl.Ross.Analytics;
@@ -47,6 +48,9 @@ namespace Toggl.Ross
             // Component initialisation.
             // Register platform info first.
             ServiceContainer.Register<IPlatformUtils> (this);
+
+            // Used for migration
+            ServiceContainer.Register<IOldSettingsStore>(() => new OldSettingsStore());
 
             // Register Phoebe services
             Services.Register();

@@ -69,7 +69,7 @@ namespace Toggl.Phoebe.Data
                 upgradersList[i](upgradeContext);
 
                 // Note: We're already checking upgradersList.Count != 0 in the for condition
-                progressReporter((float)(i+1) / upgradersList.Count);
+                progressReporter((float)(i + 1) / upgradersList.Count);
             }
         }
 

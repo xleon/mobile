@@ -26,7 +26,7 @@ namespace Toggl.Phoebe.Tests.Data.Migration
             var path = DatabaseHelper.GetDatabasePath(this.databaseDir, 0);
             if (File.Exists(path)) { File.Delete(path); }
 
-            using (var db = new SQLiteConnection(new SQLitePlatformGeneric(), path))
+            using(var db = new SQLiteConnection(new SQLitePlatformGeneric(), path))
             {
                 db.CreateTable<V0.ClientData>();
                 db.CreateTable<V0.ProjectData>();
@@ -69,7 +69,7 @@ namespace Toggl.Phoebe.Tests.Data.Migration
                 RoundingPercision = 1
             };
 
-            this.insertIntoDatabase(workspaceData);
+            this.insertIntoV0Database(workspaceData);
             var store = this.migrate();
             var newWorkspaceData = store.Table<V1.WorkspaceData>().First();
 
@@ -109,7 +109,7 @@ namespace Toggl.Phoebe.Tests.Data.Migration
                 ImageUrl = "ImageUrl"
             };
 
-            insertIntoDatabase(
+            insertIntoV0Database(
                 workspaceData,
                 userData
             );
@@ -208,7 +208,7 @@ namespace Toggl.Phoebe.Tests.Data.Migration
                 UseTasksEstimate = true
             };
 
-            this.insertIntoDatabase(
+            this.insertIntoV0Database(
                 new V0.WorkspaceData { Id = workspaceID, RemoteId = workspaceRemoteID },
                 new V0.ClientData { Id = clientId, RemoteId = clientRemoteId, WorkspaceId = workspaceID },
                 projectData
@@ -338,7 +338,7 @@ namespace Toggl.Phoebe.Tests.Data.Migration
                 IsDirty = true
             };
 
-            this.insertIntoDatabase(
+            this.insertIntoV0Database(
                 new V0.WorkspaceData { Id = workspaceID, RemoteId = workspaceRemoteID },
                 new V0.ProjectData { Id = projectID, RemoteId = projectRemoteId, WorkspaceId = workspaceID },
                 new V0.TaskData { Id = taskId, RemoteId = taskRemoteId, WorkspaceId = workspaceID, ProjectId = projectID },
@@ -380,7 +380,7 @@ namespace Toggl.Phoebe.Tests.Data.Migration
                 RemoteRejected = true
             };
 
-            insertIntoDatabase(tagData);
+            insertIntoV0Database(tagData);
             var store = this.migrate();
             var newTagData = store.Table<V1.TagData>().Where(t => t.Id == tagData.Id).First();
 
@@ -402,7 +402,7 @@ namespace Toggl.Phoebe.Tests.Data.Migration
                 RemoteRejected = true
             };
 
-            insertIntoDatabase(tagData);
+            insertIntoV0Database(tagData);
             var store = migrate();
             var newTagData = store.Table<V1.TagData>().Where(t => t.Id == tagData.Id).First();
             Assert.That(newTagData.SyncState, Is.EqualTo(V1.SyncState.UpdatePending));
@@ -419,7 +419,7 @@ namespace Toggl.Phoebe.Tests.Data.Migration
                 RemoteRejected = true
             };
 
-            insertIntoDatabase(tagData);
+            insertIntoV0Database(tagData);
             var store = migrate();
             var newTagData = store.Table<V1.TagData>().Where(t => t.Id == tagData.Id).First();
             Assert.That(newTagData.SyncState, Is.EqualTo(V1.SyncState.CreatePending));
@@ -438,9 +438,9 @@ namespace Toggl.Phoebe.Tests.Data.Migration
             if (oldVersion != -1)
             {
                 var success = DatabaseHelper.Migrate(
-                    platformInfo, this.databaseDir,
-                    oldVersion, SyncSqliteDataStore.DB_VERSION,
-                    dummyReporter);
+                                  platformInfo, this.databaseDir,
+                                  oldVersion, SyncSqliteDataStore.DB_VERSION,
+                                  dummyReporter);
 
                 if (!success)
                     throw new MigrationException("Migration unsuccessful");
@@ -452,7 +452,7 @@ namespace Toggl.Phoebe.Tests.Data.Migration
         private void insertIntoV0Database(params object[] objects)
         {
             var dbPath = DatabaseHelper.GetDatabasePath(this.databaseDir, 0);
-            using (var db = new SQLiteConnection(new SQLitePlatformGeneric(), dbPath))
+            using(var db = new SQLiteConnection(new SQLitePlatformGeneric(), dbPath))
             {
                 db.InsertAll(objects);
             }

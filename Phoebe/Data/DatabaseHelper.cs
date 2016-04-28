@@ -62,6 +62,8 @@ namespace Toggl.Phoebe.Data
                                    Action<float> progressReporter)
         {
             SQLiteConnection migrateFromDB = null, newDB = null;
+
+            // Close current connection to prevent conflicts
             var dataStore = ServiceContainer.Resolve<ISyncDataStore>();
             dataStore.Dispose();
 
@@ -119,6 +121,7 @@ namespace Toggl.Phoebe.Data
                 if (newDB != null) { newDB.Close(); }
                 if (migrateFromDB != null) { migrateFromDB.Close(); }
 
+                // Register ISyncDataStore again
                 var dbPath = GetDatabasePath(dbDir, SyncSqliteDataStore.DB_VERSION);
                 ServiceContainer.Register<ISyncDataStore>(new SyncSqliteDataStore(dbPath, platformInfo));
             }

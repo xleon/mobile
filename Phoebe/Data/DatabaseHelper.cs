@@ -44,14 +44,17 @@ namespace Toggl.Phoebe.Data
             return -1;
         }
 
-        private static void resolveMigrateException(string dbDir, MigrationException ex)
+        private static void resolveMigrateException(
+            MigrationException ex, SQLiteConnection newDB, string dbDir)
         {
             var logger = ServiceContainer.Resolve<ILogger>();
             logger.Error(nameof(DatabaseMigrator), ex, ex.Message);
 
+            // Close newDB to prevent conflicts when deleting the file
+            if (newDB != null) { newDB.Close(); }
+
             var dbPath = GetDatabasePath(dbDir, SyncSqliteDataStore.DB_VERSION);
-            if (FileExists(dbPath))
-                File.Delete(dbPath);
+            if (FileExists(dbPath)) { File.Delete(dbPath); }
         }
 
         public static bool Migrate(ISQLitePlatform platformInfo, string dbDir,
@@ -92,24 +95,29 @@ namespace Toggl.Phoebe.Data
                     validateMigratedVersion(fromVersion, expectedNewVersion, newVersion, desiredVersion);
 
                     if (newVersion == desiredVersion)
+                    {
+                        // Migration has been successful, delete old db
+                        var oldDbPath = GetDatabasePath(dbDir, fromVersion);
+                        if (FileExists(oldDbPath)) { File.Delete(oldDbPath); }
                         return true;
+                    }
 
                     migrateFromDB = newDB;
                 }
             }
             catch (MigrationException ex)
             {
-                resolveMigrateException(dbDir, ex);
+                resolveMigrateException(ex, newDB, dbDir);
             }
             catch (Exception ex)
             {
                 var ex2 = new MigrationException("Unknown exception during migration", ex);
-                resolveMigrateException(dbDir, ex2);
+                resolveMigrateException(ex2, newDB, dbDir);
             }
             finally
             {
-                if (migrateFromDB != null) { migrateFromDB.Close(); }
                 if (newDB != null) { newDB.Close(); }
+                if (migrateFromDB != null) { migrateFromDB.Close(); }
 
                 var dbPath = GetDatabasePath(dbDir, SyncSqliteDataStore.DB_VERSION);
                 ServiceContainer.Register<ISyncDataStore>(new SyncSqliteDataStore(dbPath, platformInfo));

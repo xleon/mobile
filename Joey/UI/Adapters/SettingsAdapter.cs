@@ -6,11 +6,8 @@ using GalaSoft.MvvmLight.Helpers;
 using Toggl.Joey.Data;
 using Toggl.Joey.UI.Utils;
 using Toggl.Joey.UI.Views;
-using Toggl.Phoebe;
 using Toggl.Phoebe.Reactive;
 using Toggl.Phoebe.ViewModels;
-using Toggl.Phoebe.Data;
-using XPlatUtils;
 
 namespace Toggl.Joey.UI.Adapters
 {
@@ -34,31 +31,31 @@ namespace Toggl.Joey.UI.Adapters
             showNotification = new CheckboxListItem(
                 Resource.String.SettingsGeneralShowNotificationTitle,
                 Resource.String.SettingsGeneralShowNotificationDesc,
-                SettingsStore.PropertyShowNotification,
+                nameof(SettingsState.ShowNotification),
                 viewModel.SetShowNotification);
 
             idleNotification = new CheckboxListItem(
                 Resource.String.SettingsGeneralNotifTitle,
                 Resource.String.SettingsGeneralNotifDesc,
-                SettingsStore.PropertyIdleNotification,
+                nameof(SettingsState.IdleNotification),
                 viewModel.SetIdleNotification);
 
             chooseProjectForNew = new CheckboxListItem(
                 Resource.String.SettingsGeneralAskProjectTitle,
                 Resource.String.SettingsGeneralAskProjectDesc,
-                SettingsStore.PropertyChooseProjectForNew,
+                nameof(SettingsState.ChooseProjectForNew),
                 viewModel.SetChooseProjectForNew);
 
             useDefault = new CheckboxListItem(
                 Resource.String.SettingsGeneralMobileTagTitle,
                 Resource.String.SettingsGeneralMobileTagDesc,
-                SettingsStore.PropertyUseDefaultTag,
+                nameof(SettingsState.UseDefaultTag),
                 viewModel.SetUseDefaultTag);
 
             groupedEntries = new CheckboxListItem(
                 Resource.String.SettingsGeneralGroupedEntriesTitle,
                 Resource.String.SettingsGeneralGroupedEntriesDesc,
-                SettingsStore.PropertyGroupedTimeEntries,
+                nameof(SettingsState.GroupedEntries),
                 viewModel.SetGroupedTimeEntries);
 
             showNotificationBinding = this.SetBinding(() => viewModel.ShowNotification, () => showNotification.IsChecked);
@@ -120,7 +117,7 @@ namespace Toggl.Joey.UI.Adapters
                     view.Tag = new HeaderListItemHolder(view);
                 }
                 var holder = (HeaderListItemHolder)view.Tag;
-                holder.Bind((HeaderListItem)listItem);
+                holder.Rebind((HeaderListItem)listItem);
             }
             else if (viewType == CheckboxViewType)
             {
@@ -131,7 +128,7 @@ namespace Toggl.Joey.UI.Adapters
                     view.Tag = new CheckboxListItemHolder(view);
                 }
                 var holder = (CheckboxListItemHolder)view.Tag;
-                holder.Bind((CheckboxListItem)listItem);
+                holder.Rebind((CheckboxListItem)listItem);
             }
             else
             {
@@ -225,83 +222,23 @@ namespace Toggl.Joey.UI.Adapters
             }
         }
 
-        private class HeaderListItemHolder : BindableViewHolder<HeaderListItem>
+        private class HeaderListItemHolder : Java.Lang.Object
         {
             public TextView HeaderTextView { get; private set; }
 
-            public HeaderListItemHolder(View root) : base(root)
+            public HeaderListItemHolder(View root)
             {
                 HeaderTextView = root.FindViewById<TextView> (Resource.Id.HeaderTextView).SetFont(Font.RobotoMedium);
             }
 
-            protected override void Rebind()
+            public void Rebind(HeaderListItem dataSource)
             {
-                HeaderTextView.SetText(DataSource.HeaderResId);
+                HeaderTextView.SetText(dataSource.HeaderResId);
             }
         }
 
-        private abstract class SettingViewHolder<T> : BindableViewHolder<T>
-        {
-            private Subscription<SettingChangedMessage> subscriptionSettingChanged;
 
-            public SettingViewHolder(View root) : base(root)
-            {
-            }
-
-            protected override void Dispose(bool disposing)
-            {
-                if (disposing)
-                {
-                    Unsubscribe(ServiceContainer.Resolve<MessageBus> ());
-                }
-
-                base.Dispose(disposing);
-            }
-
-            protected override void OnRootAttachedToWindow(object sender, View.ViewAttachedToWindowEventArgs e)
-            {
-                base.OnRootAttachedToWindow(sender, e);
-                Subscribe(ServiceContainer.Resolve<MessageBus> ());
-            }
-
-            protected override void OnRootDetachedFromWindow(object sender, View.ViewDetachedFromWindowEventArgs e)
-            {
-                Unsubscribe(ServiceContainer.Resolve<MessageBus> ());
-                base.OnRootDetachedFromWindow(sender, e);
-            }
-
-            protected virtual void Subscribe(MessageBus bus)
-            {
-                if (subscriptionSettingChanged == null)
-                {
-                    subscriptionSettingChanged = bus.Subscribe<SettingChangedMessage> (DispatchSettingChanged);
-                }
-            }
-
-            protected virtual void Unsubscribe(MessageBus bus)
-            {
-                if (subscriptionSettingChanged != null)
-                {
-                    bus.Unsubscribe(subscriptionSettingChanged);
-                    subscriptionSettingChanged = null;
-                }
-            }
-
-            private void DispatchSettingChanged(SettingChangedMessage msg)
-            {
-                // Protect against Java side being GCed
-                if (Handle == IntPtr.Zero)
-                {
-                    return;
-                }
-
-                OnSettingChanged(msg);
-            }
-
-            protected abstract void OnSettingChanged(SettingChangedMessage msg);
-        }
-
-        private class CheckboxListItemHolder : SettingViewHolder<CheckboxListItem>
+        private class CheckboxListItemHolder : Java.Lang.Object
         {
             public TextView TitleTextView { get; private set; }
 
@@ -309,31 +246,18 @@ namespace Toggl.Joey.UI.Adapters
 
             public CheckBox CheckBox { get; private set; }
 
-            public CheckboxListItemHolder(View root) : base(root)
+            public CheckboxListItemHolder(View root)
             {
                 TitleTextView = root.FindViewById<TextView> (Resource.Id.TitleTextView).SetFont(Font.Roboto);
                 DescriptionTextView = root.FindViewById<TextView> (Resource.Id.DescriptionTextView).SetFont(Font.RobotoLight);
                 CheckBox = root.FindViewById<CheckBox> (Resource.Id.CheckBox);
             }
 
-            protected override void Rebind()
+            public void Rebind(CheckboxListItem dataSource)
             {
-                TitleTextView.SetText(DataSource.TitleResId);
-                DescriptionTextView.SetText(DataSource.DescriptionResId);
-                CheckBox.Checked = DataSource.IsChecked;
-            }
-
-            protected override void OnSettingChanged(SettingChangedMessage msg)
-            {
-                if (DataSource == null)
-                {
-                    return;
-                }
-
-                if (msg.Name == DataSource.SettingName)
-                {
-                    Rebind();
-                }
+                TitleTextView.SetText(dataSource.TitleResId);
+                DescriptionTextView.SetText(dataSource.DescriptionResId);
+                CheckBox.Checked = dataSource.IsChecked;
             }
         }
     }

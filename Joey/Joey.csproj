@@ -246,7 +246,7 @@
     <Compile Include="Wear\WearDataProvider.cs" />
     <Compile Include="UI\Fragments\ChangeDateTimeDialogFragment.cs" />
     <Compile Include="UI\Adapters\RecyclerCollectionDataAdapter.cs" />
-    <Compile Include="Data\SettingsStore.cs" />
+    <Compile Include="Data\OldSettingsStore.cs" />
     <Compile Include="UI\Adapters\SettingsAdapter.cs" />
   </ItemGroup>
   <ItemGroup>

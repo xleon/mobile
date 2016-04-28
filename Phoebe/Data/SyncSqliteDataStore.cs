@@ -42,18 +42,19 @@ namespace Toggl.Phoebe.Data
             CleanOldDraftEntry();
         }
 
+        public void Dispose()
+        {
+            cnn.Close();
+        }
+
         private SQLiteConnectionWithLock initDatabaseConnection(string dbPath, ISQLitePlatform platformInfo)
         {
-            var dbFileExisted = File.Exists(dbPath) && new FileInfo(dbPath).Length > 0;
+            var dbFileExisted = DatabaseHelper.FileExists(dbPath);
 
             var cnnString = new SQLiteConnectionString(dbPath, true);
             var connection = new SQLiteConnectionWithLock(platformInfo, cnnString);
 
-            if (dbFileExisted)
-            {
-                connection = new SQLiteConnectionWithLock(platformInfo, cnnString);
-            }
-            else
+            if (!dbFileExisted)
             {
                 CreateTables(connection);
             }

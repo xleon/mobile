@@ -5,7 +5,7 @@ using Toggl.Phoebe.Data.Models;
 
 namespace Toggl.Phoebe.Data
 {
-    public interface ISyncDataStore
+    public interface ISyncDataStore : IDisposable
     {
         TableQuery<T> Table<T> () where T : CommonData, new();
         IReadOnlyList<ICommonData> Update(Action<ISyncDataStoreContext> worker);

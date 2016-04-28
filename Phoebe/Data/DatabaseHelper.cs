@@ -11,6 +11,11 @@ namespace Toggl.Phoebe.Data
 {
     static class DatabaseHelper
     {
+        public static bool FileExists(string path)
+        {
+            return File.Exists(path) && new FileInfo(path).Length > 0;
+        }
+
         public static string GetDatabasePath(string dbDir, int dbVersion)
         {
             return Path.Combine(dbDir, dbVersion == 0 ? "toggl.db" : $"toggl.{dbVersion}.db");
@@ -32,11 +37,21 @@ namespace Toggl.Phoebe.Data
             for (var i = 0; i < SyncSqliteDataStore.DB_VERSION; i++)
             {
                 var dbPath = GetDatabasePath(dbDir, i);
-                if (File.Exists(dbPath) && new FileInfo(dbPath).Length > 0)
+                if (FileExists(dbPath))
                     return i;
             }
 
             return -1;
+        }
+
+        private static void resolveMigrateException(string dbDir, MigrationException ex)
+        {
+            var logger = ServiceContainer.Resolve<ILogger>();
+            logger.Error(nameof(DatabaseMigrator), ex, ex.Message);
+
+            var dbPath = GetDatabasePath(dbDir, SyncSqliteDataStore.DB_VERSION);
+            if (FileExists(dbPath))
+                File.Delete(dbPath);
         }
 
         public static bool Migrate(ISQLitePlatform platformInfo, string dbDir,
@@ -44,6 +59,9 @@ namespace Toggl.Phoebe.Data
                                    Action<float> progressReporter)
         {
             SQLiteConnection migrateFromDB = null, newDB = null;
+            var dataStore = ServiceContainer.Resolve<ISyncDataStore>();
+            dataStore.Dispose();
+
             try
             {
                 migrateFromDB = new SQLiteConnection(platformInfo, GetDatabasePath(dbDir, fromVersion));
@@ -59,7 +77,7 @@ namespace Toggl.Phoebe.Data
                     validateMigrator(fromVersion, migrator, desiredVersion);
 
                     // Make sure the desiredDBPath doesn't exist to prevent corruption of data
-                    if (expectedNewVersion == desiredVersion && File.Exists(desiredDBPath))
+                    if (expectedNewVersion == desiredVersion && FileExists(desiredDBPath))
                         File.Delete(desiredDBPath);
 
                     newDB = new SQLiteConnection(platformInfo, expectedNewVersion == desiredVersion
@@ -81,19 +99,20 @@ namespace Toggl.Phoebe.Data
             }
             catch (MigrationException ex)
             {
-                var logger = ServiceContainer.Resolve<ILogger>();
-                logger.Error(nameof(DatabaseMigrator), ex, ex.Message);
+                resolveMigrateException(dbDir, ex);
             }
             catch (Exception ex)
             {
                 var ex2 = new MigrationException("Unknown exception during migration", ex);
-                var logger = ServiceContainer.Resolve<ILogger>();
-                logger.Error(nameof(DatabaseMigrator), ex2, ex2.Message);
+                resolveMigrateException(dbDir, ex2);
             }
             finally
             {
                 if (migrateFromDB != null) { migrateFromDB.Close(); }
                 if (newDB != null) { newDB.Close(); }
+
+                var dbPath = GetDatabasePath(dbDir, SyncSqliteDataStore.DB_VERSION);
+                ServiceContainer.Register<ISyncDataStore>(new SyncSqliteDataStore(dbPath, platformInfo));
             }
             return false;
         }

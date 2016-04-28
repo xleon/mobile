@@ -11,25 +11,19 @@ using V1 = Toggl.Phoebe.Data.Models;
 namespace Toggl.Phoebe.Tests.Data.Migration
 {
     [TestFixture]
-    public class MigrateV0toV1Test
+    public class MigrateV0toV1Test : Test
     {
-        readonly string dbDir = Path.GetDirectoryName(Path.GetTempPath());
-
         #region Setup
 
         [SetUp]
         public void SetUp()
         {
-            ServiceContainer.RegisterScoped<MessageBus>(new MessageBus());
-            ServiceContainer.Register<ITimeProvider>(new DefaultTimeProvider());
-            ServiceContainer.Register<TimeCorrectionManager>(new TimeCorrectionManager());
-
             this.setupV0database();
         }
 
         private void setupV0database()
         {
-            var path = DatabaseHelper.GetDatabasePath(this.dbDir, 0);
+            var path = DatabaseHelper.GetDatabasePath(this.databaseDir, 0);
             if (File.Exists(path)) { File.Delete(path); }
 
             using (var db = new SQLiteConnection(new SQLitePlatformGeneric(), path))
@@ -303,16 +297,16 @@ namespace Toggl.Phoebe.Tests.Data.Migration
 
         #region Helpers
 
-        private SyncSqliteDataStore migrate()
+        private ISyncDataStore migrate()
         {
             var platformInfo = new SQLitePlatformGeneric();
             Action<float> dummyReporter = x => { };
 
-            var oldVersion = DatabaseHelper.CheckOldDb(this.dbDir);
+            var oldVersion = DatabaseHelper.CheckOldDb(this.databaseDir);
             if (oldVersion != -1)
             {
                 var success = DatabaseHelper.Migrate(
-                    platformInfo, this.dbDir,
+                    platformInfo, this.databaseDir,
                     oldVersion, SyncSqliteDataStore.DB_VERSION,
                     dummyReporter);
 
@@ -320,13 +314,12 @@ namespace Toggl.Phoebe.Tests.Data.Migration
                     throw new MigrationException("Migration unsuccessful");
             }
 
-            var dbPath = DatabaseHelper.GetDatabasePath(this.dbDir, SyncSqliteDataStore.DB_VERSION);
-            return new SyncSqliteDataStore(dbPath, new SQLitePlatformGeneric());
+            return ServiceContainer.Resolve<ISyncDataStore>();
         }
 
         private void insertIntoV0Database(params object[] objects)
         {
-            var dbPath = DatabaseHelper.GetDatabasePath(this.dbDir, 0);
+            var dbPath = DatabaseHelper.GetDatabasePath(this.databaseDir, 0);
             using (var db = new SQLiteConnection(new SQLitePlatformGeneric(), dbPath))
             {
                 db.InsertAll(objects);

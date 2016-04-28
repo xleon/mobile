@@ -13,7 +13,7 @@ namespace Toggl.Phoebe.Tests.Data.Migration
     [TestFixture]
     public class MigrateV0toV1Test
     {
-        private string databasePath;
+        readonly string dbDir = Path.GetDirectoryName(Path.GetTempPath());
 
         #region Setup
 
@@ -29,24 +29,22 @@ namespace Toggl.Phoebe.Tests.Data.Migration
 
         private void setupV0database()
         {
-            var path = Path.GetTempFileName();
+            var path = DatabaseHelper.GetDatabasePath(this.dbDir, 0);
+            if (File.Exists(path)) { File.Delete(path); }
 
-            var db = new SQLiteConnection(new SQLitePlatformGeneric(), path);
-
-            db.CreateTable<V0.ClientData>();
-            db.CreateTable<V0.ProjectData>();
-            db.CreateTable<V0.ProjectUserData>();
-            db.CreateTable<V0.TagData>();
-            db.CreateTable<V0.TaskData>();
-            db.CreateTable<V0.TimeEntryData>();
-            db.CreateTable<V0.TimeEntryTagData>();
-            db.CreateTable<V0.UserData>();
-            db.CreateTable<V0.WorkspaceData>();
-            db.CreateTable<V0.WorkspaceUserData>();
-
-            db.Close();
-
-            this.databasePath = path;
+            using (var db = new SQLiteConnection(new SQLitePlatformGeneric(), path))
+            {
+                db.CreateTable<V0.ClientData>();
+                db.CreateTable<V0.ProjectData>();
+                db.CreateTable<V0.ProjectUserData>();
+                db.CreateTable<V0.TagData>();
+                db.CreateTable<V0.TaskData>();
+                db.CreateTable<V0.TimeEntryData>();
+                db.CreateTable<V0.TimeEntryTagData>();
+                db.CreateTable<V0.UserData>();
+                db.CreateTable<V0.WorkspaceData>();
+                db.CreateTable<V0.WorkspaceUserData>();
+            }
         }
 
         #endregion
@@ -67,7 +65,7 @@ namespace Toggl.Phoebe.Tests.Data.Migration
             var workspaceID = Guid.NewGuid();
             var workspaceName = "the matrix";
 
-            this.insertIntoDatabase(
+            this.insertIntoV0Database(
                 new V0.WorkspaceData { Id = workspaceID, Name = workspaceName }
             );
 
@@ -87,7 +85,7 @@ namespace Toggl.Phoebe.Tests.Data.Migration
             var userRemoteID = 1337L;
             var userName = "neo";
 
-            this.insertIntoDatabase(
+            this.insertIntoV0Database(
                 new V0.WorkspaceData { Id = workspaceID, RemoteId = workspaceRemoteID },
                 new V0.UserData { RemoteId = userRemoteID, Name = userName, DefaultWorkspaceId = workspaceID }
             );
@@ -110,7 +108,7 @@ namespace Toggl.Phoebe.Tests.Data.Migration
             var userRemoteID = 1337L;
             var userID = Guid.NewGuid();
 
-            this.insertIntoDatabase(
+            this.insertIntoV0Database(
                 new V0.WorkspaceData { Id = workspaceID, RemoteId = workspaceRemoteID },
                 new V0.UserData { Id = userID, RemoteId = userRemoteID },
                 new V0.WorkspaceUserData { UserId = userID, WorkspaceId = workspaceID }
@@ -134,7 +132,7 @@ namespace Toggl.Phoebe.Tests.Data.Migration
             var clientRemoteId = 1337L;
             var clientName = "the oracle";
 
-            this.insertIntoDatabase(
+            this.insertIntoV0Database(
                 new V0.WorkspaceData { Id = workspaceID, RemoteId = workspaceRemoteID },
                 new V0.ClientData { RemoteId = clientRemoteId, Name = clientName, WorkspaceId = workspaceID }
             );
@@ -159,7 +157,7 @@ namespace Toggl.Phoebe.Tests.Data.Migration
             var projectRemoteId = 500L;
             var projectName = "save the world";
 
-            this.insertIntoDatabase(
+            this.insertIntoV0Database(
                 new V0.WorkspaceData { Id = workspaceID, RemoteId = workspaceRemoteID },
                 new V0.ClientData { Id = clientId, RemoteId = clientRemoteId, WorkspaceId = workspaceID },
                 new V0.ProjectData { RemoteId = projectRemoteId, Name = projectName, ClientId = clientId, WorkspaceId = workspaceID }
@@ -186,7 +184,7 @@ namespace Toggl.Phoebe.Tests.Data.Migration
             var userRemoteID = 1337L;
             var userID = Guid.NewGuid();
 
-            this.insertIntoDatabase(
+            this.insertIntoV0Database(
                 new V0.ProjectData { Id = projectId, RemoteId = projectRemoteId, Name = projectName },
                 new V0.UserData { Id = userID, RemoteId = userRemoteID },
                 new V0.ProjectUserData { UserId = userID, ProjectId = projectId }
@@ -210,7 +208,7 @@ namespace Toggl.Phoebe.Tests.Data.Migration
             var tagRemoteId = 500L;
             var tagName = "epic";
 
-            this.insertIntoDatabase(
+            this.insertIntoV0Database(
                 new V0.WorkspaceData { Id = workspaceID, RemoteId = workspaceRemoteID },
                 new V0.TagData { RemoteId = tagRemoteId, Name = tagName, WorkspaceId = workspaceID }
             );
@@ -235,7 +233,7 @@ namespace Toggl.Phoebe.Tests.Data.Migration
             var taskRemoteId = 1337L;
             var taskName = "become the one";
 
-            this.insertIntoDatabase(
+            this.insertIntoV0Database(
                 new V0.WorkspaceData { Id = workspaceID, RemoteId = workspaceRemoteID },
                 new V0.ProjectData { Id = projectID, RemoteId = projectRemoteId, WorkspaceId = workspaceID },
                 new V0.TaskData { RemoteId = taskRemoteId, Name = taskName, WorkspaceId = workspaceID, ProjectId = projectID }
@@ -268,7 +266,7 @@ namespace Toggl.Phoebe.Tests.Data.Migration
             var timeEntryId = Guid.NewGuid();
             var timeEntryDescription = "learning kung fu";
 
-            this.insertIntoDatabase(
+            this.insertIntoV0Database(
                 new V0.WorkspaceData { Id = workspaceID, RemoteId = workspaceRemoteID },
                 new V0.ProjectData { Id = projectID, RemoteId = projectRemoteId, WorkspaceId = workspaceID },
                 new V0.TaskData { Id = taskId, RemoteId = taskRemoteId, WorkspaceId = workspaceID, ProjectId = projectID },
@@ -307,16 +305,32 @@ namespace Toggl.Phoebe.Tests.Data.Migration
 
         private SyncSqliteDataStore migrate()
         {
-            return new SyncSqliteDataStore(this.databasePath, new SQLitePlatformGeneric());
+            var platformInfo = new SQLitePlatformGeneric();
+            Action<float> dummyReporter = x => { };
+
+            var oldVersion = DatabaseHelper.CheckOldDb(this.dbDir);
+            if (oldVersion != -1)
+            {
+                var success = DatabaseHelper.Migrate(
+                    platformInfo, this.dbDir,
+                    oldVersion, SyncSqliteDataStore.DB_VERSION,
+                    dummyReporter);
+
+                if (!success)
+                    throw new MigrationException("Migration unsuccessful");
+            }
+
+            var dbPath = DatabaseHelper.GetDatabasePath(this.dbDir, SyncSqliteDataStore.DB_VERSION);
+            return new SyncSqliteDataStore(dbPath, new SQLitePlatformGeneric());
         }
 
-        private void insertIntoDatabase(params object[] objects)
+        private void insertIntoV0Database(params object[] objects)
         {
-            var db = new SQLiteConnection(new SQLitePlatformGeneric(), this.databasePath);
-
-            db.InsertAll(objects);
-
-            db.Close();
+            var dbPath = DatabaseHelper.GetDatabasePath(this.dbDir, 0);
+            using (var db = new SQLiteConnection(new SQLitePlatformGeneric(), dbPath))
+            {
+                db.InsertAll(objects);
+            }
         }
 
         #endregion

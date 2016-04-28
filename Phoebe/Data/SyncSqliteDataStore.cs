@@ -51,18 +51,7 @@ namespace Toggl.Phoebe.Data
 
             if (dbFileExisted)
             {
-                var version = DatabaseHelper.GetVersion(connection);
-                if (version != DB_VERSION)
-                {
-                    var success = DatabaseHelper.Migrate(connection, platformInfo, dbPath, DB_VERSION);
-                    if (!success)
-                    {
-                        // TODO RX: Error report has been already sent at this point, send also automatic feedback?
-                        // Besides that, show an error message to the user like "Couldn't update local data,
-                        // please try again later. If the problem persists, reinstall the application".
-                    }
-                    connection = new SQLiteConnectionWithLock(platformInfo, cnnString);
-                }
+                connection = new SQLiteConnectionWithLock(platformInfo, cnnString);
             }
             else
             {
@@ -79,10 +68,6 @@ namespace Toggl.Phoebe.Data
 
         private static void CreateTables(SQLiteConnection connection)
         {
-            // TODO: the migration logic in principle knows what tables are needed
-            // and how to set the version number. they could be used to get rid of
-            // this method and of GetDataModels() below
-
             // Meta Data: DB Version, etc
             connection.CreateTable<MetaData> ();
             connection.InsertOrIgnore(MetaData.Create(nameof(DB_VERSION), DB_VERSION));

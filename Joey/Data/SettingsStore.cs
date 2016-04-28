@@ -4,6 +4,7 @@ using Android.Content;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data;
+using Toggl.Phoebe.Misc;
 using XPlatUtils;
 
 namespace Toggl.Joey.Data
@@ -167,12 +168,12 @@ namespace Toggl.Joey.Data
 
         public static readonly string PropertyGcmAppVersion = GetPropertyName(s => s.GcmAppVersion);
 
-        public int? GcmAppVersion
+        public string GcmAppVersion
         {
-            get { return GetInt(JoeyGcmAppVersionKey); }
+            get { return GetString(JoeyGcmAppVersionKey); }
             set
             {
-                SetInt(JoeyGcmAppVersionKey, value);
+                SetString(JoeyGcmAppVersionKey, value);
                 OnSettingChanged(PropertyGcmAppVersion);
             }
         }
@@ -286,9 +287,10 @@ namespace Toggl.Joey.Data
 
         public static readonly string PropertyReportsCurrentItem = GetPropertyName(s => s.ReportsCurrentItem);
 
-        public int? ReportsCurrentItem
+        public int ReportsCurrentItem
         {
-            get { return GetInt(ReportsCurrentItemKey); }
+            // TODO: @anton, is 0 the default value for ReportsCurrentItem?
+            get { return GetInt(ReportsCurrentItemKey) ?? 0; }
             set
             {
                 SetInt(ReportsCurrentItemKey, value);
@@ -355,5 +357,17 @@ namespace Toggl.Joey.Data
                 SetInt(PhoebeShowWelcomeKey, value ? 1 : 0);
             }
         }
+
+        #region Ross dummy properties
+        // @anton, please review. This is necessary to compile the app but I'm not sure it must be here.
+        public bool RossReadDurOnlyNotice
+        {
+            get
+            {
+                return false;
+            }
+        }
+        #endregion
+
     }
 }

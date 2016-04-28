@@ -57,15 +57,19 @@ namespace Toggl.Phoebe.Data
 
         protected abstract IEnumerable<Action<UpgradeContext>> upgraders { get; }
 
-        public void Migrate(SQLiteConnection oldDB, SQLiteConnection newDB)
+        public void Migrate(SQLiteConnection oldDB, SQLiteConnection newDB, Action<float> progressReporter)
         {
+            var upgradersList = upgraders.ToList();
             var upgradeContext = new UpgradeContext(oldDB, newDB);
 
             configureDatabaseForVersion(newDB, this.NewVersion);
 
-            foreach (var upgrader in this.upgraders)
+            for (var i = 0; i < upgradersList.Count; i++)
             {
-                upgrader(upgradeContext);
+                upgradersList[i](upgradeContext);
+
+                // Note: We're already checking upgradersList.Count != 0 in the for condition
+                progressReporter((float)(i+1) / upgradersList.Count);
             }
         }
 

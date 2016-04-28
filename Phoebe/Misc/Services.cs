@@ -25,7 +25,7 @@ namespace Toggl.Phoebe
         private static Data.ISyncDataStore CreateSyncDataStore()
         {
             string folder = Environment.GetFolderPath(Environment.SpecialFolder.Personal);
-            var path = System.IO.Path.Combine(folder, "toggl.db");
+            var path = Data.DatabaseHelper.GetDatabasePath(folder, Data.SyncSqliteDataStore.DB_VERSION);
             return new Data.SyncSqliteDataStore(path, ServiceContainer.Resolve<IPlatformUtils> ().SQLiteInfo);
         }
     }

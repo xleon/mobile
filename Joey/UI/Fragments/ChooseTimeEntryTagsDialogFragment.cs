@@ -139,10 +139,10 @@ namespace Toggl.Joey.UI.Fragments
             get
             {
                 return viewModel
-                    .TagCollection
-                    .Where((_, i) => listView.CheckedItemPositions.Get(i))
-                    .Select(tag => tag.Name)
-                    .ToList();
+                       .TagCollection
+                       .Where((_, i) => listView.CheckedItemPositions.Get(i))
+                       .Select(tag => tag.Name)
+                       .ToList();
             }
         }
 

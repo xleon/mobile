@@ -11,6 +11,16 @@ namespace Toggl.Phoebe.Data
 {
     static class DatabaseHelper
     {
+        public static bool FileExists(string path)
+        {
+            return File.Exists(path) && new FileInfo(path).Length > 0;
+        }
+
+        public static string GetDatabasePath(string dbDir, int dbVersion)
+        {
+            return Path.Combine(dbDir, dbVersion == 0 ? "toggl.db" : $"toggl.{dbVersion}.db");
+        }
+
         public static int GetVersion(SQLiteConnection connection)
         {
             var tableInfo = connection.GetTableInfo(nameof(SyncSqliteDataStore.MetaData));
@@ -22,43 +32,75 @@ namespace Toggl.Phoebe.Data
             return data?.Convert<int>() ?? 0;
         }
 
-        public static bool Migrate(SQLiteConnection connection, ISQLitePlatform platformInfo,
-                                   string dbPath, int desiredVersion)
+        public static int CheckOldDb(string dbDir)
         {
+            for (var i = 0; i < SyncSqliteDataStore.DB_VERSION; i++)
+            {
+                var dbPath = GetDatabasePath(dbDir, i);
+                if (FileExists(dbPath))
+                    return i;
+            }
+
+            return -1;
+        }
+
+        private static void resolveMigrateException(
+            MigrationException ex, SQLiteConnection newDB, string dbDir)
+        {
+            var logger = ServiceContainer.Resolve<ILogger>();
+            logger.Error(nameof(DatabaseMigrator), ex, ex.Message);
+
+            // Close newDB to prevent conflicts when deleting the file
+            if (newDB != null) { newDB.Close(); }
+
+            var dbPath = GetDatabasePath(dbDir, SyncSqliteDataStore.DB_VERSION);
+            if (FileExists(dbPath)) { File.Delete(dbPath); }
+        }
+
+        public static bool Migrate(ISQLitePlatform platformInfo, string dbDir,
+                                   int fromVersion, int desiredVersion,
+                                   Action<float> progressReporter)
+        {
+            SQLiteConnection migrateFromDB = null, newDB = null;
+
+            // Close current connection to prevent conflicts
+            var dataStore = ServiceContainer.Resolve<ISyncDataStore>();
+            dataStore.Dispose();
+
             try
             {
-                var migrateFromDB = connection;
-                var version = GetVersion(migrateFromDB);
+                migrateFromDB = new SQLiteConnection(platformInfo, GetDatabasePath(dbDir, fromVersion));
 
-                var tempDBPath = dbPath + ".migrated";
+                var desiredDBPath = GetDatabasePath(dbDir, desiredVersion);
 
                 while (true)
                 {
-                    var migrator = DatabaseMigrator.ForVersion(version);
+                    var migrator = DatabaseMigrator.ForVersion(fromVersion);
 
                     var expectedNewVersion = migrator.NewVersion;
 
-                    validateMigrator(version, migrator, desiredVersion);
+                    validateMigrator(fromVersion, migrator, desiredVersion);
 
-                    // Make sure the tempDBPath doesn't exist to prevent corruption of data
-                    if (expectedNewVersion == desiredVersion && File.Exists(tempDBPath))
-                        File.Delete(tempDBPath);
+                    // Make sure the desiredDBPath doesn't exist to prevent corruption of data
+                    if (expectedNewVersion == desiredVersion && FileExists(desiredDBPath))
+                        File.Delete(desiredDBPath);
 
-                    var newDB = new SQLiteConnection(platformInfo, expectedNewVersion == desiredVersion
-                                                     ? tempDBPath
-                                                     : "Data Source=:memory:");
+                    newDB = new SQLiteConnection(platformInfo, expectedNewVersion == desiredVersion
+                                                 ? desiredDBPath
+                                                 : "Data Source=:memory:");
 
-                    migrator.Migrate(migrateFromDB, newDB);
+                    migrator.Migrate(migrateFromDB, newDB, progressReporter);
                     migrateFromDB.Close();
 
                     var newVersion = GetVersion(newDB);
 
-                    validateMigratedVersion(version, expectedNewVersion, newVersion, desiredVersion);
+                    validateMigratedVersion(fromVersion, expectedNewVersion, newVersion, desiredVersion);
 
                     if (newVersion == desiredVersion)
                     {
-                        newDB.Close();
-                        replaceDatabase(dbPath, tempDBPath);
+                        // Migration has been successful, delete old db
+                        var oldDbPath = GetDatabasePath(dbDir, fromVersion);
+                        if (FileExists(oldDbPath)) { File.Delete(oldDbPath); }
                         return true;
                     }
 
@@ -67,33 +109,23 @@ namespace Toggl.Phoebe.Data
             }
             catch (MigrationException ex)
             {
-                var logger = ServiceContainer.Resolve<ILogger>();
-                logger.Error(nameof(DatabaseMigrator), ex, ex.Message);
+                resolveMigrateException(ex, newDB, dbDir);
             }
             catch (Exception ex)
             {
                 var ex2 = new MigrationException("Unknown exception during migration", ex);
-                var logger = ServiceContainer.Resolve<ILogger>();
-                logger.Error(nameof(DatabaseMigrator), ex2, ex2.Message);
+                resolveMigrateException(ex2, newDB, dbDir);
+            }
+            finally
+            {
+                if (newDB != null) { newDB.Close(); }
+                if (migrateFromDB != null) { migrateFromDB.Close(); }
+
+                // Register ISyncDataStore again
+                var dbPath = GetDatabasePath(dbDir, SyncSqliteDataStore.DB_VERSION);
+                ServiceContainer.Register<ISyncDataStore>(new SyncSqliteDataStore(dbPath, platformInfo));
             }
             return false;
-        }
-
-        private static void replaceDatabase(string dbPath, string tempDBPath)
-        {
-            var dbDeletionPath = dbPath + ".old";
-            File.Move(dbPath, dbDeletionPath);
-            try
-            {
-                File.Move(tempDBPath, dbPath);
-            }
-            catch
-            {
-                // in case move fails, attempt to restore original data base so user can try again
-                File.Move(dbDeletionPath, dbPath);
-                throw;
-            }
-            File.Delete(dbDeletionPath);
         }
 
         private static void validateMigratedVersion(int oldVersion, int expectedNewVersion, int newVersion, int desiredVersion)

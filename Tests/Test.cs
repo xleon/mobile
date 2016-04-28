@@ -12,6 +12,8 @@ namespace Toggl.Phoebe.Tests
     public abstract class Test
     {
         protected string databasePath;
+        protected readonly string databaseDir = Path.GetDirectoryName(Path.GetTempFileName());
+
         private MainThreadSynchronizationContext syncContext;
 
         [OneTimeSetUp]
@@ -20,16 +22,17 @@ namespace Toggl.Phoebe.Tests
             syncContext = new MainThreadSynchronizationContext();
             SynchronizationContext.SetSynchronizationContext(syncContext);
 
-            databasePath = Path.GetTempFileName();
-            ServiceContainer.RegisterScoped<MessageBus> (new MessageBus());
-            ServiceContainer.RegisterScoped<ITimeProvider> (new DefaultTimeProvider());
-            ServiceContainer.Register<TimeCorrectionManager> (new TimeCorrectionManager());
-            ServiceContainer.RegisterScoped<ISyncDataStore> (
+            databasePath = DatabaseHelper.GetDatabasePath(databaseDir, SyncSqliteDataStore.DB_VERSION);
+            ServiceContainer.Register<ISyncDataStore> (
                 new SyncSqliteDataStore(databasePath, new SQLitePlatformGeneric()));
-            ServiceContainer.RegisterScoped<LogStore> ((LogStore)null);
-            ServiceContainer.RegisterScoped<ILoggerClient> ((ILoggerClient)null);
-            ServiceContainer.RegisterScoped<ILogger> (new VoidLogger());
-            ServiceContainer.RegisterScoped<INetworkPresence> (new Reactive.NetWorkPresenceMock());
+
+            ServiceContainer.Register<MessageBus>(new MessageBus());
+            ServiceContainer.Register<ITimeProvider> (new DefaultTimeProvider());
+            ServiceContainer.Register<TimeCorrectionManager> (new TimeCorrectionManager());
+            ServiceContainer.Register<LogStore> ((LogStore)null);
+            ServiceContainer.Register<ILoggerClient> ((ILoggerClient)null);
+            ServiceContainer.Register<ILogger> (new VoidLogger());
+            ServiceContainer.Register<INetworkPresence> (new Reactive.NetWorkPresenceMock());
         }
 
         [OneTimeTearDown]
@@ -51,11 +54,6 @@ namespace Toggl.Phoebe.Tests
         [TearDown]
         public virtual void TearDown()
         {
-        }
-
-        protected MessageBus MessageBus
-        {
-            get { return ServiceContainer.Resolve<MessageBus> (); }
         }
     }
 }

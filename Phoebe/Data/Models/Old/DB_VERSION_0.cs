@@ -338,7 +338,9 @@ namespace Toggl.Phoebe.Data.Models.Old.DB_VERSION_0
             data.RoundingPrecision = RoundingPercision;
             data.LogoUrl = LogoUrl;
 
-            // TODO
+            // This fields are not present in the current DB
+            // They are ignored for the moment.
+
             //data.OnlyAdminsMayCreateProjects
             //data.OnlyAdminsSeeBillableRates
             //data.IsAdmin

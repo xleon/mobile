@@ -17,6 +17,8 @@ using Toggl.Phoebe.Reactive;
 using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Logging;
 using XPlatUtils;
+using Toggl.Phoebe.Misc;
+using Toggl.Joey.Data;
 
 namespace Toggl.Joey
 {
@@ -60,6 +62,9 @@ namespace Toggl.Joey
             ServiceContainer.Register<IPlatformUtils> (this);
             ServiceContainer.Register<ITimeProvider> (() => new DefaultTimeProvider());
             ServiceContainer.Register<INetworkPresence> (() => new NetworkPresence());
+
+            // Used for migration
+            ServiceContainer.Register<IOldSettingsStore>(() => new OldSettingsStore(Context));
 
             // Register Phoebe services.
             Services.Register();

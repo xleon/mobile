@@ -22,7 +22,6 @@ namespace Toggl.Phoebe.Misc
         bool RossReadDurOnlyNotice { get; }
         // Android only  values
         string GcmRegistrationId { get; }
-        string GcmAppVersion { get; }
         bool IdleNotification { get; }
         bool ShowNotification { get; }
     }

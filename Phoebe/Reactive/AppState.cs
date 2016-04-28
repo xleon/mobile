@@ -416,7 +416,6 @@ namespace Toggl.Phoebe.Reactive
         private static readonly bool RossReadDurOnlyNoticeDefault = false;
         // Android only Default values
         private static readonly string GcmRegistrationIdDefault = string.Empty;
-        private static readonly string GcmAppVersionDefault = string.Empty;
         private static readonly bool IdleNotificationDefault = true;
         private static readonly bool ShowNotificationDefault = true;
 
@@ -438,7 +437,6 @@ namespace Toggl.Phoebe.Reactive
         public bool RossReadDurOnlyNotice { get; private set; }
         // Android only  values
         public string GcmRegistrationId { get; private set; }
-        public string GcmAppVersion { get; private set; }
         public bool IdleNotification { get; private set; }
         public bool ShowNotification { get; private set; }
 
@@ -459,7 +457,6 @@ namespace Toggl.Phoebe.Reactive
             RossReadDurOnlyNotice = RossReadDurOnlyNoticeDefault;
             // Android only  values
             GcmRegistrationId = GcmRegistrationIdDefault;
-            GcmAppVersion = GcmAppVersionDefault;
             IdleNotification = IdleNotificationDefault;
             ShowNotification = ShowNotificationDefault;
         }
@@ -501,7 +498,6 @@ namespace Toggl.Phoebe.Reactive
                 RossReadDurOnlyNotice = old.RossReadDurOnlyNotice,
                 // Android only values
                 GcmRegistrationId = old.GcmRegistrationId,
-                GcmAppVersion = old.GcmAppVersion,
                 IdleNotification = old.IdleNotification,
                 ShowNotification = old.ShowNotification
             };
@@ -528,7 +524,6 @@ namespace Toggl.Phoebe.Reactive
             DateTime? rossIgnoreSyncErrorsUntil = null,
             // Android only  values
             string gcmRegistrationId = null,
-            string gcmAppVersion = null,
             bool? idleNotification = null,
             bool? showNotification = null,
             bool? showWelcome = null)
@@ -552,7 +547,6 @@ namespace Toggl.Phoebe.Reactive
             copy.RossReadDurOnlyNotice = rossReadDurOnlyNotice ?? copy.RossReadDurOnlyNotice;
             // Android only  values
             copy.GcmRegistrationId = gcmRegistrationId ?? copy.GcmRegistrationId;
-            copy.GcmAppVersion = gcmAppVersion ?? copy.GcmAppVersion;
             copy.IdleNotification = idleNotification ?? copy.IdleNotification;
             copy.ShowNotification = showNotification ?? copy.ShowNotification;
             copy.ShowWelcome = showWelcome ?? copy.ShowWelcome;

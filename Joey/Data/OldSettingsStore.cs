@@ -2,10 +2,7 @@
 using System.Linq.Expressions;
 using Android.Content;
 using Toggl.Phoebe;
-using Toggl.Phoebe.Analytics;
-using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Misc;
-using XPlatUtils;
 
 namespace Toggl.Joey.Data
 {
@@ -13,7 +10,7 @@ namespace Toggl.Joey.Data
     /// Settings store for storing Android runtime settings. It also stores settings for Phoebe, but the
     /// <see cref="IOldSettingsStore"/> interface is implemented explicitly.
     /// </summary>
-    public class SettingsStore : IOldSettingsStore
+    public class OldSettingsStore : IOldSettingsStore
     {
         private const string PreferenceName = "togglSettings";
         private const string PhoebeUserIdKey = "phoebeUserId";
@@ -24,9 +21,7 @@ namespace Toggl.Joey.Data
         private const string PhoebeExperimentIdKey = "phoebeExperimentId";
         private const string PhoebeLastReportZoomKey = "lastReportZoomKey";
         private const string PhoebeGroupedEntriesKey = "groupedEntriesKey";
-        private const string JoeyInstallIdKey = "joeyInstallId";
         private const string JoeyGcmRegistrationIdKey = "joeyGcmRegistrationId";
-        private const string JoeyGcmAppVersionKey = "joeyGcmAppVersion";
         private const string IdleNotificationKey = "idleNotification";
         private const string ChooseProjectForNewKey = "chooseProjectForNewKey";
         private const string ReportsCurrentItemKey = "reportsCurrentItem";
@@ -35,14 +30,14 @@ namespace Toggl.Joey.Data
         private const string PhoebeIsStagingKey = "isStagingKey";
         private const string PhoebeShowWelcomeKey = "showWelcomeKey";
 
-        private static string GetPropertyName<T> (Expression<Func<SettingsStore, T>> expr)
+        private static string GetPropertyName<T> (Expression<Func<OldSettingsStore, T>> expr)
         {
             return expr.ToPropertyName();
         }
 
         private readonly ISharedPreferences prefs;
 
-        public SettingsStore(Context ctx)
+        public OldSettingsStore(Context ctx)
         {
             prefs = ctx.GetSharedPreferences(PreferenceName, FileCreationMode.Private);
         }
@@ -50,40 +45,16 @@ namespace Toggl.Joey.Data
         protected Guid? GetGuid(string key)
         {
             var val = prefs.GetString(key, null);
-            if (String.IsNullOrEmpty(val))
+            if (string.IsNullOrEmpty(val))
             {
                 return null;
             }
             return Guid.Parse(val);
         }
 
-        protected void SetGuid(string key, Guid? value)
-        {
-            if (value != null)
-            {
-                prefs.Edit().PutString(key, value.Value.ToString()).Commit();
-            }
-            else
-            {
-                prefs.Edit().Remove(key).Commit();
-            }
-        }
-
         protected string GetString(string key)
         {
             return prefs.GetString(key, null);
-        }
-
-        protected void SetString(string key, string value)
-        {
-            if (value != null)
-            {
-                prefs.Edit().PutString(key, value).Commit();
-            }
-            else
-            {
-                prefs.Edit().Remove(key).Commit();
-            }
         }
 
         protected int? GetInt(string key)
@@ -95,18 +66,6 @@ namespace Toggl.Joey.Data
             else
             {
                 return prefs.GetInt(key, 0);
-            }
-        }
-
-        protected void SetInt(string key, int? value)
-        {
-            if (value != null)
-            {
-                prefs.Edit().PutInt(key, value.Value).Commit();
-            }
-            else
-            {
-                prefs.Edit().Remove(key).Commit();
             }
         }
 
@@ -122,60 +81,11 @@ namespace Toggl.Joey.Data
             }
         }
 
-        protected void SetDateTime(string key, DateTime? value)
-        {
-            if (value != null)
-            {
-                prefs.Edit().PutLong(key, value.Value.ToBinary()).Commit();
-            }
-            else
-            {
-                prefs.Edit().Remove(key).Commit();
-            }
-        }
-
-        protected void OnSettingChanged(string name)
-        {
-            var bus = ServiceContainer.Resolve<MessageBus> ();
-            bus.Send(new SettingChangedMessage(this, name));
-        }
-
-        public string InstallId
-        {
-            get
-            {
-                var val = GetString(JoeyInstallIdKey);
-                if (String.IsNullOrEmpty(val))
-                {
-                    val = Guid.NewGuid().ToString();
-                    SetString(JoeyInstallIdKey, val);
-                }
-                return val;
-            }
-        }
-
         public static readonly string PropertyGcmRegistrationId = GetPropertyName(s => s.GcmRegistrationId);
 
         public string GcmRegistrationId
         {
             get { return GetString(JoeyGcmRegistrationIdKey); }
-            set
-            {
-                SetString(JoeyGcmRegistrationIdKey, value);
-                OnSettingChanged(PropertyGcmRegistrationId);
-            }
-        }
-
-        public static readonly string PropertyGcmAppVersion = GetPropertyName(s => s.GcmAppVersion);
-
-        public string GcmAppVersion
-        {
-            get { return GetString(JoeyGcmAppVersionKey); }
-            set
-            {
-                SetString(JoeyGcmAppVersionKey, value);
-                OnSettingChanged(PropertyGcmAppVersion);
-            }
         }
 
         public static readonly string PropertyUserId = GetPropertyName(s => s.UserId);
@@ -183,11 +93,6 @@ namespace Toggl.Joey.Data
         public Guid? UserId
         {
             get { return GetGuid(PhoebeUserIdKey); }
-            set
-            {
-                SetGuid(PhoebeUserIdKey, value);
-                OnSettingChanged(PropertyUserId);
-            }
         }
 
         public static readonly string PropertyApiToken = GetPropertyName(s => s.ApiToken);
@@ -195,11 +100,6 @@ namespace Toggl.Joey.Data
         public string ApiToken
         {
             get { return GetString(PhoebeApiTokenKey); }
-            set
-            {
-                SetString(PhoebeApiTokenKey, value);
-                OnSettingChanged(PropertyApiToken);
-            }
         }
 
         public static readonly string PropertySyncLastRun = GetPropertyName(s => s.SyncLastRun);
@@ -207,11 +107,6 @@ namespace Toggl.Joey.Data
         public DateTime? SyncLastRun
         {
             get { return GetDateTime(PhoebeSyncLastRunKey); }
-            set
-            {
-                SetDateTime(PhoebeSyncLastRunKey, value);
-                OnSettingChanged(PropertySyncLastRun);
-            }
         }
 
         public static readonly string PropertyExperimentId = GetPropertyName(s => s.ExperimentId);
@@ -219,11 +114,6 @@ namespace Toggl.Joey.Data
         public string ExperimentId
         {
             get { return GetString(PhoebeExperimentIdKey); }
-            set
-            {
-                SetString(PhoebeExperimentIdKey, value);
-                OnSettingChanged(PropertyExperimentId);
-            }
         }
 
         public static readonly string PropertyIdleNotification = GetPropertyName(s => s.IdleNotification);
@@ -231,12 +121,6 @@ namespace Toggl.Joey.Data
         public bool IdleNotification
         {
             get { return GetInt(IdleNotificationKey) == 1; }
-            set
-            {
-                SetInt(IdleNotificationKey, value ? 1 : 0);
-                OnSettingChanged(PropertyIdleNotification);
-                ServiceContainer.Resolve<ITracker> ().SendSettingsChangeEvent(SettingName.IdleNotification);
-            }
         }
 
         public static readonly string PropertyChooseProjectForNew = GetPropertyName(s => s.ChooseProjectForNew);
@@ -244,12 +128,6 @@ namespace Toggl.Joey.Data
         public bool ChooseProjectForNew
         {
             get { return GetInt(ChooseProjectForNewKey) == 1; }
-            set
-            {
-                SetInt(ChooseProjectForNewKey, value ? 1 : 0);
-                OnSettingChanged(PropertyChooseProjectForNew);
-                ServiceContainer.Resolve<ITracker> ().SendSettingsChangeEvent(SettingName.AskForProject);
-            }
         }
 
         public static readonly string PropertyUseDefaultTag = GetPropertyName(s => s.UseDefaultTag);
@@ -257,12 +135,6 @@ namespace Toggl.Joey.Data
         public bool UseDefaultTag
         {
             get { return (GetInt(PhoebeUseDefaultTagKey) ?? 1) == 1; }
-            set
-            {
-                SetInt(PhoebeUseDefaultTagKey, value ? 1 : 0);
-                OnSettingChanged(PropertyUseDefaultTag);
-                ServiceContainer.Resolve<ITracker> ().SendSettingsChangeEvent(SettingName.DefaultMobileTag);
-            }
         }
 
         public static readonly string PropertyLastAppVersion = GetPropertyName(s => s.LastAppVersion);
@@ -270,7 +142,6 @@ namespace Toggl.Joey.Data
         public string LastAppVersion
         {
             get { return GetString(PhoebeLastAppVersionKey); }
-            set { SetString(PhoebeLastAppVersionKey, value); }
         }
 
         public static readonly string PropertyLastReportZoomViewed = GetPropertyName(s => s.LastReportZoomViewed);
@@ -278,24 +149,13 @@ namespace Toggl.Joey.Data
         public int? LastReportZoomViewed
         {
             get { return GetInt(PhoebeLastReportZoomKey); }
-            set
-            {
-                SetInt(PhoebeLastReportZoomKey, value);
-                OnSettingChanged(PropertyLastReportZoomViewed);
-            }
         }
 
         public static readonly string PropertyReportsCurrentItem = GetPropertyName(s => s.ReportsCurrentItem);
 
         public int ReportsCurrentItem
         {
-            // TODO: @anton, is 0 the default value for ReportsCurrentItem?
-            get { return GetInt(ReportsCurrentItemKey) ?? 0; }
-            set
-            {
-                SetInt(ReportsCurrentItemKey, value);
-                OnSettingChanged(PropertyReportsCurrentItem);
-            }
+            get { return GetInt(ReportsCurrentItemKey).HasValue ? GetInt(ReportsCurrentItemKey).Value : 0; }
         }
 
         public static readonly string PropertyGroupedTimeEntries = GetPropertyName(s => s.GroupedTimeEntries);
@@ -303,12 +163,6 @@ namespace Toggl.Joey.Data
         public bool GroupedTimeEntries
         {
             get { return GetInt(PhoebeGroupedEntriesKey) == 1; }
-            set
-            {
-                SetInt(PhoebeGroupedEntriesKey, value ? 1 : 0);
-                OnSettingChanged(PropertyGroupedTimeEntries);
-                ServiceContainer.Resolve<ITracker> ().SendSettingsChangeEvent(SettingName.GroupedTimeEntries);
-            }
         }
 
         public static readonly string PropertyShowNotification = GetPropertyName(s => s.ShowNotification);
@@ -316,12 +170,6 @@ namespace Toggl.Joey.Data
         public bool ShowNotification
         {
             get { return (GetInt(JoeyShowNotificationKey) ?? 1) == 1; }
-            set
-            {
-                SetInt(JoeyShowNotificationKey, value ? 1 : 0);
-                OnSettingChanged(PropertyShowNotification);
-                ServiceContainer.Resolve<ITracker> ().SendSettingsChangeEvent(SettingName.ShowNotification);
-            }
         }
 
         public static readonly string PropertyProjectSort = GetPropertyName(s => s.SortProjectsBy);
@@ -329,10 +177,6 @@ namespace Toggl.Joey.Data
         public string SortProjectsBy
         {
             get { return (GetString(PhoebeProjectSortKey)); }
-            set
-            {
-                SetString(PhoebeProjectSortKey, value);
-            }
         }
 
         public static readonly string PropertyIsStagingMode = GetPropertyName(s => s.IsStagingMode);
@@ -340,11 +184,6 @@ namespace Toggl.Joey.Data
         public bool IsStagingMode
         {
             get { return GetInt(PhoebeIsStagingKey) == 1; }
-            set
-            {
-                SetInt(PhoebeIsStagingKey, value ? 1 : 0);
-                OnSettingChanged(PropertyIsStagingMode);
-            }
         }
 
         public static readonly string PropertyShowWelcome = GetPropertyName(s => s.ShowWelcome);
@@ -352,14 +191,9 @@ namespace Toggl.Joey.Data
         public bool ShowWelcome
         {
             get { return (GetInt(PhoebeShowWelcomeKey) ?? 1) == 1; }
-            set
-            {
-                SetInt(PhoebeShowWelcomeKey, value ? 1 : 0);
-            }
         }
 
         #region Ross dummy properties
-        // @anton, please review. This is necessary to compile the app but I'm not sure it must be here.
         public bool RossReadDurOnlyNotice
         {
             get

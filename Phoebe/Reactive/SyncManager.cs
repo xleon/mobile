@@ -459,8 +459,8 @@ namespace Toggl.Phoebe.Reactive
                 sinceDate = state.RequestInfo.GetChangesLastRun;
                 // ATTENTION sinceDate should be less
                 // than two month ago. Server requirements.
-                if (sinceDate < DateTime.Now.Date.AddDays(-60))
-                    sinceDate = DateTime.Now.Date.AddDays(-60);
+                if (sinceDate < DateTime.Now.Date.AddDays(-56))
+                    sinceDate = DateTime.Now.Date.AddDays(-56);
             }
             else
             {

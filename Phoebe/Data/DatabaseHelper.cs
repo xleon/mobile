@@ -21,6 +21,12 @@ namespace Toggl.Phoebe.Data
             return Path.Combine(dbDir, dbVersion == 0 ? "toggl.db" : $"toggl.{dbVersion}.db");
         }
 
+        public static string GetDatabaseDirectory()
+        {
+            return Environment.GetFolderPath(Environment.SpecialFolder.Personal);
+        }
+
+
         public static int GetVersion(SQLiteConnection connection)
         {
             var tableInfo = connection.GetTableInfo(nameof(SyncSqliteDataStore.MetaData));

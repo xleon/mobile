@@ -1,5 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+﻿<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">iPhoneSimulator</Platform>
@@ -101,7 +100,8 @@
     </Reference>
     <Reference Include="SQLite.Net.Platform.XamarinIOS.Unified">
       <HintPath>..\packages\SQLite.Net-PCL.3.1.1\lib\Xamarin.iOS10\SQLite.Net.Platform.XamarinIOS.Unified.dll</HintPath>
-    </Reference>    <Reference Include="SQLite.Net.Async">
+    </Reference>
+    <Reference Include="SQLite.Net.Async">
       <HintPath>..\packages\SQLite.Net.Async-PCL.3.1.1\lib\portable-win8+net45+wp8+wpa81+MonoAndroid1+MonoTouch1\SQLite.Net.Async.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.Practices.ServiceLocation">
@@ -297,6 +297,7 @@
       <DependentUpon>Style.cs</DependentUpon>
     </Compile>
     <Compile Include="Theme\Style.cs" />
+    <Compile Include="Theme\Style.Migration.cs" />
     <Compile Include="Theme\Style.Login.cs">
       <DependentUpon>Style.cs</DependentUpon>
     </Compile>
@@ -423,6 +424,7 @@
     <Compile Include="Misc\OldSettingsStore.cs" />
     <Compile Include="Misc\NSTimeProvider.cs" />
     <Compile Include="Misc\StringExtensions.cs" />
+    <Compile Include="ViewControllers\MigrationViewController.cs" />
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>

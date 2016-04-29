@@ -1,6 +1,4 @@
-﻿
-using System;
-using System.Threading;
+﻿using System.Threading;
 using System.Threading.Tasks;
 using Cirrious.FluentLayouts.Touch;
 using Toggl.Phoebe;
@@ -28,27 +26,27 @@ namespace Toggl.Ross.ViewControllers
 
         public override void ViewDidLoad()
         {
-            this.View.BackgroundColor = UIColor.White;
+            View.BackgroundColor = UIColor.White;
 
-            this.View.Add(this.titleLabel = new UILabel
+            View.Add(titleLabel = new UILabel
             {
                 Text = "MigratingLocalData".Tr()
             } .Apply(Style.Migration.Text));
 
-            this.View.Add(this.progressBar = new UIProgressView
+            View.Add(progressBar = new UIProgressView
             {
                 Progress = 0,
             } .Apply(Style.Migration.ProgressBar));
 
             View.AddConstraints(
-                this.titleLabel.AtTopOf(this.View, 150),
-                this.titleLabel.AtLeftOf(this.View, 25),
-                this.titleLabel.AtRightOf(this.View, 25),
+                titleLabel.AtTopOf(View, 150),
+                titleLabel.AtLeftOf(View, 25),
+                titleLabel.AtRightOf(View, 25),
 
-                this.progressBar.AtTopOf(this.View, 200),
-                this.progressBar.AtLeftOf(this.View, 25),
-                this.progressBar.AtRightOf(this.View, 25),
-                this.progressBar.Height().EqualTo(4)
+                progressBar.AtTopOf(View, 200),
+                progressBar.AtLeftOf(View, 25),
+                progressBar.AtRightOf(View, 25),
+                progressBar.Height().EqualTo(4)
             );
 
             View.SubviewsDoNotTranslateAutoresizingMaskIntoConstraints();
@@ -57,33 +55,32 @@ namespace Toggl.Ross.ViewControllers
 
         public override void ViewDidAppear(bool animated)
         {
-            this.migrateAsync();
+            Task.Run(() =>
+            {
+                triggerMigration();
+            });
+
+            titleLabel.Text = "Starting migration!";
         }
 
-        private async void migrateAsync()
+        private void triggerMigration()
         {
-            // for testing the `migrateFake` method can be used here
-            var success = await Task.Run(this.migrate);
+            var migrationResult = DatabaseHelper.Migrate(
+                                      ServiceContainer.Resolve<IPlatformUtils>().SQLiteInfo,
+                                      DatabaseHelper.GetDatabaseDirectory(),
+                                      oldVersion, newVersion,
+                                      setProgress
+                                  );
 
-            if (success)
+            if (migrationResult)
             {
-                RxChain.Send(new DataMsg.ReloadDatabase());
+                RxChain.Send(new DataMsg.InitStateAfterMigration());
             }
             else
             {
                 // TODO: show error message
-                this.titleLabel.Text = "Oh no, something went wrong!";
+                titleLabel.Text = "Oh no, something went wrong!";
             }
-        }
-
-        private bool migrate()
-        {
-            return DatabaseHelper.Migrate(
-                       ServiceContainer.Resolve<IPlatformUtils>().SQLiteInfo,
-                       DatabaseHelper.GetDatabaseDirectory(),
-                       this.oldVersion, this.newVersion,
-                       this.setProgress
-                   );
         }
 
         // method for testing
@@ -92,16 +89,16 @@ namespace Toggl.Ross.ViewControllers
             for (int i = 1; i <= 5; i++)
             {
                 Thread.Sleep(1000);
-                this.setProgress(i / 5f);
+                setProgress(i / 5f);
             }
             return true;
         }
 
         private void setProgress(float percentage)
         {
-            this.InvokeOnMainThread(() =>
+            InvokeOnMainThread(() =>
             {
-                this.progressBar.SetProgress(percentage, percentage >= this.progressBar.Progress);
+                progressBar.SetProgress(percentage, percentage >= progressBar.Progress);
             });
         }
     }

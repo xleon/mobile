@@ -89,7 +89,7 @@ namespace Toggl.Phoebe.Reactive
                    .Add(typeof(DataMsg.ProjectDataPut), ProjectDataPut)
                    .Add(typeof(DataMsg.UserDataPut), UserDataPut)
                    .Add(typeof(DataMsg.ResetState), Reset)
-                   .Add(typeof(DataMsg.ReloadDatabase), ReloadDatabase)
+                   .Add(typeof(DataMsg.InitStateAfterMigration), InitStateAfterMigration)
                    .Add(typeof(DataMsg.UpdateSetting), UpdateSettings);
         }
 
@@ -479,11 +479,38 @@ namespace Toggl.Phoebe.Reactive
             return DataSyncMsg.Create(appState);
         }
 
-        static DataSyncMsg<AppState> ReloadDatabase(AppState state, DataMsg msg)
+        static DataSyncMsg<AppState> InitStateAfterMigration(AppState state, DataMsg msg)
         {
-            var appState = AppState.Init();
+            var dataStore = ServiceContainer.Resolve<ISyncDataStore>();
+            var userData = new UserData();
+            var projects = new Dictionary<Guid, IProjectData>();
+            var projectUsers = new Dictionary<Guid, IProjectUserData>();
+            var workspaces = new Dictionary<Guid, IWorkspaceData>();
+            var workspaceUserData = new Dictionary<Guid, IWorkspaceUserData>();
+            var clients = new Dictionary<Guid, IClientData>();
+            var tasks = new Dictionary<Guid, ITaskData>();
+            var tags = new Dictionary<Guid, ITagData>();
 
-            return DataSyncMsg.Create(appState);
+            userData = dataStore.Table<UserData>().First();
+            dataStore.Table<WorkspaceData>().ForEach(x => workspaces.Add(x.Id, x));
+            dataStore.Table<WorkspaceUserData>().ForEach(x => workspaceUserData.Add(x.Id, x));
+            dataStore.Table<ProjectData>().ForEach(x => projects.Add(x.Id, x));
+            dataStore.Table<ProjectUserData>().ForEach(x => projectUsers.Add(x.Id, x));
+            dataStore.Table<ClientData>().ForEach(x => clients.Add(x.Id, x));
+            dataStore.Table<TaskData>().ForEach(x => tasks.Add(x.Id, x));
+            dataStore.Table<TagData>().ForEach(x => tags.Add(x.Id, x));
+
+            return DataSyncMsg.Create(state.With(
+                                          requestInfo: RequestInfo.Empty,
+                                          user: userData,
+                                          workspaces: workspaces,
+                                          projects: projects,
+                                          workspaceUsers: workspaceUserData,
+                                          projectUsers: projectUsers,
+                                          clients: clients,
+                                          tasks: tasks,
+                                          tags: tags,
+                                          timeEntries: new Dictionary<Guid, RichTimeEntry>()));
         }
 
         static DataSyncMsg<AppState> UpdateSettings(AppState state, DataMsg msg)

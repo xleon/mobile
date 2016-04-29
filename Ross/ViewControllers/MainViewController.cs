@@ -106,10 +106,10 @@ namespace Toggl.Ross.ViewControllers
 
         private void ResetRootViewController(IUserData userData)
         {
-            if (this.tryMigrateDatabase(userData))
+            if (tryMigrateDatabase(userData))
                 return;
 
-            this.proceedToWelcomeOrLogViewController(userData);
+            proceedToWelcomeOrLogViewController(userData);
         }
 
         private bool tryMigrateDatabase(IUserData userData)
@@ -136,8 +136,7 @@ namespace Toggl.Ross.ViewControllers
             {
                 // TODO Rx @alfonso Keep this call here explicitly or init
                 // the state with the request if user is logged.
-                if (emptyStack)
-                    RxChain.Send(new ServerRequest.GetChanges());
+                RxChain.Send(new ServerRequest.GetChanges());
                 vc = new LogViewController();
                 MenuEnabled = true;
             }

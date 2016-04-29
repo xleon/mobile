@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.IO;
 using SQLite.Net;
 using SQLite.Net.Interop;
@@ -26,6 +25,45 @@ namespace Toggl.Phoebe.Data
             return Environment.GetFolderPath(Environment.SpecialFolder.Personal);
         }
 
+        /// <summary>
+        /// Only for testing po
+        /// </summary>
+        public static void CreateDummyOldDb(ISQLitePlatform platformInfo, int dbVersion)
+        {
+            var dbPath = GetDatabasePath(GetDatabaseDirectory(), dbVersion);
+            var cnnString = new SQLiteConnectionString(dbPath, true);
+            var cnn = new SQLiteConnectionWithLock(platformInfo, cnnString);
+
+            // Get olf types
+            var dbTypes = new List<Type>();
+            if (dbVersion == 0)
+            {
+                dbTypes = new List<Type>
+                {
+                    typeof(Toggl.Phoebe.Data.Models.Old.DB_VERSION_0.UserData),
+                    typeof(Toggl.Phoebe.Data.Models.Old.DB_VERSION_0.WorkspaceData),
+                    typeof(Toggl.Phoebe.Data.Models.Old.DB_VERSION_0.WorkspaceUserData),
+                    typeof(Toggl.Phoebe.Data.Models.Old.DB_VERSION_0.ProjectData),
+                    typeof(Toggl.Phoebe.Data.Models.Old.DB_VERSION_0.ProjectUserData),
+                    typeof(Toggl.Phoebe.Data.Models.Old.DB_VERSION_0.ClientData),
+                    typeof(Toggl.Phoebe.Data.Models.Old.DB_VERSION_0.TaskData),
+                    typeof(Toggl.Phoebe.Data.Models.Old.DB_VERSION_0.TagData),
+                    typeof(Toggl.Phoebe.Data.Models.Old.DB_VERSION_0.TimeEntryData)
+                };
+
+                foreach (var t in dbTypes)
+                    cnn.CreateTable(t);
+
+                cnn.Insert(new Toggl.Phoebe.Data.Models.Old.DB_VERSION_0.UserData
+                {
+                    Id = Guid.NewGuid(),
+                    RemoteId = 11,
+                    Name = "toggl"
+                });
+            }
+
+            cnn.Close();
+        }
 
         public static int GetVersion(SQLiteConnection connection)
         {

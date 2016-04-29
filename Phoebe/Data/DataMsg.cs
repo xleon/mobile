@@ -81,7 +81,7 @@ namespace Toggl.Phoebe.Data
         {
         }
 
-        public sealed class ReloadDatabase : DataMsg
+        public sealed class InitStateAfterMigration : DataMsg
         {
         }
 

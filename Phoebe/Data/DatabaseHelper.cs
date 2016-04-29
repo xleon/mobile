@@ -26,7 +26,7 @@ namespace Toggl.Phoebe.Data
         }
 
         /// <summary>
-        /// Only for testing po
+        /// Only for testing purposes
         /// </summary>
         public static void CreateDummyOldDb(ISQLitePlatform platformInfo, int dbVersion)
         {
@@ -40,21 +40,21 @@ namespace Toggl.Phoebe.Data
             {
                 dbTypes = new List<Type>
                 {
-                    typeof(Toggl.Phoebe.Data.Models.Old.DB_VERSION_0.UserData),
-                    typeof(Toggl.Phoebe.Data.Models.Old.DB_VERSION_0.WorkspaceData),
-                    typeof(Toggl.Phoebe.Data.Models.Old.DB_VERSION_0.WorkspaceUserData),
-                    typeof(Toggl.Phoebe.Data.Models.Old.DB_VERSION_0.ProjectData),
-                    typeof(Toggl.Phoebe.Data.Models.Old.DB_VERSION_0.ProjectUserData),
-                    typeof(Toggl.Phoebe.Data.Models.Old.DB_VERSION_0.ClientData),
-                    typeof(Toggl.Phoebe.Data.Models.Old.DB_VERSION_0.TaskData),
-                    typeof(Toggl.Phoebe.Data.Models.Old.DB_VERSION_0.TagData),
-                    typeof(Toggl.Phoebe.Data.Models.Old.DB_VERSION_0.TimeEntryData)
+                    typeof(Models.Old.DB_VERSION_0.UserData),
+                    typeof(Models.Old.DB_VERSION_0.WorkspaceData),
+                    typeof(Models.Old.DB_VERSION_0.WorkspaceUserData),
+                    typeof(Models.Old.DB_VERSION_0.ProjectData),
+                    typeof(Models.Old.DB_VERSION_0.ProjectUserData),
+                    typeof(Models.Old.DB_VERSION_0.ClientData),
+                    typeof(Models.Old.DB_VERSION_0.TaskData),
+                    typeof(Models.Old.DB_VERSION_0.TagData),
+                    typeof(Models.Old.DB_VERSION_0.TimeEntryData)
                 };
 
                 foreach (var t in dbTypes)
                     cnn.CreateTable(t);
 
-                cnn.Insert(new Toggl.Phoebe.Data.Models.Old.DB_VERSION_0.UserData
+                cnn.Insert(new Models.Old.DB_VERSION_0.UserData
                 {
                     Id = Guid.NewGuid(),
                     RemoteId = 11,

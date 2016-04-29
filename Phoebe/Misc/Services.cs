@@ -24,8 +24,10 @@ namespace Toggl.Phoebe
 
         private static Data.ISyncDataStore CreateSyncDataStore()
         {
+            //
             // For testing pourpose
-            //Data.DatabaseHelper.CreateDummyOldDb(ServiceContainer.Resolve<IPlatformUtils>().SQLiteInfo, 0);
+            // Data.DatabaseHelper.CreateDummyOldDb(ServiceContainer.Resolve<IPlatformUtils>().SQLiteInfo, 0);
+            //
 
             string folder = Data.DatabaseHelper.GetDatabaseDirectory();
             var path = Data.DatabaseHelper.GetDatabasePath(folder, Data.SyncSqliteDataStore.DB_VERSION);

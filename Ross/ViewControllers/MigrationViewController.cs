@@ -17,6 +17,7 @@ namespace Toggl.Ross.ViewControllers
 
         private UILabel titleLabel;
         private UIProgressView progressBar;
+        private UIButton tryAgainBtn;
 
         public MigrationViewController(int oldVersion, int newVersion)
         {
@@ -38,6 +39,9 @@ namespace Toggl.Ross.ViewControllers
                 Progress = 0,
             } .Apply(Style.Migration.ProgressBar));
 
+            View.Add(tryAgainBtn = UIButton.FromType(UIButtonType.RoundedRect));
+            tryAgainBtn.SetTitle("Try again!", UIControlState.Normal);
+
             View.AddConstraints(
                 titleLabel.AtTopOf(View, 150),
                 titleLabel.AtLeftOf(View, 25),
@@ -46,41 +50,64 @@ namespace Toggl.Ross.ViewControllers
                 progressBar.AtTopOf(View, 200),
                 progressBar.AtLeftOf(View, 25),
                 progressBar.AtRightOf(View, 25),
-                progressBar.Height().EqualTo(4)
+                progressBar.Height().EqualTo(4),
+
+                tryAgainBtn.AtTopOf(View, 200),
+                tryAgainBtn.WithSameCenterX(View)
             );
 
             View.SubviewsDoNotTranslateAutoresizingMaskIntoConstraints();
-
         }
 
         public override void ViewDidAppear(bool animated)
         {
-            Task.Run(() =>
-            {
-                triggerMigration();
-            });
-
-            titleLabel.Text = "Starting migration!";
+            MigrateDatabase();
+            tryAgainBtn.TouchUpInside += (sender, e) => MigrateDatabase();
         }
 
-        private void triggerMigration()
+        private void MigrateDatabase()
         {
-            var migrationResult = DatabaseHelper.Migrate(
-                                      ServiceContainer.Resolve<IPlatformUtils>().SQLiteInfo,
-                                      DatabaseHelper.GetDatabaseDirectory(),
-                                      oldVersion, newVersion,
-                                      setProgress
-                                  );
+            Task.Run(() =>
+            {
+                var migrationResult = DatabaseHelper.Migrate(
+                                          ServiceContainer.Resolve<IPlatformUtils>().SQLiteInfo,
+                                          DatabaseHelper.GetDatabaseDirectory(),
+                                          oldVersion, newVersion,
+                                          setProgress
+                                      );
+                if (migrationResult)
+                {
+                    InvokeOnMainThread(() => DisplaySuccessState());
+                    RxChain.Send(new DataMsg.InitStateAfterMigration());
+                }
+                else
+                {
+                    InvokeOnMainThread(() => DisplayErrorState());
+                }
+            });
 
-            if (migrationResult)
-            {
-                RxChain.Send(new DataMsg.InitStateAfterMigration());
-            }
-            else
-            {
-                // TODO: show error message
-                titleLabel.Text = "Oh no, something went wrong!";
-            }
+            DisplayInitialState();
+        }
+
+        private void DisplayInitialState()
+        {
+            titleLabel.Text = "Starting migration!";
+            progressBar.Hidden = false;
+            tryAgainBtn.Hidden = true;
+        }
+
+        private void DisplaySuccessState()
+        {
+            titleLabel.Text = "Migration complete!";
+            progressBar.Hidden = true;
+            tryAgainBtn.Hidden = true;
+        }
+
+        private void DisplayErrorState()
+        {
+            titleLabel.Text = "Error migrating DB!";
+            progressBar.Hidden = true;
+            tryAgainBtn.Hidden = false;
         }
 
         // method for testing

@@ -106,13 +106,13 @@ namespace Toggl.Ross.ViewControllers
 
         private void ResetRootViewController(IUserData userData)
         {
-            if (this.tryMigrateDatabase(userData))
+            if (this.tryMigrateDatabaseThenProceed(userData))
                 return;
 
             this.proceedToWelcomeOrLogViewController(userData);
         }
 
-        private bool tryMigrateDatabase(IUserData userData)
+        private bool tryMigrateDatabaseThenProceed(IUserData userData)
         {
             var oldVersion = DatabaseHelper.CheckOldDb(DatabaseHelper.GetDatabaseDirectory());
             if (oldVersion == -1)

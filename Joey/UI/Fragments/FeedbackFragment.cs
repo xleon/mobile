@@ -34,6 +34,14 @@ namespace Toggl.Joey.UI.Fragments
         private static readonly int ratingNeutral = 2;
         private static readonly int ratingNegative = 3;
 
+        public FeedbackFragment()
+        {
+        }
+
+        public FeedbackFragment(IntPtr jref, Android.Runtime.JniHandleOwnership xfer) : base (jref, xfer)
+        {
+        }
+
         public override View OnCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
         {
             var view = inflater.Inflate (Resource.Layout.FeedbackFragment, container, false);

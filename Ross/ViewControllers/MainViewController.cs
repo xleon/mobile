@@ -106,6 +106,28 @@ namespace Toggl.Ross.ViewControllers
 
         private void ResetRootViewController(IUserData userData)
         {
+            if (tryMigrateDatabase(userData))
+                return;
+
+            proceedToWelcomeOrLogViewController(userData);
+        }
+
+        private bool tryMigrateDatabase(IUserData userData)
+        {
+            var oldVersion = DatabaseHelper.CheckOldDb(DatabaseHelper.GetDatabaseDirectory());
+            if (oldVersion == -1)
+                return false;
+
+            SetViewControllers(new[]
+            {
+                new MigrationViewController(oldVersion, SyncSqliteDataStore.DB_VERSION)
+            }, false);
+
+            return true;
+        }
+
+        private void proceedToWelcomeOrLogViewController(IUserData userData)
+        {
             UIViewController vc = null;
             bool isUserLogged = userData.Id != Guid.Empty;
             bool emptyStack = ViewControllers.Length < 1;
@@ -114,8 +136,7 @@ namespace Toggl.Ross.ViewControllers
             {
                 // TODO Rx @alfonso Keep this call here explicitly or init
                 // the state with the request if user is logged.
-                if (emptyStack)
-                    RxChain.Send(new ServerRequest.GetChanges());
+                RxChain.Send(new ServerRequest.GetChanges());
                 vc = new LogViewController();
                 MenuEnabled = true;
             }

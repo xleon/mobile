@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.IO;
 using SQLite.Net;
 using SQLite.Net.Interop;
@@ -19,6 +18,51 @@ namespace Toggl.Phoebe.Data
         public static string GetDatabasePath(string dbDir, int dbVersion)
         {
             return Path.Combine(dbDir, dbVersion == 0 ? "toggl.db" : $"toggl.{dbVersion}.db");
+        }
+
+        public static string GetDatabaseDirectory()
+        {
+            return Environment.GetFolderPath(Environment.SpecialFolder.Personal);
+        }
+
+        /// <summary>
+        /// Only for testing purposes
+        /// </summary>
+        public static void CreateDummyOldDb(ISQLitePlatform platformInfo, int dbVersion)
+        {
+            var dbPath = GetDatabasePath(GetDatabaseDirectory(), dbVersion);
+            var cnnString = new SQLiteConnectionString(dbPath, true);
+            var cnn = new SQLiteConnectionWithLock(platformInfo, cnnString);
+
+            // Get olf types
+            var dbTypes = new List<Type>();
+            if (dbVersion == 0)
+            {
+                dbTypes = new List<Type>
+                {
+                    typeof(Models.Old.DB_VERSION_0.UserData),
+                    typeof(Models.Old.DB_VERSION_0.WorkspaceData),
+                    typeof(Models.Old.DB_VERSION_0.WorkspaceUserData),
+                    typeof(Models.Old.DB_VERSION_0.ProjectData),
+                    typeof(Models.Old.DB_VERSION_0.ProjectUserData),
+                    typeof(Models.Old.DB_VERSION_0.ClientData),
+                    typeof(Models.Old.DB_VERSION_0.TaskData),
+                    typeof(Models.Old.DB_VERSION_0.TagData),
+                    typeof(Models.Old.DB_VERSION_0.TimeEntryData)
+                };
+
+                foreach (var t in dbTypes)
+                    cnn.CreateTable(t);
+
+                cnn.Insert(new Models.Old.DB_VERSION_0.UserData
+                {
+                    Id = Guid.NewGuid(),
+                    RemoteId = 11,
+                    Name = "toggl"
+                });
+            }
+
+            cnn.Close();
         }
 
         public static int GetVersion(SQLiteConnection connection)

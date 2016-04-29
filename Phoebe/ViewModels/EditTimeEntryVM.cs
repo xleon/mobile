@@ -161,16 +161,24 @@ namespace Toggl.Phoebe.ViewModels
             // from ViewModels. It will help in the future.
             // Thinking always with translation in mind.
             if (await IsStartStopTimeCorrect(richData.Data.StartTime + diffTime, isStart: true))
-                UpdateView(x => x.ChangeStartTime(x.StartTime + diffTime), nameof(Duration), nameof(StartDate), nameof(StopDate));
-
+            {
+                if (richData.Data.State != TimeEntryState.Running)
+                    UpdateView(x => x.ChangeStartTime(x.StartTime + diffTime), nameof(Duration), nameof(StartDate), nameof(StopDate));
+                else
+                    UpdateView(x => x.ChangeStartTime(x.StartTime + diffTime), nameof(Duration), nameof(StartDate));
+            }
             ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Change Start Time";
         }
 
         public async void ChangeTimeEntryStart(DateTime newStartTime)
         {
             if (await IsStartStopTimeCorrect(newStartTime, isStart: true))
-                UpdateView(x => x.ChangeStartTime(newStartTime), nameof(Duration), nameof(StartDate), nameof(StopDate));
-
+            {
+                if (richData.Data.State != TimeEntryState.Running)
+                    UpdateView(x => x.ChangeStartTime(newStartTime), nameof(Duration), nameof(StartDate), nameof(StopDate));
+                else
+                    UpdateView(x => x.ChangeStartTime(newStartTime), nameof(Duration), nameof(StartDate));
+            }
             ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Change Start Time";
         }
 

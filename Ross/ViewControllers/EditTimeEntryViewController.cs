@@ -68,8 +68,6 @@ namespace Toggl.Ross.ViewControllers
             wrapper.Add(startStopView = new StartStopView
             {
                 TranslatesAutoresizingMaskIntoConstraints = false,
-                StartTime = ViewModel.StartDate,
-                StopTime = ViewModel.StopDate,
             });
             startStopView.SelectedChanged += OnStartStopViewSelectedChanged;
 
@@ -562,7 +560,7 @@ namespace Toggl.Ross.ViewControllers
                         stopDateLabel.Text = time.ToLocalizedDateString();
                         stopTimeLabel.Text = time.ToLocalizedTimeString();
                     }
-                    SetStopTimeHidden(stopTime == DateTime.MaxValue, Superview != null);
+                    SetStopTimeHidden(stopTime == DateTime.MaxValue, false);
 
                     if (stopTime == DateTime.MaxValue && Selected == TimeKind.Stop)
                     {
@@ -636,7 +634,7 @@ namespace Toggl.Ross.ViewControllers
 
                     UIView.AnimateKeyframes(
                         0.4, 0,
-                        UIViewKeyframeAnimationOptions.CalculationModeCubic | UIViewKeyframeAnimationOptions.BeginFromCurrentState,
+                        UIViewKeyframeAnimationOptions.CalculationModeCubic,
                         delegate
                     {
                         UIView.AddKeyframeWithRelativeStartTime(0, 1, delegate
@@ -668,7 +666,7 @@ namespace Toggl.Ross.ViewControllers
 
                     UIView.AnimateKeyframes(
                         0.4, 0,
-                        UIViewKeyframeAnimationOptions.CalculationModeCubic | UIViewKeyframeAnimationOptions.BeginFromCurrentState,
+                        UIViewKeyframeAnimationOptions.CalculationModeCubic,
                         delegate
                     {
                         UIView.AddKeyframeWithRelativeStartTime(0, 1, delegate

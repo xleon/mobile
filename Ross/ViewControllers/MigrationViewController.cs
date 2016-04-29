@@ -63,8 +63,8 @@ namespace Toggl.Ross.ViewControllers
 
         private async void migrateAsync()
         {
-            // TODO: Replace with real `migrate` method
-            var success = await Task.Run(this.migrateFake);
+            // for testing the `migrateFake` method can be used here
+            var success = await Task.Run(this.migrate);
 
             if (success)
             {
@@ -73,6 +73,7 @@ namespace Toggl.Ross.ViewControllers
             else
             {
                 // TODO: show error message
+                this.titleLabel.Text = "Oh no, something went wrong!";
             }
         }
 
@@ -86,6 +87,7 @@ namespace Toggl.Ross.ViewControllers
                    );
         }
 
+        // method for testing
         private bool migrateFake()
         {
             for (int i = 1; i <= 5; i++)

@@ -81,6 +81,10 @@ namespace Toggl.Phoebe.Data
         {
         }
 
+        public sealed class ReloadDatabase : DataMsg
+        {
+        }
+
         public sealed class TimeEntriesLoad : DataMsg
         {
         }

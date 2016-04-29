@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Cirrious.FluentLayouts.Touch;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Data;
+using Toggl.Phoebe.Reactive;
 using Toggl.Ross.Theme;
 using UIKit;
 using XPlatUtils;
@@ -15,16 +16,14 @@ namespace Toggl.Ross.ViewControllers
     {
         private readonly int oldVersion;
         private readonly int newVersion;
-        private readonly Action onSuccess;
 
         private UILabel titleLabel;
         private UIProgressView progressBar;
 
-        public MigrationViewController(int oldVersion, int newVersion, Action onSuccess)
+        public MigrationViewController(int oldVersion, int newVersion)
         {
             this.oldVersion = oldVersion;
             this.newVersion = newVersion;
-            this.onSuccess = onSuccess;
         }
 
         public override void ViewDidLoad()
@@ -68,7 +67,7 @@ namespace Toggl.Ross.ViewControllers
 
             if (success)
             {
-                this.onSuccess();
+                RxChain.Send(new DataMsg.ReloadDatabase());
             }
             else
             {

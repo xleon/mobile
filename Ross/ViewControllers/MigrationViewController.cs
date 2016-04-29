@@ -23,6 +23,7 @@ namespace Toggl.Ross.ViewControllers
         {
             this.oldVersion = oldVersion;
             this.newVersion = newVersion;
+            Title = "MigratingTitle".Tr();
         }
 
         public override void ViewDidLoad()
@@ -91,7 +92,7 @@ namespace Toggl.Ross.ViewControllers
 
         private void DisplayInitialState()
         {
-            titleLabel.Text = "Starting migration!";
+            titleLabel.Text = "MigratingLocalData".Tr();
             progressBar.Hidden = false;
             tryAgainBtn.Hidden = true;
         }

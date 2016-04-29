@@ -89,6 +89,7 @@ namespace Toggl.Phoebe.Reactive
                    .Add(typeof(DataMsg.ProjectDataPut), ProjectDataPut)
                    .Add(typeof(DataMsg.UserDataPut), UserDataPut)
                    .Add(typeof(DataMsg.ResetState), Reset)
+                   .Add(typeof(DataMsg.ReloadDatabase), ReloadDatabase)
                    .Add(typeof(DataMsg.UpdateSetting), UpdateSettings);
         }
 
@@ -474,6 +475,13 @@ namespace Toggl.Phoebe.Reactive
 
             // TODO: Ping analytics?
             // TODO: Call Log service?
+
+            return DataSyncMsg.Create(appState);
+        }
+
+        static DataSyncMsg<AppState> ReloadDatabase(AppState state, DataMsg msg)
+        {
+            var appState = AppState.Init();
 
             return DataSyncMsg.Create(appState);
         }

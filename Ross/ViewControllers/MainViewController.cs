@@ -21,6 +21,7 @@ namespace Toggl.Ross.ViewControllers
         private UITapGestureRecognizer tapGesture;
         private UIPanGestureRecognizer mainPanGesture, leftPanGestue;
         private CGPoint draggingPoint;
+        private UIImageView splashBg;
 
         private const float menuSlideAnimationDuration = .3f;
         private const int menuOffset = 60;
@@ -41,6 +42,17 @@ namespace Toggl.Ross.ViewControllers
             View.Apply(Style.Screen);
             NavigationBar.Apply(Style.NavigationBar);
             Delegate = new NavDelegate();
+
+            // Small hack to improve transition from
+            // splash image to corresponding viewController.
+            var launchImg = GetLaunchImage();
+            if (launchImg != null)
+            {
+                splashBg = new UIImageView(launchImg);
+                View.Add(splashBg);
+                UIView.Animate(0.2, 0.5, UIViewAnimationOptions.CurveEaseIn,
+                               () => splashBg.Alpha = 0, () => splashBg.RemoveFromSuperview());
+            }
 
             mainPanGesture = new UIPanGestureRecognizer(OnMainPanGesture)
             {
@@ -148,6 +160,7 @@ namespace Toggl.Ross.ViewControllers
 
             if (menu != null)
                 menu.ConfigureUserData(userData.Name, userData.Email, userData.ImageUrl);
+
             SetViewControllers(new [] { vc }, !emptyStack);
         }
 
@@ -369,6 +382,23 @@ namespace Toggl.Ross.ViewControllers
             {
                 return InteractiveTransition;
             }
+        }
+
+        private UIImage GetLaunchImage()
+        {
+            UIImage img = null;
+            var allPngImageNames = NSBundle.MainBundle.PathsForResources("png");
+            foreach (var imgName in allPngImageNames)
+            {
+                if (imgName.Contains("LaunchImage"))
+                {
+                    img = UIImage.FromBundle(imgName);
+                    if (img.CurrentScale.Equals(UIScreen.MainScreen.Scale) && img.Size.Equals(UIScreen.MainScreen.Bounds.Size))
+                        return img;
+                }
+            }
+
+            return img;
         }
     }
 

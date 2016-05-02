@@ -84,11 +84,16 @@ namespace Toggl.Phoebe.Reactive
             networkPresence = ServiceContainer.Resolve<INetworkPresence> ();
             client = ServiceContainer.Resolve<ITogglClient> ();
 
-            StoreManager
-                .Singleton
-                .Observe()
-                .SelectAsync(EnqueueOrSend)
-                .Subscribe(_ => { }, ex => logError(ex));
+            StoreManager.Singleton
+            .Observe()
+            .SelectAsync(EnqueueOrSend)
+            .Subscribe((_) => { },
+            (ex) =>
+            {
+                logError(ex, "Failed to sync. Main observer bug.");
+                // Should pass a generic request?
+                RxChain.Send(new DataMsg.ServerResponse(new ServerRequest.GetChanges(), ex));
+            });
 
             requestManager
             .Synchronize()  // Make sure requests are run one after the other
@@ -115,7 +120,13 @@ namespace Toggl.Phoebe.Reactive
                         throw new Exception("Unexpected Authenticate operation");
                 }
             }))
-            .Subscribe(_ => { }, ex => logError(ex));
+            .Subscribe((_) => { },
+            (ex) =>
+            {
+                logError(ex, "Failed to sync. RequestManager bug.");
+                // Should pass a dummy request for this cases?
+                RxChain.Send(new DataMsg.ServerResponse(new ServerRequest.GetChanges(), ex));
+            });
         }
 
         void logError(Exception ex, string msg = "Failed to sync")

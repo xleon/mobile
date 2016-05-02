@@ -38,9 +38,9 @@ namespace Toggl.Phoebe.ViewModels
         private readonly SynchronizationContext uiContext;
         private IDisposable durationSubscriber;
 
-        public Tuple<string, Guid> LastCRUDError { get; private set; }
         public bool IsFullSyncing { get; private set; }
         public bool HasSyncErrors { get; private set; }
+        public bool HasCRUDError { get; private set; }
         public bool IsGroupedMode { get; private set; }
         public string Duration { get; private set; }
         public bool IsEntryRunning { get; private set; }
@@ -73,7 +73,6 @@ namespace Toggl.Phoebe.ViewModels
                               .ObserveOn(uiContext);
             durationSubscriber = TimerObservable.Subscribe(x => UpdateDuration());
 
-            // TODO: RX Review this line.
             // The ViewModel is created and start to load
             // content. This line was in the View before because
             // was an async method.
@@ -199,11 +198,10 @@ namespace Toggl.Phoebe.ViewModels
 
             // Check full Sync info
             IsFullSyncing = reqInfo.Running.Any(x => (x is ServerRequest.GetChanges || x is ServerRequest.GetCurrentState));
-            HasSyncErrors = reqInfo.HadErrors && IsFullSyncing;
-
+            // Sync error
+            HasSyncErrors = reqInfo.HadErrors && reqInfo.ErrorInfo.Item2 == Guid.Empty;
             // Crud error
-            if (reqInfo.HadErrors && reqInfo.ErrorInfo != null)
-                LastCRUDError = reqInfo.ErrorInfo;
+            HasCRUDError = reqInfo.HadErrors && reqInfo.ErrorInfo.Item2 != Guid.Empty;
 
             var newLoadInfo = new LoadInfoType(
                 reqInfo.Running.Any(x => x is ServerRequest.DownloadEntries),

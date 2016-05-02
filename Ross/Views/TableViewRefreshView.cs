@@ -17,11 +17,16 @@ namespace Toggl.Ross.Views
 
         public void AdaptToTableView(UITableView tableView)
         {
+            tableView.AddSubview(this);
+
+            // visual hack to hide a white
+            // space between control and table header.
             var tableFrame = tableView.Frame;
             tableFrame.Y = -tableFrame.Size.Height;
             var view = new UIView(tableFrame);
             view.BackgroundColor = BackgroundColor;
             tableView.InsertSubviewBelow(view, this);
         }
+
     }
 }

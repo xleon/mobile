@@ -19,9 +19,9 @@ using UIKit;
 
 namespace Toggl.Ross.ViewControllers
 {
-    public class
-        LogViewController : UITableViewController
+    public class LogViewController : UIViewController
     {
+        private const int StatusBarHeight = 60;
         private const string DefaultDurationText = " 00:00:00 ";
         readonly static NSString EntryCellId = new NSString("EntryCellId");
         readonly static NSString SectionCellId = new NSString("SectionCellId");
@@ -33,19 +33,16 @@ namespace Toggl.Ross.ViewControllers
         private UIButton actionButton;
         private UIBarButtonItem navigationButton;
         private UIActivityIndicatorView defaultFooterView;
+        private StatusView statusView;
+        private UITableView tableView;
 
         private Binding<LogTimeEntriesVM.LoadInfoType, LogTimeEntriesVM.LoadInfoType> loadInfoBinding, loadMoreBinding;
         private Binding<int, int> hasItemsBinding;
         private Binding<string, string> durationBinding;
-        private Binding<Tuple<string, Guid>, Tuple<string, Guid>> constrainErrorBinding;
-        private Binding<bool, bool> syncBinding, hasErrorBinding, isRunningBinding;
+        private Binding<bool, bool> syncErrorBinding, syncBinding, hasErrorBinding, isRunningBinding, constrainErrorBinding;
         private Binding<ObservableCollection<IHolder>, ObservableCollection<IHolder>> collectionBinding;
 
-        protected LogTimeEntriesVM ViewModel { get; set;}
-
-        public LogViewController() : base(UITableViewStyle.Plain)
-        {
-        }
+        protected LogTimeEntriesVM ViewModel { get; set; }
 
         public override void LoadView()
         {
@@ -53,7 +50,19 @@ namespace Toggl.Ross.ViewControllers
 
             NavigationItem.LeftBarButtonItem = new UIBarButtonItem(
                 Image.IconNav.ImageWithRenderingMode(UIImageRenderingMode.AlwaysOriginal),
-                UIBarButtonItemStyle.Plain, OnNavigationButtonTouched);
+                UIBarButtonItemStyle.Plain, OnNavigationBtnPressed);
+
+            tableView = new UITableView(View.Frame, UITableViewStyle.Plain);
+            Add(tableView);
+
+            statusView = new StatusView
+            {
+                Retry = OnStatusRetryBtnPressed,
+                Cancel = () => StatusBarShown = false,
+                StatusFailText = "ReportsStatusFailText".Tr(),
+                StatusSyncingText = "ReportsStatusSyncText".Tr()
+            };
+            Add(statusView);
 
             defaultEmptyView = new SimpleEmptyView
             {
@@ -67,7 +76,7 @@ namespace Toggl.Ross.ViewControllers
                 Message = "LogOBMEmptyMessage".Tr(),
             };
 
-            reloadView = new ReloadTableViewFooter()
+            reloadView = new ReloadTableViewFooter
             {
                 SyncButtonPressedHandler = OnTryAgainBtnPressed
             };
@@ -99,16 +108,15 @@ namespace Toggl.Ross.ViewControllers
         {
             base.ViewDidLoad();
             EdgesForExtendedLayout = UIRectEdge.None;
-            TableView.RegisterClassForCellReuse(typeof(TimeEntryCell), EntryCellId);
-            TableView.RegisterClassForCellReuse(typeof(SectionCell), SectionCellId);
-            TableView.SetEditing(false, true);
+            tableView.RegisterClassForCellReuse(typeof(TimeEntryCell), EntryCellId);
+            tableView.RegisterClassForCellReuse(typeof(SectionCell), SectionCellId);
+            tableView.SetEditing(false, true);
 
             // Create view model
             ViewModel = new LogTimeEntriesVM(StoreManager.Singleton.AppState);
 
             var headerView = new TableViewRefreshView();
-            RefreshControl = headerView;
-            headerView.AdaptToTableView(TableView);
+            headerView.AdaptToTableView(tableView);
             headerView.ValueChanged += (sender, e) => ViewModel.TriggerFullSync();
 
             // Bindings
@@ -119,14 +127,24 @@ namespace Toggl.Ross.ViewControllers
                     headerView.EndRefreshing();
                 }
             });
-
-            loadInfoBinding = this.SetBinding(() => ViewModel.LoadInfo).WhenSourceChanges(SetFooterState);
+            syncErrorBinding = this.SetBinding(() => ViewModel.HasSyncErrors).WhenSourceChanges(() =>
+            {
+                StatusBarShown = ViewModel.HasSyncErrors;
+                if (ViewModel.HasSyncErrors)
+                {
+                    statusView.StatusFailText = StoreManager.Singleton.AppState.RequestInfo.ErrorInfo.Item1;
+                }
+            });
             hasItemsBinding = this.SetBinding(() => ViewModel.Collection.Count).WhenSourceChanges(SetCollectionState);
             loadMoreBinding = this.SetBinding(() => ViewModel.LoadInfo).WhenSourceChanges(LoadMoreIfNeeded);
-            constrainErrorBinding = this.SetBinding(() => ViewModel.LastCRUDError).WhenSourceChanges(ShowConstrainError);
+            loadInfoBinding = this.SetBinding(() => ViewModel.LoadInfo).WhenSourceChanges(SetFooterState);
+            constrainErrorBinding = this.SetBinding(() => ViewModel.HasCRUDError).WhenSourceChanges(() =>
+            {
+                ShowConstrainError(StoreManager.Singleton.AppState.RequestInfo.ErrorInfo);
+            });
             collectionBinding = this.SetBinding(() => ViewModel.Collection).WhenSourceChanges(() =>
             {
-                TableView.Source = new TimeEntriesSource(this, ViewModel);
+                tableView.Source = new TimeEntriesSource(this, ViewModel);
             });
             isRunningBinding = this.SetBinding(() => ViewModel.IsEntryRunning).WhenSourceChanges(SetStartStopButtonState);
             durationBinding = this.SetBinding(() => ViewModel.Duration).WhenSourceChanges(() => durationButton.SetTitle(ViewModel.Duration, UIControlState.Normal));
@@ -148,6 +166,7 @@ namespace Toggl.Ross.ViewControllers
             obmEmptyView.Frame = new CGRect(25f, 15f, View.Frame.Size.Width - 50f, 200f);
             reloadView.Bounds = new CGRect(0f, 0f, View.Frame.Size.Width, 70f);
             reloadView.Center = new CGPoint(View.Center.X, reloadView.Center.Y);
+            statusView.Frame = new CGRect(0, View.Frame.Height, View.Frame.Width, StatusBarHeight);
         }
 
         private void OnDurationButtonTouchUpInside(object sender, EventArgs e)
@@ -220,11 +239,11 @@ namespace Toggl.Ross.ViewControllers
                     defaultFooterView.Frame = new CGRect(0, 0, 50, 50);
                     defaultFooterView.StartAnimating();
                 }
-                TableView.TableFooterView = defaultFooterView;
+                tableView.TableFooterView = defaultFooterView;
             }
             else if (ViewModel.LoadInfo.HasMore && ViewModel.LoadInfo.HadErrors)
             {
-                TableView.TableFooterView = reloadView;
+                tableView.TableFooterView = reloadView;
             }
             else if (!ViewModel.LoadInfo.HasMore && !ViewModel.LoadInfo.HadErrors)
             {
@@ -255,7 +274,7 @@ namespace Toggl.Ross.ViewControllers
                 emptyView = obmEmptyView;
             }
 
-            TableView.TableFooterView = hasItems ? new UIView() : emptyView;
+            tableView.TableFooterView = hasItems ? new UIView() : emptyView;
         }
 
         private void OnCountinueTimeEntry(int index)
@@ -268,28 +287,60 @@ namespace Toggl.Ross.ViewControllers
             ViewModel.LoadMore();
         }
 
-        private void OnNavigationButtonTouched(object sender, EventArgs e)
+        private void OnNavigationBtnPressed(object sender, EventArgs e)
         {
             var main = AppDelegate.TogglWindow.RootViewController as MainViewController;
             main.ToggleMenu();
         }
 
-        private void ShowConstrainError()
+        private void OnStatusRetryBtnPressed()
         {
-            if (ViewModel.LastCRUDError != null)
+            ViewModel.TriggerFullSync();
+        }
+
+        private void ShowConstrainError(Tuple<string, Guid> lastErrorInfo)
+        {
+            if (ViewModel.HasCRUDError)
             {
                 var alert = new UIAlertView(
                     "RequiredfieldMessage".Tr(),
-                    ViewModel.LastCRUDError.Item1,
+                    lastErrorInfo.Item1,
                     null, "RequiredfieldEditBtn".Tr());
                 alert.Clicked += (sender, e) =>
                 {
                     var controllers = new List<UIViewController>(NavigationController.ViewControllers);
-                    var editController = new EditTimeEntryViewController(ViewModel.LastCRUDError.Item2);
+                    var editController = new EditTimeEntryViewController(lastErrorInfo.Item2);
                     controllers.Add(editController);
                     NavigationController.SetViewControllers(controllers.ToArray(), true);
                 };
                 alert.Show();
+            }
+        }
+
+        private bool showStatus;
+
+        private bool StatusBarShown
+        {
+            get { return showStatus; }
+            set
+            {
+                if (showStatus == value)
+                {
+                    return;
+                }
+                showStatus = value;
+
+                var size = View.Frame.Size;
+                // small hack to avoid a weird effect when
+                // the status is defined before align subviews.
+                if (statusView.Frame.Y < size.Height - StatusBarHeight)
+                    statusView.Frame = new CGRect(0, View.Frame.Height, View.Frame.Width, StatusBarHeight);
+
+                UIView.Animate(0.5f, () =>
+                {
+                    var statusY = showStatus ? size.Height - StatusBarHeight : size.Height + 2f;
+                    statusView.Frame = new CGRect(0, statusY, size.Width, StatusBarHeight);
+                });
             }
         }
 
@@ -301,7 +352,7 @@ namespace Toggl.Ross.ViewControllers
             private LogViewController owner;
             private IDisposable durationSuscriber;
 
-            public TimeEntriesSource(LogViewController owner, LogTimeEntriesVM viewModel) : base(owner.TableView, viewModel.Collection)
+            public TimeEntriesSource(LogViewController owner, LogTimeEntriesVM viewModel) : base(owner.tableView, viewModel.Collection)
             {
                 this.owner = owner;
                 VM = viewModel;
@@ -477,13 +528,13 @@ namespace Toggl.Ross.ViewControllers
                     AnchorPoint = CGPoint.Empty,
                     StartPoint = new CGPoint(0.0f, 0.0f),
                     EndPoint = new CGPoint(1.0f, 0.0f),
-                    Colors = new []
+                    Colors = new[]
                     {
                         UIColor.FromWhiteAlpha(1, 1).CGColor,
                         UIColor.FromWhiteAlpha(1, 1).CGColor,
                         UIColor.FromWhiteAlpha(1, 0).CGColor,
                     },
-                    Locations = new []
+                    Locations = new[]
                     {
                         NSNumber.FromFloat(0f),
                         NSNumber.FromFloat(0.9f),
@@ -512,7 +563,7 @@ namespace Toggl.Ross.ViewControllers
                 if (!string.IsNullOrWhiteSpace(info.ProjectData.Name))
                 {
                     projectName = info.ProjectData.Name;
-                    projectColor = UIColor.Clear.FromHex(ProjectData.HexColors [info.ProjectData.Color % ProjectData.HexColors.Length]);
+                    projectColor = UIColor.Clear.FromHex(ProjectData.HexColors[info.ProjectData.Color % ProjectData.HexColors.Length]);
 
                     if (!string.IsNullOrWhiteSpace(info.ClientData.Name))
                     {

@@ -109,7 +109,6 @@ namespace Toggl.Ross.ViewControllers
             LayoutStatusBar();
         }
 
-
         public override void ViewWillAppear(bool animated)
         {
             base.ViewWillAppear(animated);

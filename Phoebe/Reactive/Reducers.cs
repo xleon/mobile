@@ -124,8 +124,6 @@ namespace Toggl.Phoebe.Reactive
                                    r.State != TimeEntryState.New &&
                                    r.StartTime >= startDate && r.StartTime < endDate &&
                                    r.DeletedAt == null)
-                            // TODO TODO TODO: Rx why the entries are saved without local user ID.
-                            //r.UserId == state.User.Id)
                             .Take(Literals.TimeEntryLoadMaxInit)
                             .OrderByDescending(r => r.StartTime)
                             .ToList();
@@ -150,6 +148,7 @@ namespace Toggl.Phoebe.Reactive
             {
                 var reqInfo = state.RequestInfo.With(
                                   errorInfo: null,
+                                  running: new List<ServerRequest>(),
                                   hadErrors: false);
                 state = UpdateStateWithNewData(state, receivedData);
                 return DataSyncMsg.Create(state.With(requestInfo: reqInfo));
@@ -159,7 +158,7 @@ namespace Toggl.Phoebe.Reactive
                 state = UpdateStateWithNewData(state, receivedData);
                 var reqInfo = state.RequestInfo.With(
                                   errorInfo: null,
-                                  running: state.RequestInfo.Running.Where(x => x != req).ToList(),
+                                  running: new List<ServerRequest>(),
                                   hasMore: receivedData.OfType<TimeEntryData> ().Any(),
                                   hadErrors: false);
                 return DataSyncMsg.Create(state.With(requestInfo: reqInfo));
@@ -184,7 +183,7 @@ namespace Toggl.Phoebe.Reactive
                 var reqInfo = state.RequestInfo.With(
                                   errorInfo: null,
                                   hadErrors: false,
-                                  running: state.RequestInfo.Running.Where(x => x != req).ToList(),
+                                  running: new List<ServerRequest>(),
                                   getChangesLastRun: serverMsg.Timestamp);
 
                 return DataSyncMsg.Create(state.With(
@@ -212,7 +211,7 @@ namespace Toggl.Phoebe.Reactive
                 var reqInfo = state.RequestInfo.With(
                                   errorInfo: null,
                                   hadErrors: false,
-                                  running: state.RequestInfo.Running.Where(x => x != req).ToList(),
+                                  running: new List<ServerRequest> (),
                                   getChangesLastRun: serverMsg.Timestamp);
 
                 return DataSyncMsg.Create(state.With(
@@ -242,7 +241,7 @@ namespace Toggl.Phoebe.Reactive
 
                 var reqInfo = state.RequestInfo.With(
                                   errorInfo: errorInfo,
-                                  running: state.RequestInfo.Running.Where(x => x != serverMsg.Request).ToList(),
+                                  running: new List<ServerRequest>(),
                                   hadErrors: true);
                 return DataSyncMsg.Create(state.With(requestInfo: reqInfo));
             });

@@ -4,6 +4,7 @@ using NUnit.Framework;
 using SQLite.Net;
 using SQLite.Net.Platform.Generic;
 using Toggl.Phoebe.Data;
+using Toggl.Phoebe.Misc;
 using XPlatUtils;
 using V0 = Toggl.Phoebe.Data.Models.Old.DB_VERSION_0;
 using V1 = Toggl.Phoebe.Data.Models;
@@ -88,7 +89,11 @@ namespace Toggl.Phoebe.Tests.Data.Migration
         [Test]
         public void TestMigrateUserData()
         {
+            ServiceContainer.Register<IOldSettingsStore>(() => new OldSettingsStore());
+            var settings = ServiceContainer.Resolve<IOldSettingsStore>();
+
             var workspaceData = new V0.WorkspaceData { Id = Guid.NewGuid(), RemoteId = 12L };
+
             var userData = new V0.UserData
             {
                 Name = "user",
@@ -120,6 +125,7 @@ namespace Toggl.Phoebe.Tests.Data.Migration
             // test relationships
             Assert.That(userData.DefaultWorkspaceId, Is.EqualTo(newUserData.DefaultWorkspaceId));
             Assert.That(workspaceData.RemoteId, Is.EqualTo(newUserData.DefaultWorkspaceRemoteId));
+            Assert.That(settings.ApiToken, Is.EqualTo(newUserData.ApiToken));
 
             Assert.That(userData.Name, Is.EqualTo(newUserData.Name));
             Assert.That(userData.DateFormat, Is.EqualTo(newUserData.DateFormat));
@@ -425,6 +431,29 @@ namespace Toggl.Phoebe.Tests.Data.Migration
             Assert.That(newTagData.SyncState, Is.EqualTo(V1.SyncState.CreatePending));
         }
 
+        [Test]
+        public void TestSettingsMigration()
+        {
+            ServiceContainer.Register<IOldSettingsStore>(() => new OldSettingsStore());
+            var oldSettings = ServiceContainer.Resolve<IOldSettingsStore>();
+            var newSettings = Phoebe.Reactive.SettingsState.Init();
+
+            Assert.That(newSettings.ChooseProjectForNew, Is.EqualTo(oldSettings.ChooseProjectForNew));
+            Assert.That(newSettings.GcmRegistrationId, Is.EqualTo(oldSettings.GcmRegistrationId));
+            Assert.That(newSettings.GetChangesLastRun, Is.EqualTo(oldSettings.SyncLastRun));
+            Assert.That(newSettings.GroupedEntries, Is.EqualTo(oldSettings.GroupedTimeEntries));
+            Assert.That(newSettings.IdleNotification, Is.EqualTo(oldSettings.IdleNotification));
+            Assert.That(newSettings.LastAppVersion, Is.EqualTo(oldSettings.LastAppVersion));
+            Assert.That(newSettings.LastReportZoom, Is.EqualTo(oldSettings.LastReportZoomViewed));
+            // newSettings.ProjectSort is migrated with the default value cause is a new setting.
+            Assert.That(newSettings.ReportsCurrentItem, Is.EqualTo(oldSettings.ReportsCurrentItem));
+            Assert.That(newSettings.RossReadDurOnlyNotice, Is.EqualTo(oldSettings.RossReadDurOnlyNotice));
+            Assert.That(newSettings.ShowNotification, Is.EqualTo(oldSettings.ShowNotification));
+            Assert.That(newSettings.ShowWelcome, Is.EqualTo(oldSettings.ShowWelcome));
+            Assert.That(newSettings.UseDefaultTag, Is.EqualTo(oldSettings.UseDefaultTag));
+            Assert.That(newSettings.UserId, Is.EqualTo(oldSettings.UserId));
+        }
+
         #endregion
 
         #region Helpers
@@ -455,6 +484,98 @@ namespace Toggl.Phoebe.Tests.Data.Migration
             using(var db = new SQLiteConnection(new SQLitePlatformGeneric(), dbPath))
             {
                 db.InsertAll(objects);
+            }
+        }
+
+        private class OldSettingsStore : IOldSettingsStore
+        {
+            public string ApiToken
+            {
+                get { return "1234567890"; }
+            }
+
+            public bool ChooseProjectForNew
+            {
+                get { return false; }
+            }
+
+            public string ExperimentId
+            {
+                get { return "experimentId"; }
+            }
+
+            public string GcmRegistrationId
+            {
+                get { return "gcm"; }
+            }
+
+            public bool GroupedTimeEntries
+            {
+                get { return false; }
+            }
+
+            public bool IdleNotification
+            {
+                get { return false; }
+            }
+
+            public bool IsStagingMode
+            {
+                get { return false; }
+            }
+
+            public string LastAppVersion
+            {
+                get { return "lastApp"; }
+            }
+
+            public int? LastReportZoomViewed
+            {
+                get { return 0; }
+            }
+
+            public int ReportsCurrentItem
+            {
+                get { return 0; }
+            }
+
+            public bool RossReadDurOnlyNotice
+            {
+                get { return true; }
+            }
+
+            public bool ShowNotification
+            {
+                get { return false; }
+            }
+
+            public bool ShowWelcome
+            {
+                get { return true; }
+            }
+
+            public string SortProjectsBy
+            {
+                get { return "client"; }
+            }
+
+            private readonly DateTime dateTime = DateTime.Now;
+
+            public DateTime? SyncLastRun
+            {
+                get { return dateTime; }
+            }
+
+            public bool UseDefaultTag
+            {
+                get { return true; }
+            }
+
+            private readonly Guid userId = Guid.NewGuid();
+
+            public Guid? UserId
+            {
+                get { return userId; }
             }
         }
 

@@ -410,7 +410,6 @@ namespace Toggl.Phoebe.Reactive
         private static readonly bool ChooseProjectForNewDefault = false;
         private static readonly int ReportsCurrentItemDefault = 0;
         private static readonly string ProjectSortDefault = "Clients";
-        private static readonly string InstallIdDefault = string.Empty;
         private static readonly bool ShowWelcomeDefault = true;
         // iOS only Default values
         private static readonly bool RossReadDurOnlyNoticeDefault = false;
@@ -430,7 +429,6 @@ namespace Toggl.Phoebe.Reactive
         public bool ChooseProjectForNew { get; private set; }
         public int ReportsCurrentItem { get; private set; }
         public string ProjectSort { get; private set; }
-        public string InstallId  { get; private set; }
         // Show welcome screen or not the first time user start app.
         public bool ShowWelcome { get; private set; }
         // iOS only  values
@@ -451,7 +449,6 @@ namespace Toggl.Phoebe.Reactive
             ChooseProjectForNew = ChooseProjectForNewDefault;
             ReportsCurrentItem = ReportsCurrentItemDefault;
             ProjectSort = ProjectSortDefault;
-            InstallId = InstallIdDefault;
             ShowWelcome = ShowWelcomeDefault;
             // iOS only  values
             RossReadDurOnlyNotice = RossReadDurOnlyNoticeDefault;
@@ -542,7 +539,6 @@ namespace Toggl.Phoebe.Reactive
             copy.ChooseProjectForNew = chooseProjectForNew ?? copy.ChooseProjectForNew;
             copy.ReportsCurrentItem = reportsCurrentItem ?? copy.ReportsCurrentItem;
             copy.ProjectSort = projectSort ?? copy.ProjectSort;
-            copy.InstallId = installId ?? copy.InstallId;
             // iOS only  values
             copy.RossReadDurOnlyNotice = rossReadDurOnlyNotice ?? copy.RossReadDurOnlyNotice;
             // Android only  values

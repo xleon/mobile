@@ -148,7 +148,8 @@ namespace Toggl.Ross.ViewControllers
             {
                 // TODO Rx @alfonso Keep this call here explicitly or init
                 // the state with the request if user is logged.
-                RxChain.Send(new ServerRequest.GetChanges());
+                if (emptyStack)
+                    RxChain.Send(new ServerRequest.GetChanges());
                 vc = new LogViewController();
                 MenuEnabled = true;
             }

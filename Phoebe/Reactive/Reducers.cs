@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Helpers;
@@ -123,8 +124,6 @@ namespace Toggl.Phoebe.Reactive
                                    r.State != TimeEntryState.New &&
                                    r.StartTime >= startDate && r.StartTime < endDate &&
                                    r.DeletedAt == null)
-                            // TODO TODO TODO: Rx why the entries are saved without local user ID.
-                            //r.UserId == state.User.Id)
                             .Take(Literals.TimeEntryLoadMaxInit)
                             .OrderByDescending(r => r.StartTime)
                             .ToList();
@@ -149,6 +148,7 @@ namespace Toggl.Phoebe.Reactive
             {
                 var reqInfo = state.RequestInfo.With(
                                   errorInfo: null,
+                                  running: new List<ServerRequest>(),
                                   hadErrors: false);
                 state = UpdateStateWithNewData(state, receivedData);
                 return DataSyncMsg.Create(state.With(requestInfo: reqInfo));
@@ -158,7 +158,7 @@ namespace Toggl.Phoebe.Reactive
                 state = UpdateStateWithNewData(state, receivedData);
                 var reqInfo = state.RequestInfo.With(
                                   errorInfo: null,
-                                  running: state.RequestInfo.Running.Where(x => x != req).ToList(),
+                                  running: new List<ServerRequest>(),
                                   hasMore: receivedData.OfType<TimeEntryData> ().Any(),
                                   hadErrors: false);
                 return DataSyncMsg.Create(state.With(requestInfo: reqInfo));
@@ -183,7 +183,7 @@ namespace Toggl.Phoebe.Reactive
                 var reqInfo = state.RequestInfo.With(
                                   errorInfo: null,
                                   hadErrors: false,
-                                  running: state.RequestInfo.Running.Where(x => x != req).ToList(),
+                                  running: new List<ServerRequest>(),
                                   getChangesLastRun: serverMsg.Timestamp);
 
                 return DataSyncMsg.Create(state.With(
@@ -211,7 +211,7 @@ namespace Toggl.Phoebe.Reactive
                 var reqInfo = state.RequestInfo.With(
                                   errorInfo: null,
                                   hadErrors: false,
-                                  running: state.RequestInfo.Running.Where(x => x != req).ToList(),
+                                  running: new List<ServerRequest> (),
                                   getChangesLastRun: serverMsg.Timestamp);
 
                 return DataSyncMsg.Create(state.With(
@@ -226,16 +226,22 @@ namespace Toggl.Phoebe.Reactive
             }),
             ex =>
             {
+                // TODO Rx Clean running array?
+
                 var errorInfo = state.RequestInfo.ErrorInfo;
                 if (ex is DataMsg.ServerResponse.TimeConstrainsException)
                 {
                     var exc = (DataMsg.ServerResponse.TimeConstrainsException)ex;
-                    errorInfo = new Tuple<string, Guid> (exc.ReadableMsg, exc.CommonDataId);
+                    errorInfo = new Tuple<string, Guid>(exc.ReadableMsg, exc.CommonDataId);
+                }
+                else if (!(ex is TaskCanceledException))
+                {
+                    errorInfo = new Tuple<string, Guid>(ex.Message, Guid.Empty);
                 }
 
                 var reqInfo = state.RequestInfo.With(
                                   errorInfo: errorInfo,
-                                  running: state.RequestInfo.Running.Where(x => x != serverMsg.Request).ToList(),
+                                  running: new List<ServerRequest>(),
                                   hadErrors: true);
                 return DataSyncMsg.Create(state.With(requestInfo: reqInfo));
             });
@@ -639,7 +645,7 @@ namespace Toggl.Phoebe.Reactive
                 state.TimeEntries.Values.Where(x => x.Data.Tags.Contains(removedTag.Name))
                 .Select(x => x.Data.With(t =>
                 {
-                    t.Tags = new List<string> (t.Tags.Where(n => n != removedTag.Name));
+                    t.Tags = new List<string>(t.Tags.Where(n => n != removedTag.Name));
                 })).ForEach(ctx.Put);
             }
 

@@ -132,7 +132,7 @@ namespace Toggl.Phoebe.Data
                     newDB = new SQLiteConnection(platformInfo, expectedNewVersion == desiredVersion
                                                  ? desiredDBPath
                                                  : "Data Source=:memory:");
-
+                    throw new Exception("Test exception");
                     migrator.Migrate(migrateFromDB, newDB, progressReporter);
                     migrateFromDB.Close();
 

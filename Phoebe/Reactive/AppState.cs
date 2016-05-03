@@ -491,7 +491,7 @@ namespace Toggl.Phoebe.Reactive
 
         static SettingsState initFromOldSettings(IOldSettingsStore old)
         {
-            return new SettingsState
+            var oldSettings = new SettingsState
             {
                 UserId = old.UserId.Value,
                 UseDefaultTag = old.UseDefaultTag,
@@ -509,6 +509,8 @@ namespace Toggl.Phoebe.Reactive
                 IdleNotification = old.IdleNotification,
                 ShowNotification = old.ShowNotification
             };
+            Settings.SerializedSettings = Newtonsoft.Json.JsonConvert.SerializeObject(oldSettings);
+            return oldSettings;
         }
 
         static SettingsState initDefault()

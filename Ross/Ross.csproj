@@ -282,6 +282,12 @@
     <BundleResource Include="Resources\logo%402x.png" />
     <BundleResource Include="Resources\profile%402x.png" />
     <BundleResource Include="GoogleService-Info.plist" />
+    <BundleResource Include="Resources\toggler1.png" />
+    <BundleResource Include="Resources\toggler1%402x.png" />
+    <BundleResource Include="Resources\toggler1%403x.png" />
+    <BundleResource Include="Resources\toggler2.png" />
+    <BundleResource Include="Resources\toggler2%402x.png" />
+    <BundleResource Include="Resources\toggler2%403x.png" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Info.plist" />

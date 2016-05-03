@@ -10,6 +10,8 @@ using System.Reactive.Linq;
 using System.Threading;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data;
+using Toggl.Phoebe.Logging;
+using XPlatUtils;
 
 namespace Toggl.Ross.ViewControllers
 {
@@ -143,6 +145,8 @@ namespace Toggl.Ross.ViewControllers
             UIViewController vc = null;
             bool isUserLogged = userData.Id != Guid.Empty;
             bool emptyStack = ViewControllers.Length < 1;
+
+            ServiceContainer.Resolve<ILogger>().Warning("UserId", userData.Id + " " + userData.ApiToken);
 
             if (isUserLogged)
             {

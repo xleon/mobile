@@ -344,7 +344,7 @@ namespace Toggl.Phoebe.Reactive
                             var resData = mapper.Map(response);
                             resData.Id = data.Id;
                             remoteObjects.Add(resData);
-                            logInfo("Requested extra info because duplicated: " + resData.GetType() + " remoteId: " + resData.RemoteId);
+                            logInfo("Requested extra info because duplicated: " + resData.GetType());
                             return;
                         }
 

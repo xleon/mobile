@@ -74,7 +74,6 @@ namespace Toggl.Phoebe.Reactive
         readonly string Tag = typeof(SyncManager).Name;
         readonly JsonMapper mapper;
         readonly INetworkPresence networkPresence;
-        readonly ISyncDataStore dataStore;
         readonly ITogglClient client;
         readonly Subject<Tuple<ServerRequest, AppState>> requestManager = new Subject<Tuple<ServerRequest, AppState>> ();
 
@@ -83,13 +82,13 @@ namespace Toggl.Phoebe.Reactive
         {
             mapper = new JsonMapper();
             networkPresence = ServiceContainer.Resolve<INetworkPresence> ();
-            dataStore = ServiceContainer.Resolve<ISyncDataStore> ();
             client = ServiceContainer.Resolve<ITogglClient> ();
 
-            StoreManager.Singleton
-            .Observe()
-            .SelectAsync(EnqueueOrSend)
-            .Subscribe();
+            StoreManager
+                .Singleton
+                .Observe()
+                .SelectAsync(EnqueueOrSend)
+                .Subscribe(_ => { }, ex => logError(ex));
 
             requestManager
             .Synchronize()  // Make sure requests are run one after the other
@@ -116,7 +115,7 @@ namespace Toggl.Phoebe.Reactive
                         throw new Exception("Unexpected Authenticate operation");
                 }
             }))
-            .Subscribe();
+            .Subscribe(_ => { }, ex => logError(ex));
         }
 
         void logError(Exception ex, string msg = "Failed to sync")
@@ -156,13 +155,14 @@ namespace Toggl.Phoebe.Reactive
             var remoteObjects = new List<CommonData> ();
             var enqueuedItems = new List<QueueItem> ();
             var isConnected = networkPresence.IsNetworkPresent;
+            var dataStore = ServiceContainer.Resolve<ISyncDataStore>();
 
             // Call message continuation before execute remote ops.
             if (syncMsg.Continuation != null && syncMsg.Continuation.LocalOnly)
                 syncMsg.Continuation.Invoke(syncMsg.State);
 
             // Try to empty queue first
-            var queueEmpty = await TryEmptyQueue(remoteObjects, syncMsg.State, isConnected);
+            var queueEmpty = await TryEmptyQueue(remoteObjects, syncMsg.State, isConnected, dataStore);
 
             // Deal with messages
             foreach (var data in syncMsg.ServerRequests.OfType<ServerRequest.CRUD> ().SelectMany(x => x.Items))
@@ -176,13 +176,13 @@ namespace Toggl.Phoebe.Reactive
                     catch (Exception ex)
                     {
                         logError(ex);
-                        Enqueue(data, enqueuedItems);
+                        Enqueue(data, enqueuedItems, dataStore);
                         queueEmpty = false;
                     }
                 }
                 else
                 {
-                    Enqueue(data, enqueuedItems);
+                    Enqueue(data, enqueuedItems, dataStore);
                     queueEmpty = false;
                 }
             }
@@ -201,7 +201,7 @@ namespace Toggl.Phoebe.Reactive
                 syncMsg.Continuation.Invoke(syncMsg.State, remoteObjects, enqueuedItems);
         }
 
-        async Task<bool> TryEmptyQueue(List<CommonData> remoteObjects, AppState state, bool isConnected)
+        async Task<bool> TryEmptyQueue(List<CommonData> remoteObjects, AppState state, bool isConnected, ISyncDataStore dataStore)
         {
             // Clean the queue when a logout is detected
             var authToken = state.User.ApiToken;
@@ -246,7 +246,7 @@ namespace Toggl.Phoebe.Reactive
             }
         }
 
-        void Enqueue(ICommonData data, List<QueueItem> enqueuedItems)
+        void Enqueue(ICommonData data, List<QueueItem> enqueuedItems, ISyncDataStore dataStore)
         {
             try
             {

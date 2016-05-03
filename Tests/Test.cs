@@ -14,14 +14,9 @@ namespace Toggl.Phoebe.Tests
         protected string databasePath;
         protected readonly string databaseDir = Path.GetDirectoryName(Path.GetTempFileName());
 
-        private MainThreadSynchronizationContext syncContext;
-
         [OneTimeSetUp]
         public virtual void Init()
         {
-            syncContext = new MainThreadSynchronizationContext();
-            SynchronizationContext.SetSynchronizationContext(syncContext);
-
             databasePath = DatabaseHelper.GetDatabasePath(databaseDir, SyncSqliteDataStore.DB_VERSION);
             ServiceContainer.Register<ISyncDataStore> (
                 new SyncSqliteDataStore(databasePath, new SQLitePlatformGeneric()));

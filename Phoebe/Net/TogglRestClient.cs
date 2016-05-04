@@ -33,7 +33,8 @@ namespace Toggl.Phoebe.Net
         {
             // Cannot share HttpClient instance between threads as it might (and will) cause InvalidOperationExceptions
             // occasionally.
-            var client = new HttpClient()
+
+            var client = new HttpClient(new ModernHttpClient.NativeMessageHandler())
             {
                 Timeout = TimeSpan.FromSeconds(10),
             };

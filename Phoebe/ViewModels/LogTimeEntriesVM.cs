@@ -242,6 +242,5 @@ namespace Toggl.Phoebe.ViewModels
                 return String.IsNullOrEmpty(StoreManager.Singleton.AppState.User.ApiToken);
             }
         }
-
     }
 }

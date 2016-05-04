@@ -6,7 +6,6 @@ using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Helpers;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
-using Toggl.Phoebe.Misc;
 
 namespace Toggl.Phoebe.Reactive
 {
@@ -236,8 +235,8 @@ namespace Toggl.Phoebe.Reactive
             {
                 if (settings.UserId != Guid.Empty)
                 {
-                    var dataStore = ServiceContainer.Resolve<ISyncDataStore> ();
-                    userData = dataStore.Table<UserData> ().Single(x => x.Id == settings.UserId);
+                    var dataStore = ServiceContainer.Resolve<ISyncDataStore>();
+                    userData = dataStore.Table<UserData>().Single(x => x.Id == settings.UserId);
                     dataStore.Table<WorkspaceData> ().ForEach(x => workspaces.Add(x.Id, x));
                     dataStore.Table<WorkspaceUserData> ().ForEach(x => workspaceUserData.Add(x.Id, x));
                     dataStore.Table<ProjectData> ().ForEach(x => projects.Add(x.Id, x));
@@ -247,11 +246,10 @@ namespace Toggl.Phoebe.Reactive
                     dataStore.Table<TagData> ().ForEach(x => tags.Add(x.Id, x));
                 }
             }
-            catch // (Exception ex)
+            catch (Exception ex)
             {
-                // TODO RX: logger.Error ends up calling AppState.Setting which is not initialised yet
-                //var logger = ServiceContainer.Resolve<ILogger> ();
-                //logger.Error(typeof(AppState).Name, ex, "UserId in settings not found in db: {0}", ex.Message);
+                var logger = ServiceContainer.Resolve<Logging.ILogger> ();
+                logger.Error(typeof(AppState).Name, ex, "UserId in settings not found in db: {0}", ex.Message);
 
                 // When data is corrupt and cannot find user
                 settings = settings.With(userId: Guid.Empty);
@@ -475,11 +473,6 @@ namespace Toggl.Phoebe.Reactive
             if (Settings.SerializedSettings != string.Empty)
                 return initLoadSettings();
 
-            IOldSettingsStore oldSettings;
-            if (ServiceContainer.TryResolve(out oldSettings) &&
-                    oldSettings.UserId != null && oldSettings.UserId != Guid.Empty)
-                return initFromOldSettings(oldSettings);
-
             return initDefault();
         }
 
@@ -487,28 +480,6 @@ namespace Toggl.Phoebe.Reactive
         {
             return Newtonsoft.Json.JsonConvert.DeserializeObject<SettingsState>(
                        Settings.SerializedSettings, Settings.GetNonPublicPropertiesResolverSettings());
-        }
-
-        static SettingsState initFromOldSettings(IOldSettingsStore old)
-        {
-            return new SettingsState
-            {
-                UserId = old.UserId.Value,
-                UseDefaultTag = old.UseDefaultTag,
-                LastAppVersion = old.LastAppVersion,
-                LastReportZoom = old.LastReportZoomViewed ?? LastReportZoomDefault,
-                GroupedEntries = old.GroupedTimeEntries,
-                ProjectSort = ProjectSortDefault, // Set default value
-                ShowWelcome = old.ShowWelcome,
-                ChooseProjectForNew = old.ChooseProjectForNew,
-                GetChangesLastRun = old.SyncLastRun.HasValue ? old.SyncLastRun.Value : DateTime.MinValue,
-                // iOS only values
-                RossReadDurOnlyNotice = old.RossReadDurOnlyNotice,
-                // Android only values
-                GcmRegistrationId = old.GcmRegistrationId,
-                IdleNotification = old.IdleNotification,
-                ShowNotification = old.ShowNotification
-            };
         }
 
         static SettingsState initDefault()

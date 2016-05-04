@@ -1,6 +1,4 @@
-using System;
 using UIKit;
-using CoreGraphics;
 
 namespace Toggl.Ross.Theme
 {

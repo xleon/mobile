@@ -40,7 +40,7 @@ namespace Toggl.Ross.ViewControllers
         // to avoid weak references to be removed
         private Binding<string, string> durationBinding, projectBinding, clientBinding, descriptionBinding, taskBinding, projectColorBinding;
         private Binding<DateTime, DateTime> startTimeBinding, stopTimeBinding;
-        private Binding<IReadOnlyList<string>, IReadOnlyList<string>> tagBinding;
+        private Binding<List<string>, List<string>> tagBinding;
         private Binding<bool, bool> isBillableBinding, isRunningBinding, isPremiumBinding;
 
         protected EditTimeEntryVM ViewModel { get; set; }
@@ -153,7 +153,7 @@ namespace Toggl.Ross.ViewControllers
             clientBinding = this.SetBinding(() => ViewModel.ClientName, () => projectButton.ClientName);
             tagBinding = this.SetBinding(() => ViewModel.Tags).WhenSourceChanges(() =>
             {
-                FeedTags(ViewModel.Tags.ToList(), tagsButton);
+                FeedTags(ViewModel.Tags, tagsButton);
             });
             descriptionBinding = this.SetBinding(() => ViewModel.Description, () => descriptionTextField.Text);
             isPremiumBinding = this.SetBinding(() => ViewModel.IsPremium, () => billableSwitch.Hidden).ConvertSourceToTarget(isPremium => !isPremium);

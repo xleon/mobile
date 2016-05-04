@@ -19,5 +19,12 @@ namespace Toggl.Ross.Theme
         public static readonly UIColor TimeBarBoderColor = UIColor.FromRGB(0xe6, 0xe6, 0xe6);
         public static readonly UIColor MoneyBarColor = UIColor.FromRGB(0x03, 0xA9, 0xF3);
         public static readonly UIColor ChartTopLabel = UIColor.FromRGB(0x5c, 0x5c, 0x5c);
+
+        // Migration screens:
+        public static readonly UIColor DarkestGray = UIColor.FromRGB(46, 46, 46);
+        public static readonly UIColor Steel = UIColor.FromRGB(142, 142, 142);
+        public static readonly UIColor LightishGreen = UIColor.FromRGB(76, 217, 100);
+        public static readonly UIColor DarkMint = UIColor.FromRGB(76, 190, 100);
+        public static readonly UIColor PinkishGrey = UIColor.FromRGB(206, 206, 206);
     }
 }

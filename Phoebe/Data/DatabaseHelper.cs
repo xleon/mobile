@@ -25,10 +25,25 @@ namespace Toggl.Phoebe.Data
             return Environment.GetFolderPath(Environment.SpecialFolder.Personal);
         }
 
+        public static void ResetToDBVersion(int version)
+        {
+            if (version == 0)
+                return;
+
+            for (int i = 0; i < version; i++)
+            {
+                // Delete previous version if exist.
+                var dir = GetDatabaseDirectory();
+                var path = GetDatabasePath(dir, i);
+                if (FileExists(path))
+                    File.Delete(path);
+            }
+        }
+
         /// <summary>
         /// Only for testing purposes
         /// </summary>
-        public static void CreateDummyOldDb(ISQLitePlatform platformInfo, int dbVersion)
+        public static void CreateDummyOldDb(ISQLitePlatform platformInfo, int dbVersion, Guid id)
         {
             var dbPath = GetDatabasePath(GetDatabaseDirectory(), dbVersion);
             var cnnString = new SQLiteConnectionString(dbPath, true);
@@ -56,7 +71,7 @@ namespace Toggl.Phoebe.Data
 
                 cnn.Insert(new Models.Old.DB_VERSION_0.UserData
                 {
-                    Id = Guid.NewGuid(),
+                    Id = id,
                     RemoteId = 11,
                     Name = "toggl"
                 });
@@ -134,6 +149,7 @@ namespace Toggl.Phoebe.Data
                                                  : "Data Source=:memory:");
 
                     migrator.Migrate(migrateFromDB, newDB, progressReporter);
+
                     migrateFromDB.Close();
 
                     var newVersion = GetVersion(newDB);
@@ -151,13 +167,10 @@ namespace Toggl.Phoebe.Data
                     migrateFromDB = newDB;
                 }
             }
-            catch (MigrationException ex)
-            {
-                resolveMigrateException(ex, newDB, dbDir);
-            }
             catch (Exception ex)
             {
-                var ex2 = new MigrationException("Unknown exception during migration", ex);
+                var ex2 = (ex is MigrationException) ? (MigrationException)ex :
+                          new MigrationException("Unknown exception during migration", ex);
                 resolveMigrateException(ex2, newDB, dbDir);
             }
             finally

@@ -294,15 +294,6 @@ namespace Toggl.Phoebe.Data.Models.Old.DB_VERSION_0
             data.DurationFormat = DurationFormat;
             data.ExperimentIncluded = ExperimentIncluded;
             data.ExperimentNumber = ExperimentNumber;
-
-            // TODO: Get GoogleAccessToken & ApiToken from Platform Settings
-            // @paul @alfonso in that way?
-            IOldSettingsStore oldSettings;
-            if (ServiceContainer.TryResolve(out oldSettings))
-            {
-                data.ApiToken = oldSettings.ApiToken;
-            }
-
             data.DefaultWorkspaceId = DefaultWorkspaceId;
             var ws = ctx.Connection.Table<WorkspaceData> ().Where(x => x.Id == DefaultWorkspaceId).FirstOrDefault();
             data.DefaultWorkspaceRemoteId = ws?.RemoteId ?? 0;

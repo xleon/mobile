@@ -10,6 +10,8 @@ using System.Reactive.Linq;
 using System.Threading;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data;
+using Toggl.Phoebe.Logging;
+using XPlatUtils;
 
 namespace Toggl.Ross.ViewControllers
 {

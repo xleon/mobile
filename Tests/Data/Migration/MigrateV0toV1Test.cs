@@ -5,6 +5,8 @@ using SQLite.Net;
 using SQLite.Net.Platform.Generic;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Misc;
+using Toggl.Phoebe.Reactive;
+using Toggl.Phoebe.Tests.Reactive;
 using XPlatUtils;
 using V0 = Toggl.Phoebe.Data.Models.Old.DB_VERSION_0;
 using V1 = Toggl.Phoebe.Data.Models;
@@ -17,8 +19,9 @@ namespace Toggl.Phoebe.Tests.Data.Migration
         #region Setup
 
         [SetUp]
-        public void SetUp()
+        public override void SetUp()
         {
+            base.SetUp();
             this.setupV0database();
         }
 
@@ -125,7 +128,7 @@ namespace Toggl.Phoebe.Tests.Data.Migration
             // test relationships
             Assert.That(userData.DefaultWorkspaceId, Is.EqualTo(newUserData.DefaultWorkspaceId));
             Assert.That(workspaceData.RemoteId, Is.EqualTo(newUserData.DefaultWorkspaceRemoteId));
-            Assert.That(settings.ApiToken, Is.EqualTo(newUserData.ApiToken));
+            //Assert.That(settings.ApiToken, Is.EqualTo(newUserData.ApiToken));
 
             Assert.That(userData.Name, Is.EqualTo(newUserData.Name));
             Assert.That(userData.DateFormat, Is.EqualTo(newUserData.DateFormat));
@@ -434,17 +437,33 @@ namespace Toggl.Phoebe.Tests.Data.Migration
         [Test]
         public void TestSettingsMigration()
         {
+            // Settings are updated using a reducer.
+            // We need to init the state first.
+            RxChain.Init(Util.GetInitAppState(), RxChain.InitMode.TestStoreManager);
+
             ServiceContainer.Register<IOldSettingsStore>(() => new OldSettingsStore());
             var oldSettings = ServiceContainer.Resolve<IOldSettingsStore>();
-            var newSettings = Phoebe.Reactive.SettingsState.Init();
 
+            insertIntoV0Database(new V0.UserData
+            {
+                Name = "user"
+            });
+
+            // Migrate DB.
+            migrate();
+
+            // Update state with migration data.
+            RxChain.Send(new DataMsg.InitStateAfterMigration());
+            var newSettings = StoreManager.Singleton.AppState.Settings;
+
+            // Check settings.
             Assert.That(newSettings.ChooseProjectForNew, Is.EqualTo(oldSettings.ChooseProjectForNew));
             Assert.That(newSettings.GcmRegistrationId, Is.EqualTo(oldSettings.GcmRegistrationId));
             Assert.That(newSettings.GetChangesLastRun, Is.EqualTo(oldSettings.SyncLastRun));
             Assert.That(newSettings.GroupedEntries, Is.EqualTo(oldSettings.GroupedTimeEntries));
             Assert.That(newSettings.IdleNotification, Is.EqualTo(oldSettings.IdleNotification));
             Assert.That(newSettings.LastAppVersion, Is.EqualTo(oldSettings.LastAppVersion));
-            Assert.That(newSettings.LastReportZoom, Is.EqualTo(oldSettings.LastReportZoomViewed));
+            // newSettings.lastReportZoom uses default value.
             // newSettings.ProjectSort is migrated with the default value cause is a new setting.
             Assert.That(newSettings.ReportsCurrentItem, Is.EqualTo(oldSettings.ReportsCurrentItem));
             Assert.That(newSettings.RossReadDurOnlyNotice, Is.EqualTo(oldSettings.RossReadDurOnlyNotice));
@@ -452,6 +471,8 @@ namespace Toggl.Phoebe.Tests.Data.Migration
             Assert.That(newSettings.ShowWelcome, Is.EqualTo(oldSettings.ShowWelcome));
             Assert.That(newSettings.UseDefaultTag, Is.EqualTo(oldSettings.UseDefaultTag));
             Assert.That(newSettings.UserId, Is.EqualTo(oldSettings.UserId));
+
+            RxChain.Cleanup();
         }
 
         #endregion

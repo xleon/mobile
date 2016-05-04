@@ -34,12 +34,12 @@ namespace Toggl.Phoebe.Net
             // Cannot share HttpClient instance between threads as it might (and will) cause InvalidOperationExceptions
             // occasionally.
 
-            #if __ANDROID__
+#if __ANDROID__
             var client = new HttpClient(new ModernHttpClient.NativeMessageHandler())
-            #else
+#else
             ServicePointManager.ServerCertificateValidationCallback = Validator;
             var client = new HttpClient()
-            #endif
+#endif
             {
                 Timeout = TimeSpan.FromSeconds(10),
             };
@@ -976,8 +976,8 @@ namespace Toggl.Phoebe.Net
 
         // TODO: This hack is not needed for Android anymore,
         // it should be removed for other platforms as well
-        #if __ANDROID__
-        #else
+#if __ANDROID__
+#else
         // Validator to bypass the cert requirement
         // related with the staging endpoint.
         // more options: http://www.mono-project.com/archived/usingtrustedrootsrespectfully/
@@ -985,7 +985,7 @@ namespace Toggl.Phoebe.Net
         {
             return true;
         }
-        #endif
+#endif
 
         private HttpRequestMessage GetV9SinceRequest(string authToken, string relUrl, DateTime? since)
         {

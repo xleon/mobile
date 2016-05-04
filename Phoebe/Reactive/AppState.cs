@@ -232,7 +232,7 @@ namespace Toggl.Phoebe.Reactive
             var tags = new Dictionary<Guid, ITagData> ();
 
             try
-            {                
+            {
                 if (settings.UserId != Guid.Empty)
                 {
                     var dataStore = ServiceContainer.Resolve<ISyncDataStore>();

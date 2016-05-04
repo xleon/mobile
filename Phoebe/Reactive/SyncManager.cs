@@ -176,7 +176,7 @@ namespace Toggl.Phoebe.Reactive
             // Call message continuation before execute remote ops.
             if (syncMsg.Continuation != null && syncMsg.Continuation.LocalOnly)
                 syncMsg.Continuation.Invoke(syncMsg.State);
-            
+
             try
             {
                 // Try to empty queue first
@@ -217,7 +217,7 @@ namespace Toggl.Phoebe.Reactive
                 RxChain.Send(DataMsg.ServerResponse.CRUD(remoteObjects));
 
             foreach (var req in syncMsg.ServerRequests.Where(x => x is ServerRequest.CRUD == false))
-                requestManager.OnNext(Tuple.Create(req, syncMsg.State));
+            requestManager.OnNext(Tuple.Create(req, syncMsg.State));
 
             // Mostly used for test pourposes.
             if (syncMsg.Continuation != null && !syncMsg.Continuation.LocalOnly)

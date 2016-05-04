@@ -92,8 +92,7 @@ namespace Toggl.Joey.Data
 
         public Guid? UserId
         {
-            //get { return GetGuid(PhoebeUserIdKey); }
-            get { return Guid.NewGuid(); }
+            get { return GetGuid(PhoebeUserIdKey); }
         }
 
         public static readonly string PropertyApiToken = GetPropertyName(s => s.ApiToken);

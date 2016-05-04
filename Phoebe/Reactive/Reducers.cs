@@ -510,9 +510,6 @@ namespace Toggl.Phoebe.Reactive
 
         static DataSyncMsg<AppState> NoUserState(AppState state, DataMsg msg)
         {
-            var dataStore = ServiceContainer.Resolve<ISyncDataStore>();
-            var workspaces = new Dictionary<Guid, IWorkspaceData>();
-
             var workspace = WorkspaceData.Create(x =>
             {
                 x.Id = Guid.NewGuid();
@@ -521,7 +518,6 @@ namespace Toggl.Phoebe.Reactive
                 x.IsAdmin = true;
             });
 
-            workspaces.Add(workspace.Id, workspace);
 
             var userData = UserData.Create(x =>
             {
@@ -534,7 +530,9 @@ namespace Toggl.Phoebe.Reactive
                 x.DefaultWorkspaceId = workspace.Id;
             });
 
-            dataStore.Update(ctx =>
+            var dataStore = ServiceContainer.Resolve<ISyncDataStore>();
+
+            var updated = dataStore.Update(ctx =>
             {
                 ctx.Put(userData);
                 ctx.Put(workspace);
@@ -543,7 +541,7 @@ namespace Toggl.Phoebe.Reactive
             return DataSyncMsg.Create(state.With(
                                           requestInfo: state.RequestInfo.With(authResult: AuthResult.Success),
                                           user: userData,
-                                          workspaces: workspaces,
+                                          workspaces: state.Update(state.Workspaces, updated),
                                           settings: state.Settings.With(userId: userData.Id)
                                       ));
         }

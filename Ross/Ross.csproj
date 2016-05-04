@@ -392,7 +392,6 @@
     <Compile Include="Views\AuthErrorAlert.cs" />
     <Compile Include="Analytics\Tracker.cs" />
     <Compile Include="Analytics\Experiments.cs" />
-    <Compile Include="Logging\Logger.cs" />
     <Compile Include="ViewControllers\ReportsViewController.cs" />
     <Compile Include="ViewControllers\ReportsMenuController.cs" />
     <Compile Include="Theme\Style.ReportsView.cs">

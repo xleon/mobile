@@ -3,12 +3,12 @@ using XPlatUtils;
 
 namespace Toggl.Phoebe.Logging
 {
-    public abstract class BaseLogger : ILogger
+    public class BaseLogger : ILogger
     {
         private readonly LogLevel threshold;
         private readonly LogLevel consoleThreshold;
 
-        protected BaseLogger()
+        public BaseLogger()
         {
 #if DEBUG
             threshold = LogLevel.Debug;
@@ -69,7 +69,24 @@ namespace Toggl.Phoebe.Logging
             }
         }
 
-        protected abstract void AddExtraMetadata(Metadata md);
+        protected void AddExtraMetadata(Metadata md)
+        {
+            // TODO: RX Better way to do that!
+            // TODO RX: logger. The condition is because Error ends up calling AppState.Setting
+            // which is not initialised yet
+
+            var settings = Reactive.StoreManager.Singleton.AppState.Settings;
+            if (settings == null)
+                return;
+
+            md.AddToTab("State", "Experiment", OBMExperimentManager.ExperimentNumber);
+            md.AddToTab("State", "Push registered", string.IsNullOrWhiteSpace(settings.GcmRegistrationId) ? "No" : "Yes");
+
+            md.AddToTab("Settings", "Show projects for new", settings.ChooseProjectForNew ? "Yes" : "No");
+            md.AddToTab("Settings", "Idle notifications", settings.IdleNotification ? "Yes" : "No");
+            md.AddToTab("Settings", "Add default tag", settings.UseDefaultTag ? "Yes" : "No");
+            md.AddToTab("Settings", "Is Grouped", settings.GroupedEntries ? "Yes" : "No");
+        }
 
         protected virtual void WriteConsole(LogLevel level, string tag, string message, Exception exc)
         {

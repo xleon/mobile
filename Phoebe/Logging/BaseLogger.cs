@@ -75,10 +75,10 @@ namespace Toggl.Phoebe.Logging
             // TODO RX: logger. The condition is because Error ends up calling AppState.Setting
             // which is not initialised yet
 
-            var settings = Reactive.StoreManager.Singleton.AppState.Settings;
-            if (settings == null)
+            if (Reactive.StoreManager.Singleton == null)
                 return;
 
+            var settings = Reactive.StoreManager.Singleton.AppState.Settings;
             md.AddToTab("State", "Experiment", OBMExperimentManager.ExperimentNumber);
             md.AddToTab("State", "Push registered", string.IsNullOrWhiteSpace(settings.GcmRegistrationId) ? "No" : "Yes");
 

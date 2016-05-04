@@ -256,7 +256,7 @@ namespace Toggl.Ross.ViewControllers
             InvokeOnMainThread(() =>
             {
                 progressBar.SetProgress(percentage, percentage >= progressBar.Progress);
-                percente.Text = ((int)percentage * 100) + " %";
+                percente.Text = Math.Truncate (percentage * 100) + " %";
             });
         }
     }

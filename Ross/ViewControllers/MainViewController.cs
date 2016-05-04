@@ -146,8 +146,6 @@ namespace Toggl.Ross.ViewControllers
             bool isUserLogged = userData.Id != Guid.Empty;
             bool emptyStack = ViewControllers.Length < 1;
 
-            ServiceContainer.Resolve<ILogger>().Warning("UserId", userData.Id + " " + userData.ApiToken);
-
             if (isUserLogged)
             {
                 // TODO Rx @alfonso Keep this call here explicitly or init

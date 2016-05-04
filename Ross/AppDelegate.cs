@@ -14,7 +14,6 @@ using Toggl.Phoebe.Misc;
 using Toggl.Phoebe.Net;
 using Toggl.Phoebe.Reactive;
 using Toggl.Ross.Analytics;
-using Toggl.Ross.Logging;
 using Toggl.Ross.Net;
 using Toggl.Ross.ViewControllers;
 using Toggl.Ross.Views;
@@ -59,7 +58,7 @@ namespace Toggl.Ross
             ServiceContainer.Register<ITimeProvider> (() => new NSTimeProvider());
 
             // Register Ross components:
-            ServiceContainer.Register<ILogger> (() => new Logger());
+            ServiceContainer.Register<ILogger> (() => new BaseLogger());
             ServiceContainer.Register<ExperimentManager> (() => new ExperimentManager(
                 typeof(Phoebe.Analytics.Experiments),
                 typeof(Analytics.Experiments)));

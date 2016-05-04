@@ -5,6 +5,7 @@ using Cirrious.FluentLayouts.Touch;
 using GalaSoft.MvvmLight.Views;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Data;
+using Toggl.Phoebe.Misc;
 using Toggl.Phoebe.Reactive;
 using Toggl.Ross.Theme;
 using UIKit;
@@ -143,7 +144,15 @@ namespace Toggl.Ross.ViewControllers
                              confirm =>
                 {
                     if (confirm)
+                    {
+                        // ATTENTION At this point, old DBs are deleted,
+                        // the state is reseted and Intro screen is shown.
+                        // All this operations could be converted in reducers
+                        // and maybe moved to the state.
+                        DatabaseHelper.ResetToDBVersion(SyncSqliteDataStore.DB_VERSION);
                         RxChain.Send(new DataMsg.ResetState());
+                        NavigationController.SetViewControllers(new[] { new WelcomeViewController() }, true);
+                    }
                 });
             };
         }

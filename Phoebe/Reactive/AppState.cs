@@ -35,8 +35,19 @@ namespace Toggl.Phoebe.Reactive
                 {
                     _activeEntryCache = new RichTimeEntry(new TimeEntryData(), this);
                     if (TimeEntries.Count > 0)
-                        _activeEntryCache = TimeEntries.Values.SingleOrDefault(
-                                                x => x.Data.State == TimeEntryState.Running) ?? _activeEntryCache;
+                    {
+                        var activeEntries = TimeEntries.Values.Where(x => x.Data.State == TimeEntryState.Running).ToList();
+                        if (activeEntries.Count == 1)
+                        {
+                            _activeEntryCache = activeEntries[0];
+                        }
+                        else if (activeEntries.Count > 1)
+                        {
+                            // TODO RX: React to this situation
+                            var logger = ServiceContainer.Resolve<Logging.ILogger>();
+                            logger.Error(nameof(AppState), "More than one active entry detected");
+                        }
+                    }
                 }
                 return _activeEntryCache;
             }

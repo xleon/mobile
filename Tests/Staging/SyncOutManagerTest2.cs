@@ -10,18 +10,37 @@ using Toggl.Phoebe.Net;
 using Toggl.Phoebe.Reactive;
 using Toggl.Phoebe.Tests.Reactive;
 using XPlatUtils;
+using System.IO;
+using SQLite.Net.Platform.Generic;
+using Toggl.Phoebe.Logging;
 
 namespace Toggl.Phoebe.Tests.Staging
 {
     [TestFixture]
-    public class SyncOutManagerTest2 : Test
+    public class SyncOutManagerTest2
     {
-        UserJson userJson;
-        TogglRestClient togglClient;
+        protected string databasePath;
+        protected readonly string databaseDir = Path.GetDirectoryName(Path.GetTempFileName());
 
-        public override void Init()
+        IUserData userData;
+        TogglRestClient togglClient;
+        NetworkSwitcher networkSwitcher;
+
+        [OneTimeSetUp]
+        public async Task Init()
         {
-            base.Init();
+            databasePath = DatabaseHelper.GetDatabasePath(databaseDir, SyncSqliteDataStore.DB_VERSION);
+            ServiceContainer.Register<ISyncDataStore>(
+                new SyncSqliteDataStore(databasePath, new SQLitePlatformGeneric()));
+
+            ServiceContainer.Register<MessageBus>(new MessageBus());
+            ServiceContainer.Register<ITimeProvider>(new DefaultTimeProvider());
+            ServiceContainer.Register<TimeCorrectionManager>(new TimeCorrectionManager());
+            ServiceContainer.Register<LogStore>((LogStore)null);
+            ServiceContainer.Register<ILoggerClient>((ILoggerClient)null);
+            ServiceContainer.Register<ILogger>(new VoidLogger());
+            ServiceContainer.Register<INetworkPresence>(new Reactive.NetWorkPresenceMock());
+
 
             var platformUtils = new PlatformUtils()
             {
@@ -30,27 +49,42 @@ namespace Toggl.Phoebe.Tests.Staging
             };
             ServiceContainer.RegisterScoped<IPlatformUtils> (platformUtils);
 
-            togglClient = new TogglRestClient(Build.ApiUrl);
+            this.networkSwitcher = new NetworkSwitcher();
+            ServiceContainer.RegisterScoped<INetworkPresence>(networkSwitcher);
+
+            this.togglClient = new TogglRestClient(Build.ApiUrl);
             ServiceContainer.RegisterScoped<ITogglClient> (togglClient);
             RxChain.Init(Util.GetInitAppState());
 
-            var tmpUser = new UserJson()
+            IDisposable subscription = null;
+            var tsc = new TaskCompletionSource<bool>();
+            subscription =
+                StoreManager
+                .Singleton
+                .Observe()
+                .Subscribe(x =>
             {
-                Email = string.Format("mobile.{0}@toggl.com", Util.UserId),
-                Password = "123456",
-                Timezone = Time.TimeZoneId,
-            };
-            userJson = await togglClient.Create(tmpUser);
-            togglClient.Authenticate(userJson.ApiToken);
+                if (x.State.User.ApiToken != null)
+                {
+                    this.userData = x.State.User;
+                    subscription?.Dispose();
+                    tsc.SetResult(true);
+                }
+            });
+
+            var email = string.Format("mobile.{0}@toggl.com", Util.UserId);
+            var password = "123456";
+            RxChain.Send(ServerRequest.Authenticate.Signup(email, password));
+            await tsc.Task;
         }
 
-        public async override void Cleanup()
+        public async Task Cleanup()
         {
-            if (userJson != null)
+            if (this.userData != null)
             {
                 try
                 {
-                    await togglClient.Delete(userJson);
+                    await togglClient.DeleteUser(this.userData.ApiToken);
                 }
                 catch (Exception ex)
                 {
@@ -58,23 +92,29 @@ namespace Toggl.Phoebe.Tests.Staging
                 }
             }
             RxChain.Cleanup();
-            base.Cleanup();
+
+            ServiceContainer.Clear();
+            if (databasePath != null)
+            {
+                File.Delete(databasePath);
+                databasePath = null;
+            }
         }
 
         [Test]
         public async Task TestSendMessageWithoutConnection()
         {
             var tcs = Util.CreateTask<bool> ();
-            var te = Util.CreateTimeEntryData(DateTime.Now, userJson.RemoteId.Value, userJson.DefaultWorkspaceRemoteId);
+            var te = Util.CreateTimeEntryData(DateTime.Now, userData.RemoteId.Value, userData.DefaultWorkspaceRemoteId);
 
-            RxChain.Send(
-                new DataMsg.TimeEntryPut(te), new SyncTestOptions(false, (_, sent, queued) =>
+            networkSwitcher.SetNetworkConnection(false);
+            RxChain.Send(new DataMsg.TimeEntryPut(te), new RxChain.Continuation((_, sent, queued) =>
             {
                 try
                 {
                     // As there's no connection, message should have been enqueued
-                    Assert.That(queued.Any(x => x.LocalId == te.Id), Is.True);
-                    Assert.That(0, Is.EqualTo(sent.Count));
+                    Assert.That(queued.Any(x => x.Data.Id == te.Id), Is.True);
+                    Assert.That(0, Is.EqualTo(sent.Count()));
                     tcs.SetResult(true);
                 }
                 catch (Exception ex)
@@ -89,16 +129,16 @@ namespace Toggl.Phoebe.Tests.Staging
         public async Task TestSendMessageWithConnection()
         {
             var tcs = Util.CreateTask<bool> ();
-            var te = Util.CreateTimeEntryData(DateTime.Now, userJson.RemoteId.Value, userJson.DefaultWorkspaceRemoteId);
+            var te = Util.CreateTimeEntryData(DateTime.Now, userData.RemoteId.Value, userData.DefaultWorkspaceRemoteId);
 
-            RxChain.Send(
-                new DataMsg.TimeEntryPut(te), new SyncTestOptions(true, (_, sent, queued) =>
+            networkSwitcher.SetNetworkConnection(true);
+            RxChain.Send(new DataMsg.TimeEntryPut(te), new RxChain.Continuation((_, sent, queued) =>
             {
                 try
                 {
                     // As there's connection, message should have been sent
-                    Assert.False(queued.Any(x => x.LocalId == te.Id));
-                    Assert.AreEqual(1, sent.Count);
+                    Assert.False(queued.Any(x => x.Data.Id == te.Id));
+                    Assert.AreEqual(1, sent.Count());
                     tcs.SetResult(true);
                 }
                 catch (Exception ex)
@@ -113,17 +153,17 @@ namespace Toggl.Phoebe.Tests.Staging
         public async Task TestTrySendMessageAndReconnect()
         {
             var tcs = Util.CreateTask<bool> ();
-            var te = Util.CreateTimeEntryData(DateTime.Now, userJson.RemoteId.Value, userJson.DefaultWorkspaceRemoteId);
-            var te2 = Util.CreateTimeEntryData(DateTime.Now + TimeSpan.FromMinutes(5), userJson.RemoteId.Value, userJson.DefaultWorkspaceRemoteId);
+            var te = Util.CreateTimeEntryData(DateTime.Now, userData.RemoteId.Value, userData.DefaultWorkspaceRemoteId);
+            var te2 = Util.CreateTimeEntryData(DateTime.Now + TimeSpan.FromMinutes(5), userData.RemoteId.Value, userData.DefaultWorkspaceRemoteId);
 
-            RxChain.Send(
-                new DataMsg.TimeEntryPut(te), new SyncTestOptions(false, (_, sent, queued) =>
+            networkSwitcher.SetNetworkConnection(false);
+            RxChain.Send(new DataMsg.TimeEntryPut(te), new RxChain.Continuation((_, sent, queued) =>
             {
                 try
                 {
                     // As there's no connection, message should have been enqueued
-                    Assert.True(queued.Any(x => x.LocalId == te.Id));
-                    Assert.AreEqual(0, sent.Count);
+                    Assert.True(queued.Any(x => x.Data.Id == te.Id));
+                    Assert.AreEqual(0, sent.Count());
                 }
                 catch (Exception ex)
                 {
@@ -131,14 +171,38 @@ namespace Toggl.Phoebe.Tests.Staging
                 }
             }));
 
-            RxChain.Send(
-                new DataMsg.TimeEntryPut(te2), new SyncTestOptions(true, (_, sent, queued) =>
+            networkSwitcher.SetNetworkConnection(true);
+            RxChain.Send(new DataMsg.TimeEntryPut(te2), new RxChain.Continuation((_, sent, queued) =>
             {
                 try
                 {
                     // As there's connection, messages should have been sent
-                    Assert.False(queued.Any(x => x.LocalId == te.Id || x.LocalId == te2.Id));
-                    Assert.True(sent.Count > 0);
+                    Assert.False(queued.Any(x => x.Data.Id == te.Id || x.Data.Id == te2.Id));
+                    Assert.True(sent.Count() > 0);
+                    tcs.SetResult(true);
+                }
+                catch (Exception ex)
+                {
+                    tcs.SetException(ex);
+                }
+            }));
+            await tcs.Task;
+        }
+
+        [Test]
+        public async Task TestSendEntriesOlderThanTwoMonths()
+        {
+            var tcs = Util.CreateTask<bool> ();
+            var te = Util.CreateTimeEntryData(DateTime.Today.AddDays(-90), userData.RemoteId.Value, userData.DefaultWorkspaceRemoteId);
+
+            networkSwitcher.SetNetworkConnection(true);
+            RxChain.Send(new DataMsg.TimeEntryPut(te), new RxChain.Continuation((_, sent, queued) =>
+            {
+                try
+                {
+                    // As there's connection, message should have been sent
+                    Assert.False(queued.Any(x => x.Data.Id == te.Id));
+                    Assert.AreEqual(1, sent.Count());
                     tcs.SetResult(true);
                 }
                 catch (Exception ex)

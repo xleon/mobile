@@ -55,11 +55,16 @@ namespace Toggl.Phoebe.Reactive
             }
         }
 
-        public const string QueueId = "SYNC_OUT";
+        // sinceDate for GetChanges requests shouldn't be older than two months. Server requirements.
+        // Make a few days stricter to be on the safe side.
+        const int GetChangesSinceDateLimit = -56;
+
+        const string QueueId = "SYNC_OUT";
+        const string DuplicatedNameMessage = "Name has already been taken";
+        const string TimeEntryConstrainMessage = "This entry can't be saved";
+        const string TimeEntryUnmetConstrainst = "time entry has unmet constraints";
+
         public static SyncManager Singleton { get; private set; }
-        private static string DuplicatedNameMessage = "Name has already been taken";
-        private static string TimeEntryConstrainMessage = "This entry can't be saved";
-        private static string TimeEntryUnmetConstrainst = "time entry has unmet constraints";
 
         public static void Init()
         {
@@ -171,41 +176,48 @@ namespace Toggl.Phoebe.Reactive
             // Call message continuation before execute remote ops.
             if (syncMsg.Continuation != null && syncMsg.Continuation.LocalOnly)
                 syncMsg.Continuation.Invoke(syncMsg.State);
-
-            // Try to empty queue first
-            var queueEmpty = await TryEmptyQueue(remoteObjects, syncMsg.State, isConnected, dataStore);
-
-            // Deal with messages
-            foreach (var data in syncMsg.ServerRequests.OfType<ServerRequest.CRUD> ().SelectMany(x => x.Items))
+            
+            try
             {
-                if (queueEmpty && isConnected)
+                // Try to empty queue first
+                var queueEmpty = await TryEmptyQueue(remoteObjects, syncMsg.State, isConnected, dataStore);
+
+                // Deal with messages
+                foreach (var data in syncMsg.ServerRequests.OfType<ServerRequest.CRUD>().SelectMany(x => x.Items))
                 {
-                    try
+                    if (queueEmpty && isConnected)
                     {
-                        await SendData(data, remoteObjects, syncMsg.State);
+                        try
+                        {
+                            await SendData(data, remoteObjects, syncMsg.State);
+                        }
+                        catch (Exception ex)
+                        {
+                            logError(ex);
+                            Enqueue(data, enqueuedItems, dataStore);
+                            queueEmpty = false;
+                        }
                     }
-                    catch (Exception ex)
+                    else
                     {
-                        logError(ex);
                         Enqueue(data, enqueuedItems, dataStore);
                         queueEmpty = false;
                     }
                 }
-                else
-                {
-                    Enqueue(data, enqueuedItems, dataStore);
-                    queueEmpty = false;
-                }
-            }
 
-            // TODO: Try to empty queue again?
+                // TODO: Try to empty queue again?
+            }
+            catch (Exception ex)
+            {
+                logError(ex, $"{nameof(SyncManager)} Queue");
+            }
 
             // Return remote objects
             if (remoteObjects.Count > 0)
                 RxChain.Send(DataMsg.ServerResponse.CRUD(remoteObjects));
 
             foreach (var req in syncMsg.ServerRequests.Where(x => x is ServerRequest.CRUD == false))
-            requestManager.OnNext(Tuple.Create(req, syncMsg.State));
+                requestManager.OnNext(Tuple.Create(req, syncMsg.State));
 
             // Mostly used for test pourposes.
             if (syncMsg.Continuation != null && !syncMsg.Continuation.LocalOnly)
@@ -468,10 +480,8 @@ namespace Toggl.Phoebe.Reactive
             if (request is ServerRequest.GetChanges)
             {
                 sinceDate = state.RequestInfo.GetChangesLastRun;
-                // ATTENTION sinceDate should be less
-                // than two month ago. Server requirements.
-                if (sinceDate < DateTime.Now.Date.AddDays(-56))
-                    sinceDate = DateTime.Now.Date.AddDays(-56);
+                if (sinceDate < DateTime.Now.Date.AddDays(GetChangesSinceDateLimit))
+                    sinceDate = DateTime.Now.Date.AddDays(GetChangesSinceDateLimit);
             }
             else
             {

@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
+using Toggl.Phoebe.Logging;
+using XPlatUtils;
 
 namespace Toggl.Phoebe.Reactive
 {
@@ -26,9 +28,22 @@ namespace Toggl.Phoebe.Reactive
             }
 
             public void Invoke(AppState state, IEnumerable<ICommonData> remoteObjects, IEnumerable<SyncManager.QueueItem> enqueuedItems) =>
-            _testCont(state, remoteObjects, enqueuedItems);
+            safeInvoke(() => _testCont(state, remoteObjects, enqueuedItems));
 
-            public void Invoke(AppState state) => _cont(state);
+            public void Invoke(AppState state) => safeInvoke(() => _cont(state));
+
+            private void safeInvoke(Action f)
+            {
+                try
+                {
+                    f();
+                }
+                catch (Exception ex)
+                {
+                    var logger = ServiceContainer.Resolve<ILogger>();
+                    logger.Error(nameof(Continuation), ex, ex.Message);
+                }
+            }
         }
 
         public enum InitMode

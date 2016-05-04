@@ -6,6 +6,7 @@ using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Helpers;
 using Toggl.Phoebe.Logging;
+using Toggl.Phoebe.Misc;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
 
@@ -114,12 +115,12 @@ namespace Toggl.Phoebe.Reactive
 
         static DataSyncMsg<AppState> TimeEntriesLoad(AppState state, DataMsg msg)
         {
-            var dataStore = ServiceContainer.Resolve<ISyncDataStore> ();
+            var dataStore = ServiceContainer.Resolve<ISyncDataStore>();
             var endDate = state.RequestInfo.NextDownloadFrom;
 
             var startDate = GetDatesByDays(dataStore, endDate, Literals.TimeEntryLoadDays);
             var dbEntries = dataStore
-                            .Table<TimeEntryData> ()
+                            .Table<TimeEntryData>()
                             .Where(r =>
                                    r.State != TimeEntryState.New &&
                                    r.StartTime >= startDate && r.StartTime < endDate &&
@@ -159,7 +160,7 @@ namespace Toggl.Phoebe.Reactive
                 var reqInfo = state.RequestInfo.With(
                                   errorInfo: null,
                                   running: new List<ServerRequest>(),
-                                  hasMore: receivedData.OfType<TimeEntryData> ().Any(),
+                                  hasMore: receivedData.OfType<TimeEntryData>().Any(),
                                   hadErrors: false);
                 return DataSyncMsg.Create(state.With(requestInfo: reqInfo));
             },
@@ -168,7 +169,7 @@ namespace Toggl.Phoebe.Reactive
                 state = UpdateStateWithNewData(state, receivedData);
 
                 // Update user
-                var dataStore = ServiceContainer.Resolve<ISyncDataStore> ();
+                var dataStore = ServiceContainer.Resolve<ISyncDataStore>();
                 UserData user = serverMsg.User;
                 user.Id = state.User.Id;
                 user.DefaultWorkspaceId = state.Workspaces.Values.Single(x => x.RemoteId == user.DefaultWorkspaceRemoteId).Id;
@@ -211,7 +212,7 @@ namespace Toggl.Phoebe.Reactive
                 var reqInfo = state.RequestInfo.With(
                                   errorInfo: null,
                                   hadErrors: false,
-                                  running: new List<ServerRequest> (),
+                                  running: new List<ServerRequest>(),
                                   getChangesLastRun: serverMsg.Timestamp);
 
                 return DataSyncMsg.Create(state.With(
@@ -340,12 +341,12 @@ namespace Toggl.Phoebe.Reactive
             return (msg as DataMsg.UserDataPut).Data.Match(
                        userData =>
             {
-                var dataStore = ServiceContainer.Resolve<ISyncDataStore> ();
+                var dataStore = ServiceContainer.Resolve<ISyncDataStore>();
                 var updated = dataStore.Update(ctx => { ctx.Put(userData); });
                 var runningState = state.RequestInfo.Running.Where(x => !(x is ServerRequest.Authenticate)).ToList();
 
                 // This will throw an exception if user hasn't been correctly updated
-                var userDataInDb = updated.OfType<UserData> ().Single();
+                var userDataInDb = updated.OfType<UserData>().Single();
 
                 // ATTENTION After succesful login, send
                 // a request to get data state from server.
@@ -380,7 +381,7 @@ namespace Toggl.Phoebe.Reactive
         static DataSyncMsg<AppState> TimeEntryContinue(AppState state, DataMsg msg)
         {
             var entryData = (msg as DataMsg.TimeEntryContinue).Data.ForceLeft();
-            var dataStore = ServiceContainer.Resolve <ISyncDataStore> ();
+            var dataStore = ServiceContainer.Resolve<ISyncDataStore>();
             var isStartedNew = (msg as DataMsg.TimeEntryContinue).StartedByFAB;
 
             var updated = dataStore.Update(ctx =>
@@ -413,7 +414,7 @@ namespace Toggl.Phoebe.Reactive
                     x.State = TimeEntryState.Running;
                     x.StartTime = Time.UtcNow.Truncate(TimeSpan.TicksPerSecond);
                     x.StopTime = null;
-                    x.Tags = state.Settings.UseDefaultTag ? TimeEntryData.DefaultTags : new List<string> ();
+                    x.Tags = state.Settings.UseDefaultTag ? TimeEntryData.DefaultTags : new List<string>();
                 }));
             });
 
@@ -423,7 +424,7 @@ namespace Toggl.Phoebe.Reactive
 
         static DataSyncMsg<AppState> TimeEntryStart(AppState state, DataMsg msg)
         {
-            var dataStore = ServiceContainer.Resolve <ISyncDataStore> ();
+            var dataStore = ServiceContainer.Resolve<ISyncDataStore>();
             var updated = dataStore.Update(ctx =>
             {
                 // Stop ActiveEntry if necessary
@@ -444,7 +445,7 @@ namespace Toggl.Phoebe.Reactive
                     x.State = TimeEntryState.Running;
                     x.StartTime = Time.UtcNow.Truncate(TimeSpan.TicksPerSecond);
                     x.StopTime = null;
-                    x.Tags = state.Settings.UseDefaultTag ? TimeEntryData.DefaultTags : new List<string> ();
+                    x.Tags = state.Settings.UseDefaultTag ? TimeEntryData.DefaultTags : new List<string>();
                 }));
             });
 
@@ -455,7 +456,7 @@ namespace Toggl.Phoebe.Reactive
         static DataSyncMsg<AppState> TimeEntryStop(AppState state, DataMsg msg)
         {
             var entryData = (msg as DataMsg.TimeEntryStop).Data.ForceLeft();
-            var dataStore = ServiceContainer.Resolve <ISyncDataStore> ();
+            var dataStore = ServiceContainer.Resolve<ISyncDataStore>();
 
             CheckTimeEntryState(entryData, TimeEntryState.Running, "stop");
 
@@ -470,7 +471,7 @@ namespace Toggl.Phoebe.Reactive
 
         static DataSyncMsg<AppState> Reset(AppState state, DataMsg msg)
         {
-            var dataStore = ServiceContainer.Resolve <ISyncDataStore> ();
+            var dataStore = ServiceContainer.Resolve<ISyncDataStore>();
             dataStore.WipeTables();
 
             // Clear platform settings.
@@ -506,9 +507,40 @@ namespace Toggl.Phoebe.Reactive
             dataStore.Table<TaskData>().ForEach(x => tasks.Add(x.Id, x));
             dataStore.Table<TagData>().ForEach(x => tags.Add(x.Id, x));
 
+            var settings = state.Settings;
+            IOldSettingsStore oldSettings;
+            UserData userDataUpdated = userData;
+
+            if (ServiceContainer.TryResolve(out oldSettings) &&
+                    oldSettings.UserId != null &&
+                    oldSettings.UserId != Guid.Empty)
+            {
+                // Set api token.
+                userData.ApiToken = oldSettings.ApiToken;
+                userDataUpdated = (UserData)dataStore.Update(ctx => ctx.Put(userData)).Single();
+
+                // projectDefault: default value used
+                // lastReportZoom: Default value used
+                settings = settings.With(
+                               userId: oldSettings.UserId.Value,
+                               useTag: oldSettings.UseDefaultTag,
+                               lastAppVersion: oldSettings.LastAppVersion,
+                               groupedEntries: oldSettings.GroupedTimeEntries,
+                               showWelcome: oldSettings.ShowWelcome,
+                               chooseProjectForNew: oldSettings.ChooseProjectForNew,
+                               getChangesLastRun: oldSettings.SyncLastRun.HasValue ? oldSettings.SyncLastRun.Value : DateTime.MinValue,
+                               // iOS only values
+                               rossReadDurOnlyNotice : oldSettings.RossReadDurOnlyNotice,
+                               // Android only values
+                               gcmRegistrationId : oldSettings.GcmRegistrationId,
+                               idleNotification : oldSettings.IdleNotification,
+                               showNotification : oldSettings.ShowNotification);
+            }
+
             return DataSyncMsg.Create(state.With(
+                                          settings: settings,
                                           requestInfo: RequestInfo.Empty,
-                                          user: userData,
+                                          user: userDataUpdated,
                                           workspaces: workspaces,
                                           projects: projects,
                                           workspaceUsers: workspaceUserData,
@@ -557,7 +589,7 @@ namespace Toggl.Phoebe.Reactive
         #region Util
         static AppState UpdateStateWithNewData(AppState state, IEnumerable<CommonData> receivedData)
         {
-            var dataStore = ServiceContainer.Resolve <ISyncDataStore> ();
+            var dataStore = ServiceContainer.Resolve<ISyncDataStore>();
             dataStore.Update(ctx =>
             {
                 foreach (var iterator in receivedData)
@@ -586,8 +618,8 @@ namespace Toggl.Phoebe.Reactive
                         else
                         {
                             // No changes, just continue.
-                            var logger = ServiceContainer.Resolve<ILogger> ();
-                            logger.Info("UpdateStateWithNewData", "Posible sync error. Object without changes " +  newData);
+                            var logger = ServiceContainer.Resolve<ILogger>();
+                            logger.Info("UpdateStateWithNewData", "Posible sync error. Object without changes " + newData);
                             continue;
                         }
                     }
@@ -746,7 +778,7 @@ namespace Toggl.Phoebe.Reactive
         // TODO: replace this method with the SQLite equivalent.
         static DateTime GetDatesByDays(ISyncDataStore dataStore, DateTime startDate, int numDays)
         {
-            var baseQuery = dataStore.Table<TimeEntryData> ().Where(
+            var baseQuery = dataStore.Table<TimeEntryData>().Where(
                                 r => r.State != TimeEntryState.New &&
                                 r.StartTime < startDate &&
                                 r.DeletedAt == null);

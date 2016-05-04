@@ -33,7 +33,7 @@ namespace Toggl.Joey.UI.Views
 
         public TextView TextView { get; private set; }
 
-        public IReadOnlyList<string> TagNames
+        public List<string> TagNames
         {
             get
             {

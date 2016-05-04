@@ -126,7 +126,7 @@ namespace Toggl.Phoebe.ViewModels
         public string ProjectName { get { return richData.Info.ProjectData.Name ?? string.Empty; } }
         public string TaskName { get { return richData.Info.TaskData.Name ?? string.Empty; } }
         public string ClientName { get { return richData.Info.ClientData.Name ?? string.Empty; } }
-        public IReadOnlyList<string> Tags { get { return richData.Data.Tags; } }
+        public List<string> Tags { get { return richData.Data.Tags.ToList(); } }
 
         #endregion
 

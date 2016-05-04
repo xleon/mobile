@@ -30,7 +30,7 @@ namespace Toggl.Joey.UI.Fragments
         // to avoid weak references to be removed
         private Binding<string, string> durationBinding, projectBinding, clientBinding, descriptionBinding;
         private Binding<DateTime, string> startTimeBinding, stopTimeBinding;
-        private Binding<IReadOnlyList<string>, IReadOnlyList<string>> tagBinding;
+        private Binding<List<string>, List<string>> tagBinding;
         private Binding<bool, ViewStates> isPremiumBinding;
         private Binding<bool, bool> isBillableBinding, billableBinding, isRunningBinding, saveMenuBinding, syncErrorBinding;
 

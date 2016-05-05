@@ -52,7 +52,7 @@ namespace Toggl.Ross.ViewControllers
             {
                 splashBg = new UIImageView(launchImg);
                 View.Add(splashBg);
-                UIView.Animate(0.2, 0.5, UIViewAnimationOptions.CurveEaseIn,
+                UIView.Animate(0.2, 0.7, UIViewAnimationOptions.CurveEaseIn,
                                () => splashBg.Alpha = 0, () => splashBg.RemoveFromSuperview());
             }
 

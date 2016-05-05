@@ -5,7 +5,6 @@ using Cirrious.FluentLayouts.Touch;
 using GalaSoft.MvvmLight.Views;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Data;
-using Toggl.Phoebe.Misc;
 using Toggl.Phoebe.Reactive;
 using Toggl.Ross.Theme;
 using UIKit;
@@ -192,11 +191,15 @@ namespace Toggl.Ross.ViewControllers
             topLabel.Text = "MigratingUpdateTitle".Tr();
             descLabel.Text = "MigratingUpdateDesc".Tr();
             progressBar.Hidden = false;
+            toggler1.Hidden = false;
+            percente.Hidden = false;
+            progressBar.Progress = 0;
 
             toggler2.Hidden = true;
             tryAgainBtn.Hidden = true;
             discardBtn.Hidden = true;
             discardDesc.Hidden = true;
+            discardLabel.Hidden = true;
         }
 
         private void DisplaySuccessState()
@@ -223,6 +226,7 @@ namespace Toggl.Ross.ViewControllers
             progressBar.Hidden = true;
             discardBtn.Hidden = true;
             discardDesc.Hidden = true;
+            discardLabel.Hidden = true;
         }
 
         private void DisplayDiscardState()

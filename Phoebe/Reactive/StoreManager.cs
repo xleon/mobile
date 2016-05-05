@@ -69,6 +69,14 @@ namespace Toggl.Phoebe.Reactive
                 AppState = msg.State;
                 return tuple.Item2 == null ? msg : new DataSyncMsg<AppState> (msg.State, msg.ServerRequests, tuple.Item2);
             })
+            .Select(syncMsg =>
+            {
+                // Call message continuation after executing reducers
+                if (syncMsg.Continuation != null && syncMsg.Continuation.LocalOnly)
+                    syncMsg.Continuation.Invoke(syncMsg.State);
+
+                return syncMsg;
+            })
             .Subscribe(subject2.OnNext);
         }
 

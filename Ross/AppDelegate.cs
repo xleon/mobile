@@ -94,6 +94,10 @@ namespace Toggl.Ross
             window.RootViewController = new MainViewController();
             window.MakeKeyAndVisible();
 
+            #if __UITESTS__
+            Calabash.Start();
+            #endif
+
             return true;
         }
 

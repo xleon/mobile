@@ -173,10 +173,6 @@ namespace Toggl.Phoebe.Reactive
             var isConnected = networkPresence.IsNetworkPresent;
             var dataStore = ServiceContainer.Resolve<ISyncDataStore>();
 
-            // Call message continuation before execute remote ops.
-            if (syncMsg.Continuation != null && syncMsg.Continuation.LocalOnly)
-                syncMsg.Continuation.Invoke(syncMsg.State);
-
             try
             {
                 // Try to empty queue first

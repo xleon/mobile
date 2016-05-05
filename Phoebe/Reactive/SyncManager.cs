@@ -318,6 +318,11 @@ namespace Toggl.Phoebe.Reactive
                     if (json.RemoteId != null)
                     {
                         await client.Delete(authToken, json);
+                        // Check if remoteObjects contains the deleted item
+                        // (for example, when an entry is create and deleted before syncing)
+                        for (var i = remoteObjects.Count - 1; i >= 0; i--)
+                            if (remoteObjects[i].Id == data.Id)
+                                remoteObjects.RemoveAt(i);
                     }
                 }
             }

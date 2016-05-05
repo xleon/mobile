@@ -150,6 +150,8 @@ namespace Toggl.Phoebe.Data
 
                     migrator.Migrate(migrateFromDB, newDB, progressReporter);
 
+                    throw new Exception("DB exception!");
+
                     migrateFromDB.Close();
 
                     var newVersion = GetVersion(newDB);

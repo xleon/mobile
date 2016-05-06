@@ -167,7 +167,7 @@ namespace Toggl.Phoebe.Tests.Reactive
         }
 
         [Test]
-        public async Task TestQueueOptimizations()
+        public async Task TestQueueWithMultipleValues()
         {
             var tcs = Util.CreateTask<bool>();
             var te1 = Util.CreateTimeEntryData(DateTime.Now.AddHours(-1));
@@ -176,8 +176,7 @@ namespace Toggl.Phoebe.Tests.Reactive
             networkSwitcher.SetNetworkConnection(false);
 
             RxChain.Send(new DataMsg.TimeEntryPut(te1));
-            te1.With(x => x.Description = "desc1");
-            RxChain.Send(new DataMsg.TimeEntryPut(te1));
+            RxChain.Send(new DataMsg.TimeEntryPut(te1.With(x => x.Description = "desc1")));
             RxChain.Send(new DataMsg.TimeEntryPut(te2));
             RxChain.Send(new DataMsg.TimeEntriesRemove(te1));
 
@@ -186,10 +185,9 @@ namespace Toggl.Phoebe.Tests.Reactive
             {
                 try
                 {
-                    // As there's connection, messages should have been sent
+                    // As there's connection, queue should be empty
                     Assert.That(queued.Count(), Is.EqualTo(0));
-                    // After the optimization, only one update
-                    // should be sent?
+                    // As te1 was deleted, only te2 should remain as sent
                     Assert.That(sent.Count(), Is.EqualTo(1));
                     tcs.SetResult(true);
                 }

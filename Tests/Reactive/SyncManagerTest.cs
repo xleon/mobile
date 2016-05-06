@@ -167,6 +167,42 @@ namespace Toggl.Phoebe.Tests.Reactive
         }
 
         [Test]
+        public async Task TestQueueOptimizations()
+        {
+            var tcs = Util.CreateTask<bool>();
+            var te1 = Util.CreateTimeEntryData(DateTime.Now.AddHours(-1));
+            var te2 = Util.CreateTimeEntryData(DateTime.Now);
+
+            networkSwitcher.SetNetworkConnection(false);
+
+            RxChain.Send(new DataMsg.TimeEntryPut(te1));
+            te1.With(x => x.Description = "desc1");
+            RxChain.Send(new DataMsg.TimeEntryPut(te1));
+            RxChain.Send(new DataMsg.TimeEntryPut(te2));
+            RxChain.Send(new DataMsg.TimeEntriesRemove(te1));
+
+            networkSwitcher.SetNetworkConnection(true);
+            RxChain.Send(new ServerRequest.GetChanges(), new RxChain.Continuation((_, sent, queued) =>
+            {
+                try
+                {
+                    // As there's connection, messages should have been sent
+                    Assert.That(queued.Count(), Is.EqualTo(0));
+                    // After the optimization, only one update
+                    // should be sent?
+                    Assert.That(sent.Count(), Is.EqualTo(1));
+                    tcs.SetResult(true);
+                }
+                catch (Exception ex)
+                {
+                    tcs.SetException(ex);
+                }
+            }));
+
+            await tcs.Task;
+        }
+
+        [Test]
         public async Task TestCreateNewCommonData()
         {
             // Set network as connected.

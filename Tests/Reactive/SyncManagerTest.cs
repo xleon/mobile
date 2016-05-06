@@ -25,7 +25,7 @@ namespace Toggl.Phoebe.Tests.Reactive
             ServiceContainer.RegisterScoped<ITogglClient> (togglClient);
             networkSwitcher = new NetworkSwitcher();
             ServiceContainer.RegisterScoped<INetworkPresence> (networkSwitcher);
-            RxChain.Init(Util.GetInitAppState());
+            RxChain.Init(Util.GetInitAppState().With(user: new UserData() { ApiToken = "Dummy Token" }));
         }
 
         public override void Cleanup()
@@ -122,6 +122,73 @@ namespace Toggl.Phoebe.Tests.Reactive
                     // As there's connection, messages should have been sent
                     Assert.That(queued.Any(x => x.Data.Id == te.Id || x.Data.Id == te2.Id), Is.False);
                     Assert.That(sent.Count() > 0, Is.True);
+                    tcs.SetResult(true);
+                }
+                catch (Exception ex)
+                {
+                    tcs.SetException(ex);
+                }
+            }));
+
+            await tcs.Task;
+        }
+
+        [Test]
+        public async Task TestCreateEntryOfflineDeleteAndReconnect()
+        {
+            var tcs = Util.CreateTask<bool>();
+            var te = Util.CreateTimeEntryData(DateTime.Now);
+
+            networkSwitcher.SetNetworkConnection(false);
+
+            RxChain.Send(new DataMsg.TimeEntryPut(te));
+
+            RxChain.Send(new DataMsg.TimeEntriesRemove(te));
+
+            networkSwitcher.SetNetworkConnection(true);
+            RxChain.Send(new ServerRequest.GetChanges(), new RxChain.Continuation((_, sent, queued) =>
+            {
+                try
+                {
+                    // As there's connection, messages should have been sent
+                    Assert.That(queued.Count(), Is.EqualTo(0));
+                    // As the entry is deleted, it shouldn't be included in the sent items
+                    // (this is to prevent it reappears again in the AppState after deletion)
+                    Assert.That(sent.Count(), Is.EqualTo(0));
+                    tcs.SetResult(true);
+                }
+                catch (Exception ex)
+                {
+                    tcs.SetException(ex);
+                }
+            }));
+
+            await tcs.Task;
+        }
+
+        [Test]
+        public async Task TestQueueWithMultipleValues()
+        {
+            var tcs = Util.CreateTask<bool>();
+            var te1 = Util.CreateTimeEntryData(DateTime.Now.AddHours(-1));
+            var te2 = Util.CreateTimeEntryData(DateTime.Now);
+
+            networkSwitcher.SetNetworkConnection(false);
+
+            RxChain.Send(new DataMsg.TimeEntryPut(te1));
+            RxChain.Send(new DataMsg.TimeEntryPut(te1.With(x => x.Description = "desc1")));
+            RxChain.Send(new DataMsg.TimeEntryPut(te2));
+            RxChain.Send(new DataMsg.TimeEntriesRemove(te1));
+
+            networkSwitcher.SetNetworkConnection(true);
+            RxChain.Send(new ServerRequest.GetChanges(), new RxChain.Continuation((_, sent, queued) =>
+            {
+                try
+                {
+                    // As there's connection, queue should be empty
+                    Assert.That(queued.Count(), Is.EqualTo(0));
+                    // As te1 was deleted, only te2 should remain as sent
+                    Assert.That(sent.Count(), Is.EqualTo(1));
                     tcs.SetResult(true);
                 }
                 catch (Exception ex)

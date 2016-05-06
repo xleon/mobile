@@ -314,10 +314,15 @@ namespace Toggl.Phoebe.Reactive
                 {
                     var json = mapper.MapToJson(data);
                     // If RemoteId is null, check whether it can be found in previously sent objects and ignore if not
-                    json.RemoteId = json.RemoteId ?? remoteObjects.SingleOrDefault(x => x.Id == data.Id)?.RemoteId;
+                    json.RemoteId = json.RemoteId ?? remoteObjects.FirstOrDefault(x => x.Id == data.Id)?.RemoteId;
                     if (json.RemoteId != null)
                     {
                         await client.Delete(authToken, json);
+                        // Check if remoteObjects contains the deleted item
+                        // (for example, when an entry is create and deleted before syncing)
+                        for (var i = remoteObjects.Count - 1; i >= 0; i--)
+                            if (remoteObjects[i].Id == data.Id)
+                                remoteObjects.RemoveAt(i);
                     }
                 }
             }

@@ -259,6 +259,8 @@
     <Compile Include="Data\OldSettingsStore.cs" />
     <Compile Include="UI\Adapters\SettingsAdapter.cs" />
     <Compile Include="UI\Fragments\LoginFragment.cs" />
+    <Compile Include="UI\Fragments\ReportsNoApiFragment.cs" />
+    <Compile Include="UI\Fragments\FeedbackNoApiFragment.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\AboutResources.txt" />
@@ -829,6 +831,8 @@
     <AndroidResource Include="Resources\drawable-xxhdpi\IcGoogleWhite.png" />
     <AndroidResource Include="Resources\menu\ReportsToolbarMenu.axml" />
     <AndroidResource Include="Resources\layout\ConnectLayout.axml" />
+    <AndroidResource Include="Resources\layout\ReportsNoApiFragment.axml" />
+    <AndroidResource Include="Resources\layout\FeedbackNoApiFragment.axml" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Xamarin\Android\Xamarin.Android.CSharp.targets" />
   <ItemGroup>

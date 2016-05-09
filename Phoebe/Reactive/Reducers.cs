@@ -480,7 +480,6 @@ namespace Toggl.Phoebe.Reactive
                 x.IsAdmin = true;
             });
 
-
             var userData = UserData.Create(x =>
             {
                 x.Id = Guid.NewGuid();
@@ -501,7 +500,6 @@ namespace Toggl.Phoebe.Reactive
             });
 
             return DataSyncMsg.Create(state.With(
-                                          requestInfo: state.RequestInfo.With(authResult: AuthResult.Success),
                                           user: userData,
                                           workspaces: state.Update(state.Workspaces, updated),
                                           settings: state.Settings.With(userId: userData.Id)

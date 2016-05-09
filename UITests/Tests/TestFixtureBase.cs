@@ -1,16 +1,18 @@
 ﻿using NUnit.Framework;
+using UITests.UIHelpers;
 using Xamarin.UITest;
 
 namespace UITests
 {
     [TestFixture(Platform.Android)]
     [TestFixture(Platform.iOS)]
-    public class Tests
+    public abstract class TestFixtureBase
     {
-        IApp app;
-        Platform platform;
+        protected IApp app { get; private set; }
+        protected Platform platform { get; }
+        protected UI ui { get; } = new UI();
 
-        public Tests(Platform platform)
+        public TestFixtureBase(Platform platform)
         {
             this.platform = platform;
         }
@@ -21,10 +23,5 @@ namespace UITests
             app = AppInitializer.StartApp(platform);
         }
 
-        [Test]
-        public void AppLaunches()
-        {
-            app.Screenshot("First screen.");
-        }
     }
 }

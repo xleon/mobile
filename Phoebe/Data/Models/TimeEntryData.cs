@@ -131,12 +131,7 @@ namespace Toggl.Phoebe.Data.Models
         public static string GetFormattedDuration(UserData user, TimeSpan duration)
         {
             string formattedString = duration.ToString(@"hh\:mm\:ss");
-            if (user == null)
-            {
-                return formattedString;
-            }
-
-            if (user.DurationFormat == DurationFormat.Classic)
+            if (user == null || user.DurationFormat == DurationFormat.Classic)
             {
                 if (duration.TotalMinutes < 1)
                 {
@@ -148,7 +143,10 @@ namespace Toggl.Phoebe.Data.Models
                 }
                 else
                 {
-                    formattedString = duration.ToString(@"hh\:mm\:ss");
+                    formattedString = string.Format("{0:00}:{1:00}:{2:00}",
+                                                    Math.Floor(duration.TotalHours),
+                                                    duration.Minutes,
+                                                    duration.Seconds);
                 }
             }
             else if (user.DurationFormat == DurationFormat.Decimal)

@@ -104,6 +104,7 @@ namespace Toggl.Phoebe.Reactive
                 MaxDegreeOfParallelism = 1,
                 BoundedCapacity = BufferSize
             };
+
             var processingBlock = new ActionBlock<DataSyncMsg<AppState>> (async(DataSyncMsg<AppState> msg) =>
             {
                 await EnqueueOrSend(msg);

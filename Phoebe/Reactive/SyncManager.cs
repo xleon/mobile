@@ -91,6 +91,8 @@ namespace Toggl.Phoebe.Reactive
 
             StoreManager.Singleton
             .Observe()
+            // Process messages only for logged users
+            .Where (msg => !string.IsNullOrEmpty (msg.State.User.ApiToken)) 
             .SelectAsync(EnqueueOrSend)
             .Subscribe((_) => { },
             (ex) =>

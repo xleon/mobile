@@ -128,7 +128,7 @@ namespace Toggl.Phoebe.Data.Models
             }
         }
 
-        public static string GetFormattedDuration(UserData user, TimeSpan duration)
+        public static string GetFormattedDuration(TimeSpan duration, UserData user = null)
         {
             string formattedString = duration.ToString(@"hh\:mm\:ss");
             if (user == null || user.DurationFormat == DurationFormat.Classic)

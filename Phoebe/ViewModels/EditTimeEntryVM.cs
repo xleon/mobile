@@ -82,9 +82,7 @@ namespace Toggl.Phoebe.ViewModels
         {
             get
             {
-                // TODO: check substring function for long times
-                return TimeSpan.FromSeconds(richData.Data.GetDuration().TotalSeconds)
-                       .ToString().Substring(0, 8);
+                return TimeEntryData.GetFormattedDuration(richData.Data.GetDuration());
             }
         }
 

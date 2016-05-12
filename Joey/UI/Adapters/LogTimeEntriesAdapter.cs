@@ -547,7 +547,7 @@ namespace Toggl.Joey.UI.Adapters
                     timer.Start();
                 }
 
-                DurationTextView.Text = TimeEntryData.GetFormattedDuration(null, duration);
+                DurationTextView.Text = TimeEntryData.GetFormattedDuration(duration);
             }
 
             private void OnDurationElapsed(object sender, ElapsedEventArgs e)

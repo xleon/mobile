@@ -90,7 +90,6 @@ namespace Toggl.Phoebe.Reactive
                    .Add(typeof(DataMsg.ClientDataPut), ClientDataPut)
                    .Add(typeof(DataMsg.ProjectDataPut), ProjectDataPut)
                    .Add(typeof(DataMsg.UserDataPut), UserDataPut)
-                   .Add(typeof(DataMsg.InitState), InitState)
                    .Add(typeof(DataMsg.ResetState), Reset)
                    .Add(typeof(DataMsg.InitStateAfterMigration), InitStateAfterMigration)
                    .Add(typeof(DataMsg.UpdateSetting), UpdateSettings);
@@ -99,11 +98,27 @@ namespace Toggl.Phoebe.Reactive
         static DataSyncMsg<AppState> ServerRequest(AppState state, DataMsg msg)
         {
             var req = (msg as DataMsg.ServerRequest).Data;
+            RequestInfo reqInfo;
 
-            var reqInfo = state.RequestInfo.With(
+            // ATTENTION If ApiToken doesn't exist and the request
+            // is not related with authentication, user is not connecte
+            // just return an empty and anyoying answer :)
+            if (!(req is ServerRequest.Authenticate) &&
+                    string.IsNullOrEmpty(state.User.ApiToken))
+            {
+                reqInfo = state.RequestInfo.With(
                               hadErrors: false,
                               errorInfo: null,
-                              running: state.RequestInfo.Running.Append(req).ToList());
+                              hasMore: false,
+                              running: new List<ServerRequest>());
+
+                return DataSyncMsg.Create(state.With(requestInfo: reqInfo));
+            }
+
+            reqInfo = state.RequestInfo.With(
+                          hadErrors: false,
+                          errorInfo: null,
+                          running: state.RequestInfo.Running.Append(req).ToList());
 
             if (req is ServerRequest.Authenticate)
                 reqInfo = reqInfo.With(authResult: AuthResult.None);
@@ -130,11 +145,28 @@ namespace Toggl.Phoebe.Reactive
                             .OrderByDescending(r => r.StartTime)
                             .ToList();
 
-            var req = new ServerRequest.DownloadEntries();
-            var reqInfo = state.RequestInfo.With(
-                              running: state.RequestInfo.Running.Append(req).ToList(),
-                              downloadFrom: endDate,
-                              nextDownloadFrom: dbEntries.Any() ? dbEntries.Min(x => x.StartTime) : endDate);
+            ServerRequest req;
+            RequestInfo reqInfo;
+
+            // ATTENTION If ApiToken doesn't exist and the request
+            // is not related with authentication, user is not connecte
+            // just return an empty and anyoying answer :)
+            if (string.IsNullOrEmpty(state.User.ApiToken))
+            {
+                reqInfo = state.RequestInfo.With(
+                              hadErrors: false,
+                              errorInfo: null,
+                              hasMore: false,
+                              running: new List<ServerRequest>());
+
+                return DataSyncMsg.Create(state.With(requestInfo: reqInfo));
+            }
+
+            req = new ServerRequest.DownloadEntries();
+            reqInfo = state.RequestInfo.With(
+                          running: state.RequestInfo.Running.Append(req).ToList(),
+                          downloadFrom: endDate,
+                          nextDownloadFrom: dbEntries.Any() ? dbEntries.Min(x => x.StartTime) : endDate);
 
             return DataSyncMsg.Create(req, state.With(
                                           requestInfo: reqInfo,
@@ -468,44 +500,6 @@ namespace Toggl.Phoebe.Reactive
             })));
             // TODO: Check updated.Count == 1?
             return DataSyncMsg.Create(updated, state.With(timeEntries: state.UpdateTimeEntries(updated)));
-        }
-
-        static DataSyncMsg<AppState> InitState(AppState state, DataMsg msg)
-        {
-            var workspace = WorkspaceData.Create(x =>
-            {
-                x.Id = Guid.NewGuid();
-                x.Name = "Workspace";
-                x.IsPremium = false;
-                x.IsAdmin = true;
-            });
-
-
-            var userData = UserData.Create(x =>
-            {
-                x.Id = Guid.NewGuid();
-                x.Name = "John Doe";
-                x.Email = "support@toggl.com";
-                x.Locale = "locale";
-                x.StartOfWeek = DayOfWeek.Monday;
-                x.Timezone = Time.TimeZoneId;;
-                x.DefaultWorkspaceId = workspace.Id;
-            });
-
-            var dataStore = ServiceContainer.Resolve<ISyncDataStore>();
-
-            var updated = dataStore.Update(ctx =>
-            {
-                ctx.Put(userData);
-                ctx.Put(workspace);
-            });
-
-            return DataSyncMsg.Create(state.With(
-                                          requestInfo: state.RequestInfo.With(authResult: AuthResult.Success),
-                                          user: userData,
-                                          workspaces: state.Update(state.Workspaces, updated),
-                                          settings: state.Settings.With(userId: userData.Id)
-                                      ));
         }
 
         static DataSyncMsg<AppState> Reset(AppState state, DataMsg msg)

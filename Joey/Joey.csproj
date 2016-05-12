@@ -256,6 +256,8 @@
     <Compile Include="Data\OldSettingsStore.cs" />
     <Compile Include="UI\Adapters\SettingsAdapter.cs" />
     <Compile Include="UI\Fragments\LoginFragment.cs" />
+    <Compile Include="UI\Fragments\ReportsNoApiFragment.cs" />
+    <Compile Include="UI\Fragments\FeedbackNoApiFragment.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\AboutResources.txt" />
@@ -377,7 +379,6 @@
     <AndroidResource Include="Resources\drawable-xxhdpi\DividerVerticalLeftOpaque.9.png" />
     <AndroidResource Include="Resources\layout\TimeTrackingFragment.axml" />
     <AndroidResource Include="Resources\layout\MainDrawerListItem.axml" />
-    <AndroidResource Include="Resources\layout\MainDrawerListHeader.axml" />
     <AndroidResource Include="Resources\layout\MainDrawerActivity.axml" />
     <AndroidResource Include="Resources\drawable-hdpi\DrawerShadow.9.png" />
     <AndroidResource Include="Resources\drawable-mdpi\DrawerShadow.9.png" />
@@ -826,6 +827,25 @@
     <AndroidResource Include="Resources\drawable-xxhdpi\IcGoogleWhite.png" />
     <AndroidResource Include="Resources\menu\ReportsToolbarMenu.axml" />
     <AndroidResource Include="Resources\layout\ConnectLayout.axml" />
+    <AndroidResource Include="Resources\layout\ReportsNoApiFragment.axml" />
+    <AndroidResource Include="Resources\layout\FeedbackNoApiFragment.axml" />
+    <AndroidResource Include="Resources\drawable-ldpi\profile.png" />
+    <AndroidResource Include="Resources\drawable-mdpi\profile.png" />
+    <AndroidResource Include="Resources\drawable-xhdpi\profile.png" />
+    <AndroidResource Include="Resources\drawable-xxhdpi\profile.png" />
+    <AndroidResource Include="Resources\drawable-hdpi\profile.png" />
+    <AndroidResource Include="Resources\drawable-hdpi\ic_hello_arrow_down.png" />
+    <AndroidResource Include="Resources\drawable-mdpi\ic_hello_arrow_down.png" />
+    <AndroidResource Include="Resources\drawable-xhdpi\ic_hello_arrow_down.png" />
+    <AndroidResource Include="Resources\drawable-xxhdpi\ic_hello_arrow_down.png" />
+    <AndroidResource Include="Resources\drawable-hdpi\ic_hello_arrow_up.png" />
+    <AndroidResource Include="Resources\drawable-mdpi\ic_hello_arrow_up.png" />
+    <AndroidResource Include="Resources\drawable-xhdpi\ic_hello_arrow_up.png" />
+    <AndroidResource Include="Resources\drawable-xxhdpi\ic_hello_arrow_up.png" />
+    <AndroidResource Include="Resources\drawable-hdpi\ic_hello_toggler.png" />
+    <AndroidResource Include="Resources\drawable-mdpi\ic_hello_toggler.png" />
+    <AndroidResource Include="Resources\drawable-xhdpi\ic_hello_toggler.png" />
+    <AndroidResource Include="Resources\drawable-xxhdpi\ic_hello_toggler.png" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Xamarin\Android\Xamarin.Android.CSharp.targets" />
   <ItemGroup>
@@ -833,12 +853,16 @@
     <AndroidAsset Include="Assets\fonts\Roboto-Medium.ttf" />
     <AndroidAsset Include="Assets\fonts\Roboto-Regular.ttf" />
     <AndroidAsset Include="Assets\fonts\DIN-Medium.ttf" />
+    <AndroidAsset Include="Assets\fonts\TektonPro-Cond.otf" />
   </ItemGroup>
   <ItemGroup>
     <ProguardConfiguration Include="Proguard.cfg" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="FodyWeavers.xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Resources\drawable-ldpi\" />
   </ItemGroup>
   <Import Project="..\Phoebe\Phoebe.Shared.projitems" Label="Shared" />
   <Import Project="..\packages\Fody.1.29.4\build\dotnet\Fody.targets" Condition="Exists('..\packages\Fody.1.29.4\build\dotnet\Fody.targets')" />

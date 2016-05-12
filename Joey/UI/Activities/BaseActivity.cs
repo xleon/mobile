@@ -17,37 +17,17 @@ namespace Toggl.Joey.UI.Activities
 
         private const int SyncErrorMenuItemId = 0;
         protected readonly Handler Handler = new Handler();
-        private int syncCount;
 
         /// <summary>
         /// The activity that is currently in the foreground.
         /// </summary>
         public static BaseActivity CurrentActivity { get; private set; }
 
-        protected virtual bool StartAuthActivity()
-        {
-            var user = Phoebe.Reactive.StoreManager.Singleton.AppState.User;
-            if (user.Id == Guid.Empty)
-            {
-                RxChain.Send(new DataMsg.InitState());
-                var intent = new Intent(this, typeof(MainDrawerActivity));
-                intent.AddFlags(ActivityFlags.ClearTop);
-                StartActivity(intent);
-                Finish();
-                return true;
-            }
-            return false;
-        }
-
         protected sealed override void OnCreate(Bundle savedInstanceState)
         {
             base.OnCreate(savedInstanceState);
             CurrentActivity = this;
-
-            if (!StartAuthActivity())
-            {
-                OnCreateActivity(savedInstanceState);
-            }
+            OnCreateActivity(savedInstanceState);
         }
 
         protected virtual void OnCreateActivity(Bundle state)
@@ -57,11 +37,7 @@ namespace Toggl.Joey.UI.Activities
         protected sealed override void OnResume()
         {
             base.OnResume();
-
-            if (!StartAuthActivity())
-            {
-                OnResumeActivity();
-            }
+            OnResumeActivity();
         }
 
         protected virtual void OnResumeActivity()

@@ -90,9 +90,11 @@ namespace Toggl.Joey.UI.Activities
 
             MainToolbar = FindViewById<Toolbar> (Resource.Id.MainToolbar);
             DrawerListView = FindViewById<ListView> (Resource.Id.DrawerListView);
-            DrawerUserName = FindViewById<TextView> (Resource.Id.TitleTextView);
-            DrawerEmail = FindViewById<TextView> (Resource.Id.EmailTextView);
-            DrawerImage = FindViewById<ProfileImageView> (Resource.Id.IconProfileImageView);
+            DrawerUserView = LayoutInflater.Inflate(Resource.Layout.MainDrawerListHeader, null);
+            DrawerUserName = DrawerUserView.FindViewById<TextView> (Resource.Id.TitleTextView);
+            DrawerEmail = DrawerUserView.FindViewById<TextView> (Resource.Id.EmailTextView);
+            DrawerImage = DrawerUserView.FindViewById<ProfileImageView> (Resource.Id.IconProfileImageView);
+            DrawerListView.AddHeaderView(DrawerUserView);
             DrawerListView.ItemClick += OnDrawerListViewItemClick;
 
             DrawerLayout = FindViewById<DrawerLayout> (Resource.Id.DrawerLayout);
@@ -120,12 +122,13 @@ namespace Toggl.Joey.UI.Activities
             // ATTENTION Suscription to state (settings) changes inside
             // the view. This will be replaced for "router"
             // modified in the reducers.
-            stateObserver = StoreManager.Singleton
-                            .Observe(x => x.State.User)
-                            .StartWith(StoreManager.Singleton.AppState.User)
-                            .ObserveOn(SynchronizationContext.Current)
-                            .DistinctUntilChanged(x => x.ApiToken)
-                            .Subscribe(userData => ResetFragmentNavigation(userData));
+            stateObserver = StoreManager
+                .Singleton
+                .Observe(x => x.State.User)
+                .StartWith(StoreManager.Singleton.AppState.User)
+                .ObserveOn(SynchronizationContext.Current)
+                .DistinctUntilChanged(x => x.ApiToken)
+                .Subscribe(userData => ResetFragmentNavigation(userData));
         }
 
         protected override void OnDestroy()
@@ -185,7 +188,7 @@ namespace Toggl.Joey.UI.Activities
             }
         }
 
-        private void ResetFragmentNavigation(IUserData userData)
+       private void ResetFragmentNavigation(IUserData userData)
         {
             DrawerUserName.Text = userData.Name;
             DrawerEmail.Text = userData.Email;
@@ -216,7 +219,20 @@ namespace Toggl.Joey.UI.Activities
             if (oldVersion == -1)
                 return false;
 
-            var migrationFragment = MigrationFragment.Init(oldVersion, SyncSqliteDataStore.DB_VERSION);
+            Fragment migrationFragment = null;
+            migrationFragment = MigrationFragment.Init(
+                oldVersion, success =>
+            {
+                //if (!success) // TODO
+
+                FragmentManager.BeginTransaction()
+                               .Detach(migrationFragment)
+                               .Commit();
+
+                ResetFragmentNavigation(userData);
+            });
+
+
             OpenFragment(migrationFragment);
             return true;
         }

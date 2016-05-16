@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Reactive.Linq;
+using System.Threading;
 using Android.App;
 using Android.Content.PM;
 using Android.OS;
@@ -43,6 +45,7 @@ namespace Toggl.Joey.UI.Activities
         private readonly List<int> pageStack = new List<int> ();
         private DrawerListAdapter drawerAdapter;
         private ToolbarModes toolbarMode;
+        private IDisposable stateObserver;
 
         private ListView DrawerListView { get; set; }
 
@@ -62,6 +65,19 @@ namespace Toggl.Joey.UI.Activities
 
         public Toolbar MainToolbar { get; set; }
 
+        public ToolbarModes ToolbarMode
+        {
+            get
+            {
+                return toolbarMode;
+            }
+            set
+            {
+                toolbarMode = value;
+                AdjustToolbar();
+            }
+        }
+
         protected override void OnCreateActivity(Bundle state)
         {
             base.OnCreateActivity(state);
@@ -75,14 +91,13 @@ namespace Toggl.Joey.UI.Activities
             DrawerEmail = DrawerUserView.FindViewById<TextView> (Resource.Id.EmailTextView);
             DrawerImage = DrawerUserView.FindViewById<ProfileImageView> (Resource.Id.IconProfileImageView);
             DrawerListView.AddHeaderView(DrawerUserView);
-            DrawerListView.Adapter = drawerAdapter = new DrawerListAdapter();
             DrawerListView.ItemClick += OnDrawerListViewItemClick;
 
             DrawerLayout = FindViewById<DrawerLayout> (Resource.Id.DrawerLayout);
             DrawerToggle = new ActionBarDrawerToggle(this, DrawerLayout, MainToolbar, Resource.String.EntryName, Resource.String.EntryName);
 
             DrawerLayout.SetDrawerShadow(Resource.Drawable.drawershadow, (int)GravityFlags.Start);
-            DrawerLayout.SetDrawerListener(DrawerToggle);
+            DrawerLayout.AddDrawerListener(DrawerToggle);
 
             var drawerFrameLayout = FindViewById<FrameLayout> (Resource.Id.DrawerFrameLayout);
             drawerFrameLayout.Touch += (sender, e) =>
@@ -101,57 +116,22 @@ namespace Toggl.Joey.UI.Activities
             SupportActionBar.SetCustomView(Timer.Root, lp);
             SupportActionBar.SetDisplayShowCustomEnabled(true);
 
-            if (state == null)
-            {
-                OpenPage(DrawerListAdapter.TimerPageId);
-            }
-            else
-            {
-                // Restore page stack
-                pageStack.Clear();
-                var arr = state.GetIntArray(PageStackExtra);
-                if (arr != null)
-                {
-                    pageStack.AddRange(arr);
-                }
-            }
-
-            var userData = StoreManager.Singleton.AppState.User;
-            DrawerUserName.Text = userData.Name;
-            DrawerEmail.Text = userData.Email;
-            DrawerImage.ImageUrl = userData.ImageUrl;
-
-            // Make sure that the user will see newest data when they start the activity
-            //ServiceContainer.Resolve<ISyncManager> ().Run ();
-            RxChain.Send(new ServerRequest.GetChanges());
+            // ATTENTION Suscription to state (settings) changes inside
+            // the view. This will be replaced for "router"
+            // modified in the reducers.
+            stateObserver = StoreManager
+                .Singleton
+                .Observe(x => x.State.User)
+                .StartWith(StoreManager.Singleton.AppState.User)
+                .ObserveOn(SynchronizationContext.Current)
+                .DistinctUntilChanged(x => x.ApiToken)
+                .Subscribe(userData => ResetFragmentNavigation(userData));
         }
 
-        public ToolbarModes ToolbarMode
+        protected override void OnDestroy()
         {
-            get
-            {
-                return toolbarMode;
-            }
-            set
-            {
-                toolbarMode = value;
-                AdjustToolbar();
-            }
-        }
-
-        private void AdjustToolbar()
-        {
-            switch (toolbarMode)
-            {
-                case ToolbarModes.Timer:
-                    SupportActionBar.SetDisplayShowTitleEnabled(false);
-                    Timer.Hide = false;
-                    break;
-                case ToolbarModes.Normal:
-                    Timer.Hide = true;
-                    SupportActionBar.SetDisplayShowTitleEnabled(true);
-                    break;
-            }
+            stateObserver.Dispose();
+            base.OnDestroy();
         }
 
         protected override void OnSaveInstanceState(Bundle outState)
@@ -185,13 +165,65 @@ namespace Toggl.Joey.UI.Activities
             }
         }
 
+        public override void Finish()
+        {
+            base.Finish();
+        }
+ 
+        private void AdjustToolbar()
+        {
+            switch (toolbarMode)
+            {
+                case ToolbarModes.Timer:
+                    SupportActionBar.SetDisplayShowTitleEnabled(false);
+                    Timer.Hide = false;
+                    break;
+                case ToolbarModes.Normal:
+                    Timer.Hide = true;
+                    SupportActionBar.SetDisplayShowTitleEnabled(true);
+                    break;
+            }
+        }
+ 
+       private void ResetFragmentNavigation(IUserData userData)
+        {
+            DrawerUserName.Text = userData.Name;
+            DrawerEmail.Text = userData.Email;
+            DrawerImage.ImageUrl = userData.ImageUrl;
+ 
+           if (tryMigrateDatabase(userData))
+                return;
+ 
+           // Make sure that the user will see newest data when they start the activity
+            RxChain.Send(new ServerRequest.GetChanges());
+ 
+           // Configure left menu.
+            DrawerListView.Adapter = drawerAdapter = new DrawerListAdapter(); //withApiToken: string.IsNullOrEmpty(userData.ApiToken));
+ 
+           // Open Timer fragment.
+            OpenPage(DrawerListAdapter.TimerPageId);
+        }
+
         private bool tryMigrateDatabase(IUserData userData)
         {
             var oldVersion = DatabaseHelper.CheckOldDb(DatabaseHelper.GetDatabaseDirectory());
             if (oldVersion == -1)
                 return false;
 
-            var migrationFragment = MigrationFragment.Init(oldVersion, SyncSqliteDataStore.DB_VERSION);
+            Fragment migrationFragment = null;
+            migrationFragment = MigrationFragment.Init(
+                oldVersion, success =>
+            {
+                //if (!success) // TODO
+
+                FragmentManager.BeginTransaction()
+                               .Detach(migrationFragment)
+                               .Commit();
+
+                ResetFragmentNavigation(userData);
+            });
+
+
             OpenFragment(migrationFragment);
             return true;
         }

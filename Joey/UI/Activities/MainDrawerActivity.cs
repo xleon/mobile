@@ -185,6 +185,17 @@ namespace Toggl.Joey.UI.Activities
             }
         }
 
+        private bool tryMigrateDatabase(IUserData userData)
+        {
+            var oldVersion = DatabaseHelper.CheckOldDb(DatabaseHelper.GetDatabaseDirectory());
+            if (oldVersion == -1)
+                return false;
+
+            var migrationFragment = MigrationFragment.Init(oldVersion, SyncSqliteDataStore.DB_VERSION);
+            OpenFragment(migrationFragment);
+            return true;
+        }
+
         private void SetMenuSelection(int pos)
         {
             DrawerListView.ClearChoices();

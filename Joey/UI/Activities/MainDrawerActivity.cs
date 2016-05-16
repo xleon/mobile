@@ -185,7 +185,7 @@ namespace Toggl.Joey.UI.Activities
             }
         }
 
-        private void ResetFragmentNavigation(IUserData userData)
+       private void ResetFragmentNavigation(IUserData userData)
         {
             DrawerUserName.Text = userData.Name;
             DrawerEmail.Text = userData.Email;
@@ -210,7 +210,20 @@ namespace Toggl.Joey.UI.Activities
             if (oldVersion == -1)
                 return false;
 
-            var migrationFragment = MigrationFragment.Init(oldVersion, SyncSqliteDataStore.DB_VERSION);
+            Fragment migrationFragment = null;
+            migrationFragment = MigrationFragment.Init(
+                oldVersion, success =>
+            {
+                //if (!success) // TODO
+
+                FragmentManager.BeginTransaction()
+                               .Detach(migrationFragment)
+                               .Commit();
+
+                ResetFragmentNavigation(userData);
+            });
+
+
             OpenFragment(migrationFragment);
             return true;
         }

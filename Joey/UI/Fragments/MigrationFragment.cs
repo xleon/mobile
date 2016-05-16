@@ -31,3 +31,4 @@ namespace Toggl.Joey.UI.Fragments
 
     }
 }
+

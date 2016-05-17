@@ -130,7 +130,7 @@ namespace Toggl.Joey.UI.Activities
 
         protected override void OnDestroy()
         {
-            stateObserver.Dispose();
+            stateObserver?.Dispose();
             base.OnDestroy();
         }
 
@@ -204,8 +204,20 @@ namespace Toggl.Joey.UI.Activities
             OpenPage(DrawerListAdapter.TimerPageId);
         }
 
+#if DEBUG // TODO: DELETE TEST CODE --------
+        bool firstTime = true;
         private bool tryMigrateDatabase(IUserData userData)
         {
+            if (firstTime)
+            {
+                firstTime = false;
+                MigrationFragment.CreateOldDbForTesting();
+            }
+#else
+        private bool tryMigrateDatabase(IUserData userData)
+        {
+#endif
+
             var oldVersion = DatabaseHelper.CheckOldDb(DatabaseHelper.GetDatabaseDirectory());
             if (oldVersion == -1)
                 return false;

@@ -408,7 +408,7 @@ namespace Toggl.Phoebe.Reactive
                     if (exception.StatusCode == System.Net.HttpStatusCode.InternalServerError)
                         return;
                 }
-
+                Console.WriteLine("ExceptionMessage: {0}", ex.Message);
                 throw;
             }
         }

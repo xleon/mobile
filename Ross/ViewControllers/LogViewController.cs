@@ -29,12 +29,11 @@ namespace Toggl.Ross.ViewControllers
         private SimpleEmptyView defaultEmptyView;
         private UIView obmEmptyView;
         private UIView reloadView;
-        private UIButton durationButton;
-        private UIButton actionButton;
         private UIBarButtonItem navigationButton;
         private UIActivityIndicatorView defaultFooterView;
         private StatusView statusView;
         private UITableView tableView;
+        private TimerBar timerBar;
 
         private Binding<LogTimeEntriesVM.LoadInfoType, LogTimeEntriesVM.LoadInfoType> loadInfoBinding, loadMoreBinding;
         private Binding<int, int> hasItemsBinding;
@@ -52,8 +51,23 @@ namespace Toggl.Ross.ViewControllers
                 Image.IconNav.ImageWithRenderingMode(UIImageRenderingMode.AlwaysOriginal),
                 UIBarButtonItemStyle.Plain, OnNavigationBtnPressed);
 
-            tableView = new UITableView(View.Frame, UITableViewStyle.Plain);
+            var topBarsHeight = NavigationController.NavigationBar.Bounds.Height
+                                + UIApplication.SharedApplication.StatusBarFrame.Height;
+
+            var tableFrame = View.Frame;
+            tableFrame.Y -= topBarsHeight;
+            tableView = new UITableView(tableFrame, UITableViewStyle.Plain);
+            var tableInset = new UIEdgeInsets(topBarsHeight, 0, 72, 0);
+            tableView.ContentInset = tableInset;
+            tableView.ScrollIndicatorInsets = tableInset;
             Add(tableView);
+
+            timerBar = new TimerBar
+            {
+                Frame = new CGRect(0, this.View.Frame.Height - 72 - topBarsHeight, this.View.Bounds.Width, 72)
+            };
+            Add(timerBar);
+            timerBar.StartButtonHit += onTimerStartButtonHit;
 
             statusView = new StatusView
             {
@@ -81,26 +95,9 @@ namespace Toggl.Ross.ViewControllers
                 SyncButtonPressedHandler = OnTryAgainBtnPressed
             };
 
-            // Setup top toolbar
-            if (durationButton == null)
-            {
-                durationButton = new UIButton().Apply(Style.NavTimer.DurationButton);
-                durationButton.SetTitle(DefaultDurationText, UIControlState.Normal);  // Dummy content to use for sizing of the label
-                durationButton.SizeToFit();
-                durationButton.TouchUpInside += OnDurationButtonTouchUpInside;
-            }
-
-            if (navigationButton == null)
-            {
-                actionButton = new UIButton().Apply(Style.NavTimer.StartButton);
-                actionButton.SizeToFit();
-                actionButton.TouchUpInside += OnActionButtonTouchUpInside;
-                navigationButton = new UIBarButtonItem(actionButton);
-            }
 
             // Attach views
             var navigationItem = NavigationItem;
-            navigationItem.TitleView = durationButton;
             navigationItem.RightBarButtonItem = navigationButton;
         }
 
@@ -147,7 +144,7 @@ namespace Toggl.Ross.ViewControllers
                 tableView.Source = new TimeEntriesSource(this, ViewModel);
             });
             isRunningBinding = this.SetBinding(() => ViewModel.IsEntryRunning).WhenSourceChanges(SetStartStopButtonState);
-            durationBinding = this.SetBinding(() => ViewModel.Duration).WhenSourceChanges(() => durationButton.SetTitle(ViewModel.Duration, UIControlState.Normal));
+            durationBinding = this.SetBinding(() => ViewModel.Duration).WhenSourceChanges(setDuration);
         }
 
         public override void ViewWillDisappear(bool animated)
@@ -169,12 +166,19 @@ namespace Toggl.Ross.ViewControllers
             statusView.Frame = new CGRect(0, View.Frame.Height, View.Frame.Width, StatusBarHeight);
         }
 
-        private void OnDurationButtonTouchUpInside(object sender, EventArgs e)
+        private void onTimerStartButtonHit(object sender, EventArgs e)
         {
-
+            if (timerBar.IsManualModeSwitchOn)
+            {
+                // TODO: manually create time entry
+            }
+            else
+            {
+                startStop();
+            }
         }
 
-        private async void OnActionButtonTouchUpInside(object sender, EventArgs e)
+        private async void startStop()
         {
             // Send experiment data.
             ViewModel.ReportExperiment(OBMExperimentManager.StartButtonActionKey,
@@ -200,15 +204,33 @@ namespace Toggl.Ross.ViewControllers
             }
         }
 
+        private void OnDurationButtonTouchUpInside(object sender, EventArgs e)
+        {
+
+        }
+
+        private void OnActionButtonTouchUpInside(object sender, EventArgs e)
+        {
+            startStop();
+        }
+
+        private void setDuration()
+        {
+            timerBar.SetDurationText(ViewModel.Duration);
+        }
+
         private void SetStartStopButtonState()
         {
             if (ViewModel.IsEntryRunning)
             {
-                actionButton.Apply(Style.NavTimer.StopButton);
+                this.timerBar.SetState(TimerBar.State.TimerRunning);
             }
             else
             {
-                actionButton.Apply(Style.NavTimer.StartButton);
+                if (!this.timerBar.IsManualModeSwitchOn)
+                {
+                    this.timerBar.SetState(TimerBar.State.TimerInactive);
+                }
             }
         }
 

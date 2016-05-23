@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+﻿<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">iPhoneSimulator</Platform>
@@ -307,7 +306,6 @@
       <DependentUpon>Style.cs</DependentUpon>
     </Compile>
     <Compile Include="Theme\Style.cs" />
-    <Compile Include="Theme\Style.Migration.cs" />
     <Compile Include="Theme\Style.Login.cs">
       <DependentUpon>Style.cs</DependentUpon>
     </Compile>
@@ -341,6 +339,7 @@
       <DependentUpon>Style.cs</DependentUpon>
     </Compile>
     <Compile Include="ViewControllers\SignupViewController.cs" />
+    <Compile Include="Theme\Style.Migration.cs" />
     <Compile Include="Theme\Style.Signup.cs">
       <DependentUpon>Style.cs</DependentUpon>
     </Compile>
@@ -434,6 +433,9 @@
     <Compile Include="Misc\NSTimeProvider.cs" />
     <Compile Include="Misc\StringExtensions.cs" />
     <Compile Include="ViewControllers\MigrationViewController.cs" />
+    <Compile Include="Views\TimerBar.cs" />
+    <Compile Include="Theme\Style.Timer.cs" />
+    <Compile Include="Theme\Font.cs" />
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>

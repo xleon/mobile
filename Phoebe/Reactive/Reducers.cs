@@ -414,7 +414,9 @@ namespace Toggl.Phoebe.Reactive
                     x.State = TimeEntryState.Running;
                     x.StartTime = Time.UtcNow.Truncate(TimeSpan.TicksPerSecond);
                     x.StopTime = null;
-                    x.Tags = state.Settings.UseDefaultTag ? TimeEntryData.DefaultTags : new List<string>();
+                    x.Tags = x.Tags == null || x.Tags.Count == 0
+                        ? (state.Settings.UseDefaultTag ? TimeEntryData.DefaultTags : new List<string>())
+                        : x.Tags;
                 }));
             });
 

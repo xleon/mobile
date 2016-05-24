@@ -469,9 +469,17 @@ namespace Toggl.Ross.ViewControllers
             private void OnContinueTimeEntry(TimeEntryCell cell)
             {
                 var indexPath = TableView.IndexPathForCell(cell);
-                // TODO: Rx needs further test!
-                //TableView.ScrollToRow(NSIndexPath.FromRowSection(0, 0), UITableViewScrollPosition.Top, true);
-                VM.ContinueTimeEntry(indexPath.Row);
+                if (indexPath != null)
+                {
+                    // TODO: Rx needs further test!
+                    //TableView.ScrollToRow(NSIndexPath.FromRowSection(0, 0), UITableViewScrollPosition.Top, true);
+                    VM.ContinueTimeEntry(indexPath.Row);
+                }
+                else
+                {
+                    Phoebe.Helpers.Util.Log(Phoebe.Logging.LogLevel.Warning,
+                                            nameof(OnContinueTimeEntry), "Cannot find indexPath for cell");
+                }
             }
 
             protected override void Dispose(bool disposing)

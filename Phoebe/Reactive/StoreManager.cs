@@ -52,7 +52,9 @@ namespace Toggl.Phoebe.Reactive
             var initSyncMsg = DataSyncMsg.Create(initState);
 
             subject1
-            .Synchronize(Scheduler.Default)
+#if !__TESTS__
+            .ObserveOn(Scheduler.Default)
+#endif
             .Scan(initSyncMsg, (acc, tuple) =>
             {
                 DataSyncMsg<AppState> msg;
@@ -87,12 +89,14 @@ namespace Toggl.Phoebe.Reactive
 
         public IObservable<DataSyncMsg<AppState>> Observe()
         {
-            return subject2;
+            return subject2.AsObservable();
+            // TODO: Consider if we should use a new thread here
+            //return subject2.ObserveOn(NewThreadScheduler.Default);
         }
 
         public IObservable<T> Observe<T> (Func<DataSyncMsg<AppState>, T> selector)
         {
-            return subject2.Select(syncMsg => selector(syncMsg));
+            return Observe().Select(syncMsg => selector(syncMsg));
         }
     }
 }

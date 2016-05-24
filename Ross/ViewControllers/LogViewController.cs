@@ -169,9 +169,11 @@ namespace Toggl.Ross.ViewControllers
             statusView.Frame = new CGRect(0, View.Frame.Height, View.Frame.Width, StatusBarHeight);
         }
 
-        private void OnDurationButtonTouchUpInside(object sender, EventArgs e)
+        private async void OnDurationButtonTouchUpInside(object sender, EventArgs e)
         {
+            var te = await ViewModel.ManuallyCreateTimeEntry();
 
+            openEditViewForNewEntry(te);
         }
 
         private async void OnActionButtonTouchUpInside(object sender, EventArgs e)
@@ -184,20 +186,25 @@ namespace Toggl.Ross.ViewControllers
             {
                 var te = await ViewModel.StartNewTimeEntryAsync();
 
-                // Show next viewController.
-                var controllers = new List<UIViewController>(NavigationController.ViewControllers);
-                var editController = new EditTimeEntryViewController(te.Id);
-                controllers.Add(editController);
-                if (StoreManager.Singleton.AppState.Settings.ChooseProjectForNew)
-                {
-                    controllers.Add(new ProjectSelectionViewController(te.WorkspaceId, editController));
-                }
-                NavigationController.SetViewControllers(controllers.ToArray(), true);
+                openEditViewForNewEntry(te);
             }
             else
             {
                 ViewModel.StopTimeEntry();
             }
+        }
+
+        private void openEditViewForNewEntry(ITimeEntryData te)
+        {
+            // Show next viewController.
+            var controllers = new List<UIViewController>(NavigationController.ViewControllers);
+            var editController = new EditTimeEntryViewController(te.Id);
+            controllers.Add(editController);
+            if (StoreManager.Singleton.AppState.Settings.ChooseProjectForNew)
+            {
+                controllers.Add(new ProjectSelectionViewController(te.WorkspaceId, editController));
+            }
+            NavigationController.SetViewControllers(controllers.ToArray(), true);
         }
 
         private void SetStartStopButtonState()

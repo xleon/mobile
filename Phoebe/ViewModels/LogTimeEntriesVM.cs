@@ -13,6 +13,7 @@ using Toggl.Phoebe.ViewModels.Timer;
 using XPlatUtils;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 
 namespace Toggl.Phoebe.ViewModels
 {
@@ -166,6 +167,30 @@ namespace Toggl.Phoebe.ViewModels
             // TODO: Add analytic event
             var te = Collection.ElementAt(index) as ITimeEntryHolder;
             RxChain.Send(new DataMsg.TimeEntriesRemove(te.Entry.Data));
+        }
+
+        public Task<ITimeEntryData> ManuallyCreateTimeEntry()
+        {
+            // TODO: should this be in a reducer instead?
+            var state = StoreManager.Singleton.AppState;
+            var draft = state.GetTimeEntryDraft();
+            var now = Time.UtcNow.Truncate(TimeSpan.TicksPerSecond);
+            var newEntry = TimeEntryData.Create(draft: draft, transform: x =>
+            {
+                x.State = TimeEntryState.Finished;
+                x.StartTime = now;
+                x.StopTime = now;
+                x.Tags = state.Settings.UseDefaultTag ? TimeEntryData.DefaultTags : new List<string>();
+            });
+
+            var tcs = new TaskCompletionSource<ITimeEntryData>();
+
+            RxChain.Send(new DataMsg.TimeEntryPut(newEntry), new RxChain.Continuation(s =>
+            {
+                tcs.SetResult(StoreManager.Singleton.AppState.TimeEntries[newEntry.Id].Data);
+            }));
+
+            return tcs.Task;
         }
 
         #region Extra

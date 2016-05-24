@@ -13,6 +13,7 @@ using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Helpers;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
+using System.Reactive.Concurrency;
 
 namespace Toggl.Phoebe.Reactive
 {
@@ -52,6 +53,13 @@ namespace Toggl.Phoebe.Reactive
             {
                 Data = data;
                 TypeName = data.GetType().FullName;
+            }
+        }
+
+        public class RemoteIdException : Exception
+        {
+            public RemoteIdException(string msg) : base(msg)
+            {
             }
         }
 
@@ -227,6 +235,8 @@ namespace Toggl.Phoebe.Reactive
             }
 
             string json = null;
+            List<string> conflicting = new List<string>();
+
             if (dataStore.TryPeek(QueueId, out json))
             {
                 if (isConnected)
@@ -236,12 +246,34 @@ namespace Toggl.Phoebe.Reactive
                         do
                         {
                             var queueItem = JsonConvert.DeserializeObject<QueueItem> (json);
-                            await SendData(queueItem.Data, remoteObjects, state);
 
-                            // If we sent the message successfully, remove it from the queue
-                            dataStore.TryDequeue(QueueId, out json);
+                            try
+                            {
+                                await SendData(queueItem.Data, remoteObjects, state);
+
+                                // If we sent the message successfully, remove it from the queue
+                                dataStore.TryDequeue(QueueId, out json);
+                            }
+                            catch (RemoteIdException ex)
+                            {
+                                Util.Log(LogLevel.Warning, nameof(RemoteIdException), ex.Message);
+
+                                // Items missing a RemoteId shouldn't lock the queue
+                                // TODO RX: Discard conflicting items if they're too old or too many
+                                conflicting.Add(json);
+                                dataStore.TryDequeue(QueueId, out json);
+                            }
+                            catch
+                            {
+                                throw;
+                            }
                         }
                         while (dataStore.TryPeek(QueueId, out json));
+
+                        // Put back in the queue conflicting items (if any)
+                        foreach (var conflict in conflicting)
+                            dataStore.TryEnqueue(QueueId, conflict);
+
                         return true;
                     }
                     catch (Exception ex)
@@ -289,11 +321,11 @@ namespace Toggl.Phoebe.Reactive
                     switch (data.SyncState)
                     {
                         case SyncState.CreatePending:
-                            Console.WriteLine("Remote created :" + data.GetType() + " " + data.Id);
+                            Console.WriteLine($"Remote create: {data.GetType().Name} {data.Id}");
                             response = await client.Create(authToken, json);
                             break;
                         case SyncState.UpdatePending:
-                            Console.WriteLine("Remote update :" + data.GetType() + " " + data.Id);
+                            Console.WriteLine($"Remote update: {data.GetType().Name} {data.Id}");
                             response = await client.Update(authToken, json);
                             break;
                         default:
@@ -304,7 +336,7 @@ namespace Toggl.Phoebe.Reactive
                     var resData = mapper.Map(response);
                     resData.Id = data.Id;
                     remoteObjects.Add(resData);
-                    Console.WriteLine("Remote received :" + resData.GetType() + " " + resData.RemoteId + " " + resData.Id);
+                    Console.WriteLine($"Remote received: {resData.GetType().Name} {resData.RemoteId} {resData.Id}");
                 }
                 else
                 {
@@ -671,7 +703,7 @@ namespace Toggl.Phoebe.Reactive
                 var pr = (ProjectData)data.Clone();
                 if (pr.WorkspaceRemoteId == 0)
                 {
-                    pr.WorkspaceRemoteId = GetRemoteId<ProjectData> (pr.WorkspaceId, remoteObjects, state);
+                    pr.WorkspaceRemoteId = GetRemoteId<ProjectData>(pr.WorkspaceId, remoteObjects, state);
                 }
                 if (pr.ClientId != Guid.Empty && !pr.ClientRemoteId.HasValue)
                 {
@@ -784,7 +816,18 @@ namespace Toggl.Phoebe.Reactive
             }
             else if (typ == typeof(TimeEntryData))
             {
-                res = state.TimeEntries[localId].Data.RemoteId;
+                // Not all TEs are loaded to AppState, if it's not found there
+                // we must check the DB
+                if (state.TimeEntries.ContainsKey(localId))
+                {
+                    res = state.TimeEntries[localId].Data.RemoteId;
+                }
+                else
+                {
+                    var dataStore = ServiceContainer.Resolve<ISyncDataStore>();
+                    var storedEntry = dataStore.Table<TimeEntryData>().FirstOrDefault(x => x.Id == localId);
+                    res = storedEntry?.RemoteId;
+                }
             }
             else if (typ == typeof(UserData))
             {
@@ -801,10 +844,8 @@ namespace Toggl.Phoebe.Reactive
 
             if (!res.HasValue)
             {
-                // Stop sending messages and wait for state update
-                // TODO RX: Keep a cache to check if the same error is repeating many times?
-                // Publish more info about this bug
-                throw new Exception("RemoteId missing. Type: " + typ.FullName);
+                // Wait for state update
+                throw new RemoteIdException($"RemoteId missing: {typ.Name} - {localId}");
             }
             return res.Value;
         }

@@ -7,9 +7,12 @@ using CoreGraphics;
 using Foundation;
 using GalaSoft.MvvmLight.Helpers;
 using Toggl.Phoebe;
+using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Reactive;
 using Toggl.Phoebe.ViewModels;
+using Toggl.Phoebe.ViewModels.Timer;
+using Toggl.Ross.DataSources;
 using Toggl.Ross.Theme;
 using Toggl.Ross.Views;
 using UIKit;
@@ -22,8 +25,16 @@ namespace Toggl.Ross.ViewControllers
         IOnTagSelectedHandler,
         IOnProjectSelectedHandler
     {
-        private const string DefaultDurationText = " 00:00:00 ";
+        private enum LayoutVariant
+        {
+            Default,
+            Description
+        }
 
+        private const string DefaultDurationText = " 00:00:00 ";
+        readonly static NSString EntryCellId = new NSString("autocompletionCell");
+
+        private LayoutVariant layoutVariant = LayoutVariant.Default;
         private NSLayoutConstraint[] trackedWrapperConstraints;
         private UIView wrapper;
         private StartStopView startStopView { get; set; }
@@ -34,6 +45,9 @@ namespace Toggl.Ross.ViewControllers
         private UIButton tagsButton;
         private UIButton deleteButton;
         private UIButton durationButton;
+        private UITableView autoCompletionTableView;
+        private UIBarButtonItem autoCopmletionDoneBarButtonItem;
+
         private bool hideDatePicker = true;
         private readonly List<NSObject> notificationObjects = new List<NSObject> ();
 
@@ -98,10 +112,12 @@ namespace Toggl.Ross.ViewControllers
             descriptionTextField.ShouldBeginEditing += (s) =>
             {
                 ForceDimissDatePicker();
+                DescriptionEditingMode = true;
                 return true;
             };
             descriptionTextField.ShouldEndEditing += s =>
             {
+                DescriptionEditingMode = false;
                 return true;
             };
 
@@ -125,6 +141,10 @@ namespace Toggl.Ross.ViewControllers
             deleteButton.SetTitle("EditEntryDelete".Tr(), UIControlState.Normal);
             deleteButton.TouchUpInside += OnDeleteButtonTouchUpInside;
 
+            autoCompletionTableView = new UITableView(View.Frame, UITableViewStyle.Plain);
+            Add(autoCompletionTableView);
+
+
             ResetWrapperConstraints();
             scrollView.AddConstraints(
                 wrapper.AtTopOf(scrollView),
@@ -136,6 +156,7 @@ namespace Toggl.Ross.ViewControllers
                 null
             );
 
+            BindAutocompletionTableView(autoCompletionTableView);
             View = scrollView;
         }
 
@@ -173,6 +194,74 @@ namespace Toggl.Ross.ViewControllers
             // Events to edit some fields
             descriptionTextField.EditingChanged += (sender, e) => { ViewModel.ChangeDescription(descriptionTextField.Text); };
             billableSwitch.Switch.ValueChanged += (sender, e) => { ViewModel.ChangeBillable(billableSwitch.Switch.On); };
+        }
+
+        private void ResetWrapperConstraints()
+        {
+            if (trackedWrapperConstraints != null)
+            {
+                wrapper.RemoveConstraints(trackedWrapperConstraints);
+                trackedWrapperConstraints = null;
+            }
+
+            switch (layoutVariant)
+            {
+                case LayoutVariant.Default:
+                    trackedWrapperConstraints = VerticalLinearLayout(wrapper).ToLayoutConstraints();
+                    break;
+                case LayoutVariant.Description:
+                    trackedWrapperConstraints = new []
+                    {
+                        descriptionTextField.AtTopOf(wrapper),
+                        descriptionTextField.AtLeftOf(wrapper),
+                        descriptionTextField.AtRightOf(wrapper),
+                        descriptionTextField.Height().EqualTo(60.0f),
+                        autoCompletionTableView.AtTopOf(wrapper, 65.0f),
+                        autoCompletionTableView.AtLeftOf(wrapper),
+                        autoCompletionTableView.AtRightOf(wrapper),
+                        autoCompletionTableView.AtBottomOf(wrapper)
+                    } .ToLayoutConstraints();
+                    break;
+            }
+
+            wrapper.AddConstraints(trackedWrapperConstraints);
+        }
+
+        private bool changedModeOnce = false;
+        private bool descriptionEditingMode__;
+        private bool DescriptionEditingMode
+        {
+            get { return descriptionEditingMode__; }
+            set
+            {
+                UIScrollView scrlView = (UIScrollView)View;
+                scrlView.ScrollEnabled = !value;
+                if (value)
+                {
+                    layoutVariant = LayoutVariant.Description;
+                    NavigationItem.Apply(BindAutoCompletionDoneBarButtonItem);
+                }
+                else
+                {
+                    descriptionTextField.ResignFirstResponder();
+                    layoutVariant = LayoutVariant.Default;
+                    NavigationItem.Apply(UnBindAutoCompletionDoneBarButtonItem);
+                }
+                ResetWrapperConstraints();
+                UIView.Animate(changedModeOnce ? 0.3f : 0.0f, delegate
+                {
+                    SetEditingModeViewsHidden(value);
+                    wrapper.LayoutIfNeeded();
+                });
+                descriptionEditingMode__ = value;
+                changedModeOnce = true;
+            }
+        }
+
+        private void SetEditingModeViewsHidden(bool editingMode)
+        {
+            billableSwitch.Alpha = tagsButton.Alpha = startStopView.Alpha = projectButton.Alpha = deleteButton.Alpha = editingMode ? 0 : 1;
+            autoCompletionTableView.Alpha = 1 - tagsButton.Alpha;
         }
 
         public override void ViewWillDisappear(bool animated)
@@ -323,6 +412,83 @@ namespace Toggl.Ross.ViewControllers
             }
         }
 
+        private SuggestionSource autocompletionTableViewSource;
+
+        private void BindAutocompletionTableView(UITableView v)
+        {
+            autocompletionTableViewSource = new SuggestionSource(this, ViewModel);
+            autoCompletionTableView.Source = autocompletionTableViewSource;
+        }
+
+        private void BindAutoCompletionDoneBarButtonItem(UINavigationItem v)
+        {
+            autoCopmletionDoneBarButtonItem = new UIBarButtonItem(UIBarButtonSystemItem.Done);
+            autoCopmletionDoneBarButtonItem.Clicked += (object sender, EventArgs e) =>
+            {
+                DescriptionEditingMode = false;
+            };
+            v.SetRightBarButtonItem(autoCopmletionDoneBarButtonItem, true);
+        }
+
+        private void UnBindAutoCompletionDoneBarButtonItem(UINavigationItem v)
+        {
+            if (v.RightBarButtonItem == autoCopmletionDoneBarButtonItem)
+            {
+                v.SetRightBarButtonItem(null, true);
+                autoCopmletionDoneBarButtonItem = null;
+            }
+        }
+
+        private class SuggestionSource : PlainObservableCollectionViewSource<IHolder>
+        {
+            private readonly EditTimeEntryViewController owner;
+            private readonly EditTimeEntryVM VM;
+
+            public SuggestionSource(EditTimeEntryViewController owner, EditTimeEntryVM viewModel) : base(owner.autoCompletionTableView, viewModel.SuggestionsCollection)
+            {
+                this.owner = owner;
+                VM = viewModel;
+            }
+
+            public void UpdateDescription(string descriptionString)
+            {
+                foreach (var item in tableView.VisibleCells)
+                {
+                    ((ISuggestCell)item).Update();
+                }
+            }
+
+            public override UITableViewCell GetCell(UITableView tableView, NSIndexPath indexPath)
+            {
+                UITableViewCell cell;
+                var holder = collection.ElementAt(indexPath.Row);
+                cell = tableView.DequeueReusableCell(EntryCellId, indexPath);
+                ((SuggestionTableViewCell)cell).Bind((ITimeEntryHolder)holder);
+
+                return cell;
+            }
+
+            public override nfloat EstimatedHeight(UITableView tableView, NSIndexPath indexPath)
+            {
+                return 60f;
+            }
+
+            public override nfloat GetHeightForRow(UITableView tableView, NSIndexPath indexPath)
+            {
+                return EstimatedHeight(tableView, indexPath);
+            }
+
+
+
+            public override void RowSelected(UITableView tableView, NSIndexPath indexPath)
+            {
+                tableView.DeselectRow(indexPath, false);
+//                TimeEntryModel selectedModel;
+//                selectedModel = (TimeEntryModel)GetRow (indexPath);
+//                owner.UpdateModel (selectedModel);
+            }
+        }
+
         private void ForceDimissDatePicker()
         {
             DatePickerHidden = true;
@@ -423,19 +589,6 @@ namespace Toggl.Ross.ViewControllers
             }
         }
 
-        private void ResetWrapperConstraints()
-        {
-            if (trackedWrapperConstraints != null)
-            {
-                wrapper.RemoveConstraints(trackedWrapperConstraints);
-                trackedWrapperConstraints = null;
-            }
-
-            trackedWrapperConstraints = VerticalLinearLayout(wrapper).ToLayoutConstraints();
-            wrapper.AddConstraints(trackedWrapperConstraints);
-        }
-
-
         private IEnumerable<FluentLayout> VerticalLinearLayout(UIView container)
         {
             UIView prev = null;
@@ -469,6 +622,11 @@ namespace Toggl.Ross.ViewControllers
             {
                 yield return prev.AtBottomOf(container);
             }
+        }
+
+        interface ISuggestCell
+        {
+            void Update();
         }
         #endregion
 
@@ -1008,6 +1166,108 @@ namespace Toggl.Ross.ViewControllers
                 return true;
             }
         }
+
+        public class SuggestionTableViewCell : UITableViewCell
+        {
+            private const float HorizPadding = 15.0f;
+            private readonly UIView textContentView;
+            private readonly UILabel projectLabel;
+            private readonly UILabel clientLabel;
+            private readonly UILabel descriptionLabel;
+
+            public SuggestionTableViewCell(IntPtr handle) : base(handle)
+            {
+                textContentView = new UIView();
+
+                projectLabel = new UILabel().Apply(Style.Recent.CellProjectLabel);
+                clientLabel = new UILabel().Apply(Style.Recent.CellClientLabel);
+                descriptionLabel = new UILabel().Apply(Style.Recent.CellDescriptionLabel);
+
+                textContentView.AddSubviews(projectLabel, clientLabel, descriptionLabel);
+
+                ContentView.AddSubview(textContentView);
+
+                ContentView.AddConstraints(new FluentLayout[]
+                {
+                    textContentView.AtTopOf(ContentView),
+                    textContentView.AtBottomOf(ContentView),
+                    textContentView.AtLeftOf(ContentView),
+                    textContentView.AtRightOf(ContentView)
+                } .ToLayoutConstraints());
+
+                textContentView.AddConstraints(new FluentLayout[]
+                {
+                    projectLabel.AtTopOf(textContentView, 8),
+                    projectLabel.AtLeftOf(textContentView, HorizPadding),
+                    clientLabel.WithSameCenterY(projectLabel).Plus(1),
+                    clientLabel.ToRightOf(projectLabel, 6),
+                    clientLabel.AtRightOf(textContentView, HorizPadding),
+                    descriptionLabel.Below(projectLabel, 4),
+                    descriptionLabel.AtLeftOf(textContentView, HorizPadding + 1),
+                    descriptionLabel.AtRightOf(textContentView, HorizPadding)
+                } .ToLayoutConstraints());
+
+                textContentView.SubviewsDoNotTranslateAutoresizingMaskIntoConstraints();
+                ContentView.SubviewsDoNotTranslateAutoresizingMaskIntoConstraints();
+            }
+
+
+            public void Bind(ITimeEntryHolder data)
+            {
+
+                var projectName = "LogCellNoProject".Tr();
+                var projectColor = Color.Gray;
+                var clientName = String.Empty;
+
+                if (data.Entry.Data.ProjectId != Guid.Empty)
+                {
+
+                    projectName = data.Entry.Info.ProjectData.Name;
+
+//                    projectColor = UIColor.Clear.FromHex (data.Entry.Info.Color);
+
+                    if (data.Entry.Info.ProjectData.ClientId != Guid.Empty)
+                    {
+                        clientName = data.Entry.Info.ClientData.Name;
+                    }
+                }
+
+                projectLabel.TextColor = projectColor;
+
+                if (projectLabel.Text != projectName)
+                {
+                    projectLabel.Text = projectName;
+                    projectLabel.InvalidateIntrinsicContentSize();
+                    SetNeedsLayout();
+                }
+
+                if (clientLabel.Text != clientName)
+                {
+                    clientLabel.Text = clientName;
+                    clientLabel.InvalidateIntrinsicContentSize();
+                    SetNeedsLayout();
+                }
+
+                var description = data.Entry.Data.Description;
+                var descriptionHidden = String.IsNullOrWhiteSpace(description);
+
+                if (descriptionHidden)
+                {
+                    description = "LogCellNoDescription".Tr();
+                    descriptionHidden = false;
+                }
+
+                if (descriptionLabel.Text != description)
+                {
+                    descriptionLabel.Text = description;
+                    descriptionLabel.InvalidateIntrinsicContentSize();
+                    SetNeedsLayout();
+                }
+
+                LayoutIfNeeded();
+            }
+        }
+
         #endregion
     }
 }

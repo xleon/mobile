@@ -23,7 +23,8 @@
     <ConsolePause>false</ConsolePause>
     <CodesignEntitlements>Entitlements.plist</CodesignEntitlements>
     <MtouchDebug>true</MtouchDebug>
-    <MtouchI18n></MtouchI18n>
+    <MtouchI18n>
+    </MtouchI18n>
     <MtouchArch>i386</MtouchArch>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <MtouchProfiling>true</MtouchProfiling>
@@ -42,7 +43,8 @@
     <CodesignEntitlements>Entitlements.plist</CodesignEntitlements>
     <MtouchDebug>true</MtouchDebug>
     <CodesignKey>iPhone Developer</CodesignKey>
-    <IpaPackageName></IpaPackageName>
+    <IpaPackageName>
+    </IpaPackageName>
     <MtouchArch>ARMv7</MtouchArch>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <MtouchProfiling>true</MtouchProfiling>
@@ -63,7 +65,8 @@
     <BuildIpa>true</BuildIpa>
     <CodesignProvision>Automatic:AdHoc</CodesignProvision>
     <CodesignKey>iPhone Distribution</CodesignKey>
-    <MtouchI18n></MtouchI18n>
+    <MtouchI18n>
+    </MtouchI18n>
     <MtouchArch>ARMv7, ARM64</MtouchArch>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <MtouchUseLlvm>true</MtouchUseLlvm>
@@ -80,7 +83,8 @@
     <CodesignEntitlements>Entitlements.plist</CodesignEntitlements>
     <CodesignProvision>Automatic:AppStore</CodesignProvision>
     <CodesignKey>iPhone Distribution</CodesignKey>
-    <MtouchI18n></MtouchI18n>
+    <MtouchI18n>
+    </MtouchI18n>
     <MtouchArch>ARMv7, ARM64</MtouchArch>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <MtouchUseLlvm>true</MtouchUseLlvm>
@@ -196,6 +200,8 @@
     </Reference>
     <Reference Include="Google.Analytics">
       <HintPath>..\packages\Xamarin.Google.iOS.Analytics.3.14.0.5\lib\Xamarin.iOS10\Google.Analytics.dll</HintPath>
+    <Reference Include="VDS.Common">
+      <HintPath>..\packages\VDS.Common.1.6.4\lib\portable-net4+sl5+netcore45+wpa81+wp8+MonoAndroid1+MonoTouch1\VDS.Common.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>

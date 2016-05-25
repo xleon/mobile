@@ -1,16 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
+using System.Reactive.Linq;
+using System.Threading;
 using GalaSoft.MvvmLight;
+using GalaSoft.MvvmLight.Views;
 using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Helpers;
 using Toggl.Phoebe.Reactive;
+using Toggl.Phoebe.ViewModels.Timer;
 using XPlatUtils;
-using System.Reactive.Linq;
-using System.Threading;
-using GalaSoft.MvvmLight.Views;
 
 namespace Toggl.Phoebe.ViewModels
 {
@@ -21,6 +23,7 @@ namespace Toggl.Phoebe.ViewModels
         private readonly string StopTimeError = "Stop time should be after start time!";
 
         private IDisposable subscriptionTimer, subscriptionState;
+        private TimeEntrySuggestionsVM suggestionsCollection;
         private RichTimeEntry richData;
         private RichTimeEntry previousData;
 
@@ -64,6 +67,8 @@ namespace Toggl.Phoebe.ViewModels
                                                  TimeSpan.FromSeconds(1))
                                 .ObserveOn(SynchronizationContext.Current)
                                 .Subscribe(x => UpdateDuration());
+
+            suggestionsCollection = new TimeEntrySuggestionsVM();
 
             ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Edit Time Entry";
         }
@@ -125,8 +130,13 @@ namespace Toggl.Phoebe.ViewModels
         public string TaskName { get { return richData.Info.TaskData.Name ?? string.Empty; } }
         public string ClientName { get { return richData.Info.ClientData.Name ?? string.Empty; } }
         public List<string> Tags { get { return richData.Data.Tags.ToList(); } }
+        public ObservableCollection<IHolder> SuggestionsCollection { get { return suggestionsCollection; } }
 
         #endregion
+        public void CurrentDescription(string desc)
+        {
+            suggestionsCollection.FilterByInfix(desc);
+        }
 
         public void ChangeProjectAndTask(Guid projectId, Guid taskId)
         {

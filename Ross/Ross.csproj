@@ -434,6 +434,7 @@
     <Compile Include="Misc\NSTimeProvider.cs" />
     <Compile Include="Misc\StringExtensions.cs" />
     <Compile Include="ViewControllers\MigrationViewController.cs" />
+    <Compile Include="Misc\UIExtensions.cs" />
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>

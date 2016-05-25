@@ -173,7 +173,7 @@ namespace Toggl.Ross.ViewControllers
         {
             var te = await ViewModel.ManuallyCreateTimeEntry();
 
-            openEditViewForNewEntry(te);
+            openEditViewForManualEntry(te);
         }
 
         private async void OnActionButtonTouchUpInside(object sender, EventArgs e)
@@ -196,15 +196,27 @@ namespace Toggl.Ross.ViewControllers
 
         private void openEditViewForNewEntry(ITimeEntryData te)
         {
-            // Show next viewController.
-            var controllers = new List<UIViewController>(NavigationController.ViewControllers);
             var editController = new EditTimeEntryViewController(te.Id);
-            controllers.Add(editController);
-            if (StoreManager.Singleton.AppState.Settings.ChooseProjectForNew)
-            {
-                controllers.Add(new ProjectSelectionViewController(te.WorkspaceId, editController));
-            }
-            NavigationController.SetViewControllers(controllers.ToArray(), true);
+            var projectViewController = getProjectViewControllerIfChooseProjectForNew(te, editController);
+
+            NavigationController.PushViewControllers(true, editController, projectViewController);
+        }
+
+        private void openEditViewForManualEntry(ITimeEntryData te)
+        {
+            var editController = new EditTimeEntryViewController(te.Id);
+            var durationViewController = new DurationChangeViewController(te.StopTime.Value, te.StartTime, editController);
+            var projectViewController = getProjectViewControllerIfChooseProjectForNew(te, editController);
+
+            NavigationController.PushViewControllers(true, editController, durationViewController, projectViewController);
+        }
+
+        private ProjectSelectionViewController getProjectViewControllerIfChooseProjectForNew(
+            ITimeEntryData te, EditTimeEntryViewController editController)
+        {
+            return StoreManager.Singleton.AppState.Settings.ChooseProjectForNew
+                   ? new ProjectSelectionViewController(te.WorkspaceId, editController)
+                   : null;
         }
 
         private void SetStartStopButtonState()

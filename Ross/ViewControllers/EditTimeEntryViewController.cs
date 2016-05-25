@@ -332,7 +332,6 @@ namespace Toggl.Ross.ViewControllers
         public void OnProjectSelected(Guid projectId, Guid taskId)
         {
             ViewModel.ChangeProjectAndTask(projectId, taskId);
-            NavigationController.PopToViewController(this, true);
         }
         #endregion
 
@@ -340,7 +339,6 @@ namespace Toggl.Ross.ViewControllers
         public void OnChangeDuration(TimeSpan newDuration)
         {
             ViewModel.ChangeTimeEntryDuration(newDuration);
-            NavigationController.PopViewController(true);
         }
         #endregion
 

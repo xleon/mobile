@@ -24,6 +24,8 @@ namespace Toggl.Phoebe.ViewModels
 
         private IDisposable subscriptionTimer, subscriptionState;
         private TimeEntrySuggestionsVM suggestionsCollection;
+        private ObservableCollection<TimeEntryData> allSuggestions;
+        private ObservableCollection<TimeEntryData> filteredSuggestions;
         private RichTimeEntry richData;
         private RichTimeEntry previousData;
 
@@ -67,6 +69,8 @@ namespace Toggl.Phoebe.ViewModels
                                                  TimeSpan.FromSeconds(1))
                                 .ObserveOn(SynchronizationContext.Current)
                                 .Subscribe(x => UpdateDuration());
+
+            InitSuggestions();
 
             suggestionsCollection = new TimeEntrySuggestionsVM();
 
@@ -121,6 +125,34 @@ namespace Toggl.Phoebe.ViewModels
             }
         }
 
+        private void InitSuggestions()
+        {
+            allSuggestions = new ObservableCollection<TimeEntryData> ();
+            filteredSuggestions = new ObservableCollection<TimeEntryData> ();
+            var dataStore = ServiceContainer.Resolve<ISyncDataStore> ();
+            var entries = dataStore.Table<TimeEntryData> ()
+                          .OrderBy(r => r.StartTime)
+                          .Where(r => r.State != TimeEntryState.New
+                                 && r.DeletedAt == null
+                                 && r.Description != null)
+                          .ToList();
+            entries.ForEach(allSuggestions.Add);
+        }
+        private ObservableCollection<TimeEntryData> LoadSuggestions(string description)
+        {
+            if (allSuggestions == null)
+                InitSuggestions();
+            filteredSuggestions.Clear();
+            foreach (var s in allSuggestions)
+            {
+                if (s.Description.Contains(description))
+                {
+                    filteredSuggestions.Add(s);
+                }
+            }
+            return filteredSuggestions;
+        }
+
         public bool IsRunning { get { return richData.Data.State == TimeEntryState.Running; } }
         public string Description { get { return richData.Data.Description ?? string.Empty; } }
         public bool IsBillable { get { return richData.Data.IsBillable; } }
@@ -130,12 +162,21 @@ namespace Toggl.Phoebe.ViewModels
         public string TaskName { get { return richData.Info.TaskData.Name ?? string.Empty; } }
         public string ClientName { get { return richData.Info.ClientData.Name ?? string.Empty; } }
         public List<string> Tags { get { return richData.Data.Tags.ToList(); } }
-        public ObservableCollection<IHolder> SuggestionsCollection { get { return suggestionsCollection; } }
+        public ObservableCollection<TimeEntryData> SuggestionsCollection
+        {
+            get
+            {
+                if (filteredSuggestions == null)
+                    InitSuggestions();
+                return filteredSuggestions;
+            }
+            set {}
+        }
 
         #endregion
-        public void CurrentDescription(string desc)
+        public void SuggestEntries(string desc)
         {
-            suggestionsCollection.FilterByInfix(desc);
+            SuggestionsCollection = LoadSuggestions(desc);
         }
 
         public void ChangeProjectAndTask(Guid projectId, Guid taskId)
@@ -214,6 +255,7 @@ namespace Toggl.Phoebe.ViewModels
         public void ChangeDescription(string description)
         {
             UpdateView(x => x.Description = description, nameof(Description));
+            SuggestEntries(description);
         }
 
         public void ChangeBillable(bool billable)

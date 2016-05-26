@@ -647,11 +647,6 @@ namespace Toggl.Ross.ViewControllers
                 yield return prev.AtBottomOf(container);
             }
         }
-
-        interface ISuggestCell
-        {
-            void Update();
-        }
         #endregion
 
         #region Custom UI components

@@ -58,7 +58,7 @@ namespace Toggl.Ross.ViewControllers
         private Binding<DateTime, DateTime> startTimeBinding, stopTimeBinding;
         private Binding<List<string>, List<string>> tagBinding;
         private Binding<bool, bool> isBillableBinding, isRunningBinding, isPremiumBinding;
-        private Binding<ObservableCollection<TimeEntryData>, ObservableCollection<TimeEntryData>> collectionBinding;
+        private Binding<List<TimeEntryData>, List<TimeEntryData>> collectionBinding;
 
         protected EditTimeEntryVM ViewModel { get; set; }
 
@@ -213,7 +213,8 @@ namespace Toggl.Ross.ViewControllers
             });
             collectionBinding = this.SetBinding(() => ViewModel.SuggestionsCollection).WhenSourceChanges(() =>
             {
-                autoCompletionTableView.Source = new SuggestionSource(this, ViewModel);
+                autoCompletionTableView.Source = new SuggestionSource(this);
+                autoCompletionTableView.ReloadData();
             });
             isBillableBinding = this.SetBinding(() => ViewModel.IsBillable, () => billableSwitch.Switch.On);
 
@@ -441,7 +442,7 @@ namespace Toggl.Ross.ViewControllers
 
         private void BindAutocompletionTableView(UITableView v)
         {
-            autocompletionTableViewSource = new SuggestionSource(this, ViewModel);
+            autocompletionTableViewSource = new SuggestionSource(this);
         }
 
         private void BindAutoCompletionDoneBarButtonItem(UINavigationItem v)
@@ -463,36 +464,38 @@ namespace Toggl.Ross.ViewControllers
             }
         }
 
-        private class SuggestionSource : PlainObservableCollectionViewSource<TimeEntryData>
+        private void UpdateEntry(TimeEntryData data)
+        {
+            ViewModel.UpdateEntry(data);
+            DescriptionEditingMode = false;
+        }
+
+        internal class SuggestionSource : UITableViewSource
         {
             private readonly EditTimeEntryViewController owner;
-            private readonly EditTimeEntryVM VM;
+            private readonly UITableView table;
+            private readonly List<TimeEntryData> collection;
 
-            public SuggestionSource(EditTimeEntryViewController owner, EditTimeEntryVM viewModel) : base(owner.autoCompletionTableView, viewModel.SuggestionsCollection)
+            public SuggestionSource(EditTimeEntryViewController owner)
             {
+                collection = owner.ViewModel.SuggestionsCollection;
+                table = owner.autoCompletionTableView;
                 this.owner = owner;
-                VM = viewModel;
-                owner.autoCompletionTableView.RegisterClassForCellReuse(typeof(SuggestionTableViewCell), EntryCellId);
-
-                Console.WriteLine("Suggestions count: {0}", viewModel.SuggestionsCollection.Count);
-            }
-
-            public void UpdateDescription(string descriptionString)
-            {
-                foreach (var item in tableView.VisibleCells)
-                {
-                    ((ISuggestCell)item).Update();
-                }
+                table.RegisterClassForCellReuse(typeof(SuggestionTableViewCell), EntryCellId);
             }
 
             public override UITableViewCell GetCell(UITableView tableView, NSIndexPath indexPath)
             {
-                UITableViewCell cell;
+                UITableViewCell cell = tableView.DequeueReusableCell(EntryCellId);
                 var data = collection.ElementAt(indexPath.Row);
-                cell = tableView.DequeueReusableCell(EntryCellId, indexPath);
                 ((SuggestionTableViewCell)cell).Bind((TimeEntryData)data);
 
                 return cell;
+            }
+
+            public override nint RowsInSection(UITableView tableview, nint section)
+            {
+                return collection.Count;
             }
 
             public override nfloat EstimatedHeight(UITableView tableView, NSIndexPath indexPath)
@@ -507,14 +510,10 @@ namespace Toggl.Ross.ViewControllers
 
             public override void RowSelected(UITableView tableView, NSIndexPath indexPath)
             {
+                owner.UpdateEntry(collection[indexPath.Row]);
                 tableView.DeselectRow(indexPath, false);
-//                TimeEntryModel selectedModel;
-//                selectedModel = (TimeEntryModel)GetRow (indexPath);
-//                owner.ViewModel.
-//                owner.UpdateModel (selectedModel);
             }
         }
-
         private void ForceDimissDatePicker()
         {
             DatePickerHidden = true;
@@ -1239,7 +1238,6 @@ namespace Toggl.Ross.ViewControllers
 
             public void Bind(TimeEntryData data)
             {
-
                 var projectName = "LogCellNoProject".Tr();
                 var projectColor = Color.Gray;
                 var clientName = String.Empty;
@@ -1250,7 +1248,10 @@ namespace Toggl.Ross.ViewControllers
 
                     projectName = info.ProjectData.Name;
 
-//                    projectColor = UIColor.Clear.FromHex (data.Entry.Info.Color);
+                    var hex = info.ProjectData.Id != Guid.Empty
+                              ? ProjectData.HexColors[info.ProjectData.Color % ProjectData.HexColors.Length]
+                              : ProjectData.HexColors[ProjectData.DefaultColor];
+                    projectColor = UIColor.Clear.FromHex(hex);
 
                     if (info.ProjectData.Id != Guid.Empty)
                     {

@@ -333,6 +333,7 @@ namespace Toggl.Ross.ViewControllers
         public void OnProjectSelected(Guid projectId, Guid taskId)
         {
             ViewModel.ChangeProjectAndTask(projectId, taskId);
+            NavigationController.PopToViewController(this, true);
         }
         #endregion
 

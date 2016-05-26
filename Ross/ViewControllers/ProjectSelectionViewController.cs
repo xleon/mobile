@@ -85,7 +85,6 @@ namespace Toggl.Ross.ViewControllers
             }
 
             handler.OnProjectSelected(projectId, taskId);
-            NavigationController.PopViewController(true);
         }
 
         private void OnAddNewProject(object sender, EventArgs evt)

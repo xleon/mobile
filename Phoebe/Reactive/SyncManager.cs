@@ -98,17 +98,11 @@ namespace Toggl.Phoebe.Reactive
 
             StoreManager.Singleton
             .Observe()
-#if !__TESTS__
-            .TimedBuffer(BufferMilliseconds)
+#if __TESTS__
+            .SelectAsync(EnqueueOrSend).Subscribe();
+#else
+            .SubscribeQueued(EnqueueOrSend);
 #endif
-            .SelectAsync(EnqueueOrSend)
-            .Subscribe((_) => { },
-            (ex) =>
-            {
-                logError(ex, "Failed to sync. Main observer bug.");
-                // Should pass a generic request?
-                RxChain.Send(new DataMsg.ServerResponse(new ServerRequest.GetChanges(), ex));
-            });
         }
 
         void logError(Exception ex, string msg = "Failed to sync")

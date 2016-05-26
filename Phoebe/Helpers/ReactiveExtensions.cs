@@ -8,6 +8,18 @@ namespace Toggl.Phoebe.Helpers
 {
     public static class ReactiveExtensions
     {
+        public class SimpleDisposable : IDisposable
+        {
+            private readonly Action action;
+
+            public SimpleDisposable(Action action)
+            {
+                this.action = action;
+            }
+
+            public void Dispose() => action();
+        }
+
         public class SimpleObserver<T> : IObserver<T>
         {
             readonly Action<T> onNext;
@@ -38,6 +50,35 @@ namespace Toggl.Phoebe.Helpers
         where U : class
         {
             return observable.Select(chooser).Where(x => x != null);
+        }
+
+        public static IDisposable SubscribeQueued<T>(this IObservable<T> observable, Func<T,Task> action)
+        {
+            var isDisposed = false;
+            var lockObj = new object();
+            var queue = new System.Collections.Concurrent.ConcurrentQueue<T>();
+
+            Func<Task> monitor = async () =>
+            {
+                T next = default(T);
+                var localIsDisposed = false;
+                do
+                {
+                    if (queue.TryDequeue(out next))
+                        await action(next);
+                    else
+                        await Task.Delay(500);
+                    lock (lockObj) { localIsDisposed = isDisposed; }
+                } while (!localIsDisposed);
+            };
+
+            var disp = observable.Subscribe(queue.Enqueue);
+            monitor();
+            return new SimpleDisposable(() =>
+            {
+                lock(lockObj) { isDisposed = true; }
+                disp.Dispose();
+            });
         }
 
         public static IObservable<T> TimedBuffer<T> (this IObservable<T> observable, int milliseconds)

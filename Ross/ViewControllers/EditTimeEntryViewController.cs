@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using Cirrious.FluentLayouts.Touch;
 using CoreAnimation;
@@ -9,6 +10,7 @@ using GalaSoft.MvvmLight.Helpers;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
+using Toggl.Phoebe.Helpers;
 using Toggl.Phoebe.Reactive;
 using Toggl.Phoebe.ViewModels;
 using Toggl.Phoebe.ViewModels.Timer;
@@ -56,12 +58,28 @@ namespace Toggl.Ross.ViewControllers
         private Binding<DateTime, DateTime> startTimeBinding, stopTimeBinding;
         private Binding<List<string>, List<string>> tagBinding;
         private Binding<bool, bool> isBillableBinding, isRunningBinding, isPremiumBinding;
+        private Binding<ObservableCollection<TimeEntryData>, ObservableCollection<TimeEntryData>> collectionBinding;
 
         protected EditTimeEntryVM ViewModel { get; set; }
 
         public EditTimeEntryViewController(Guid dataId)
         {
             ViewModel = new EditTimeEntryVM(StoreManager.Singleton.AppState, dataId);
+        }
+
+        class TGTableView : UITableView
+        {
+            public override UIView TableFooterView
+            {
+                get
+                {
+                    return base.TableFooterView;
+                }
+                set
+                {
+                    base.TableFooterView = value ?? new UIView();
+                }
+            }
         }
 
         public override void LoadView()
@@ -141,9 +159,12 @@ namespace Toggl.Ross.ViewControllers
             deleteButton.SetTitle("EditEntryDelete".Tr(), UIControlState.Normal);
             deleteButton.TouchUpInside += OnDeleteButtonTouchUpInside;
 
-            autoCompletionTableView = new UITableView(View.Frame, UITableViewStyle.Plain);
-            Add(autoCompletionTableView);
-
+            wrapper.Add(autoCompletionTableView = new TGTableView()
+            {
+                TranslatesAutoresizingMaskIntoConstraints = false,
+                EstimatedRowHeight = 60.0f,
+                BackgroundColor = UIColor.Clear
+            });
 
             ResetWrapperConstraints();
             scrollView.AddConstraints(
@@ -156,8 +177,9 @@ namespace Toggl.Ross.ViewControllers
                 null
             );
 
-            BindAutocompletionTableView(autoCompletionTableView);
             View = scrollView;
+
+            DescriptionEditingMode = false;
         }
 
         public override void ViewDidLoad()
@@ -188,6 +210,10 @@ namespace Toggl.Ross.ViewControllers
                 {
                     startStopView.StopTime = ViewModel.StopDate;
                 }
+            });
+            collectionBinding = this.SetBinding(() => ViewModel.SuggestionsCollection).WhenSourceChanges(() =>
+            {
+                autoCompletionTableView.Source = new SuggestionSource(this, ViewModel);
             });
             isBillableBinding = this.SetBinding(() => ViewModel.IsBillable, () => billableSwitch.Switch.On);
 
@@ -417,7 +443,6 @@ namespace Toggl.Ross.ViewControllers
         private void BindAutocompletionTableView(UITableView v)
         {
             autocompletionTableViewSource = new SuggestionSource(this, ViewModel);
-            autoCompletionTableView.Source = autocompletionTableViewSource;
         }
 
         private void BindAutoCompletionDoneBarButtonItem(UINavigationItem v)
@@ -439,7 +464,7 @@ namespace Toggl.Ross.ViewControllers
             }
         }
 
-        private class SuggestionSource : PlainObservableCollectionViewSource<IHolder>
+        private class SuggestionSource : PlainObservableCollectionViewSource<TimeEntryData>
         {
             private readonly EditTimeEntryViewController owner;
             private readonly EditTimeEntryVM VM;
@@ -448,6 +473,9 @@ namespace Toggl.Ross.ViewControllers
             {
                 this.owner = owner;
                 VM = viewModel;
+                owner.autoCompletionTableView.RegisterClassForCellReuse(typeof(SuggestionTableViewCell), EntryCellId);
+
+                Console.WriteLine("Suggestions count: {0}", viewModel.SuggestionsCollection.Count);
             }
 
             public void UpdateDescription(string descriptionString)
@@ -461,9 +489,9 @@ namespace Toggl.Ross.ViewControllers
             public override UITableViewCell GetCell(UITableView tableView, NSIndexPath indexPath)
             {
                 UITableViewCell cell;
-                var holder = collection.ElementAt(indexPath.Row);
+                var data = collection.ElementAt(indexPath.Row);
                 cell = tableView.DequeueReusableCell(EntryCellId, indexPath);
-                ((SuggestionTableViewCell)cell).Bind((ITimeEntryHolder)holder);
+                ((SuggestionTableViewCell)cell).Bind((TimeEntryData)data);
 
                 return cell;
             }
@@ -478,13 +506,12 @@ namespace Toggl.Ross.ViewControllers
                 return EstimatedHeight(tableView, indexPath);
             }
 
-
-
             public override void RowSelected(UITableView tableView, NSIndexPath indexPath)
             {
                 tableView.DeselectRow(indexPath, false);
 //                TimeEntryModel selectedModel;
 //                selectedModel = (TimeEntryModel)GetRow (indexPath);
+//                owner.ViewModel.
 //                owner.UpdateModel (selectedModel);
             }
         }
@@ -1212,23 +1239,24 @@ namespace Toggl.Ross.ViewControllers
             }
 
 
-            public void Bind(ITimeEntryHolder data)
+            public void Bind(TimeEntryData data)
             {
 
                 var projectName = "LogCellNoProject".Tr();
                 var projectColor = Color.Gray;
                 var clientName = String.Empty;
 
-                if (data.Entry.Data.ProjectId != Guid.Empty)
+                var info = StoreManager.Singleton.AppState.LoadTimeEntryInfo(data);
+                if (data.ProjectId != Guid.Empty)
                 {
 
-                    projectName = data.Entry.Info.ProjectData.Name;
+                    projectName = info.ProjectData.Name;
 
 //                    projectColor = UIColor.Clear.FromHex (data.Entry.Info.Color);
 
-                    if (data.Entry.Info.ProjectData.ClientId != Guid.Empty)
+                    if (info.ProjectData.Id != Guid.Empty)
                     {
-                        clientName = data.Entry.Info.ClientData.Name;
+                        clientName = info.ClientData.Name;
                     }
                 }
 
@@ -1248,7 +1276,7 @@ namespace Toggl.Ross.ViewControllers
                     SetNeedsLayout();
                 }
 
-                var description = data.Entry.Data.Description;
+                var description = data.Description;
                 var descriptionHidden = String.IsNullOrWhiteSpace(description);
 
                 if (descriptionHidden)

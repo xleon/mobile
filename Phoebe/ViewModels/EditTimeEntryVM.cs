@@ -55,7 +55,9 @@ namespace Toggl.Phoebe.ViewModels
                 // a better way.
                 subscriptionState = StoreManager
                                     .Singleton
-                                    .Observe(x => x.State.TimeEntries [timeEntryId])
+                                    .Observe()
+                                    .Where(x => x.State.TimeEntries.ContainsKey(timeEntryId))
+                                    .Select(x => x.State.TimeEntries[timeEntryId])
                                     .DistinctUntilChanged(x => x.Data.RemoteId)
                                     .ObserveOn(SynchronizationContext.Current)
                                     .Subscribe(syncedRichData =>

@@ -41,9 +41,9 @@ namespace Toggl.Ross.Views
             );
 
             arrowImageView.Frame = new CGRect(
-                y: 0f,
+                y: 15f,
                 height: arrowHeight ,
-                x: Frame.Width - arrowWidth - 5f,
+                x: Frame.Width - arrowWidth - 29f,
                 width: arrowWidth
             );
         }

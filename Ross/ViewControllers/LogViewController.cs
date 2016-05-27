@@ -162,8 +162,8 @@ namespace Toggl.Ross.ViewControllers
         public override void ViewDidLayoutSubviews()
         {
             base.ViewDidLayoutSubviews();
-            defaultEmptyView.Frame = new CGRect(25f, (View.Frame.Size.Height - 200f) / 2, View.Frame.Size.Width - 50f, 200f);
-            obmEmptyView.Frame = new CGRect(25f, 15f, View.Frame.Size.Width - 50f, 200f);
+            defaultEmptyView.Frame = new CGRect(0, (View.Frame.Size.Height - 200f) / 2, View.Frame.Size.Width, 200f);
+            obmEmptyView.Frame = new CGRect(0, 15f, View.Frame.Size.Width, 200f);
             reloadView.Bounds = new CGRect(0f, 0f, View.Frame.Size.Width, 70f);
             reloadView.Center = new CGPoint(View.Center.X, reloadView.Center.Y);
             statusView.Frame = new CGRect(0, View.Frame.Height, View.Frame.Width, StatusBarHeight);

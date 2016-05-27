@@ -156,6 +156,10 @@ namespace Toggl.Ross.ViewControllers
             var random = new Random();
             var newProjectData = await ViewModel.SaveProjectAsync(projectName, random.Next(ProjectData.HexColors.Length - 1));
             handler.OnProjectSelected(newProjectData.Id, Guid.Empty);
+
+            // Go back to EditTimeEntryViewController
+            NavigationController.PopViewController(true);
+            NavigationController.PopViewController(true);
         }
 
         private IEnumerable<FluentLayout> VerticalLinearLayout(UIView container)

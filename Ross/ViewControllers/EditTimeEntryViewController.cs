@@ -245,7 +245,7 @@ namespace Toggl.Ross.ViewControllers
                     return true;
 
                 if (descriptionTextField.Text.Length > EditTimeEntryVM.LoadSuggestionsCharLimit)
-                    return initialDescription.Length <= 0 && ViewModel.SuggestionsCollection.Count > 0;
+                    return initialDescription.Length == 0 && ViewModel.SuggestionsCollection.Count > 0;
                 return false;
             }
         }

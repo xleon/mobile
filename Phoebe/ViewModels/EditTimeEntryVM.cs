@@ -21,12 +21,13 @@ namespace Toggl.Phoebe.ViewModels
         private readonly string ErrorTitle = "Error";
         private readonly string StartTimeError = "Start time should be earlier than stop time!";
         private readonly string StopTimeError = "Stop time should be after start time!";
+        private readonly int LoadSuggestionsThrottle = 1000;
 
         private IDisposable subscriptionTimer, subscriptionState;
-        private List<TimeEntryData> allSuggestions;
-        private List<TimeEntryData> filteredSuggestions;
         private RichTimeEntry richData;
         private RichTimeEntry previousData;
+
+        private event EventHandler<string> ChangedDescription;
 
         public EditTimeEntryVM(AppState appState, Guid timeEntryId)
         {
@@ -69,7 +70,9 @@ namespace Toggl.Phoebe.ViewModels
                                 .ObserveOn(SynchronizationContext.Current)
                                 .Subscribe(x => UpdateDuration());
 
-            InitSuggestions();
+            Observable.FromEventPattern<string>(h => ChangedDescription += h, h => ChangedDescription -= h)
+            .Throttle(TimeSpan.FromMilliseconds(LoadSuggestionsThrottle))
+            .Subscribe(ev => SuggestEntries(ev.EventArgs));
 
             ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Edit Time Entry";
         }
@@ -136,31 +139,17 @@ namespace Toggl.Phoebe.ViewModels
             }
         }
 
-        private void InitSuggestions()
+        public List<TimeEntryData> LoadSuggestions(string description)
         {
-            allSuggestions = new List<TimeEntryData> ();
-            filteredSuggestions = new List<TimeEntryData> ();
-            var dataStore = ServiceContainer.Resolve<ISyncDataStore> ();
-            var entries = dataStore.Table<TimeEntryData> ()
+            var dataStore = ServiceContainer.Resolve<ISyncDataStore>();
+            var entries = dataStore.Table<TimeEntryData>()
                           .OrderBy(r => r.StartTime)
                           .Where(r => r.State != TimeEntryState.New
                                  && r.DeletedAt == null
-                                 && r.Description != null)
+                                 && r.Description != null
+                                 && r.Description.Contains(description))
                           .ToList();
-            allSuggestions = entries;
-        }
-
-        public List<TimeEntryData> LoadSuggestions(string description)
-        {
-            var suggestions = new List<TimeEntryData> ();
-            if (description.Length < 3)
-                return suggestions;
-
-            foreach (var s in allSuggestions)
-                if (s.Description.Contains(description))
-                    suggestions.Add(s);
-
-            return suggestions;
+            return entries;
         }
 
         public bool IsRunning { get { return richData.Data.State == TimeEntryState.Running; } }
@@ -173,19 +162,7 @@ namespace Toggl.Phoebe.ViewModels
         public string ClientName { get { return richData.Info.ClientData.Name ?? string.Empty; } }
         public List<string> Tags { get { return richData.Data.Tags.ToList(); } }
 
-        public List<TimeEntryData> SuggestionsCollection
-        {
-            get
-            {
-                if (filteredSuggestions == null)
-                    InitSuggestions();
-                return filteredSuggestions;
-            }
-            set
-            {
-                filteredSuggestions = value;
-            }
-        }
+        public List<TimeEntryData> SuggestionsCollection { get; set; } = new List<TimeEntryData>();
 
         #endregion
         public void SuggestEntries(string desc)
@@ -269,7 +246,9 @@ namespace Toggl.Phoebe.ViewModels
         public void ChangeDescription(string description)
         {
             UpdateView(x => x.Description = description, nameof(Description));
-            SuggestEntries(description);
+
+            if (ChangedDescription != null)
+                ChangedDescription(this, description);
         }
 
         public void ChangeBillable(bool billable)

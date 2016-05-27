@@ -52,13 +52,13 @@ namespace Toggl.Phoebe.Helpers
             return observable.Select(chooser).Where(x => x != null);
         }
 
-        public static IDisposable SubscribeQueued<T>(this IObservable<T> observable, Func<T,Task> action)
+        public static IDisposable SubscribeQueued<T>(this IObservable<T> observable, Func<T, Task> action)
         {
             var isDisposed = false;
             var lockObj = new object();
             var queue = new System.Collections.Concurrent.ConcurrentQueue<T>();
 
-            Func<Task> monitor = async () =>
+            Func<Task> monitor = async() =>
             {
                 T next = default(T);
                 var localIsDisposed = false;
@@ -69,14 +69,15 @@ namespace Toggl.Phoebe.Helpers
                     else
                         await Task.Delay(500);
                     lock (lockObj) { localIsDisposed = isDisposed; }
-                } while (!localIsDisposed);
+                }
+                while (!localIsDisposed);
             };
 
             var disp = observable.Subscribe(queue.Enqueue);
             monitor();
             return new SimpleDisposable(() =>
             {
-                lock(lockObj) { isDisposed = true; }
+                lock (lockObj) { isDisposed = true; }
                 disp.Dispose();
             });
         }

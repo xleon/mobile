@@ -130,7 +130,7 @@ namespace Toggl.Ross.ViewControllers
             descriptionTextField.ShouldBeginEditing += (s) =>
             {
                 ForceDimissDatePicker();
-                DescriptionEditingMode = true;
+                initialDescription = s.Text;
                 return true;
             };
             descriptionTextField.ShouldEndEditing += s =>
@@ -213,16 +213,42 @@ namespace Toggl.Ross.ViewControllers
             });
             collectionBinding = this.SetBinding(() => ViewModel.SuggestionsCollection).WhenSourceChanges(() =>
             {
-                autoCompletionTableView.Source = new SuggestionSource(this);
-                autoCompletionTableView.ReloadData();
+                if (DescriptionEditingMode)
+                {
+                    autoCompletionTableView.Source = new SuggestionSource(this);
+                    autoCompletionTableView.ReloadData();
+                }
             });
             isBillableBinding = this.SetBinding(() => ViewModel.IsBillable, () => billableSwitch.Switch.On);
 
             // Events to edit some fields
-            descriptionTextField.EditingChanged += (sender, e) => { ViewModel.ChangeDescription(descriptionTextField.Text); };
+            descriptionTextField.EditingChanged += (sender, e) =>
+            {
+                ViewModel.ChangeDescription(descriptionTextField.Text);
+
+                if (descriptionTextField.Text.Length == 0 && initialDescription.Length > 0)
+                    initialDescription = descriptionTextField.Text;
+
+                if (shoudShowAutoComplete)
+                    DescriptionEditingMode = true;
+            };
             billableSwitch.Switch.ValueChanged += (sender, e) => { ViewModel.ChangeBillable(billableSwitch.Switch.On); };
         }
 
+        private string initialDescription;
+
+        private bool shoudShowAutoComplete
+        {
+            get
+            {
+                if (DescriptionEditingMode)
+                    return true;
+
+                if (descriptionTextField.Text.Length > 2)
+                    return initialDescription.Length <= 0 && ViewModel.SuggestionsCollection.Count > 0;
+                return false;
+            }
+        }
         private void ResetWrapperConstraints()
         {
             if (trackedWrapperConstraints != null)
@@ -261,6 +287,8 @@ namespace Toggl.Ross.ViewControllers
             get { return descriptionEditingMode__; }
             set
             {
+                if (value == descriptionEditingMode__)
+                    return;
                 UIScrollView scrlView = (UIScrollView)View;
                 scrlView.ScrollEnabled = !value;
                 if (value)

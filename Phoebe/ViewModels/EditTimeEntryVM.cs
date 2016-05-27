@@ -22,7 +22,7 @@ namespace Toggl.Phoebe.ViewModels
         private readonly string ErrorTitle = "Error";
         private readonly string StartTimeError = "Start time should be earlier than stop time!";
         private readonly string StopTimeError = "Stop time should be after start time!";
-        private readonly int LoadSuggestionsCharLimit = 3;
+        private readonly int LoadSuggestionsCharLimit = 2;
         private readonly int LoadSuggestionsResultsLimit = 10;
 
         private IDisposable subscriptionTimer, subscriptionState;

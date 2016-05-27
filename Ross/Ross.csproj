@@ -200,6 +200,7 @@
     </Reference>
     <Reference Include="Google.Analytics">
       <HintPath>..\packages\Xamarin.Google.iOS.Analytics.3.14.0.5\lib\Xamarin.iOS10\Google.Analytics.dll</HintPath>
+    </Reference>
     <Reference Include="VDS.Common">
       <HintPath>..\packages\VDS.Common.1.6.4\lib\portable-net4+sl5+netcore45+wpa81+wp8+MonoAndroid1+MonoTouch1\VDS.Common.dll</HintPath>
     </Reference>

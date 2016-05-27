@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Reactive.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 using GalaSoft.MvvmLight;
 using GalaSoft.MvvmLight.Views;
 using Toggl.Phoebe.Analytics;
@@ -21,13 +22,12 @@ namespace Toggl.Phoebe.ViewModels
         private readonly string ErrorTitle = "Error";
         private readonly string StartTimeError = "Start time should be earlier than stop time!";
         private readonly string StopTimeError = "Stop time should be after start time!";
-        private readonly int LoadSuggestionsThrottle = 1000;
+        private readonly int LoadSuggestionsCharLimit = 3;
+        private readonly int LoadSuggestionsResultsLimit = 10;
 
         private IDisposable subscriptionTimer, subscriptionState;
         private RichTimeEntry richData;
         private RichTimeEntry previousData;
-
-        private event EventHandler<string> ChangedDescription;
 
         public EditTimeEntryVM(AppState appState, Guid timeEntryId)
         {
@@ -69,10 +69,6 @@ namespace Toggl.Phoebe.ViewModels
                                                  TimeSpan.FromSeconds(1))
                                 .ObserveOn(SynchronizationContext.Current)
                                 .Subscribe(x => UpdateDuration());
-
-            Observable.FromEventPattern<string>(h => ChangedDescription += h, h => ChangedDescription -= h)
-            .Throttle(TimeSpan.FromMilliseconds(LoadSuggestionsThrottle))
-            .Subscribe(ev => SuggestEntries(ev.EventArgs));
 
             ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Edit Time Entry";
         }
@@ -139,16 +135,24 @@ namespace Toggl.Phoebe.ViewModels
             }
         }
 
-        public List<TimeEntryData> LoadSuggestions(string description)
+        public async Task<List<TimeEntryData>> LoadSuggestions(string description)
         {
-            var dataStore = ServiceContainer.Resolve<ISyncDataStore>();
-            var entries = dataStore.Table<TimeEntryData>()
-                          .OrderBy(r => r.StartTime)
-                          .Where(r => r.State != TimeEntryState.New
-                                 && r.DeletedAt == null
-                                 && r.Description != null
-                                 && r.Description.Contains(description))
-                          .ToList();
+            var entries = new List<TimeEntryData>();
+            if (description != null && description.Length >= LoadSuggestionsCharLimit)
+            {
+                entries = await Task.Run(() =>
+                {
+                    var dataStore = ServiceContainer.Resolve<ISyncDataStore>();
+                    return dataStore.Table<TimeEntryData>()
+                           .OrderBy(r => r.StartTime)
+                           .Where(r => r.State != TimeEntryState.New
+                                  && r.DeletedAt == null
+                                  && r.Description != null
+                                  && r.Description.Contains(description))
+                           .Take(LoadSuggestionsResultsLimit)
+                           .ToList();
+                });
+            }
             return entries;
         }
 
@@ -162,12 +166,12 @@ namespace Toggl.Phoebe.ViewModels
         public string ClientName { get { return richData.Info.ClientData.Name ?? string.Empty; } }
         public List<string> Tags { get { return richData.Data.Tags.ToList(); } }
 
-        public List<TimeEntryData> SuggestionsCollection { get; set; } = new List<TimeEntryData>();
+        public List<TimeEntryData> SuggestionsCollection { get; private set; } = new List<TimeEntryData>();
 
         #endregion
-        public void SuggestEntries(string desc)
+        public async Task SuggestEntries(string desc)
         {
-            SuggestionsCollection = LoadSuggestions(desc);
+            SuggestionsCollection = await LoadSuggestions(desc);
         }
 
         public void ChangeProjectAndTask(Guid projectId, Guid taskId)
@@ -243,12 +247,10 @@ namespace Toggl.Phoebe.ViewModels
             UpdateView(x => x.Tags = newTags.ToList(), nameof(Tags));
         }
 
-        public void ChangeDescription(string description)
+        public async Task ChangeDescription(string description)
         {
             UpdateView(x => x.Description = description, nameof(Description));
-
-            if (ChangedDescription != null)
-                ChangedDescription(this, description);
+            SuggestEntries(description);
         }
 
         public void ChangeBillable(bool billable)

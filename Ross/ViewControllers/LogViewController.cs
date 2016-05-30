@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Reactive.Linq;
+using System.Threading.Tasks;
 using CoreAnimation;
 using CoreGraphics;
 using Foundation;
@@ -159,8 +160,8 @@ namespace Toggl.Ross.ViewControllers
         public override void ViewDidLayoutSubviews()
         {
             base.ViewDidLayoutSubviews();
-            defaultEmptyView.Frame = new CGRect(25f, (View.Frame.Size.Height - 200f) / 2, View.Frame.Size.Width - 50f, 200f);
-            obmEmptyView.Frame = new CGRect(25f, 15f, View.Frame.Size.Width - 50f, 200f);
+            defaultEmptyView.Frame = new CGRect(0, (View.Frame.Size.Height - 200f) / 2, View.Frame.Size.Width, 200f);
+            obmEmptyView.Frame = new CGRect(0, 15f, View.Frame.Size.Width, 200f);
             reloadView.Bounds = new CGRect(0f, 0f, View.Frame.Size.Width, 70f);
             reloadView.Center = new CGPoint(View.Center.X, reloadView.Center.Y);
             statusView.Frame = new CGRect(0, View.Frame.Height, View.Frame.Width, StatusBarHeight);
@@ -170,12 +171,19 @@ namespace Toggl.Ross.ViewControllers
         {
             if (timerBar.IsManualModeSwitchOn)
             {
-                // TODO: manually create time entry
+                createManual();
             }
             else
             {
                 startStop();
             }
+        }
+
+        private async void createManual()
+        {
+            var te = await ViewModel.ManuallyCreateTimeEntry();
+
+            openEditViewForManualEntry(te);
         }
 
         private async void startStop()
@@ -188,15 +196,7 @@ namespace Toggl.Ross.ViewControllers
             {
                 var te = await ViewModel.StartNewTimeEntryAsync();
 
-                // Show next viewController.
-                var controllers = new List<UIViewController>(NavigationController.ViewControllers);
-                var editController = new EditTimeEntryViewController(te.Id);
-                controllers.Add(editController);
-                if (StoreManager.Singleton.AppState.Settings.ChooseProjectForNew)
-                {
-                    controllers.Add(new ProjectSelectionViewController(te.WorkspaceId, editController));
-                }
-                NavigationController.SetViewControllers(controllers.ToArray(), true);
+                openEditViewForNewEntry(te);
             }
             else
             {
@@ -204,19 +204,29 @@ namespace Toggl.Ross.ViewControllers
             }
         }
 
-        private void OnDurationButtonTouchUpInside(object sender, EventArgs e)
+        private void openEditViewForNewEntry(ITimeEntryData te)
         {
+            var editController = new EditTimeEntryViewController(te.Id);
+            var projectViewController = getProjectViewControllerIfChooseProjectForNew(te, editController);
 
+            NavigationController.PushViewControllers(true, editController, projectViewController);
         }
 
-        private void OnActionButtonTouchUpInside(object sender, EventArgs e)
+        private void openEditViewForManualEntry(ITimeEntryData te)
         {
-            startStop();
+            var editController = new EditTimeEntryViewController(te.Id);
+            var durationViewController = new DurationChangeViewController(te.StopTime.Value, te.StartTime, editController);
+            var projectViewController = getProjectViewControllerIfChooseProjectForNew(te, editController);
+
+            NavigationController.PushViewControllers(true, editController, durationViewController, projectViewController);
         }
 
-        private void setDuration()
+        private ProjectSelectionViewController getProjectViewControllerIfChooseProjectForNew(
+            ITimeEntryData te, EditTimeEntryViewController editController)
         {
-            timerBar.SetDurationText(ViewModel.Duration);
+            return StoreManager.Singleton.AppState.Settings.ChooseProjectForNew
+                   ? new ProjectSelectionViewController(te.WorkspaceId, editController)
+                   : null;
         }
 
         private void SetStartStopButtonState()
@@ -232,6 +242,10 @@ namespace Toggl.Ross.ViewControllers
                     this.timerBar.SetState(TimerBar.State.TimerInactive);
                 }
             }
+        }
+        private void setDuration()
+        {
+            timerBar.SetDurationText(ViewModel.Duration);
         }
 
         private void LoadMoreIfNeeded()
@@ -484,9 +498,17 @@ namespace Toggl.Ross.ViewControllers
             private void OnContinueTimeEntry(TimeEntryCell cell)
             {
                 var indexPath = TableView.IndexPathForCell(cell);
-                // TODO: Rx needs further test!
-                //TableView.ScrollToRow(NSIndexPath.FromRowSection(0, 0), UITableViewScrollPosition.Top, true);
-                VM.ContinueTimeEntry(indexPath.Row);
+                if (indexPath != null)
+                {
+                    // TODO: Rx needs further test!
+                    //TableView.ScrollToRow(NSIndexPath.FromRowSection(0, 0), UITableViewScrollPosition.Top, true);
+                    VM.ContinueTimeEntry(indexPath.Row);
+                }
+                else
+                {
+                    Phoebe.Helpers.Util.Log(Phoebe.Logging.LogLevel.Warning,
+                                            nameof(OnContinueTimeEntry), "Cannot find indexPath for cell");
+                }
             }
 
             protected override void Dispose(bool disposing)

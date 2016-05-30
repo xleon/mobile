@@ -8,6 +8,18 @@ namespace Toggl.Phoebe.Helpers
 {
     public static class ReactiveExtensions
     {
+        public class SimpleDisposable : IDisposable
+        {
+            private readonly Action action;
+
+            public SimpleDisposable(Action action)
+            {
+                this.action = action;
+            }
+
+            public void Dispose() => action();
+        }
+
         public class SimpleObserver<T> : IObserver<T>
         {
             readonly Action<T> onNext;
@@ -40,20 +52,60 @@ namespace Toggl.Phoebe.Helpers
             return observable.Select(chooser).Where(x => x != null);
         }
 
-        public static IObservable<IList<T>> TimedBuffer<T> (this IObservable<T> observable, int milliseconds)
+        public static IDisposable SubscribeQueued<T>(this IObservable<T> observable, Func<T, Task> action)
         {
-            if (milliseconds > 0)
+            var isDisposed = false;
+            var lockObj = new object();
+            var queue = new System.Collections.Concurrent.ConcurrentQueue<T>();
+
+            Func<Task> monitor = async() =>
             {
-                // TODO: This is firing up even if there're no events. Can it be improved?
-                return observable
-                       .Buffer(TimeSpan.FromMilliseconds(milliseconds))
-                       .Where(b => b.Count > 0);
-            }
-            else
+                T next = default(T);
+                var localIsDisposed = false;
+                do
+                {
+                    if (queue.TryDequeue(out next))
+                        await action(next);
+                    else
+                        await Task.Delay(500);
+                    lock (lockObj) { localIsDisposed = isDisposed; }
+                }
+                while (!localIsDisposed);
+            };
+
+            var disp = observable.Subscribe(queue.Enqueue);
+            monitor();
+            return new SimpleDisposable(() =>
             {
-                return observable
-                .Select(x => new List<T> () { x });
-            }
+                lock (lockObj) { isDisposed = true; }
+                disp.Dispose();
+            });
+        }
+
+        public static IObservable<T> TimedBuffer<T> (this IObservable<T> observable, int milliseconds)
+        {
+            if (milliseconds <= 0)
+                throw new ArgumentException($"{nameof(milliseconds)} must be bigger than 0");
+
+            var queue = new System.Collections.Concurrent.ConcurrentQueue<T>();
+            var timer = new System.Timers.Timer(milliseconds) { AutoReset = true };
+
+            return Observable.Create((IObserver<T> obs) =>
+            {
+                T next = default(T);
+                timer.Elapsed += (sender, timestamp) =>
+                {
+                    if (queue.TryDequeue(out next))
+                        obs.OnNext(next);
+                };
+                timer.Start();
+                var disp = observable.Subscribe(queue.Enqueue);
+                return () =>
+                {
+                    disp.Dispose();
+                    timer.Dispose();
+                };
+            });
         }
 
         /// <summary>

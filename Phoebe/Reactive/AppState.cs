@@ -42,9 +42,15 @@ namespace Toggl.Phoebe.Reactive
                         }
                         else if (activeEntries.Count > 1)
                         {
-                            // TODO RX: React to this situation
-                            var logger = ServiceContainer.Resolve<Logging.ILogger>();
-                            logger.Error(nameof(AppState), "More than one active entry detected");
+                            Util.Log(Logging.LogLevel.Warning, nameof(AppState), "More than one active entry detected");
+                            _activeEntryCache = activeEntries.OrderByDescending(x => x.Data.StartTime).First();
+                            foreach (var entry in activeEntries)
+                            {
+                                if (entry != _activeEntryCache)
+                                {
+                                    RxChain.Send(new DataMsg.TimeEntryStop(entry.Data));
+                                }
+                            }
                         }
                     }
                 }

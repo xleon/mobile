@@ -13,6 +13,7 @@ using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Helpers;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
+using System.Reactive.Concurrency;
 
 namespace Toggl.Phoebe.Reactive
 {
@@ -55,9 +56,17 @@ namespace Toggl.Phoebe.Reactive
             }
         }
 
+        public class RemoteIdException : Exception
+        {
+            public RemoteIdException(string msg) : base(msg)
+            {
+            }
+        }
+
         // sinceDate for GetChanges requests shouldn't be older than two months. Server requirements.
         // Make a few days stricter to be on the safe side.
         const int GetChangesSinceDateLimit = -56;
+        const int BufferMilliseconds = 1000;
 
         const string QueueId = "SYNC_OUT";
         const string DuplicatedNameMessage = "Name has already been taken";
@@ -80,8 +89,6 @@ namespace Toggl.Phoebe.Reactive
         readonly JsonMapper mapper;
         readonly INetworkPresence networkPresence;
         readonly ITogglClient client;
-        readonly Subject<Tuple<ServerRequest, AppState>> requestManager = new Subject<Tuple<ServerRequest, AppState>> ();
-
 
         SyncManager()
         {
@@ -91,47 +98,11 @@ namespace Toggl.Phoebe.Reactive
 
             StoreManager.Singleton
             .Observe()
-            .SelectAsync(EnqueueOrSend)
-            .Subscribe((_) => { },
-            (ex) =>
-            {
-                logError(ex, "Failed to sync. Main observer bug.");
-                // Should pass a generic request?
-                RxChain.Send(new DataMsg.ServerResponse(new ServerRequest.GetChanges(), ex));
-            });
-
-            requestManager
-            .Synchronize()  // Make sure requests are run one after the other
-            .SelectAsync(async x => await x.Item1.MatchType(
-                             (ServerRequest.DownloadEntries _) =>
-                             DownloadEntries(x.Item1, x.Item2),
-                             (ServerRequest.GetChanges _) =>
-                             GetChanges(x.Item1, x.Item2),
-                             (ServerRequest.GetCurrentState _) =>
-                             GetChanges(x.Item1, x.Item2),
-                             (ServerRequest.Authenticate req) =>
-            {
-                switch (req.Operation)
-                {
-                    case ServerRequest.Authenticate.Op.Login:
-                        return LoginAsync(req.Username, req.Password);
-                    case ServerRequest.Authenticate.Op.Signup:
-                        return SignupAsync(req.Username, req.Password);
-                    case ServerRequest.Authenticate.Op.LoginWithGoogle:
-                        return LoginWithGoogleAsync(req.AccessToken);
-                    case ServerRequest.Authenticate.Op.SignupWithGoogle:
-                        return SignupWithGoogleAsync(req.AccessToken);
-                    default:
-                        throw new Exception("Unexpected Authenticate operation");
-                }
-            }))
-            .Subscribe((_) => { },
-            (ex) =>
-            {
-                logError(ex, "Failed to sync. RequestManager bug.");
-                // Should pass a dummy request for this cases?
-                RxChain.Send(new DataMsg.ServerResponse(new ServerRequest.GetChanges(), ex));
-            });
+#if __TESTS__
+            .SelectAsync(EnqueueOrSend).Subscribe();
+#else
+            .SubscribeQueued(EnqueueOrSend);
+#endif
         }
 
         void logError(Exception ex, string msg = "Failed to sync")
@@ -166,6 +137,30 @@ namespace Toggl.Phoebe.Reactive
             }
         }
 
+        async Task HandleRequest(ServerRequest request, AppState state)
+        {
+            await request.MatchType(
+                (ServerRequest.DownloadEntries _) => DownloadEntries(request, state),
+                (ServerRequest.GetChanges _) => GetChanges(request, state),
+                (ServerRequest.GetCurrentState _) => GetChanges(request, state),
+                (ServerRequest.Authenticate req) =>
+            {
+                switch (req.Operation)
+                {
+                    case ServerRequest.Authenticate.Op.Login:
+                        return LoginAsync(req.Username, req.Password);
+                    case ServerRequest.Authenticate.Op.Signup:
+                        return SignupAsync(req.Username, req.Password);
+                    case ServerRequest.Authenticate.Op.LoginWithGoogle:
+                        return LoginWithGoogleAsync(req.AccessToken);
+                    case ServerRequest.Authenticate.Op.SignupWithGoogle:
+                        return SignupWithGoogleAsync(req.AccessToken);
+                    default:
+                        throw new Exception("Unexpected Authenticate operation");
+                }
+            });
+        }
+
         async Task EnqueueOrSend(DataSyncMsg<AppState> syncMsg)
         {
             var remoteObjects = new List<CommonData> ();
@@ -189,7 +184,11 @@ namespace Toggl.Phoebe.Reactive
                         }
                         catch (Exception ex)
                         {
-                            logError(ex);
+                            if (ex is RemoteIdException)
+                                logInfo(ex.Message);
+                            else
+                                logError(ex);
+
                             Enqueue(data, enqueuedItems, dataStore);
                             queueEmpty = false;
                         }
@@ -213,7 +212,9 @@ namespace Toggl.Phoebe.Reactive
                 RxChain.Send(DataMsg.ServerResponse.CRUD(remoteObjects));
 
             foreach (var req in syncMsg.ServerRequests.Where(x => x is ServerRequest.CRUD == false))
-            requestManager.OnNext(Tuple.Create(req, syncMsg.State));
+            {
+                await HandleRequest(req, syncMsg.State);
+            }
 
             // Mostly used for test pourposes.
             if (syncMsg.Continuation != null && !syncMsg.Continuation.LocalOnly)
@@ -231,6 +232,8 @@ namespace Toggl.Phoebe.Reactive
             }
 
             string json = null;
+            List<string> conflicting = new List<string>();
+
             if (dataStore.TryPeek(QueueId, out json))
             {
                 if (isConnected)
@@ -240,12 +243,34 @@ namespace Toggl.Phoebe.Reactive
                         do
                         {
                             var queueItem = JsonConvert.DeserializeObject<QueueItem> (json);
-                            await SendData(queueItem.Data, remoteObjects, state);
 
-                            // If we sent the message successfully, remove it from the queue
-                            dataStore.TryDequeue(QueueId, out json);
+                            try
+                            {
+                                await SendData(queueItem.Data, remoteObjects, state);
+
+                                // If we sent the message successfully, remove it from the queue
+                                dataStore.TryDequeue(QueueId, out json);
+                            }
+                            catch (RemoteIdException ex)
+                            {
+                                logInfo(ex.Message);
+
+                                // Items missing a RemoteId shouldn't lock the queue
+                                // TODO RX: Discard conflicting items if they're too old or too many
+                                conflicting.Add(json);
+                                dataStore.TryDequeue(QueueId, out json);
+                            }
+                            catch
+                            {
+                                throw;
+                            }
                         }
                         while (dataStore.TryPeek(QueueId, out json));
+
+                        // Put back in the queue conflicting items (if any)
+                        foreach (var conflict in conflicting)
+                            dataStore.TryEnqueue(QueueId, conflict);
+
                         return true;
                     }
                     catch (Exception ex)
@@ -293,11 +318,11 @@ namespace Toggl.Phoebe.Reactive
                     switch (data.SyncState)
                     {
                         case SyncState.CreatePending:
-                            Console.WriteLine("Remote created :" + data.GetType() + " " + data.Id);
+                            Console.WriteLine($"Remote create: {data.GetType().Name} {data.Id}");
                             response = await client.Create(authToken, json);
                             break;
                         case SyncState.UpdatePending:
-                            Console.WriteLine("Remote update :" + data.GetType() + " " + data.Id);
+                            Console.WriteLine($"Remote update: {data.GetType().Name} {data.Id}");
                             response = await client.Update(authToken, json);
                             break;
                         default:
@@ -308,7 +333,7 @@ namespace Toggl.Phoebe.Reactive
                     var resData = mapper.Map(response);
                     resData.Id = data.Id;
                     remoteObjects.Add(resData);
-                    Console.WriteLine("Remote received :" + resData.GetType() + " " + resData.RemoteId + " " + resData.Id);
+                    Console.WriteLine($"Remote received: {resData.GetType().Name} {resData.RemoteId} {resData.Id}");
                 }
                 else
                 {
@@ -675,7 +700,7 @@ namespace Toggl.Phoebe.Reactive
                 var pr = (ProjectData)data.Clone();
                 if (pr.WorkspaceRemoteId == 0)
                 {
-                    pr.WorkspaceRemoteId = GetRemoteId<ProjectData> (pr.WorkspaceId, remoteObjects, state);
+                    pr.WorkspaceRemoteId = GetRemoteId<ProjectData>(pr.WorkspaceId, remoteObjects, state);
                 }
                 if (pr.ClientId != Guid.Empty && !pr.ClientRemoteId.HasValue)
                 {
@@ -788,7 +813,18 @@ namespace Toggl.Phoebe.Reactive
             }
             else if (typ == typeof(TimeEntryData))
             {
-                res = state.TimeEntries[localId].Data.RemoteId;
+                // Not all TEs are loaded to AppState, if it's not found there
+                // we must check the DB
+                if (state.TimeEntries.ContainsKey(localId))
+                {
+                    res = state.TimeEntries[localId].Data.RemoteId;
+                }
+                else
+                {
+                    var dataStore = ServiceContainer.Resolve<ISyncDataStore>();
+                    var storedEntry = dataStore.Table<TimeEntryData>().FirstOrDefault(x => x.Id == localId);
+                    res = storedEntry?.RemoteId;
+                }
             }
             else if (typ == typeof(UserData))
             {
@@ -805,10 +841,8 @@ namespace Toggl.Phoebe.Reactive
 
             if (!res.HasValue)
             {
-                // Stop sending messages and wait for state update
-                // TODO RX: Keep a cache to check if the same error is repeating many times?
-                // Publish more info about this bug
-                throw new Exception("RemoteId missing. Type: " + typ.FullName);
+                // Wait for state update
+                throw new RemoteIdException($"RemoteId missing: {typ.Name} - {localId}");
             }
             return res.Value;
         }

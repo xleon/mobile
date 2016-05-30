@@ -325,7 +325,7 @@ namespace Toggl.Phoebe.Data.Json
                 if (!string.IsNullOrEmpty(s) && s.Contains("."))
                 {
                     double d;
-                    double.TryParse(s, out d);
+                    double.TryParse(s, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out d);
                     l = (long)Math.Round(d);
                 }
                 else

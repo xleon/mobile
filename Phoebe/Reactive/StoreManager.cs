@@ -52,7 +52,6 @@ namespace Toggl.Phoebe.Reactive
             var initSyncMsg = DataSyncMsg.Create(initState);
 
             subject1
-            .Synchronize(Scheduler.Default)
             .Scan(initSyncMsg, (acc, tuple) =>
             {
                 DataSyncMsg<AppState> msg;
@@ -69,15 +68,14 @@ namespace Toggl.Phoebe.Reactive
                 AppState = msg.State;
                 return tuple.Item2 == null ? msg : new DataSyncMsg<AppState> (msg.State, msg.ServerRequests, tuple.Item2);
             })
-            .Select(syncMsg =>
+            .Subscribe(syncMsg =>
             {
                 // Call message continuation after executing reducers
                 if (syncMsg.Continuation != null && syncMsg.Continuation.LocalOnly)
                     syncMsg.Continuation.Invoke(syncMsg.State);
 
-                return syncMsg;
-            })
-            .Subscribe(subject2.OnNext);
+                subject2.OnNext(syncMsg);
+            });
         }
 
         public void Send(DataMsg msg, RxChain.Continuation cont)
@@ -87,12 +85,12 @@ namespace Toggl.Phoebe.Reactive
 
         public IObservable<DataSyncMsg<AppState>> Observe()
         {
-            return subject2;
+            return subject2.AsObservable();
         }
 
         public IObservable<T> Observe<T> (Func<DataSyncMsg<AppState>, T> selector)
         {
-            return subject2.Select(syncMsg => selector(syncMsg));
+            return Observe().Select(syncMsg => selector(syncMsg));
         }
     }
 }

@@ -8,6 +8,36 @@ namespace Toggl.Phoebe.Helpers
 {
     public static class Util
     {
+        /// <summary>
+        /// Logs message and absorbs exception if ILogger is not found
+        /// </summary>
+        public static void Log(LogLevel severity, string tag, string message)
+        {
+            try
+            {
+                var logger = ServiceContainer.Resolve<ILogger>();
+                switch (severity)
+                {
+                    case LogLevel.Info:
+                        logger.Info(tag, message);
+                        break;
+                    case LogLevel.Debug:
+                        logger.Debug(tag, message);
+                        break;
+                    case LogLevel.Error:
+                        logger.Debug(tag, message);
+                        break;
+                    case LogLevel.Warning:
+                        logger.Warning(tag, message);
+                        break;
+                }
+            }
+            catch
+            {
+                // Do nothing
+            }
+        }
+
         public static string GetName<T> (T enumCase)
         {
             return Enum.GetName(typeof(T), enumCase);

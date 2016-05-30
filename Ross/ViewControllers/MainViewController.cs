@@ -396,7 +396,7 @@ namespace Toggl.Ross.ViewControllers
                 if (imgName.Contains("LaunchImage"))
                 {
                     img = UIImage.FromBundle(imgName);
-                    if (img.CurrentScale.Equals(UIScreen.MainScreen.Scale) && img.Size.Equals(UIScreen.MainScreen.Bounds.Size))
+                    if (img != null && img.CurrentScale.Equals(UIScreen.MainScreen.Scale) && img.Size.Equals(UIScreen.MainScreen.Bounds.Size))
                         return img;
                 }
             }

@@ -1,16 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
+using System.Reactive.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using GalaSoft.MvvmLight;
+using GalaSoft.MvvmLight.Views;
 using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Helpers;
 using Toggl.Phoebe.Reactive;
+using Toggl.Phoebe.ViewModels.Timer;
 using XPlatUtils;
-using System.Reactive.Linq;
-using System.Threading;
-using GalaSoft.MvvmLight.Views;
 
 namespace Toggl.Phoebe.ViewModels
 {
@@ -19,6 +22,8 @@ namespace Toggl.Phoebe.ViewModels
         private readonly string ErrorTitle = "Error";
         private readonly string StartTimeError = "Start time should be earlier than stop time!";
         private readonly string StopTimeError = "Stop time should be after start time!";
+        public static readonly int LoadSuggestionsCharLimit = 2;
+        private readonly int LoadSuggestionsResultsLimit = 10;
 
         private IDisposable subscriptionTimer, subscriptionState;
         private RichTimeEntry richData;
@@ -50,7 +55,9 @@ namespace Toggl.Phoebe.ViewModels
                 // a better way.
                 subscriptionState = StoreManager
                                     .Singleton
-                                    .Observe(x => x.State.TimeEntries [timeEntryId])
+                                    .Observe()
+                                    .Where(x => x.State.TimeEntries.ContainsKey(timeEntryId))
+                                    .Select(x => x.State.TimeEntries[timeEntryId])
                                     .DistinctUntilChanged(x => x.Data.RemoteId)
                                     .ObserveOn(SynchronizationContext.Current)
                                     .Subscribe(syncedRichData =>
@@ -68,6 +75,20 @@ namespace Toggl.Phoebe.ViewModels
             ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Edit Time Entry";
         }
 
+
+        public void UpdateEntry(TimeEntryData data)
+        {
+            UpdateView(x =>
+            {
+                x.Description = data.Description;
+                x.ProjectRemoteId = data.ProjectRemoteId;
+                x.ProjectId = data.ProjectId;
+                x.WorkspaceId = data.WorkspaceId;
+                x.WorkspaceRemoteId = data.WorkspaceRemoteId;
+                x.IsBillable = data.IsBillable;
+            }, nameof(Description) , nameof(ProjectName), nameof(ClientName), nameof(ProjectColorHex), nameof(IsPremium), nameof(IsBillable));
+        }
+
         public void Dispose()
         {
             if (subscriptionState != null)
@@ -82,9 +103,7 @@ namespace Toggl.Phoebe.ViewModels
         {
             get
             {
-                // TODO: check substring function for long times
-                return TimeSpan.FromSeconds(richData.Data.GetDuration().TotalSeconds)
-                       .ToString().Substring(0, 8);
+                return TimeEntryData.GetFormattedDuration(richData.Data.GetDuration());
             }
         }
 
@@ -118,6 +137,27 @@ namespace Toggl.Phoebe.ViewModels
             }
         }
 
+        public async Task<List<TimeEntryData>> LoadSuggestions(string description)
+        {
+            var entries = new List<TimeEntryData>();
+            if (description != null && description.Length >= LoadSuggestionsCharLimit)
+            {
+                entries = await Task.Run(() =>
+                {
+                    var dataStore = ServiceContainer.Resolve<ISyncDataStore>();
+                    return dataStore.Table<TimeEntryData>()
+                           .OrderBy(r => r.StartTime)
+                           .Where(r => r.State != TimeEntryState.New
+                                  && r.DeletedAt == null
+                                  && r.Description != null
+                                  && r.Description.Contains(description))
+                           .Take(LoadSuggestionsResultsLimit)
+                           .ToList();
+                });
+            }
+            return entries;
+        }
+
         public bool IsRunning { get { return richData.Data.State == TimeEntryState.Running; } }
         public string Description { get { return richData.Data.Description ?? string.Empty; } }
         public bool IsBillable { get { return richData.Data.IsBillable; } }
@@ -128,7 +168,13 @@ namespace Toggl.Phoebe.ViewModels
         public string ClientName { get { return richData.Info.ClientData.Name ?? string.Empty; } }
         public List<string> Tags { get { return richData.Data.Tags.ToList(); } }
 
+        public List<TimeEntryData> SuggestionsCollection { get; private set; } = new List<TimeEntryData>();
+
         #endregion
+        public async Task SuggestEntries(string desc)
+        {
+            SuggestionsCollection = await LoadSuggestions(desc);
+        }
 
         public void ChangeProjectAndTask(Guid projectId, Guid taskId)
         {
@@ -203,9 +249,10 @@ namespace Toggl.Phoebe.ViewModels
             UpdateView(x => x.Tags = newTags.ToList(), nameof(Tags));
         }
 
-        public void ChangeDescription(string description)
+        public async Task ChangeDescription(string description)
         {
             UpdateView(x => x.Description = description, nameof(Description));
+            SuggestEntries(description);
         }
 
         public void ChangeBillable(bool billable)

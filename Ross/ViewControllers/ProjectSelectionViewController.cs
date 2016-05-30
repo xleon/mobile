@@ -119,13 +119,13 @@ namespace Toggl.Ross.ViewControllers
 
                 if (data is ProjectData)
                 {
-                    var cell = (ProjectCell)tableView.DequeueReusableCell(ProjectCellId, indexPath);
+                    var cell = (ProjectCell)tableView.DequeueReusableCell(ProjectCellId);
                     cell.Bind((ProjectsCollectionVM.SuperProjectData)data, viewModel.ProjectList.AddTasks);
                     return cell;
                 }
                 else
                 {
-                    var cell = (TaskCell)tableView.DequeueReusableCell(TaskCellId, indexPath);
+                    var cell = (TaskCell)tableView.DequeueReusableCell(TaskCellId);
                     cell.Bind((TaskData)data);
                     return cell;
                 }
@@ -159,6 +159,11 @@ namespace Toggl.Ross.ViewControllers
             public override bool CanEditRow(UITableView tableView, NSIndexPath indexPath)
             {
                 return false;
+            }
+
+            public override nfloat GetHeightForRow(UITableView tableView, NSIndexPath indexPath)
+            {
+                return 60f;
             }
 
             public override void RowSelected(UITableView tableView, NSIndexPath indexPath)

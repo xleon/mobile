@@ -391,7 +391,6 @@ namespace Toggl.Ross.ViewControllers
         {
             UIImage img = null;
             var allPngImageNames = NSBundle.MainBundle.PathsForResources("png");
-
             foreach (var imgName in allPngImageNames)
             {
                 if (imgName.Contains("LaunchImage"))

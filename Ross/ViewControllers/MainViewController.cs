@@ -391,12 +391,13 @@ namespace Toggl.Ross.ViewControllers
         {
             UIImage img = null;
             var allPngImageNames = NSBundle.MainBundle.PathsForResources("png");
+
             foreach (var imgName in allPngImageNames)
             {
                 if (imgName.Contains("LaunchImage"))
                 {
                     img = UIImage.FromBundle(imgName);
-                    if (img.CurrentScale.Equals(UIScreen.MainScreen.Scale) && img.Size.Equals(UIScreen.MainScreen.Bounds.Size))
+                    if (img != null && img.CurrentScale.Equals(UIScreen.MainScreen.Scale) && img.Size.Equals(UIScreen.MainScreen.Bounds.Size))
                         return img;
                 }
             }

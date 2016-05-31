@@ -22,12 +22,14 @@ namespace Toggl.Phoebe.ViewModels
         public const string ErrorTitle = "Error";
         public const string StartTimeError = "Start time should be earlier than stop time!";
         public const string StopTimeError = "Stop time should be after start time!";
-        public static readonly int LoadSuggestionsCharLimit = 2;
-        private readonly int LoadSuggestionsResultsLimit = 10;
+        public const int LoadSuggestionsCharLimit = 2;
+        public const int LoadSuggestionsResultsLimit = 10;
+        public const int LoadSuggestionsThrottleMilliseconds = 500;
 
         private IDisposable subscriptionTimer, subscriptionState;
         private RichTimeEntry richData;
         private RichTimeEntry previousData;
+        private event EventHandler<string> DescriptionChanged;
 
         public EditTimeEntryVM(AppState appState, Guid timeEntryId)
         {
@@ -71,6 +73,13 @@ namespace Toggl.Phoebe.ViewModels
                                                  TimeSpan.FromSeconds(1))
                                 .ObserveOn(SynchronizationContext.Current)
                                 .Subscribe(x => UpdateDuration());
+
+            Observable.FromEventPattern<string>(h => DescriptionChanged += h, h => DescriptionChanged -= h)
+                      .Select(ev => ev.EventArgs)
+                      .Where(desc => desc != null && desc.Length >= LoadSuggestionsCharLimit)
+                      .Throttle(TimeSpan.FromMilliseconds(LoadSuggestionsThrottleMilliseconds))
+                      .ObserveOn(SynchronizationContext.Current)
+                      .Subscribe(async desc => await SuggestEntries(desc));
 
             ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Edit Time Entry";
         }
@@ -139,23 +148,18 @@ namespace Toggl.Phoebe.ViewModels
 
         public async Task<List<TimeEntryData>> LoadSuggestions(string description)
         {
-            var entries = new List<TimeEntryData>();
-            if (description != null && description.Length >= LoadSuggestionsCharLimit)
+            return await Task.Run(() =>
             {
-                entries = await Task.Run(() =>
-                {
-                    var dataStore = ServiceContainer.Resolve<ISyncDataStore>();
-                    return dataStore.Table<TimeEntryData>()
-                           .OrderBy(r => r.StartTime)
-                           .Where(r => r.State != TimeEntryState.New
-                                  && r.DeletedAt == null
-                                  && r.Description != null
-                                  && r.Description.Contains(description))
-                           .Take(LoadSuggestionsResultsLimit)
-                           .ToList();
-                });
-            }
-            return entries;
+                var dataStore = ServiceContainer.Resolve<ISyncDataStore>();
+                return dataStore.Table<TimeEntryData>()
+                       .OrderBy(r => r.StartTime)
+                       .Where(r => r.State != TimeEntryState.New
+                              && r.DeletedAt == null
+                              && r.Description != null
+                              && r.Description.Contains(description))
+                       .Take(LoadSuggestionsResultsLimit)
+                       .ToList();
+            });
         }
 
         public bool IsRunning { get { return richData.Data.State == TimeEntryState.Running; } }
@@ -237,7 +241,8 @@ namespace Toggl.Phoebe.ViewModels
         public void ChangeDescription(string description)
         {
             UpdateView(x => x.Description = description, nameof(Description));
-            SuggestEntries(description);
+
+            DescriptionChanged(this, description);
         }
 
         public void ChangeBillable(bool billable)

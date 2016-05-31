@@ -233,6 +233,22 @@ namespace Toggl.Ross.ViewControllers
                     DescriptionEditingMode = true;
             };
             billableSwitch.Switch.ValueChanged += (sender, e) => { ViewModel.ChangeBillable(billableSwitch.Switch.On); };
+
+            NavigationItem.HidesBackButton = true;
+            var newBackButton = new UIBarButtonItem("EditEntryBack".Tr(), UIBarButtonItemStyle.Bordered, (sender, e) =>
+            {
+                var savedProperly = ViewModel?.Save();
+                if (savedProperly == false)
+                {
+                    XPlatUtils.ServiceContainer.Resolve<GalaSoft.MvvmLight.Views.IDialogService>()
+                              .ShowMessage(EditTimeEntryVM.StartTimeError, EditTimeEntryVM.ErrorTitle);
+                }
+                else
+                {
+                    NavigationController?.PopViewController(true);
+                }
+            });
+            NavigationItem.LeftBarButtonItem = newBackButton;
         }
 
         private string initialDescription;
@@ -323,7 +339,6 @@ namespace Toggl.Ross.ViewControllers
         {
             NSNotificationCenter.DefaultCenter.RemoveObservers(notificationObjects);
             notificationObjects.Clear();
-            ViewModel.Save();
 
             // TODO: Release ViewModel only when the
             // ViewController is poped. It is a weird behaviour

@@ -236,42 +236,6 @@ namespace Toggl.Phoebe.Helpers
             data.StopTime = data.StopTime.Truncate(TimeSpan.TicksPerSecond);
         }
 
-        /// <summary>
-        /// Change StartTime to a TimeEntryData
-        /// </summary>
-        public static TimeEntryData ChangeStartTime(this TimeEntryData data, DateTime newValue)
-        {
-            newValue = newValue.ToUtc().Truncate(TimeSpan.TicksPerSecond);
-            var duration = data.GetDuration();
-            data.StartTime = newValue;
-
-            if (data.State != TimeEntryState.Running)
-            {
-                if (data.StopTime.HasValue)
-                {
-                    data.StopTime = data.StartTime + duration;
-                }
-                else
-                {
-                    var now = Time.UtcNow;
-
-                    data.StopTime = data.StartTime.Date
-                                    .AddHours(now.Hour)
-                                    .AddMinutes(now.Minute)
-                                    .AddSeconds(data.StartTime.Second);
-
-                    if (data.StopTime < data.StartTime)
-                    {
-                        data.StopTime = data.StartTime + duration;
-                    }
-                }
-
-                data.StartTime = data.StartTime.Truncate(TimeSpan.TicksPerSecond);
-                data.StopTime = data.StopTime.Truncate(TimeSpan.TicksPerSecond);
-            }
-            return data;
-        }
-
         // GetProperties doesn't get properties from base interfaces, we need this
         // From http://stackoverflow.com/a/2444090/3922220
         public static PropertyInfo[] GetPublicProperties(this Type type)
@@ -377,6 +341,16 @@ namespace Toggl.Phoebe.Helpers
                 }
             }
             return true;
+        }
+
+        /// <summary>
+        /// Change StartTime to a TimeEntryData
+        /// </summary>
+        public static TimeEntryData ChangeStartTime(this TimeEntryData data, DateTime newValue)
+        {
+            newValue = newValue.ToUtc().Truncate(TimeSpan.TicksPerSecond);
+            data.StartTime = newValue;
+            return data;
         }
 
         /// <summary>

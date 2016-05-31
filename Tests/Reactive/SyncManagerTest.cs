@@ -95,7 +95,8 @@ namespace Toggl.Phoebe.Tests.Reactive
         [Test]
         public async Task TestTrySendMessageAndReconnect()
         {
-            var tcs = Util.CreateTask<bool> ();
+            var tcs1 = Util.CreateTask<bool> ();
+            var tcs2 = Util.CreateTask<bool> ();
             var te = Util.CreateTimeEntryData(DateTime.Now);
             var te2 = Util.CreateTimeEntryData(DateTime.Now + TimeSpan.FromMinutes(5));
 
@@ -107,12 +108,15 @@ namespace Toggl.Phoebe.Tests.Reactive
                     // As there's no connection, message should have been enqueued
                     Assert.That(queued.Any(x => x.Data.Id == te.Id), Is.True);
                     Assert.That(0, Is.EqualTo(sent.Count()));
+                    tcs1.SetResult(true);
                 }
                 catch (Exception ex)
                 {
-                    tcs.SetException(ex);
+                    tcs1.SetException(ex);
                 }
             }));
+
+            await tcs1.Task;
 
             networkSwitcher.SetNetworkConnection(true);
             RxChain.Send(new DataMsg.TimeEntryPut(te2), new RxChain.Continuation((_, sent, queued) =>
@@ -122,15 +126,15 @@ namespace Toggl.Phoebe.Tests.Reactive
                     // As there's connection, messages should have been sent
                     Assert.That(queued.Any(x => x.Data.Id == te.Id || x.Data.Id == te2.Id), Is.False);
                     Assert.That(sent.Count() > 0, Is.True);
-                    tcs.SetResult(true);
+                    tcs2.SetResult(true);
                 }
                 catch (Exception ex)
                 {
-                    tcs.SetException(ex);
+                    tcs2.SetException(ex);
                 }
             }));
 
-            await tcs.Task;
+            await tcs2.Task;
         }
 
         [Test]
@@ -169,7 +173,8 @@ namespace Toggl.Phoebe.Tests.Reactive
         [Test]
         public async Task TestQueueWithMultipleValues()
         {
-            var tcs = Util.CreateTask<bool>();
+            var tcs1 = Util.CreateTask<bool>();
+            var tcs2 = Util.CreateTask<bool>();
             var te1 = Util.CreateTimeEntryData(DateTime.Now.AddHours(-1));
             var te2 = Util.CreateTimeEntryData(DateTime.Now);
 
@@ -178,7 +183,21 @@ namespace Toggl.Phoebe.Tests.Reactive
             RxChain.Send(new DataMsg.TimeEntryPut(te1));
             RxChain.Send(new DataMsg.TimeEntryPut(te1.With(x => x.Description = "desc1")));
             RxChain.Send(new DataMsg.TimeEntryPut(te2));
-            RxChain.Send(new DataMsg.TimeEntriesRemove(te1));
+            RxChain.Send(new DataMsg.TimeEntriesRemove(te1), new RxChain.Continuation((_, sent, queued) =>
+            {
+                try
+                {
+                    // As there's no connection, queue isn't empty
+                    Assert.That(queued.Count(), Is.GreaterThan(0));
+                    tcs1.SetResult(true);
+                }
+                catch (Exception ex)
+                {
+                    tcs1.SetException(ex);
+                }
+            }));
+
+            await tcs1.Task;
 
             networkSwitcher.SetNetworkConnection(true);
             RxChain.Send(new ServerRequest.GetChanges(), new RxChain.Continuation((_, sent, queued) =>
@@ -189,15 +208,15 @@ namespace Toggl.Phoebe.Tests.Reactive
                     Assert.That(queued.Count(), Is.EqualTo(0));
                     // As te1 was deleted, only te2 should remain as sent
                     Assert.That(sent.Count(), Is.EqualTo(1));
-                    tcs.SetResult(true);
+                    tcs2.SetResult(true);
                 }
                 catch (Exception ex)
                 {
-                    tcs.SetException(ex);
+                    tcs2.SetException(ex);
                 }
             }));
 
-            await tcs.Task;
+            await tcs2.Task;
         }
 
         [Test]

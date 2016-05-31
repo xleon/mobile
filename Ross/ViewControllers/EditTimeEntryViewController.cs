@@ -177,6 +177,7 @@ namespace Toggl.Ross.ViewControllers
                 null
             );
 
+
             View = scrollView;
 
             DescriptionEditingMode = false;
@@ -265,6 +266,7 @@ namespace Toggl.Ross.ViewControllers
                 return false;
             }
         }
+
         private void ResetWrapperConstraints()
         {
             if (trackedWrapperConstraints != null)

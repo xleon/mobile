@@ -14,6 +14,7 @@ using Toggl.Phoebe.Helpers;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
 using System.Reactive.Concurrency;
+using System.Threading.Tasks.Dataflow;
 
 namespace Toggl.Phoebe.Reactive
 {
@@ -66,7 +67,7 @@ namespace Toggl.Phoebe.Reactive
         // sinceDate for GetChanges requests shouldn't be older than two months. Server requirements.
         // Make a few days stricter to be on the safe side.
         const int GetChangesSinceDateLimit = -56;
-        const int BufferMilliseconds = 1000;
+        const int BufferSize = 100;
 
         const string QueueId = "SYNC_OUT";
         const string DuplicatedNameMessage = "Name has already been taken";
@@ -96,13 +97,21 @@ namespace Toggl.Phoebe.Reactive
             networkPresence = ServiceContainer.Resolve<INetworkPresence> ();
             client = ServiceContainer.Resolve<ITogglClient> ();
 
+            // TPL block to buffer messages and
+            // delay execution if needed.
+            var blockOptions = new ExecutionDataflowBlockOptions
+            {
+                MaxDegreeOfParallelism = 1,
+                BoundedCapacity = BufferSize
+            };
+            var processingBlock = new ActionBlock<DataSyncMsg<AppState>> (async(DataSyncMsg<AppState> msg) =>
+            {
+                await EnqueueOrSend(msg);
+            }, blockOptions);
+
             StoreManager.Singleton
             .Observe()
-#if __TESTS__
-            .SelectAsync(EnqueueOrSend).Subscribe();
-#else
-            .SubscribeQueued(EnqueueOrSend);
-#endif
+            .Subscribe(processingBlock.AsObserver());
         }
 
         void logError(Exception ex, string msg = "Failed to sync")

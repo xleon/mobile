@@ -21,7 +21,7 @@ namespace Toggl.Ross.ViewControllers
         private UIView fadeView;
 
         private UITapGestureRecognizer tapGesture;
-        private UIPanGestureRecognizer mainPanGesture, leftPanGestue;
+        private UIPanGestureRecognizer leftPanGesture;
         private CGPoint draggingPoint;
         private UIImageView splashBg;
 
@@ -56,15 +56,6 @@ namespace Toggl.Ross.ViewControllers
                                () => splashBg.Alpha = 0, () => splashBg.RemoveFromSuperview());
             }
 
-            mainPanGesture = new UIPanGestureRecognizer(OnMainPanGesture)
-            {
-                // TODO: TableView scroll gestures are not
-                // compatible with the open / close pan gesture.
-                ShouldRecognizeSimultaneously = (a, b) => !(b.View is UITableView),
-                CancelsTouchesInView = true,
-            };
-            View.AddGestureRecognizer(mainPanGesture);
-
             fadeView = new UIView();
             fadeView.BackgroundColor = UIColor.FromRGBA(29f / 255f, 29f / 255f, 28f / 255f, 0.5f);
             fadeView.Frame = new CGRect(0, 0, View.Frame.Width, View.Frame.Height);
@@ -98,11 +89,11 @@ namespace Toggl.Ross.ViewControllers
             menu = new LeftViewController(OnMenuButtonSelected);
             View.Window.InsertSubview(menu.View, 0);
 
-            leftPanGestue = new UIPanGestureRecognizer(OnLeftPanGesture)
+            leftPanGesture = new UIPanGestureRecognizer(OnLeftPanGesture)
             {
                 CancelsTouchesInView = true
             };
-            menu.View.AddGestureRecognizer(leftPanGestue);
+            menu.View.AddGestureRecognizer(leftPanGesture);
 
             var user = StoreManager.Singleton.AppState.User;
             menu.ConfigureUserData(user.Name, user.Email, user.ImageUrl);
@@ -111,10 +102,10 @@ namespace Toggl.Ross.ViewControllers
         public override void ViewWillDisappear(bool animated)
         {
             // Dispose elements created when ViewDidAppear.
-            menu.View.RemoveGestureRecognizer(leftPanGestue);
+            menu.View.RemoveGestureRecognizer(leftPanGesture);
             menu.View.RemoveFromSuperview();
             menu.Dispose();
-            leftPanGestue.Dispose();
+            leftPanGesture.Dispose();
             base.ViewWillDisappear(animated);
         }
 
@@ -213,57 +204,6 @@ namespace Toggl.Ross.ViewControllers
             else
             {
                 OpenMenu();
-            }
-        }
-
-        private void OnMainPanGesture(UIPanGestureRecognizer recognizer)
-        {
-            if (!MenuEnabled)
-            {
-                return;
-            }
-
-            var translation = recognizer.TranslationInView(recognizer.View);
-            var movement = translation.X - draggingPoint.X;
-
-            switch (recognizer.State)
-            {
-                case UIGestureRecognizerState.Began:
-                    draggingPoint = translation;
-                    break;
-                case UIGestureRecognizerState.Changed:
-                    var newX = CurrentX;
-                    newX += movement;
-                    if (newX > MinDraggingX && newX < MaxDraggingX)
-                    {
-                        MoveToLocation(newX);
-                    }
-                    draggingPoint = translation;
-                    break;
-                case UIGestureRecognizerState.Ended:
-                    if (Math.Abs(translation.X) >= velocityTreshold)
-                    {
-                        if (translation.X < 0)
-                        {
-                            CloseMenu();
-                        }
-                        else
-                        {
-                            OpenMenu();
-                        }
-                    }
-                    else
-                    {
-                        if (Math.Abs(CurrentX) < (Width - menuOffset) / 2)
-                        {
-                            CloseMenu();
-                        }
-                        else
-                        {
-                            OpenMenu();
-                        }
-                    }
-                    break;
             }
         }
 

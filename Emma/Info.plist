@@ -22,10 +22,10 @@
 		<string>com.apple.widget-extension</string>
 	</dict>
 	<key>CFBundleDisplayName</key>
-	<string>Toggl Timer</string>
+	<string>com.toggl.Emma</string>
 	<key>CFBundleShortVersionString</key>
-	<string>7.1.0</string>
+	<string>7.1.6</string>
 	<key>CFBundleVersion</key>
-	<string>22</string>
+	<string>24</string>
 </dict>
 </plist>

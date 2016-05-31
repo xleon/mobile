@@ -82,8 +82,6 @@ namespace Toggl.Phoebe.ViewModels
 
         private void UpdateCollection(IList<DiffSection<IHolder>> diffs)
         {
-            Console.WriteLine("Timer View Updates: " + diffs.Count);
-
             foreach (var diff in diffs)
             {
                 switch (diff.Type)

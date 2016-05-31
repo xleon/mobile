@@ -5,7 +5,7 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>MinimumOSVersion</key>
-	<string>7.1</string>
+	<string>8.0</string>
 	<key>UIDeviceFamily</key>
 	<array>
 		<integer>1</integer>
@@ -58,7 +58,7 @@
 		<string>Fonts/icomoon.ttf</string>
 	</array>
 	<key>CFBundleVersion</key>
-	<string>22</string>
+	<string>23</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>remote-notification</string>

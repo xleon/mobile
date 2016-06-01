@@ -12,9 +12,19 @@ namespace Toggl.Ross.Theme
                 v.Layer.CornerRadius = 20;
             }
 
-            public static void TimerModeSwitchLabel(UILabel v)
+            public static void TimerModeSwitchLabelInactive(UILabel v)
             {
                 v.TextColor = Color.TextInactive;
+                v.Font = Font.Main(12);
+            }
+            public static void TimerModeSwitchLabelTimer(UILabel v)
+            {
+                v.TextColor = Color.StartButton;
+                v.Font = Font.Main(12);
+            }
+            public static void TimerModeSwitchLabelManual(UILabel v)
+            {
+                v.TextColor = Color.AddManualButton;
                 v.Font = Font.Main(12);
             }
 
@@ -33,6 +43,7 @@ namespace Toggl.Ross.Theme
                 v.Text = "00:00:00";
                 v.Font = Font.MainLight(24);
                 v.TextColor = Color.OffSteel;
+                v.TextAlignment = UITextAlignment.Right;
             }
         }
 

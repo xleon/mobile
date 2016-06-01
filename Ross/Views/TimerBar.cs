@@ -14,14 +14,21 @@ namespace Toggl.Ross.Views
             ManualMode
         }
 
-        UIButton startButton;
-        UIView startButtonCircle;
-        UISwitch manualSwitch;
+        #region views
 
-        UILabel timerLabel;
-        UILabel manualLabel;
+        private readonly UIButton startButton;
+        private readonly UIView startButtonCircle;
+        private readonly UISwitch manualSwitch;
+        private readonly UIButton manualSwitchHitArea;
 
-        UILabel durationLabel;
+        private readonly UILabel timerLabel;
+        private readonly UILabel manualLabel;
+        private readonly UILabel timerLabelInactive;
+        private readonly UILabel manualLabelInactive;
+
+        private readonly UILabel durationLabel;
+
+        #endregion
 
         public event EventHandler StartButtonHit;
         public event EventHandler ManualModeSwitchHit;
@@ -34,14 +41,19 @@ namespace Toggl.Ross.Views
 
             this.Add(this.startButton = UIButton.FromType(UIButtonType.Custom));
 
-            this.Add(this.manualSwitch = new UISwitch().Apply(Style.Timer.TimerModeSwitch));
-
             this.Add(this.timerLabel = new UILabel { Text = "Timer" }
-            .Apply(Style.Timer.TimerModeSwitchLabel));
+            .Apply(Style.Timer.TimerModeSwitchLabelTimer));
             this.Add(this.manualLabel = new UILabel { Text = "Manual" }
-            .Apply(Style.Timer.TimerModeSwitchLabel));
+            .Apply(Style.Timer.TimerModeSwitchLabelManual));
+            this.Add(this.timerLabelInactive = new UILabel { Text = "Timer" }
+            .Apply(Style.Timer.TimerModeSwitchLabelInactive));
+            this.Add(this.manualLabelInactive = new UILabel { Text = "Manual" }
+            .Apply(Style.Timer.TimerModeSwitchLabelInactive));
 
             this.Add(this.durationLabel = new UILabel().Apply(Style.Timer.TimerDurationLabel));
+
+            this.Add(this.manualSwitchHitArea = UIButton.FromType(UIButtonType.Custom));
+            this.Add(this.manualSwitch = new UISwitch().Apply(Style.Timer.TimerModeSwitch));
 
             this.SubviewsDoNotTranslateAutoresizingMaskIntoConstraints();
 
@@ -50,6 +62,11 @@ namespace Toggl.Ross.Views
                 this.startButton.AtRightOf(this),
                 this.startButton.AtTopOf(this),
                 this.startButton.AtBottomOf(this),
+
+                this.manualSwitchHitArea.AtTopOf(this.manualSwitch, -8),
+                this.manualSwitchHitArea.AtBottomOf(this.manualSwitch, -8),
+                this.manualSwitchHitArea.AtLeftOf(this.timerLabel, -8),
+                this.manualSwitchHitArea.AtRightOf(this.manualLabel, -8),
 
                 this.startButtonCircle.WithSameCenterX(this.startButton),
                 this.startButtonCircle.WithSameCenterY(this.startButton),
@@ -64,16 +81,25 @@ namespace Toggl.Ross.Views
                 this.manualLabel.WithSameCenterY(this),
                 this.manualSwitch.WithSameCenterY(this),
 
+                this.manualLabelInactive.WithSameCenterY(this.manualLabel),
+                this.manualLabelInactive.WithSameCenterX(this.manualLabel),
+                this.timerLabelInactive.WithSameCenterY(this.timerLabel),
+                this.timerLabelInactive.WithSameCenterX(this.timerLabel),
+
                 this.durationLabel.WithSameCenterY(this),
-                this.durationLabel.AtRightOf(this, 265)
+                this.durationLabel.Width().EqualTo(110),
+                this.durationLabel.AtLeftOf(this)
 
             );
 
             this.manualSwitch.ValueChanged += this.onManualSwitchValueChanged;
             this.startButton.TouchUpInside += this.onStartButtonTouchUpInside;
+            this.manualSwitchHitArea.TouchUpInside += this.onManualSwitchHitAreaTouchUpInside;
 
-            this.SetState(State.TimerRunning);
+            this.setState(State.TimerInactive);
         }
+
+        #region event handlers
 
         private void onStartButtonTouchUpInside(object sender, EventArgs e)
         {
@@ -86,6 +112,16 @@ namespace Toggl.Ross.Views
             this.ManualModeSwitchHit?.Invoke(this, EventArgs.Empty);
         }
 
+        private void onManualSwitchHitAreaTouchUpInside(object sender, EventArgs e)
+        {
+            this.manualSwitch.SetState(!this.manualSwitch.On, true);
+            this.onManualSwitchValueChanged(sender, e);
+        }
+
+        #endregion
+
+        #region public methods
+
         public void SetDurationText(string text)
         {
             this.durationLabel.Text = text;
@@ -93,41 +129,57 @@ namespace Toggl.Ross.Views
 
         public void SetState(State state)
         {
+            const double animTime = 0.2;
+
+            Animate(animTime, () => this.setState(state));
+        }
+
+        #endregion
+
+        #region private methods
+
+        private void setState(State state)
+        {
             var isRunning = state == State.TimerRunning;
             var isManual = state == State.ManualMode;
 
-            this.manualLabel.Hidden = isRunning;
-            this.timerLabel.Hidden = isRunning;
-            this.manualSwitch.Hidden = isRunning;
-            this.durationLabel.Hidden = !isRunning;
-
             this.manualSwitch.On = isManual;
+
+            var buttonColor = this.startButtonCircle.BackgroundColor;
 
             switch (state)
             {
                 case State.TimerInactive:
-                {
-                    this.manualLabel.TextColor = Color.TextInactive;
-                    this.timerLabel.TextColor = Color.StartButton;
-
-                    this.startButtonCircle.BackgroundColor = Color.StartButton;
+                    buttonColor = Color.StartButton;
                     break;
-                }
                 case State.TimerRunning:
-                {
-                    this.startButtonCircle.BackgroundColor = Color.StopButton;
+                    buttonColor = Color.StopButton;
                     break;
-                }
                 case State.ManualMode:
-                {
-                    this.manualLabel.TextColor = Color.AddManualButton;
-                    this.timerLabel.TextColor = Color.TextInactive;
-
-                    this.startButtonCircle.BackgroundColor = Color.AddManualButton;
+                    buttonColor = Color.AddManualButton;
                     break;
-                }
             }
+
+            var manualOpacity = isManual ? 1f : 0f;
+            var switchOpacity = isRunning ? 0f : 1f;
+
+            this.setUIState(manualOpacity, switchOpacity, buttonColor);
         }
+
+        private void setUIState(float manualOpacity, float switchOpacity, UIColor buttonColor)
+        {
+            this.manualLabel.Layer.Opacity = manualOpacity * switchOpacity;
+            this.manualLabelInactive.Layer.Opacity = (1 - manualOpacity) * switchOpacity;
+            this.timerLabel.Layer.Opacity = (1 - manualOpacity) * switchOpacity;
+            this.timerLabelInactive.Layer.Opacity = manualOpacity * switchOpacity;
+
+            this.manualSwitch.Layer.Opacity = switchOpacity;
+            this.durationLabel.Layer.Opacity = 1 - switchOpacity;
+
+            this.startButtonCircle.BackgroundColor = buttonColor;
+        }
+
+        #endregion
     }
 }
 

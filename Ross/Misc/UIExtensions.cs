@@ -13,6 +13,15 @@ namespace Toggl.Ross
                 .ToArray(),
                 animated);
         }
+
+        public static T WithDebugBackground<T>(this T view)
+        where T : UIView
+        {
+#if DEBUG
+            view.BackgroundColor = new UIColor(1, 0, 0, 0.3f);
+#endif
+            return view;
+        }
     }
 }
 

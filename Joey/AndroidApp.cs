@@ -93,7 +93,6 @@ namespace Toggl.Joey
             }
 
             componentsInitialized = true;
-            // TODO RX: Move this somewhere else. Previously it was ServiceContainer.Resolve<GcmRegistrationManager> ();
             RxChain.Send(new Phoebe.Data.DataMsg.RegisterPush());
             ServiceContainer.Resolve<AndroidNotificationManager> ();
         }

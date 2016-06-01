@@ -99,18 +99,23 @@ namespace Toggl.Phoebe.Reactive
 
         static DataSyncMsg<AppState> RegisterPush(AppState state, DataMsg msg)
         {
+            var pushMsg = msg as DataMsg.RegisterPush;
             var pushClient = ServiceContainer.Resolve<IPushClient>();
 
-            // TODO: pushClient.GetPushToken may take some time, we may need
-            // to make it asynchronous to prevent blocking the RxChain
-            var pushToken = string.IsNullOrEmpty(state.Settings.PushToken)
-                            ? pushClient.GetPushToken()
-                            : state.Settings.PushToken;
+            string pushToken = null;
+            if (!string.IsNullOrEmpty(state.Settings.PushToken))
+            {
+                pushToken = state.Settings.PushToken;
+            }
+            else
+            {
+                pushToken = ""; // TODO: Task.Run(() => pushClient.GetPushToken(pushMsg.DeviceToken));
+            }
 
             if (!string.IsNullOrEmpty(pushToken))
             {
                 IgnoreTaskErrors(
-                    pushClient.Register(state.User.ApiToken, Build.PushService, pushToken),
+                    pushClient.Register(state.User.ApiToken, pushToken),
                     "Failed to send push token to server.");
             }
 
@@ -123,7 +128,7 @@ namespace Toggl.Phoebe.Reactive
             {
                 var pushClient = ServiceContainer.Resolve<IPushClient>();
                 IgnoreTaskErrors(
-                    pushClient.Register(state.User.ApiToken, Build.PushService, state.Settings.PushToken),
+                    pushClient.Unregister(state.User.ApiToken, state.Settings.PushToken),
                     "Failed to send push token to server.");
             }
 

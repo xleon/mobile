@@ -276,6 +276,11 @@ namespace Toggl.Phoebe.Data
 
         public sealed class RegisterPush : DataMsg
         {
+            public readonly object DeviceToken;
+            public RegisterPush(object deviceToken)
+            {
+                DeviceToken = deviceToken;
+            }
         }
 
         public sealed class UnregisterPush : DataMsg

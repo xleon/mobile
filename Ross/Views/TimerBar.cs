@@ -20,6 +20,7 @@ namespace Toggl.Ross.Views
         private readonly UIView startButtonCircle;
         private readonly UISwitch manualSwitch;
         private readonly UIButton manualSwitchHitArea;
+        private readonly TimerButtonIcon startButtonIcon;
 
         private readonly UILabel timerLabel;
         private readonly UILabel manualLabel;
@@ -38,6 +39,8 @@ namespace Toggl.Ross.Views
         public TimerBar()
         {
             this.Add(this.startButtonCircle = new UIView().Apply(Style.Timer.StartButtonCircle));
+
+            this.startButtonCircle.Add(this.startButtonIcon = new TimerButtonIcon());
 
             this.Add(this.startButton = UIButton.FromType(UIButtonType.Custom));
 
@@ -131,18 +134,21 @@ namespace Toggl.Ross.Views
         {
             const double animTime = 0.2;
 
-            Animate(animTime, () => this.setState(state));
+            Animate(animTime, () => this.setState(state, true));
         }
 
         #endregion
 
         #region private methods
 
-        private void setState(State state)
+        private void setState(State state, bool animated = false)
         {
+            this.startButtonIcon.SetState(state, animated);
+
             var isRunning = state == State.TimerRunning;
             var isManual = state == State.ManualMode;
 
+            this.manualSwitchHitArea.Enabled = !isRunning;
             this.manualSwitch.On = isManual;
 
             var buttonColor = this.startButtonCircle.BackgroundColor;

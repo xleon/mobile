@@ -441,6 +441,7 @@
     <Compile Include="Theme\Style.Timer.cs" />
     <Compile Include="Theme\Font.cs" />
     <Compile Include="Misc\UIExtensions.cs" />
+    <Compile Include="Views\TimerButtonIcon.cs" />
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>

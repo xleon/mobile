@@ -300,7 +300,7 @@ namespace Toggl.Joey.UI.Fragments
                 {
                     dismiss = false;
                     XPlatUtils.ServiceContainer.Resolve<GalaSoft.MvvmLight.Views.IDialogService>()
-                              .ShowMessage(EditTimeEntryVM.StartTimeError, EditTimeEntryVM.ErrorTitle);
+                    .ShowMessage(EditTimeEntryVM.StartTimeError, EditTimeEntryVM.ErrorTitle);
                 }
             }
 

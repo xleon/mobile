@@ -84,7 +84,7 @@ namespace Toggl.Phoebe.Net
                 Build.GcmSenderId,
                 Google.InstanceID.Constants.ScopeGCM,
                 options,
-                (t, error) => { tcs.SetResult(t); });
+            (t, error) => { tcs.SetResult(t); });
             token = await tcs.Task;
 #endif
             return token;

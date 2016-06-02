@@ -1,4 +1,7 @@
-﻿using UIKit;
+﻿using System;
+using CoreAnimation;
+using CoreGraphics;
+using UIKit;
 
 namespace Toggl.Ross.Theme
 {
@@ -10,6 +13,7 @@ namespace Toggl.Ross.Theme
             {
                 v.BackgroundColor = Color.StartButton;
                 v.Layer.CornerRadius = 20;
+                v.ClipsToBounds = true;
             }
 
             public static void TimerModeSwitchLabelInactive(UILabel v)
@@ -44,6 +48,15 @@ namespace Toggl.Ross.Theme
                 v.Font = Font.MainLight(24);
                 v.TextColor = Color.OffSteel;
                 v.TextAlignment = UITextAlignment.Right;
+            }
+
+
+            public static void StartButtonHighlight(CALayer l)
+            {
+                l.Frame = new CGRect(0, 0, 40, 40);
+                l.BackgroundColor = Color.Black.CGColor;
+                l.Opacity = 0.2f;
+                l.Hidden = true;
             }
         }
 

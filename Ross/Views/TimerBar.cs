@@ -1,5 +1,6 @@
 ﻿using System;
 using Cirrious.FluentLayouts.Touch;
+using CoreAnimation;
 using Toggl.Ross.Theme;
 using UIKit;
 
@@ -21,6 +22,7 @@ namespace Toggl.Ross.Views
         private readonly UISwitch manualSwitch;
         private readonly UIButton manualSwitchHitArea;
         private readonly TimerButtonIcon startButtonIcon;
+        private readonly CALayer startButtonHighlight;
 
         private readonly UILabel timerLabel;
         private readonly UILabel manualLabel;
@@ -34,12 +36,15 @@ namespace Toggl.Ross.Views
         public event EventHandler StartButtonHit;
         public event EventHandler ManualModeSwitchHit;
 
+
         public bool IsManualModeSwitchOn => this.manualSwitch.On;
 
         public TimerBar()
         {
             this.Add(this.startButtonCircle = new UIView().Apply(Style.Timer.StartButtonCircle));
 
+            this.startButtonCircle.Layer.AddSublayer(this.startButtonHighlight = new CALayer()
+            .Apply(Style.Timer.StartButtonHighlight));
             this.startButtonCircle.Add(this.startButtonIcon = new TimerButtonIcon());
 
             this.Add(this.startButton = UIButton.FromType(UIButtonType.Custom));
@@ -99,6 +104,9 @@ namespace Toggl.Ross.Views
             this.startButton.TouchUpInside += this.onStartButtonTouchUpInside;
             this.manualSwitchHitArea.TouchUpInside += this.onManualSwitchHitAreaTouchUpInside;
 
+            this.startButton.TouchDown += this.onStartButtonTouchDown;
+            this.startButton.TouchCancel += this.onStartButtonTouchCancel;
+
             this.setState(State.TimerInactive);
         }
 
@@ -106,6 +114,7 @@ namespace Toggl.Ross.Views
 
         private void onStartButtonTouchUpInside(object sender, EventArgs e)
         {
+            this.startButtonHighlight.Hidden = true;
             this.StartButtonHit?.Invoke(this, EventArgs.Empty);
         }
 
@@ -119,6 +128,16 @@ namespace Toggl.Ross.Views
         {
             this.manualSwitch.SetState(!this.manualSwitch.On, true);
             this.onManualSwitchValueChanged(sender, e);
+        }
+
+        private void onStartButtonTouchDown(object sender, EventArgs e)
+        {
+            this.startButtonHighlight.Hidden = false;
+        }
+
+        private void onStartButtonTouchCancel(object sender, EventArgs e)
+        {
+            this.startButtonHighlight.Hidden = true;
         }
 
         #endregion

@@ -22,6 +22,8 @@ namespace Toggl.Ross.ViewControllers
 {
     public class LogViewController : UIViewController
     {
+        private const float DateHeaderHeight = 42f;
+
         private const int StatusBarHeight = 60;
         private const string DefaultDurationText = " 00:00:00 ";
         readonly static NSString EntryCellId = new NSString("EntryCellId");
@@ -35,6 +37,9 @@ namespace Toggl.Ross.ViewControllers
         private StatusView statusView;
         private UITableView tableView;
         private TimerBar timerBar;
+        private SectionCell floatingHeader;
+
+        private float heightOfTopBars;
 
         private Binding<LogTimeEntriesVM.LoadInfoType, LogTimeEntriesVM.LoadInfoType> loadInfoBinding, loadMoreBinding;
         private Binding<int, int> hasItemsBinding;
@@ -44,6 +49,7 @@ namespace Toggl.Ross.ViewControllers
 
         protected LogTimeEntriesVM ViewModel { get; set; }
 
+
         public override void LoadView()
         {
             base.LoadView();
@@ -52,20 +58,23 @@ namespace Toggl.Ross.ViewControllers
                 Image.IconNav.ImageWithRenderingMode(UIImageRenderingMode.AlwaysOriginal),
                 UIBarButtonItemStyle.Plain, OnNavigationBtnPressed);
 
-            var topBarsHeight = NavigationController.NavigationBar.Bounds.Height
-                                + UIApplication.SharedApplication.StatusBarFrame.Height;
+            heightOfTopBars = (float)(NavigationController.NavigationBar.Bounds.Height
+                                      + UIApplication.SharedApplication.StatusBarFrame.Height);
 
             var tableFrame = View.Frame;
-            tableFrame.Y -= topBarsHeight;
+            tableFrame.Y -= heightOfTopBars;
             tableView = new UITableView(tableFrame, UITableViewStyle.Plain);
-            var tableInset = new UIEdgeInsets(topBarsHeight, 0, 72, 0);
+            var tableInset = new UIEdgeInsets(heightOfTopBars, 0, 72, 0);
             tableView.ContentInset = tableInset;
             tableView.ScrollIndicatorInsets = tableInset;
             Add(tableView);
 
+            this.Add(floatingHeader = SectionCell.CreateImposter());
+            floatingHeader.Hidden = true;
+
             timerBar = new TimerBar
             {
-                Frame = new CGRect(0, this.View.Frame.Height - 72 - topBarsHeight, this.View.Bounds.Width, 72)
+                Frame = new CGRect(0, this.View.Frame.Height - 72 - heightOfTopBars, this.View.Bounds.Width, 72)
             };
             Add(timerBar);
             timerBar.StartButtonHit += onTimerStartButtonHit;
@@ -142,7 +151,15 @@ namespace Toggl.Ross.ViewControllers
             });
             collectionBinding = this.SetBinding(() => ViewModel.Collection).WhenSourceChanges(() =>
             {
-                tableView.Source = new TimeEntriesSource(this, ViewModel);
+                var source = new TimeEntriesSource(this, ViewModel, floatingHeader);
+                if (tableView.Source != null)
+                {
+                    ((TimeEntriesSource)tableView.Source).Dispose();
+                }
+                source.Scroll += onTableViewScrolled;
+                tableView.Source = source;
+                updateFloatingHeader();
+                ViewModel.Collection.CollectionChanged += (s, e) => updateFloatingHeader();
             });
             isRunningBinding = this.SetBinding(() => ViewModel.IsEntryRunning).WhenSourceChanges(SetStartStopButtonState);
             durationBinding = this.SetBinding(() => ViewModel.Duration).WhenSourceChanges(setDuration);
@@ -165,6 +182,63 @@ namespace Toggl.Ross.ViewControllers
             reloadView.Bounds = new CGRect(0f, 0f, View.Frame.Size.Width, 70f);
             reloadView.Center = new CGPoint(View.Center.X, reloadView.Center.Y);
             statusView.Frame = new CGRect(0, View.Frame.Height, View.Frame.Width, StatusBarHeight);
+        }
+
+        private void onTableViewScrolled(object sender, EventArgs e)
+        {
+            updateFloatingHeader();
+        }
+
+        private void updateFloatingHeader()
+        {
+            var point = new CGPoint(0, heightOfTopBars + tableView.ContentOffset.Y);
+            var nsIndex = tableView.IndexPathForRowAtPoint(point);
+
+            if (nsIndex == null)
+            {
+                floatingHeader.Hidden = true;
+            }
+            else
+            {
+                floatingHeader.Hidden = false;
+
+                var source = (TimeEntriesSource)tableView.Source;
+
+                var sectionIndex = source.GetSectionCellIndexForIndex(tableView, nsIndex.Row);
+
+                var sectionVM = source.GetSectionViewModelAt(sectionIndex);
+
+                floatingHeader.Bind(sectionVM);
+
+                floatingHeader.Frame = getFloatingHeaderFrame(sectionVM);
+            }
+        }
+
+        private CGRect getFloatingHeaderFrame(DateHolder displayedSectionVM)
+        {
+            var source = (TimeEntriesSource)tableView.Source;
+
+            var point2 = new CGPoint(0, heightOfTopBars + tableView.ContentOffset.Y + DateHeaderHeight);
+            var nsIndex2 = tableView.IndexPathForRowAtPoint(point2);
+
+            var frame = new CGRect(0, 0, this.View.Frame.Width, DateHeaderHeight);
+
+            if (nsIndex2 != null)
+            {
+                var nextSectionVM = source.GetSectionViewModelAt(nsIndex2.Row);
+
+                if (nextSectionVM != null)
+                {
+                    if (nextSectionVM != displayedSectionVM)
+                    {
+                        var nextSectionRect = tableView.RectForRowAtIndexPath(nsIndex2);
+
+                        frame.Y = nextSectionRect.Y - tableView.ContentOffset.Y - DateHeaderHeight - heightOfTopBars;
+                    }
+                }
+            }
+
+            return frame;
         }
 
         private void onTimerStartButtonHit(object sender, EventArgs e)
@@ -387,20 +461,47 @@ namespace Toggl.Ross.ViewControllers
             private readonly LogTimeEntriesVM VM;
             private LogViewController owner;
             private IDisposable durationSuscriber;
+            private readonly SectionCell floatingHeader;
 
-            public TimeEntriesSource(LogViewController owner, LogTimeEntriesVM viewModel) : base(owner.tableView, viewModel.Collection)
+            public event EventHandler Scroll;
+
+            public TimeEntriesSource(LogViewController owner, LogTimeEntriesVM viewModel, SectionCell floatingHeader)
+            : base(owner.tableView, viewModel.Collection)
             {
+                this.floatingHeader = floatingHeader;
                 this.owner = owner;
                 VM = viewModel;
-                durationSuscriber = viewModel.TimerObservable.Subscribe(x => UpdateDuration());
+                durationSuscriber = viewModel.TimerObservable.Subscribe(x => updateDuration());
             }
 
-            private void UpdateDuration()
+            private void updateDuration()
             {
                 foreach (var item in tableView.VisibleCells)
                 {
                     ((IDurationCell)item).UpdateDuration();
                 }
+                this.floatingHeader.UpdateDuration();
+            }
+
+            public int GetSectionCellIndexForIndex(UITableView tableView, int index)
+            {
+                var i = index;
+                while (true)
+                {
+                    var holder = collection.ElementAt(i);
+                    if (holder is ITimeEntryHolder)
+                    {
+                        i--;
+                        continue;
+                    }
+
+                    return i;
+                }
+            }
+
+            public DateHolder GetSectionViewModelAt(int index)
+            {
+                return collection.ElementAt(index) as DateHolder;
             }
 
             public override UITableViewCell GetCell(UITableView tableView, NSIndexPath indexPath)
@@ -447,7 +548,7 @@ namespace Toggl.Ross.ViewControllers
                 var holder = collection.ElementAt(indexPath.Row);
                 if (holder is DateHolder)
                 {
-                    return 42f;
+                    return DateHeaderHeight;
                 }
                 return EstimatedHeight(tableView, indexPath);
             }
@@ -493,6 +594,8 @@ namespace Toggl.Ross.ViewControllers
                     isLoading = true;
                     VM.LoadMore();
                 }
+
+                this.Scroll?.Invoke(this, EventArgs.Empty);
             }
 
             private void OnContinueTimeEntry(TimeEntryCell cell)
@@ -520,6 +623,7 @@ namespace Toggl.Ross.ViewControllers
                         durationSuscriber.Dispose();
                         durationSuscriber = null;
                     }
+                    this.Scroll = null;
                 }
                 base.Dispose(disposing);
             }
@@ -840,22 +944,44 @@ namespace Toggl.Ross.ViewControllers
         private class SectionCell : UITableViewCell, IDurationCell
         {
             private const float HorizSpacing = 15f;
-            private readonly UILabel dateLabel;
-            private readonly UILabel totalDurationLabel;
+            private UILabel dateLabel;
+            private UILabel totalDurationLabel;
             private bool isRunning;
             private TimeSpan duration;
             private DateTime date;
 
             public SectionCell(IntPtr handle) : base(handle)
             {
-                UserInteractionEnabled = false;
+                this.setupUI(false);
+            }
+
+            private SectionCell()
+            {
+                this.setupUI(true);
+            }
+
+            private void setupUI(bool isFloating)
+            {
                 dateLabel = new UILabel().Apply(Style.Log.HeaderDateLabel);
                 ContentView.AddSubview(dateLabel);
 
                 totalDurationLabel = new UILabel().Apply(Style.Log.HeaderDurationLabel);
                 ContentView.AddSubview(totalDurationLabel);
 
-                BackgroundView = new UIView().Apply(Style.Log.HeaderBackgroundView);
+                if (isFloating)
+                {
+                    BackgroundView = new UIToolbar();
+                }
+                else
+                {
+                    UserInteractionEnabled = false;
+                    BackgroundView = new UIView().Apply(Style.Log.HeaderBackgroundView);
+                }
+            }
+
+            public static SectionCell CreateImposter()
+            {
+                return new SectionCell();
             }
 
             public void UpdateDuration()

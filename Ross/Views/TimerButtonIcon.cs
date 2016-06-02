@@ -8,20 +8,21 @@ namespace Toggl.Ross.Views
 {
     class TimerButtonIcon : UIView
     {
-        private readonly CAShapeLayer mask;
+        private readonly CAShapeLayer icon;
 
 
         public TimerButtonIcon()
         {
-            this.BackgroundColor = Color.White;
+            this.BackgroundColor = Color.Transparent;
 
             this.Frame = new CGRect(8, 8, 24, 24);
 
-            this.mask = new CAShapeLayer();
-            this.mask.Path = this.getTrianglePath();
-            this.mask.AffineTransform = new CGAffineTransform(6, 0, 0, 6, 12, 12);
+            this.icon = new CAShapeLayer();
+            this.icon.Path = this.getTrianglePath();
+            this.icon.AffineTransform = new CGAffineTransform(6, 0, 0, 6, 12, 12);
+            this.icon.FillColor = Color.White.CGColor;
 
-            this.Layer.Mask = this.mask;
+            this.Layer.AddSublayer(this.icon);
         }
 
         private CGPath getSquarePath()
@@ -98,9 +99,9 @@ namespace Toggl.Ross.Views
                     break;
             }
 
-            var oldPath = this.mask.Path;
+            var oldPath = this.icon.Path;
 
-            this.mask.Path = path;
+            this.icon.Path = path;
 
             if (!animated)
                 return;
@@ -114,7 +115,7 @@ namespace Toggl.Ross.Views
             anim.SetTo(path);
             anim.RemovedOnCompletion = true;
 
-            this.mask.AddAnimation(anim, null);
+            this.icon.AddAnimation(anim, null);
         }
     }
 }

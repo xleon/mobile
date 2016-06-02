@@ -1,18 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Linq;
+using System.Reactive.Concurrency;
 using System.Reactive.Linq;
 using System.Threading;
-using System.Threading.Tasks;
 using GalaSoft.MvvmLight;
-using GalaSoft.MvvmLight.Views;
 using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Helpers;
 using Toggl.Phoebe.Reactive;
-using Toggl.Phoebe.ViewModels.Timer;
 using XPlatUtils;
 
 namespace Toggl.Phoebe.ViewModels
@@ -75,11 +72,13 @@ namespace Toggl.Phoebe.ViewModels
                                 .Subscribe(x => UpdateDuration());
 
             Observable.FromEventPattern<string>(h => DescriptionChanged += h, h => DescriptionChanged -= h)
-                      .Select(ev => ev.EventArgs)
-                      .Where(desc => desc != null && desc.Length >= LoadSuggestionsCharLimit)
-                      .Throttle(TimeSpan.FromMilliseconds(LoadSuggestionsThrottleMilliseconds))
-                      .ObserveOn(SynchronizationContext.Current)
-                      .Subscribe(async desc => await SuggestEntries(desc));
+            .Select(ev => ev.EventArgs)
+            .Where(desc => desc != null && desc.Length >= LoadSuggestionsCharLimit)
+            .Throttle(TimeSpan.FromMilliseconds(LoadSuggestionsThrottleMilliseconds))
+            .SubscribeOn(Scheduler.Default)
+            .Select(desc => LoadSuggestions(desc))
+            .ObserveOn(SynchronizationContext.Current)
+            .Subscribe(result => SuggestionsCollection = result);
 
             ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Edit Time Entry";
         }
@@ -146,22 +145,6 @@ namespace Toggl.Phoebe.ViewModels
             }
         }
 
-        public async Task<List<TimeEntryData>> LoadSuggestions(string description)
-        {
-            return await Task.Run(() =>
-            {
-                var dataStore = ServiceContainer.Resolve<ISyncDataStore>();
-                return dataStore.Table<TimeEntryData>()
-                       .OrderBy(r => r.StartTime)
-                       .Where(r => r.State != TimeEntryState.New
-                              && r.DeletedAt == null
-                              && r.Description != null
-                              && r.Description.Contains(description))
-                       .Take(LoadSuggestionsResultsLimit)
-                       .ToList();
-            });
-        }
-
         public bool IsRunning { get { return richData.Data.State == TimeEntryState.Running; } }
         public string Description { get { return richData.Data.Description ?? string.Empty; } }
         public bool IsBillable { get { return richData.Data.IsBillable; } }
@@ -175,11 +158,6 @@ namespace Toggl.Phoebe.ViewModels
         public List<TimeEntryData> SuggestionsCollection { get; private set; } = new List<TimeEntryData>();
 
         #endregion
-        public async Task SuggestEntries(string desc)
-        {
-            SuggestionsCollection = await LoadSuggestions(desc);
-        }
-
         public void ChangeProjectAndTask(Guid projectId, Guid taskId)
         {
             if (projectId == richData.Data.ProjectId &&
@@ -216,7 +194,7 @@ namespace Toggl.Phoebe.ViewModels
             //if (richData.Data.State != TimeEntryState.Running)
             //    UpdateView(x => x.ChangeStartTime(newStartTime), nameof(Duration), nameof(StartDate), nameof(StopDate));
             //else
-                UpdateView(x => x.ChangeStartTime(newStartTime), nameof(Duration), nameof(StartDate));
+            UpdateView(x => x.ChangeStartTime(newStartTime), nameof(Duration), nameof(StartDate));
 
             ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Change Start Time";
         }
@@ -339,6 +317,19 @@ namespace Toggl.Phoebe.ViewModels
                 x.TaskId = taskId;
                 x.TaskRemoteId = taskRemoteId;
             }, nameof(TaskName));
+        }
+
+        private List<TimeEntryData> LoadSuggestions(string description)
+        {
+            var dataStore = ServiceContainer.Resolve<ISyncDataStore>();
+            return dataStore.Table<TimeEntryData>()
+                   .OrderBy(r => r.StartTime)
+                   .Where(r => r.State != TimeEntryState.New
+                          && r.DeletedAt == null
+                          && r.Description != null
+                          && r.Description.Contains(description))
+                   .Take(LoadSuggestionsResultsLimit)
+                   .ToList();
         }
 
         private bool HasTimeEntryChanged(ITimeEntryData previous, ITimeEntryData current)

@@ -190,7 +190,6 @@
     <Compile Include="UI\Activities\LoginActivity.cs" />
     <Compile Include="AndroidApp.cs" />
     <Compile Include="UI\Activities\BaseActivity.cs" />
-    <Compile Include="Net\GcmBroadcastReceiver.cs" />
     <Compile Include="AndroidNotificationManager.cs" />
     <Compile Include="StopRunningTimeEntryService.cs" />
     <Compile Include="UI\Components\TimerComponent.cs" />
@@ -259,6 +258,8 @@
     <Compile Include="Data\OldSettingsStore.cs" />
     <Compile Include="UI\Adapters\SettingsAdapter.cs" />
     <Compile Include="Net\InstanceIdListenerService.cs" />
+    <Compile Include="Net\GcmRegistrationIntentService.cs" />
+    <Compile Include="Net\GcmListenerService.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\AboutResources.txt" />

@@ -93,7 +93,6 @@ namespace Toggl.Joey
             }
 
             componentsInitialized = true;
-            RxChain.Send(new Phoebe.Data.DataMsg.RegisterPush());
             ServiceContainer.Resolve<AndroidNotificationManager> ();
         }
 

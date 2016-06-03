@@ -1,12 +1,7 @@
 ﻿using Android.App;
 using Android.Content;
-using Android.Gms.Gcm.Iid;
-using Toggl.Joey.Net;
-using Toggl.Phoebe.Data;
-using Toggl.Phoebe.Reactive;
-using XPlatUtils;
 
-namespace ClientApp
+namespace Toggl.Joey.Net
 {
     // Registration tokens are unique and secure; however, the client app(or GCM) may need
     // to refresh the registration token in the event of app reinstallation or a security issue.
@@ -16,7 +11,8 @@ namespace ClientApp
     {
         public override void OnTokenRefresh()
         {
-            RxChain.Send(new DataMsg.RegisterPush());
+            var intent = new Intent(this, typeof(GcmRegistrationIntentService));
+            StartService(intent);
         }
     }
 }

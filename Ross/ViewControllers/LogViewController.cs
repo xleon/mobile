@@ -63,10 +63,13 @@ namespace Toggl.Ross.ViewControllers
 
             var tableFrame = View.Frame;
             tableFrame.Y -= heightOfTopBars;
-            tableView = new UITableView(tableFrame, UITableViewStyle.Plain);
             var tableInset = new UIEdgeInsets(heightOfTopBars, 0, 72, 0);
-            tableView.ContentInset = tableInset;
-            tableView.ScrollIndicatorInsets = tableInset;
+            tableView = new UITableView(tableFrame, UITableViewStyle.Plain)
+            {
+                ContentInset = tableInset,
+                ScrollIndicatorInsets = tableInset,
+                SeparatorInset = UIEdgeInsets.Zero,
+            };
             Add(tableView);
 
             this.Add(floatingHeader = SectionCell.CreateImposter());
@@ -697,6 +700,10 @@ namespace Toggl.Ross.ViewControllers
                     durationLabel,
                     runningImageView
                 );
+
+                PreservesSuperviewLayoutMargins = false;
+                SeparatorInset = UIEdgeInsets.Zero;
+                LayoutMargins = UIEdgeInsets.Zero;
             }
 
             public void Bind(ITimeEntryHolder dataSource, Action<TimeEntryCell> OnContinueAction)
@@ -967,6 +974,10 @@ namespace Toggl.Ross.ViewControllers
 
                 totalDurationLabel = new UILabel().Apply(Style.Log.HeaderDurationLabel);
                 ContentView.AddSubview(totalDurationLabel);
+
+                PreservesSuperviewLayoutMargins = false;
+                SeparatorInset = UIEdgeInsets.Zero;
+                LayoutMargins = UIEdgeInsets.Zero;
 
                 if (isFloating)
                 {

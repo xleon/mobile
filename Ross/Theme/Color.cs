@@ -29,6 +29,7 @@ namespace Toggl.Ross.Theme
 
         // Redesign:
         public static readonly UIColor OffSteel = rgb(142, 142, 147);
+        public static readonly UIColor OffBlack = rgb(46, 46, 46);
 
         public static readonly UIColor StartButton = rgb(76, 217, 100);
         public static readonly UIColor StopButton = rgb(255, 59, 48);

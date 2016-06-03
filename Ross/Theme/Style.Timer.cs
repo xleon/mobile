@@ -1,6 +1,7 @@
 ﻿using System;
 using CoreAnimation;
 using CoreGraphics;
+using Toggl.Ross.Views;
 using UIKit;
 
 namespace Toggl.Ross.Theme
@@ -40,6 +41,17 @@ namespace Toggl.Ross.Theme
                 v.Transform = new CoreGraphics.CGAffineTransform(0.54f, 0f, 0f, 0.54f, 0, 0);
 
                 v.Layer.CornerRadius = 18;
+            }
+
+            public static void Bar(TimerBar v)
+            {
+                v.ClipsToBounds = true;
+                v.BarTintColor = Color.Background;
+            }
+
+            public static void Border(UIView v)
+            {
+                v.BackgroundColor = Color.Border;
             }
 
             public static void TimerDurationLabel(UILabel v)

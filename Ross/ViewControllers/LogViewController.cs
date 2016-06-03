@@ -64,15 +64,13 @@ namespace Toggl.Ross.ViewControllers
             var tableFrame = View.Frame;
             tableFrame.Y -= heightOfTopBars;
             var tableInset = new UIEdgeInsets(heightOfTopBars, 0, 72, 0);
-            tableView = new UITableView(tableFrame, UITableViewStyle.Plain)
+            Add(tableView = new UITableView(tableFrame, UITableViewStyle.Plain)
             {
                 ContentInset = tableInset,
                 ScrollIndicatorInsets = tableInset,
-                SeparatorInset = UIEdgeInsets.Zero,
-            };
-            Add(tableView);
+            } .Apply(Style.Log.EntryList));
 
-            this.Add(floatingHeader = SectionCell.CreateImposter());
+            Add(floatingHeader = new FloatingSectionCell());
             floatingHeader.Hidden = true;
 
             timerBar = new TimerBar
@@ -224,7 +222,7 @@ namespace Toggl.Ross.ViewControllers
             var point2 = new CGPoint(0, heightOfTopBars + tableView.ContentOffset.Y + DateHeaderHeight);
             var nsIndex2 = tableView.IndexPathForRowAtPoint(point2);
 
-            var frame = new CGRect(0, 0, this.View.Frame.Width, DateHeaderHeight);
+            var frame = new CGRect(0, 0, this.View.Frame.Width, DateHeaderHeight + 1);
 
             if (nsIndex2 != null)
             {
@@ -948,6 +946,26 @@ namespace Toggl.Ross.ViewControllers
             }
         }
 
+        private class FloatingSectionCell : SectionCell
+        {
+            private UIView bottomBorder;
+
+            protected override void makeBackground()
+            {
+                BackgroundView = new UIToolbar().Apply(Style.Toolbar);
+                Add(bottomBorder = new UIView().Apply(Style.Log.SectionBorder));
+                ClipsToBounds = true;
+            }
+
+            public override void LayoutSubviews()
+            {
+                base.LayoutSubviews();
+                var contentFrame = ContentView.Frame;
+
+                bottomBorder.Frame = new CGRect(0, contentFrame.Height - 1, contentFrame.Width, 1);
+            }
+        }
+
         private class SectionCell : UITableViewCell, IDurationCell
         {
             private const float HorizSpacing = 15f;
@@ -959,15 +977,15 @@ namespace Toggl.Ross.ViewControllers
 
             public SectionCell(IntPtr handle) : base(handle)
             {
-                this.setupUI(false);
+                this.setupUI();
             }
 
-            private SectionCell()
+            protected SectionCell()
             {
-                this.setupUI(true);
+                this.setupUI();
             }
 
-            private void setupUI(bool isFloating)
+            private void setupUI()
             {
                 dateLabel = new UILabel().Apply(Style.Log.HeaderDateLabel);
                 ContentView.AddSubview(dateLabel);
@@ -979,20 +997,13 @@ namespace Toggl.Ross.ViewControllers
                 SeparatorInset = UIEdgeInsets.Zero;
                 LayoutMargins = UIEdgeInsets.Zero;
 
-                if (isFloating)
-                {
-                    BackgroundView = new UIToolbar();
-                }
-                else
-                {
-                    UserInteractionEnabled = false;
-                    BackgroundView = new UIView().Apply(Style.Log.HeaderBackgroundView);
-                }
+                makeBackground();
             }
 
-            public static SectionCell CreateImposter()
+            protected virtual void makeBackground()
             {
-                return new SectionCell();
+                UserInteractionEnabled = false;
+                BackgroundView = new UIView().Apply(Style.Log.HeaderBackgroundView);
             }
 
             public void UpdateDuration()

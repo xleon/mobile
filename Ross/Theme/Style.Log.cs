@@ -9,7 +9,7 @@ namespace Toggl.Ross.Theme
         {
             public static void HeaderBackgroundView(UIView v)
             {
-                v.BackgroundColor = Color.LightestGray;
+                v.BackgroundColor = Color.Background;
             }
 
             public static void HeaderDateLabel(UILabel v)
@@ -101,6 +101,19 @@ namespace Toggl.Ross.Theme
             {
                 v.Image = null;
             }
+
+            public static void SectionBorder(UIView v)
+            {
+                v.BackgroundColor = Color.Border;
+            }
+
+            public static void EntryList(UITableView v)
+            {
+                v.SeparatorInset = UIEdgeInsets.Zero;
+                v.SeparatorColor = Color.Border;
+                v.BackgroundColor = Color.Background;
+            }
         }
+
     }
 }

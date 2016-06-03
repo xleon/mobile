@@ -31,6 +31,8 @@ namespace Toggl.Ross.Views
 
         private readonly UILabel durationLabel;
 
+        private readonly UIView topBorder;
+
         #endregion
 
         public event EventHandler StartButtonHit;
@@ -41,6 +43,9 @@ namespace Toggl.Ross.Views
 
         public TimerBar()
         {
+            this.Apply(Style.Timer.Bar);
+            this.Add(this.topBorder = new UIView().Apply(Style.Timer.Border));
+
             this.Add(this.startButtonCircle = new UIView().Apply(Style.Timer.StartButtonCircle));
 
             this.startButtonCircle.Layer.AddSublayer(this.startButtonHighlight = new CALayer()
@@ -96,7 +101,12 @@ namespace Toggl.Ross.Views
 
                 this.durationLabel.WithSameCenterY(this),
                 this.durationLabel.Width().EqualTo(110),
-                this.durationLabel.AtLeftOf(this)
+                this.durationLabel.AtLeftOf(this),
+
+                this.topBorder.AtTopOf(this),
+                this.topBorder.AtLeftOf(this),
+                this.topBorder.AtRightOf(this),
+                this.topBorder.Height().EqualTo(1)
 
             );
 

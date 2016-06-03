@@ -34,6 +34,8 @@ namespace Toggl.Ross.Theme
         public static readonly UIColor StopButton = rgb(255, 59, 48);
         public static readonly UIColor AddManualButton = rgb(142, 142, 147);
 
+        public static readonly UIColor Background = rgb(250, 251, 252);
+        public static readonly UIColor BackgroundToolbar = rgb(251, 252, 253); // +1 compared to background to offset transparent effect
         public static readonly UIColor Border = rgb(236, 237, 237);
         public static readonly UIColor Transparent = rgb(0, 0, 0, 0);
 

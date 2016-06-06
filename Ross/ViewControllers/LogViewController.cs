@@ -67,10 +67,12 @@ namespace Toggl.Ross.ViewControllers
             var tableFrame = View.Frame;
             tableFrame.Y -= heightOfTopBars;
             var tableInset = new UIEdgeInsets(heightOfTopBars - ListInsetTop, 0, 72, 0);
+            var tableScrollInset = tableInset;
+            tableScrollInset.Top += DateHeaderHeight;
             Add(tableView = new UITableView(tableFrame, UITableViewStyle.Plain)
             {
                 ContentInset = tableInset,
-                ScrollIndicatorInsets = tableInset,
+                ScrollIndicatorInsets = tableScrollInset,
             } .Apply(Style.Log.EntryList));
 
             Add(floatingHeader = new FloatingSectionCell());

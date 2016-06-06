@@ -53,6 +53,7 @@ namespace Toggl.Phoebe.Net
                                                string.Format("{0}:api_token", authToken))));
         }
 
+        /*
         /// <summary>
         /// deviceToken is only used for iOS
         /// </summary>
@@ -61,17 +62,6 @@ namespace Toggl.Phoebe.Net
             var token = string.Empty;
 
             // TODO: Probably not the best way to do this, we can move this code to the platform projects later
-#if __ANDROID__
-            var ctx = ServiceContainer.Resolve<Android.Content.Context>();
-
-            // Check Google Play Services availability
-            if (Android.Gms.Common.GoogleApiAvailability.Instance.IsGooglePlayServicesAvailable(ctx)
-                    == Android.Gms.Common.ConnectionResult.Success)
-            {
-                var instanceID = Android.Gms.Gcm.Iid.InstanceID.GetInstance(ctx);
-                token = instanceID.GetToken(Build.GcmSenderId, Android.Gms.Gcm.GoogleCloudMessaging.InstanceIdScope, null);
-            }
-#elif __IOS__
             // Register APNS Token to GCM
             var options = new Foundation.NSDictionary();
             options.SetValueForKey((Foundation.NSObject)deviceToken, Google.InstanceID.Constants.RegisterAPNSOption);
@@ -84,11 +74,12 @@ namespace Toggl.Phoebe.Net
                 Build.GcmSenderId,
                 Google.InstanceID.Constants.ScopeGCM,
                 options,
-                (t, error) => { tcs.SetResult(t); });
+            (t, error) => { tcs.SetResult(t); });
             token = await tcs.Task;
-#endif
+
             return token;
         }
+        */
 
         public async Task Register(string authToken, string pushToken)
         {

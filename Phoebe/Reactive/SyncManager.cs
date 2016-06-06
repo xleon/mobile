@@ -336,8 +336,8 @@ namespace Toggl.Phoebe.Reactive
                             break;
                         default:
                             throw new Exception(
-                                string.Format("Unexpected SyncState ({0}) of enqueued item: {1}",
-                                              Enum.GetName(typeof(SyncState), data.SyncState), data.Id));
+                                string.Format("Unexpected SyncState ({0}) of enqueued item:",
+                                              Enum.GetName(typeof(SyncState), data.SyncState)));
                     }
                     var resData = mapper.Map(response);
                     resData.Id = data.Id;

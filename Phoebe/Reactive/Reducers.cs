@@ -100,23 +100,18 @@ namespace Toggl.Phoebe.Reactive
         static DataSyncMsg<AppState> RegisterPush(AppState state, DataMsg msg)
         {
             var pushMsg = msg as DataMsg.RegisterPush;
-            var pushClient = ServiceContainer.Resolve<IPushClient>();
+            var pushToken = state.Settings.PushToken;
 
-            string pushToken = null;
-            if (!string.IsNullOrEmpty(state.Settings.PushToken))
+            if (string.IsNullOrEmpty(pushToken))
             {
-                pushToken = state.Settings.PushToken;
-            }
-            else
-            {
-                pushToken = ""; // TODO: Task.Run(() => pushClient.GetPushToken(pushMsg.DeviceToken));
-            }
-
-            if (!string.IsNullOrEmpty(pushToken))
-            {
+                pushToken = pushMsg.DeviceToken;
+                // Try to register PushToken in server silently
+                // Maybe is better to include the process inside
+                // SyncManager
+                var pushClient = ServiceContainer.Resolve<IPushClient>();
                 IgnoreTaskErrors(
                     pushClient.Register(state.User.ApiToken, pushToken),
-                    "Failed to send push token to server.");
+                    "Failed to register push token to server.");
             }
 
             return DataSyncMsg.Create(state.With(settings: state.Settings.With(pushToken: pushToken)));
@@ -124,12 +119,13 @@ namespace Toggl.Phoebe.Reactive
 
         static DataSyncMsg<AppState> UnregisterPush(AppState state, DataMsg msg)
         {
-            if (!string.IsNullOrEmpty(state.User.ApiToken) && !string.IsNullOrEmpty(state.Settings.PushToken))
+            if (!string.IsNullOrEmpty(state.User.ApiToken) &&
+                    !string.IsNullOrEmpty(state.Settings.PushToken))
             {
                 var pushClient = ServiceContainer.Resolve<IPushClient>();
                 IgnoreTaskErrors(
                     pushClient.Unregister(state.User.ApiToken, state.Settings.PushToken),
-                    "Failed to send push token to server.");
+                    "Failed to unregister push token to server.");
             }
 
             return DataSyncMsg.Create(state.With(settings: state.Settings.With(pushToken: string.Empty)));
@@ -844,7 +840,7 @@ namespace Toggl.Phoebe.Reactive
             {
                 var e = t.Exception;
                 var log = ServiceContainer.Resolve<ILogger>();
-                log.Info(nameof(Reducers), e, errorMessage);
+                log.Warning(nameof(Reducers), e, errorMessage);
             }, TaskContinuationOptions.OnlyOnFaulted);
         }
         #endregion

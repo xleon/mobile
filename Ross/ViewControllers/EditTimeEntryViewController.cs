@@ -242,7 +242,7 @@ namespace Toggl.Ross.ViewControllers
                 if (savedProperly == false)
                 {
                     XPlatUtils.ServiceContainer.Resolve<GalaSoft.MvvmLight.Views.IDialogService>()
-                              .ShowMessage(EditTimeEntryVM.StartTimeError, EditTimeEntryVM.ErrorTitle);
+                    .ShowMessage(EditTimeEntryVM.StartTimeError, EditTimeEntryVM.ErrorTitle);
                 }
                 else
                 {

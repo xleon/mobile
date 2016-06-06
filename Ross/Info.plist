@@ -56,6 +56,8 @@
 	<key>UIAppFonts</key>
 	<array>
 		<string>Fonts/icomoon.ttf</string>
+		<string>Fonts/SF-UI-Text-Light.otf</string>
+		<string>Fonts/SF-UI-Text-Regular.otf</string>
 	</array>
 	<key>CFBundleVersion</key>
 	<string>22</string>

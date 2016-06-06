@@ -100,7 +100,7 @@ namespace Toggl.Ross.Views
                 this.timerLabelInactive.WithSameCenterX(this.timerLabel),
 
                 this.durationLabel.WithSameCenterY(this),
-                this.durationLabel.Width().EqualTo(110),
+                this.durationLabel.Width().EqualTo(124),
                 this.durationLabel.AtLeftOf(this),
 
                 this.topBorder.AtTopOf(this),

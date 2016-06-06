@@ -26,7 +26,7 @@ namespace Toggl.Ross.Theme
             public static void SwipeActionButton(UIButton v)
             {
                 v.SetTitleColor(Color.White, UIControlState.Normal);
-                v.Font = UIFont.FromName("HelveticaNeue", 18f);
+                v.Font = sharedFont;
                 v.TitleLabel.TextAlignment = UITextAlignment.Center;
             }
 
@@ -75,7 +75,7 @@ namespace Toggl.Ross.Theme
             public static void DurationLabel(UILabel v)
             {
                 v.TextAlignment = UITextAlignment.Right;
-                v.Font = sharedFont;
+                v.Font = sharedFont.WithMonospacedDigits();
                 v.TextColor = Color.OffSteel;
             }
 

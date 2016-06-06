@@ -19,15 +19,17 @@ namespace Toggl.Phoebe.ViewModels
 {
     public class EditTimeEntryVM : ViewModelBase, IDisposable
     {
-        private readonly string ErrorTitle = "Error";
-        private readonly string StartTimeError = "Start time should be earlier than stop time!";
-        private readonly string StopTimeError = "Stop time should be after start time!";
-        public static readonly int LoadSuggestionsCharLimit = 2;
-        private readonly int LoadSuggestionsResultsLimit = 10;
+        public const string ErrorTitle = "Error";
+        public const string StartTimeError = "Start time should be earlier than stop time!";
+        public const string StopTimeError = "Stop time should be after start time!";
+        public const int LoadSuggestionsCharLimit = 2;
+        public const int LoadSuggestionsResultsLimit = 10;
+        public const int LoadSuggestionsThrottleMilliseconds = 500;
 
         private IDisposable subscriptionTimer, subscriptionState;
         private RichTimeEntry richData;
         private RichTimeEntry previousData;
+        private event EventHandler<string> DescriptionChanged;
 
         public EditTimeEntryVM(AppState appState, Guid timeEntryId)
         {
@@ -71,6 +73,13 @@ namespace Toggl.Phoebe.ViewModels
                                                  TimeSpan.FromSeconds(1))
                                 .ObserveOn(SynchronizationContext.Current)
                                 .Subscribe(x => UpdateDuration());
+
+            Observable.FromEventPattern<string>(h => DescriptionChanged += h, h => DescriptionChanged -= h)
+                      .Select(ev => ev.EventArgs)
+                      .Where(desc => desc != null && desc.Length >= LoadSuggestionsCharLimit)
+                      .Throttle(TimeSpan.FromMilliseconds(LoadSuggestionsThrottleMilliseconds))
+                      .ObserveOn(SynchronizationContext.Current)
+                      .Subscribe(async desc => await SuggestEntries(desc));
 
             ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Edit Time Entry";
         }
@@ -139,23 +148,18 @@ namespace Toggl.Phoebe.ViewModels
 
         public async Task<List<TimeEntryData>> LoadSuggestions(string description)
         {
-            var entries = new List<TimeEntryData>();
-            if (description != null && description.Length >= LoadSuggestionsCharLimit)
+            return await Task.Run(() =>
             {
-                entries = await Task.Run(() =>
-                {
-                    var dataStore = ServiceContainer.Resolve<ISyncDataStore>();
-                    return dataStore.Table<TimeEntryData>()
-                           .OrderBy(r => r.StartTime)
-                           .Where(r => r.State != TimeEntryState.New
-                                  && r.DeletedAt == null
-                                  && r.Description != null
-                                  && r.Description.Contains(description))
-                           .Take(LoadSuggestionsResultsLimit)
-                           .ToList();
-                });
-            }
-            return entries;
+                var dataStore = ServiceContainer.Resolve<ISyncDataStore>();
+                return dataStore.Table<TimeEntryData>()
+                       .OrderBy(r => r.StartTime)
+                       .Where(r => r.State != TimeEntryState.New
+                              && r.DeletedAt == null
+                              && r.Description != null
+                              && r.Description.Contains(description))
+                       .Take(LoadSuggestionsResultsLimit)
+                       .ToList();
+            });
         }
 
         public bool IsRunning { get { return richData.Data.State == TimeEntryState.Running; } }
@@ -201,45 +205,30 @@ namespace Toggl.Phoebe.ViewModels
             ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Change Duration";
         }
 
-        public async void ChangeTimeEntryStart(TimeSpan diffTime)
+        public void ChangeTimeEntryStart(TimeSpan diffTime)
         {
-            // TODO Small experiment to show error Dialogs
-            // from ViewModels. It will help in the future.
-            // Thinking always with translation in mind.
-            if (await IsStartStopTimeCorrect(richData.Data.StartTime + diffTime, isStart: true))
-            {
-                if (richData.Data.State != TimeEntryState.Running)
-                    UpdateView(x => x.ChangeStartTime(x.StartTime + diffTime), nameof(Duration), nameof(StartDate), nameof(StopDate));
-                else
-                    UpdateView(x => x.ChangeStartTime(x.StartTime + diffTime), nameof(Duration), nameof(StartDate));
-            }
+            ChangeTimeEntryStart(richData.Data.StartTime + diffTime);
+        }
+
+        public void ChangeTimeEntryStart(DateTime newStartTime)
+        {
+            // Disable automatic update of StopTime as it confuses users (see #1593)
+            //if (richData.Data.State != TimeEntryState.Running)
+            //    UpdateView(x => x.ChangeStartTime(newStartTime), nameof(Duration), nameof(StartDate), nameof(StopDate));
+            //else
+                UpdateView(x => x.ChangeStartTime(newStartTime), nameof(Duration), nameof(StartDate));
+
             ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Change Start Time";
         }
 
-        public async void ChangeTimeEntryStart(DateTime newStartTime)
+        public void ChangeTimeEntryStop(TimeSpan diffTime)
         {
-            if (await IsStartStopTimeCorrect(newStartTime, isStart: true))
-            {
-                if (richData.Data.State != TimeEntryState.Running)
-                    UpdateView(x => x.ChangeStartTime(newStartTime), nameof(Duration), nameof(StartDate), nameof(StopDate));
-                else
-                    UpdateView(x => x.ChangeStartTime(newStartTime), nameof(Duration), nameof(StartDate));
-            }
-            ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Change Start Time";
+            ChangeTimeEntryStop(richData.Data.StopTime.Value + diffTime);
         }
 
-        public async void ChangeTimeEntryStop(TimeSpan diffTime)
+        public void ChangeTimeEntryStop(DateTime newStopTime)
         {
-            if (await IsStartStopTimeCorrect(richData.Data.StopTime.Value + diffTime, isStart: false))
-                UpdateView(x => x.ChangeStoptime(x.StopTime + diffTime), nameof(Duration), nameof(StopDate));
-
-            ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Change Stop Time";
-        }
-
-        public async void ChangeTimeEntryStop(DateTime newStopTime)
-        {
-            if (await IsStartStopTimeCorrect(newStopTime, isStart: false))
-                UpdateView(x => x.ChangeStoptime(newStopTime), nameof(Duration), nameof(StopDate));
+            UpdateView(x => x.ChangeStoptime(newStopTime), nameof(Duration), nameof(StopDate));
 
             ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Change Stop Time";
         }
@@ -249,10 +238,11 @@ namespace Toggl.Phoebe.ViewModels
             UpdateView(x => x.Tags = newTags.ToList(), nameof(Tags));
         }
 
-        public async Task ChangeDescription(string description)
+        public void ChangeDescription(string description)
         {
             UpdateView(x => x.Description = description, nameof(Description));
-            SuggestEntries(description);
+
+            DescriptionChanged(this, description);
         }
 
         public void ChangeBillable(bool billable)
@@ -265,13 +255,24 @@ namespace Toggl.Phoebe.ViewModels
             RxChain.Send(new DataMsg.TimeEntriesRemove(richData.Data));
         }
 
-        public void Save()
+        public bool Save()
         {
             if (HasTimeEntryChanged(previousData.Data, richData.Data))
             {
-                RxChain.Send(new DataMsg.TimeEntryPut(richData.Data, Tags));
-                previousData = richData;
+                // Check start and stop times
+                var isStartStopTimeCorrect =
+                    !richData.Data.StopTime.HasValue || richData.Data.StartTime < richData.Data.StopTime.Value;
+
+                if (isStartStopTimeCorrect)
+                {
+                    RxChain.Send(new DataMsg.TimeEntryPut(richData.Data, Tags));
+                    previousData = richData;
+                }
+
+                return isStartStopTimeCorrect;
             }
+
+            return true;
         }
 
         private void UpdateView(Action<TimeEntryData> updater, params string[] changedProperties)
@@ -338,24 +339,6 @@ namespace Toggl.Phoebe.ViewModels
                 x.TaskId = taskId;
                 x.TaskRemoteId = taskRemoteId;
             }, nameof(TaskName));
-        }
-
-        private async System.Threading.Tasks.Task<bool> IsStartStopTimeCorrect(DateTime newDateTime, bool isStart)
-        {
-            if (newDateTime >= richData.Data.StopTime && isStart)
-            {
-                await ServiceContainer.Resolve<IDialogService> ().ShowMessage(StartTimeError, ErrorTitle);
-                RaisePropertyChanged(nameof(TimeEntryData.StartTime));
-                return false;
-            }
-            else if (newDateTime <= richData.Data.StartTime && !isStart)
-            {
-                await ServiceContainer.Resolve<IDialogService> ().ShowMessage(StopTimeError, ErrorTitle);
-                RaisePropertyChanged(nameof(TimeEntryData.StopTime));
-                return false;
-            }
-
-            return true;
         }
 
         private bool HasTimeEntryChanged(ITimeEntryData previous, ITimeEntryData current)

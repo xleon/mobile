@@ -215,20 +215,14 @@ namespace Toggl.Joey.UI.Fragments
 
         public override void OnDestroyView()
         {
-            // TODO: Remove null condition in next release.
-            if (ViewModel != null)
-            {
-                ViewModel.Dispose();
-            }
+            ViewModel?.Dispose();
             base.OnDestroyView();
         }
 
         public override void OnPause()
         {
-            // TODO: Remove null condition in next release.
-            // Save Time entry state every time
-            // the fragment is paused.
-            ViewModel.Save();
+            // Save Time entry state every time the fragment is paused.
+            ViewModel?.Save();
             base.OnPause();
         }
 
@@ -298,13 +292,22 @@ namespace Toggl.Joey.UI.Fragments
 
         public override bool OnOptionsItemSelected(IMenuItem item)
         {
-            // Ugly null check
+            bool dismiss = true;
             if (item == SaveMenuItem && ViewModel != null)
             {
-                ViewModel.Save();
+                var savedProperly = ViewModel.Save();
+                if (savedProperly == false)
+                {
+                    dismiss = false;
+                    XPlatUtils.ServiceContainer.Resolve<GalaSoft.MvvmLight.Views.IDialogService>()
+                              .ShowMessage(EditTimeEntryVM.StartTimeError, EditTimeEntryVM.ErrorTitle);
+                }
             }
 
-            Activity.OnBackPressed();
+            if (dismiss)
+            {
+                Activity.OnBackPressed();
+            }
             return base.OnOptionsItemSelected(item);
         }
 

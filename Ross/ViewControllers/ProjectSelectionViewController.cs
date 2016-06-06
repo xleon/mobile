@@ -1,15 +1,15 @@
 using System;
-using CoreGraphics;
+using System.Collections.ObjectModel;
 using CoreAnimation;
+using CoreGraphics;
 using Foundation;
-using UIKit;
+using GalaSoft.MvvmLight.Helpers;
 using Toggl.Phoebe.Data.Models;
+using Toggl.Phoebe.Reactive;
+using Toggl.Phoebe.ViewModels;
 using Toggl.Ross.DataSources;
 using Toggl.Ross.Theme;
-using GalaSoft.MvvmLight.Helpers;
-using System.Collections.ObjectModel;
-using Toggl.Phoebe.ViewModels;
-using Toggl.Phoebe.Reactive;
+using UIKit;
 
 namespace Toggl.Ross.ViewControllers
 {
@@ -97,8 +97,22 @@ namespace Toggl.Ross.ViewControllers
         private void OnShowWorkspaceFilter(object sender, EventArgs evt)
         {
             var sourceRect = new CGRect(NavigationController.Toolbar.Bounds.Width - 45, NavigationController.Toolbar.Bounds.Height, 1, 1);
-            var popoverController = new WorkspaceSelectorPopover(viewModel, sourceRect);
-            PresentViewController(popoverController, true, null);
+
+            bool hasPopover = ObjCRuntime.Class.GetHandle("UIPopoverPresentationController") != IntPtr.Zero;
+            if (hasPopover)
+            {
+                var popoverController = new WorkspaceSelectorPopover(viewModel, sourceRect);
+                PresentViewController(popoverController, true, null);
+            }
+            else
+            {
+                var nextWorkspace = viewModel.CurrentWorkspaceIndex + 1;
+                if (nextWorkspace > viewModel.WorkspaceList.Count - 1)
+                {
+                    nextWorkspace = 0;
+                }
+                viewModel.ChangeWorkspaceByIndex(nextWorkspace);
+            }
         }
 
         class Source : ObservableCollectionViewSource<ICommonData, IClientData, IProjectData>
@@ -119,13 +133,13 @@ namespace Toggl.Ross.ViewControllers
 
                 if (data is ProjectData)
                 {
-                    var cell = (ProjectCell)tableView.DequeueReusableCell(ProjectCellId, indexPath);
+                    var cell = (ProjectCell)tableView.DequeueReusableCell(ProjectCellId);
                     cell.Bind((ProjectsCollectionVM.SuperProjectData)data, viewModel.ProjectList.AddTasks);
                     return cell;
                 }
                 else
                 {
-                    var cell = (TaskCell)tableView.DequeueReusableCell(TaskCellId, indexPath);
+                    var cell = (TaskCell)tableView.DequeueReusableCell(TaskCellId);
                     cell.Bind((TaskData)data);
                     return cell;
                 }
@@ -159,6 +173,11 @@ namespace Toggl.Ross.ViewControllers
             public override bool CanEditRow(UITableView tableView, NSIndexPath indexPath)
             {
                 return false;
+            }
+
+            public override nfloat GetHeightForRow(UITableView tableView, NSIndexPath indexPath)
+            {
+                return 60f;
             }
 
             public override void RowSelected(UITableView tableView, NSIndexPath indexPath)

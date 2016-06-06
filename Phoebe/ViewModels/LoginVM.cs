@@ -82,6 +82,7 @@ namespace Toggl.Phoebe.ViewModels
         {
             if (CurrentLoginMode == LoginMode.Login)
             {
+                RxChain.Send(new DataMsg.ResetState()); //TODO: Ask permission to delete data, if any
                 RxChain.Send(ServerRequest.Authenticate.Login(email, password));
             }
             else
@@ -94,6 +95,7 @@ namespace Toggl.Phoebe.ViewModels
         {
             if (CurrentLoginMode == LoginMode.Login)
             {
+                RxChain.Send(new DataMsg.ResetState()); //TODO: Ask permission to delete data, if any
                 RxChain.Send(ServerRequest.Authenticate.LoginWithGoogle(token));
             }
             else

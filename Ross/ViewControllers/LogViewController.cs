@@ -816,7 +816,7 @@ namespace Toggl.Ross.ViewControllers
             // TODO: Try to find a stateless method.
             private void RebindDuration()
             {
-                //runningCircle.Hidden = !isRunning;
+                runningCircle.Hidden = !isRunning;
                 durationLabel.Text = string.Format("{0:D2}:{1:mm}:{1:ss}", (int)duration.TotalHours, duration);
                 updateRunningIndicatorTransform();
             }

@@ -234,8 +234,6 @@
     <BundleResource Include="Resources\icon-arrow-right%402x.png" />
     <BundleResource Include="Resources\icon-back.png" />
     <BundleResource Include="Resources\icon-back%402x.png" />
-    <BundleResource Include="Resources\icon-billable.png" />
-    <BundleResource Include="Resources\icon-billable%402x.png" />
     <BundleResource Include="Resources\icon-cancel.png" />
     <BundleResource Include="Resources\icon-cancel%402x.png" />
     <BundleResource Include="Resources\icon-duration-arrow.png" />
@@ -274,10 +272,6 @@
     <BundleResource Include="Resources\icon-settings-green%402x.png" />
     <BundleResource Include="Resources\icon-settings.png" />
     <BundleResource Include="Resources\icon-settings%402x.png" />
-    <BundleResource Include="Resources\icon-tag-billable.png" />
-    <BundleResource Include="Resources\icon-tag-billable%402x.png" />
-    <BundleResource Include="Resources\icon-tag.png" />
-    <BundleResource Include="Resources\icon-tag%402x.png" />
     <BundleResource Include="Resources\icon-timer-green.png" />
     <BundleResource Include="Resources\icon-timer-green%402x.png" />
     <BundleResource Include="Resources\icon-timer.png" />
@@ -294,6 +288,12 @@
     <BundleResource Include="Resources\toggler2.png" />
     <BundleResource Include="Resources\toggler2%402x.png" />
     <BundleResource Include="Resources\toggler2%403x.png" />
+    <BundleResource Include="Resources\iconBillable.png" />
+    <BundleResource Include="Resources\iconBillable%402x.png" />
+    <BundleResource Include="Resources\iconBillable%403x.png" />
+    <BundleResource Include="Resources\iconTag.png" />
+    <BundleResource Include="Resources\iconTag%402x.png" />
+    <BundleResource Include="Resources\iconTag%403x.png" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Info.plist" />

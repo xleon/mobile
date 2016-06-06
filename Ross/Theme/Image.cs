@@ -50,7 +50,7 @@ namespace Toggl.Ross.Theme
 
         public static UIImage IconBillable
         {
-            get { return UIImage.FromBundle("icon-billable"); }
+            get { return UIImage.FromBundle("iconBillable"); }
         }
 
         public static UIImage IconCancel
@@ -110,12 +110,7 @@ namespace Toggl.Ross.Theme
 
         public static UIImage IconTag
         {
-            get { return UIImage.FromBundle("icon-tag"); }
-        }
-
-        public static UIImage IconTagBillable
-        {
-            get { return UIImage.FromBundle("icon-tag-billable"); }
+            get { return UIImage.FromBundle("iconTag"); }
         }
 
         public static UIImage Logo

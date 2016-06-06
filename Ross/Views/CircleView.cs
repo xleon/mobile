@@ -28,6 +28,7 @@ namespace Toggl.Ross.Views
         public void SetFrame(nfloat x, nfloat y, nfloat w, nfloat h)
         {
             this.Frame = new CGRect(x - 1, y - 1, w + 2, h + 2);
+            this.SetNeedsDisplay();
         }
 
         public override void Draw(CGRect rect)

@@ -69,12 +69,6 @@ namespace Toggl.Ross.Theme
                 v.Apply(TimeEntryCell.DurationLabel);
             }
 
-            public static void BillableAndTaggedEntry(UIImageView v)
-            {
-                v.ContentMode = UIViewContentMode.Center;
-                v.Image = Image.IconTagBillable;
-            }
-
             public static void TaggedEntry(UIImageView v)
             {
                 v.ContentMode = UIViewContentMode.Center;

@@ -72,11 +72,13 @@ namespace Toggl.Phoebe.ViewModels
                                 .Subscribe(x => UpdateDuration());
 
             Observable.FromEventPattern<string>(h => DescriptionChanged += h, h => DescriptionChanged -= h)
+            // Observe on the task pool to prevent locking UI
+            .SubscribeOn(TaskPoolScheduler.Default)
             .Select(ev => ev.EventArgs)
             .Where(desc => desc != null && desc.Length >= LoadSuggestionsCharLimit)
             .Throttle(TimeSpan.FromMilliseconds(LoadSuggestionsThrottleMilliseconds))
-            .SubscribeOn(Scheduler.Default)
             .Select(desc => LoadSuggestions(desc))
+            // Go back to current context (UI thread)
             .ObserveOn(SynchronizationContext.Current)
             .Subscribe(result => SuggestionsCollection = result);
 

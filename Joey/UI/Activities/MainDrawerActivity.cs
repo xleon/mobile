@@ -202,6 +202,12 @@ namespace Toggl.Joey.UI.Activities
 
             // Open Timer fragment.
             OpenPage(DrawerListAdapter.TimerPageId);
+
+            // Register to GCM if needed
+            if (string.IsNullOrEmpty(userData.ApiToken))
+            {
+                // TODO: Register to GCM here!
+            }
         }
 
         private bool tryMigrateDatabase(IUserData userData)

@@ -151,7 +151,7 @@ namespace Toggl.Phoebe.Reactive
         {
             await request.MatchType(
                 (ServerRequest.DownloadEntries _) => DownloadEntries(request, state),
-                (ServerRequest.GetChanges _) => GetChanges(request, state),
+                (ServerRequest.GetChanges _) => PushOfflineChanges(request, state),
                 (ServerRequest.GetCurrentState _) => GetChanges(request, state),
                 (ServerRequest.Authenticate req) =>
             {
@@ -197,21 +197,17 @@ namespace Toggl.Phoebe.Reactive
                             }
                             catch (Exception ex)
                             {
-                                logError(ex);
+                                if (ex is RemoteIdException)
+                                    logInfo(ex.Message);
+                                else
+                                    logError(ex);
+
                                 Enqueue(data, enqueuedItems, dataStore);
                                 queueEmpty = false;
                             }
                         }
                         else
                         {
-<<<<<<< 3f7b1ce83841cb5450748e8d3bd0a0decdd077d8
-                            if (ex is RemoteIdException)
-                                logInfo(ex.Message);
-                            else
-                                logError(ex);
-
-=======
->>>>>>> Some fixes
                             Enqueue(data, enqueuedItems, dataStore);
                             queueEmpty = false;
                         }
@@ -232,11 +228,7 @@ namespace Toggl.Phoebe.Reactive
             // Process other requests
             foreach (var req in syncMsg.ServerRequests.Where(x => x is ServerRequest.CRUD == false))
             {
-<<<<<<< 3f7b1ce83841cb5450748e8d3bd0a0decdd077d8
                 await HandleRequest(req, syncMsg.State);
-=======
-                requestManager.OnNext(Tuple.Create(req, syncMsg.State));
->>>>>>> Some fixes
             }
 
             // Mostly used for test pourposes.
@@ -322,25 +314,20 @@ namespace Toggl.Phoebe.Reactive
             dataStore.ResetQueue(QueueId);
 
             var enqueuedItems = new List<QueueItem> ();
-            PushOfflineTable<TagData> (dataStore, state, enqueuedItems);
-            PushOfflineTable<ClientData> (dataStore, state, enqueuedItems);
-            PushOfflineTable<ProjectData> (dataStore, state, enqueuedItems);
-            PushOfflineTable<TaskData> (dataStore, state, enqueuedItems);
-            PushOfflineTable<TimeEntryData> (dataStore, state, enqueuedItems);
+
+            dataStore.Table<TagData>().ForEach(x => Enqueue(x, enqueuedItems, dataStore));
+            dataStore.Table<ClientData>().ForEach(x => Enqueue(x, enqueuedItems, dataStore));
+            dataStore.Table<ProjectData>().ForEach(x => Enqueue(x, enqueuedItems, dataStore));
+            dataStore.Table<TimeEntryData>().ForEach(x => Enqueue(x, enqueuedItems, dataStore));
 
             await TryEmptyQueue(remoteObjects, state, true, dataStore);
+
             if (remoteObjects.Count > 0)
             {
                 RxChain.Send(DataMsg.ServerResponse.CRUD(remoteObjects));
             }
 
             await GetChanges(request, state);
-        }
-
-        void PushOfflineTable<T> (ISyncDataStore dataStore, AppState state, List<QueueItem> enqueuedItems)
-        where T : CommonData, new()
-        {
-            dataStore.Table<T>().Where(x => x.RemoteId == null).ForEach(x => Enqueue(x, enqueuedItems, dataStore));
         }
 
         #endregion
@@ -373,17 +360,9 @@ namespace Toggl.Phoebe.Reactive
                     switch (data.SyncState)
                     {
                         case SyncState.CreatePending:
-<<<<<<< ca82e2121425a24faf71c88b5d69c2e43435bdf4
-                            Console.WriteLine($"Remote create: {data.GetType().Name} {data.Id}");
                             response = await client.Create(authToken, json);
                             break;
                         case SyncState.UpdatePending:
-                            Console.WriteLine($"Remote update: {data.GetType().Name} {data.Id}");
-=======
-                            response = await client.Create(authToken, json);
-                            break;
-                        case SyncState.UpdatePending:
->>>>>>> Reset existing queue, all items to CreatePending state, Add to queue. Lose comments.
                             response = await client.Update(authToken, json);
                             break;
                         default:
@@ -394,10 +373,6 @@ namespace Toggl.Phoebe.Reactive
                     var resData = mapper.Map(response);
                     resData.Id = data.Id;
                     remoteObjects.Add(resData);
-<<<<<<< ca82e2121425a24faf71c88b5d69c2e43435bdf4
-                    Console.WriteLine($"Remote received: {resData.GetType().Name} {resData.RemoteId} {resData.Id}");
-=======
->>>>>>> Reset existing queue, all items to CreatePending state, Add to queue. Lose comments.
                 }
                 else
                 {

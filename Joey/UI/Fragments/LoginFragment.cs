@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using Android.Accounts;
 using Android.App;
-using Android.App;
 using Android.Content;
 using Android.Gms.Auth;
 using Android.Gms.Auth.Api;
@@ -26,7 +25,6 @@ using Toggl.Phoebe.ViewModels;
 using XPlatUtils;
 using DialogFragment = Android.Support.V4.App.DialogFragment;
 using Fragment = Android.Support.V4.App.Fragment;
-using FragmentManager = Android.Support.V4.App.FragmentManager;
 
 namespace Toggl.Joey.UI.Fragments
 {
@@ -76,23 +74,23 @@ namespace Toggl.Joey.UI.Fragments
                          .Where(a => a.Contains("@"))
                          .Distinct()
                          .ToList();
-            return new ArrayAdapter<string> (Activity, Android.Resource.Layout.SelectDialogItem, emails);
+            return new ArrayAdapter<string>(Activity, Android.Resource.Layout.SelectDialogItem, emails);
         }
 
         public override View OnCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState)
         {
             var view = inflater.Inflate(Resource.Layout.ConnectLayout, container, false);
 
-            EmailInputLayout = view.FindViewById<TextInputLayout> (Resource.Id.EmailInputLayout);
-            EmailEditText = view.FindViewById<AutoCompleteTextView> (Resource.Id.EmailAutoCompleteTextView).SetFont(Font.RobotoLight);
-            PasswordInputLayout = view.FindViewById<TextInputLayout> (Resource.Id.PasswordInputLayout);
-            PasswordEditText = view.FindViewById<EditText> (Resource.Id.PasswordEditText).SetFont(Font.RobotoLight);
-            PasswordToggleButton = view.FindViewById<Button> (Resource.Id.PasswordToggleButton).SetFont(Font.Roboto);
-            SubmitButton = view.FindViewById<Button> (Resource.Id.SubmitButton).SetFont(Font.Roboto);
-            LegalTextView = view.FindViewById<TextView> (Resource.Id.LegalTextView).SetFont(Font.RobotoLight);
-            GoogleLoginButton = view.FindViewById<FrameLayout> (Resource.Id.GoogleLoginButton);
-            GoogleLoginText = view.FindViewById<TextView> (Resource.Id.GoogleLoginText).SetFont(Font.Roboto);
-            GoogleIntroText = view.FindViewById<TextView> (Resource.Id.GoogleIntroText);
+            EmailInputLayout = view.FindViewById<TextInputLayout>(Resource.Id.EmailInputLayout);
+            EmailEditText = view.FindViewById<AutoCompleteTextView>(Resource.Id.EmailAutoCompleteTextView).SetFont(Font.RobotoLight);
+            PasswordInputLayout = view.FindViewById<TextInputLayout>(Resource.Id.PasswordInputLayout);
+            PasswordEditText = view.FindViewById<EditText>(Resource.Id.PasswordEditText).SetFont(Font.RobotoLight);
+            PasswordToggleButton = view.FindViewById<Button>(Resource.Id.PasswordToggleButton).SetFont(Font.Roboto);
+            SubmitButton = view.FindViewById<Button>(Resource.Id.SubmitButton).SetFont(Font.Roboto);
+            LegalTextView = view.FindViewById<TextView>(Resource.Id.LegalTextView).SetFont(Font.RobotoLight);
+            GoogleLoginButton = view.FindViewById<FrameLayout>(Resource.Id.GoogleLoginButton);
+            GoogleLoginText = view.FindViewById<TextView>(Resource.Id.GoogleLoginText).SetFont(Font.Roboto);
+            GoogleIntroText = view.FindViewById<TextView>(Resource.Id.GoogleIntroText);
 
             EmailInputLayout.HintEnabled = false;
             EmailInputLayout.ErrorEnabled = true;
@@ -393,19 +391,19 @@ namespace Toggl.Joey.UI.Fragments
 
         public void OnConnected(Bundle connectionHint)
         {
-            var log = ServiceContainer.Resolve<ILogger> ();
+            var log = ServiceContainer.Resolve<ILogger>();
             log.Info(LogTag, "Login with Google. Success : " + connectionHint);
         }
 
         public void OnConnectionSuspended(int cause)
         {
-            var log = ServiceContainer.Resolve<ILogger> ();
+            var log = ServiceContainer.Resolve<ILogger>();
             log.Info(LogTag, new Exception(), "Failed to login with Google. onConnectionSuspended:" + cause);
         }
 
         public void OnConnectionFailed(ConnectionResult result)
         {
-            var log = ServiceContainer.Resolve<ILogger> ();
+            var log = ServiceContainer.Resolve<ILogger>();
             log.Info(LogTag, "OnConnectionFailed:" + result);
 
             if (!mIsResolving && mShouldResolve)
@@ -489,62 +487,9 @@ namespace Toggl.Joey.UI.Fragments
             var dialog = new AlertDialog.Builder(Activity)
             .SetTitle(title)
             .SetMessage(message)
-            .SetPositiveButton(Resource.String.LoginInvalidCredentialsDialogOk, delegate {})
+            .SetPositiveButton(Resource.String.LoginInvalidCredentialsDialogOk, delegate { })
             .Create();
             dialog.Show();
-        }
-
-        public class NoWorkspaceDialogFragment : DialogFragment
-        {
-            private const string EmailKey = "com.toggl.timer.email";
-
-            public NoWorkspaceDialogFragment()
-            {
-            }
-
-            public NoWorkspaceDialogFragment(string email)
-            {
-                var args = new Bundle();
-                args.PutString(EmailKey, email);
-
-                Arguments = args;
-            }
-
-            private string Email
-            {
-                get
-                {
-                    if (Arguments == null)
-                    {
-                        return String.Empty;
-                    }
-                    return Arguments.GetString(EmailKey);
-                }
-            }
-
-            public override Dialog OnCreateDialog(Bundle savedInstanceState)
-            {
-                return new AlertDialog.Builder(Activity)
-                       .SetTitle(Resource.String.LoginNoWorkspaceDialogTitle)
-                       .SetMessage(Resource.String.LoginNoWorkspaceDialogText)
-                       .SetPositiveButton(Resource.String.LoginNoWorkspaceDialogOk, OnOkButtonClicked)
-                       .SetNegativeButton(Resource.String.LoginNoWorkspaceDialogCancel, OnCancelButtonClicked)
-                       .Create();
-            }
-
-            private void OnOkButtonClicked(object sender, DialogClickEventArgs args)
-            {
-                var intent = new Intent(Intent.ActionSend);
-                intent.SetType("message/rfc822");
-                intent.PutExtra(Intent.ExtraEmail, new[] { Resources.GetString(Resource.String.LoginNoWorkspaceDialogEmail) });
-                intent.PutExtra(Intent.ExtraSubject, Resources.GetString(Resource.String.LoginNoWorkspaceDialogSubject));
-                intent.PutExtra(Intent.ExtraText, string.Format(Resources.GetString(Resource.String.LoginNoWorkspaceDialogBody), Email));
-                StartActivity(Intent.CreateChooser(intent, (string)null));
-            }
-
-            private void OnCancelButtonClicked(object sender, DialogClickEventArgs args)
-            {
-            }
         }
 
         private class TogglURLSPan : URLSpan
@@ -559,7 +504,6 @@ namespace Toggl.Joey.UI.Fragments
                 ds.UnderlineText = true;
             }
         }
-
 
         private ISpannable FormattedLegalText
         {

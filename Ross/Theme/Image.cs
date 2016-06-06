@@ -18,6 +18,8 @@ namespace Toggl.Ross.Theme
             }
         }
 
+        public static UIImage TogglLogo => UIImage.FromBundle("togglLogo");
+
         public static UIImage CircleStart
         {
             get { return UIImage.FromBundle("circle-start"); }

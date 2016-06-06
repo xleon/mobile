@@ -294,6 +294,9 @@
     <BundleResource Include="Resources\iconTag.png" />
     <BundleResource Include="Resources\iconTag%402x.png" />
     <BundleResource Include="Resources\iconTag%403x.png" />
+    <BundleResource Include="Resources\togglLogo.png" />
+    <BundleResource Include="Resources\togglLogo%402x.png" />
+    <BundleResource Include="Resources\togglLogo%403x.png" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Info.plist" />

@@ -40,6 +40,7 @@ namespace Toggl.Ross.ViewControllers
         private UITableView tableView;
         private TimerBar timerBar;
         private SectionCell floatingHeader;
+        private UIImageView navigationLogo;
 
         private float heightOfTopBars;
 
@@ -108,10 +109,12 @@ namespace Toggl.Ross.ViewControllers
                 SyncButtonPressedHandler = OnTryAgainBtnPressed
             };
 
+            navigationLogo = new UIImageView(Image.TogglLogo);
 
             // Attach views
             var navigationItem = NavigationItem;
             navigationItem.RightBarButtonItem = navigationButton;
+            navigationItem.TitleView = navigationLogo;
         }
 
         public override void ViewDidLoad()

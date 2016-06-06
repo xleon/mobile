@@ -655,9 +655,9 @@ namespace Toggl.Ross.ViewControllers
             private readonly UIImageView billableImage;
             private readonly UIImageView tagsImage;
             private readonly UILabel durationLabel;
-            private readonly UIView runningCircle;
+            private readonly CircleView runningCircle;
             private readonly UIView descriptionTaskSeparator;
-            private readonly UIView projectCircle;
+            private readonly CircleView projectCircle;
             private readonly CALayer runningCirclePointer;
 
             private bool isRunning;
@@ -674,15 +674,16 @@ namespace Toggl.Ross.ViewControllers
                 descriptionLabel = new UILabel().Apply(Style.Log.CellDescriptionLabel);
 
                 descriptionTaskSeparator = new UIView().Apply(Style.TimeEntryCell.DescriptionTaskSeparator);
-                projectCircle = new UIView().Apply(Style.TimeEntryCell.ProjectCircle);
+                projectCircle = new CircleView();
 
                 billableImage = new UIImageView().Apply(Style.TimeEntryCell.BillableImage);
                 tagsImage = new UIImageView().Apply(Style.TimeEntryCell.TagsImage);
                 durationLabel = new UILabel().Apply(Style.Log.CellDurationLabel);
-                runningCircle = new UIView().Apply(Style.TimeEntryCell.RunningIndicator);
+                runningCircle = new CircleView().Apply(Style.TimeEntryCell.RunningIndicator);
                 runningCircle.Layer.AddSublayer(
                     this.runningCirclePointer = new CAShapeLayer().Apply(Style.TimeEntryCell.RunningIndicatorPointer)
                 );
+                updateRunningIndicatorTransform();
 
                 textContentView.AddSubviews(
                     projectLabel, clientLabel,
@@ -728,7 +729,7 @@ namespace Toggl.Ross.ViewControllers
                 this.OnContinueAction = OnContinueAction;
 
                 var projectName = "LogCellNoProject".Tr();
-                var projectColor = Color.Gray;
+                var projectColor = Color.Gray.CGColor;
                 var clientName = string.Empty;
                 var info = dataSource.Entry.Info;
 
@@ -739,7 +740,7 @@ namespace Toggl.Ross.ViewControllers
                 if (hasProject)
                 {
                     projectName = info.ProjectData.Name;
-                    projectColor = UIColor.Clear.FromHex(ProjectData.HexColors[info.ProjectData.Color % ProjectData.HexColors.Length]);
+                    projectColor = UIColor.Clear.FromHex(ProjectData.HexColors[info.ProjectData.Color % ProjectData.HexColors.Length]).CGColor;
 
                     if (!string.IsNullOrWhiteSpace(info.ClientData.Name))
                     {
@@ -747,9 +748,9 @@ namespace Toggl.Ross.ViewControllers
                     }
                 }
 
-                if (projectCircle.BackgroundColor != projectColor)
+                if (projectCircle.Color != projectColor)
                 {
-                    projectCircle.BackgroundColor = projectColor;
+                    projectCircle.Color = projectColor;
                     SetNeedsLayout();
                 }
                 if (projectLabel.Text != projectName)
@@ -815,14 +816,27 @@ namespace Toggl.Ross.ViewControllers
             // TODO: Try to find a stateless method.
             private void RebindDuration()
             {
-                runningCircle.Hidden = !isRunning;
+                //runningCircle.Hidden = !isRunning;
                 durationLabel.Text = string.Format("{0:D2}:{1:mm}:{1:ss}", (int)duration.TotalHours, duration);
+                updateRunningIndicatorTransform();
+            }
+
+            private void updateRunningIndicatorTransform()
+            {
                 if (isRunning)
                 {
                     runningCirclePointer.AffineTransform = CGAffineTransform.Rotate(
-                            CGAffineTransform.MakeTranslation(Style.TimeEntryCell.RunningIndicatorRadius, Style.TimeEntryCell.RunningIndicatorRadius),
+                            CGAffineTransform.MakeTranslation(
+                                Style.TimeEntryCell.RunningIndicatorRadius + 1,
+                                Style.TimeEntryCell.RunningIndicatorRadius + 1),
                             duration.Seconds / 60f * (float)Math.PI * 2f
                                                            );
+                }
+                else
+                {
+                    runningCirclePointer.AffineTransform = CGAffineTransform.MakeTranslation(
+                            Style.TimeEntryCell.RunningIndicatorRadius + 1,
+                            Style.TimeEntryCell.RunningIndicatorRadius + 1);
                 }
             }
 
@@ -870,7 +884,7 @@ namespace Toggl.Ross.ViewControllers
                     if (!runningCircle.Hidden)
                     {
                         offsetX -= Style.TimeEntryCell.RunningIndicatorRadius * 2 + 3;
-                        runningCircle.Frame = new CGRect(
+                        runningCircle.SetFrame(
                             offsetX,
                             rowCenterY - Style.TimeEntryCell.RunningIndicatorRadius,
                             Style.TimeEntryCell.RunningIndicatorRadius * 2,
@@ -926,7 +940,7 @@ namespace Toggl.Ross.ViewControllers
 
                     if (!projectCircle.Hidden)
                     {
-                        projectCircle.Frame = new CGRect(
+                        projectCircle.SetFrame(
                             offsetX - 2,
                             topRowY + labelHeight / 2 - Style.TimeEntryCell.ProjectCircleRadius + 1,
                             Style.TimeEntryCell.ProjectCircleRadius * 2,

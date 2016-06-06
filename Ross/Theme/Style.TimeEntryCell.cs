@@ -1,6 +1,7 @@
 using System;
 using CoreAnimation;
 using CoreGraphics;
+using Toggl.Ross.Views;
 using UIKit;
 
 namespace Toggl.Ross.Theme
@@ -41,11 +42,6 @@ namespace Toggl.Ross.Theme
                 v.Image = Image.IconTag;
             }
 
-            public static void ProjectCircle(UIView v)
-            {
-                v.Layer.CornerRadius = ProjectCircleRadius;
-            }
-
             public static void DescriptionTaskSeparator(UIView v)
             {
                 v.Layer.CornerRadius = DescriptionTaskSeparatorRadius;
@@ -83,10 +79,9 @@ namespace Toggl.Ross.Theme
                 v.TextColor = Color.OffSteel;
             }
 
-            public static void RunningIndicator(UIView v)
+            public static void RunningIndicator(CircleView v)
             {
-                v.BackgroundColor = Color.StopButton;
-                v.Layer.CornerRadius = RunningIndicatorRadius;
+                v.Color = Color.StopButton.CGColor;
             }
 
             public static void RunningIndicatorPointer(CAShapeLayer l)

@@ -69,11 +69,6 @@ namespace Toggl.Ross.Theme
                 v.Apply(TimeEntryCell.DurationLabel);
             }
 
-            public static void CellRunningIndicator(UIImageView v)
-            {
-                v.Apply(TimeEntryCell.RunningIndicator);
-            }
-
             public static void BillableAndTaggedEntry(UIImageView v)
             {
                 v.ContentMode = UIViewContentMode.Center;

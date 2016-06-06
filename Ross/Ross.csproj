@@ -442,6 +442,7 @@
     <Compile Include="Theme\Font.cs" />
     <Compile Include="Misc\UIExtensions.cs" />
     <Compile Include="Views\TimerButtonIcon.cs" />
+    <Compile Include="Views\CircleView.cs" />
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>

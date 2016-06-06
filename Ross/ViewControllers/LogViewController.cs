@@ -66,9 +66,9 @@ namespace Toggl.Ross.ViewControllers
 
             var tableFrame = View.Frame;
             tableFrame.Y -= heightOfTopBars;
-            var tableInset = new UIEdgeInsets(heightOfTopBars - ListInsetTop, 0, 72, 0);
+            var tableInset = new UIEdgeInsets(heightOfTopBars, 0, 72, 0);
             var tableScrollInset = tableInset;
-            tableScrollInset.Top += DateHeaderHeight;
+            tableScrollInset.Top += DateHeaderHeight - ListInsetTop;
             Add(tableView = new UITableView(tableFrame, UITableViewStyle.Plain)
             {
                 ContentInset = tableInset,
@@ -199,7 +199,7 @@ namespace Toggl.Ross.ViewControllers
 
         private void updateFloatingHeader()
         {
-            var point = new CGPoint(0, heightOfTopBars + tableView.ContentOffset.Y - ListInsetTop);
+            var point = new CGPoint(0, heightOfTopBars + tableView.ContentOffset.Y);
             var nsIndex = tableView.IndexPathForRowAtPoint(point);
 
             if (nsIndex == null)
@@ -559,6 +559,11 @@ namespace Toggl.Ross.ViewControllers
 
             public override nfloat GetHeightForRow(UITableView tableView, NSIndexPath indexPath)
             {
+                if (indexPath.Row == 0)
+                {
+                    return DateHeaderHeight - ListInsetTop;
+                }
+
                 var holder = collection.ElementAt(indexPath.Row);
                 if (holder is DateHolder)
                 {

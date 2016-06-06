@@ -17,11 +17,7 @@ namespace Toggl.Ross.Views
 
         public void AdaptToTableView(UITableView tableView)
         {
-            // container is needed to properly offset spinner
-            var container = new UIView(new CGRect(0, 20, 0, 0));
-
-            tableView.Add(container);
-            container.Add(this);
+            tableView.Add(this);
         }
 
     }

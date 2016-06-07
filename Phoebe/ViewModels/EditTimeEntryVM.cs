@@ -75,11 +75,11 @@ namespace Toggl.Phoebe.ViewModels
                                 .Subscribe(x => UpdateDuration());
 
             Observable.FromEventPattern<string>(h => DescriptionChanged += h, h => DescriptionChanged -= h)
-                      .Select(ev => ev.EventArgs)
-                      .Where(desc => desc != null && desc.Length >= LoadSuggestionsCharLimit)
-                      .Throttle(TimeSpan.FromMilliseconds(LoadSuggestionsThrottleMilliseconds))
-                      .ObserveOn(SynchronizationContext.Current)
-                      .Subscribe(async desc => await SuggestEntries(desc));
+            .Select(ev => ev.EventArgs)
+            .Where(desc => desc != null && desc.Length >= LoadSuggestionsCharLimit)
+            .Throttle(TimeSpan.FromMilliseconds(LoadSuggestionsThrottleMilliseconds))
+            .ObserveOn(SynchronizationContext.Current)
+            .Subscribe(async desc => await SuggestEntries(desc));
 
             ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Edit Time Entry";
         }
@@ -216,7 +216,7 @@ namespace Toggl.Phoebe.ViewModels
             //if (richData.Data.State != TimeEntryState.Running)
             //    UpdateView(x => x.ChangeStartTime(newStartTime), nameof(Duration), nameof(StartDate), nameof(StopDate));
             //else
-                UpdateView(x => x.ChangeStartTime(newStartTime), nameof(Duration), nameof(StartDate));
+            UpdateView(x => x.ChangeStartTime(newStartTime), nameof(Duration), nameof(StartDate));
 
             ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Change Start Time";
         }

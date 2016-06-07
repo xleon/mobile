@@ -70,6 +70,7 @@ namespace Toggl.Joey.UI.Fragments
             experimentEmptyView = view.FindViewById<View> (Resource.Id.ExperimentEmptyMessageView);
             emptyMessageView = view.FindViewById<View> (Resource.Id.EmptyMessageView);
             welcomeView = view.FindViewById<View> (Resource.Id.WelcomeLayout);
+            welcomeView.Visibility = ViewStates.Gone;
 
             view.FindViewById<TextView>(Resource.Id.welcomeHelloTextView).SetFont(Font.TektonPro);
             view.FindViewById<TextView>(Resource.Id.welcomeSignInTextView).SetFont(Font.TektonPro);

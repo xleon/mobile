@@ -1,25 +1,14 @@
-﻿using System;
-using UIKit;
+﻿using UIKit;
 
 namespace Toggl.Ross.Theme
 {
     public static class Font
     {
-        public static UIFont Main(float height) => UIFont.FromName("SFUIText-Regular", height);
-        public static UIFont MainLight(float height) => UIFont.FromName("SFUIText-Light", height);
+        public static UIFont Main(float height) => UIFont.SystemFontOfSize(height, UIFontWeight.Regular);
+        public static UIFont MainLight(float height) => UIFont.SystemFontOfSize(height, UIFontWeight.Light);
 
-        public static UIFont WithMonospacedDigits(this UIFont font)
-        {
-            var descriptor = font.FontDescriptor;
-
-            var feature = new UIFontFeature(CoreText.CTFontFeatureNumberSpacing.Selector.MonospacedNumbers);
-
-            var attribute = new UIFontAttributes(feature);
-
-            var d = descriptor.CreateWithAttributes(attribute);
-
-            return UIFont.FromDescriptor(d, font.FontDescriptor.Size.Value);
-        }
+        public static UIFont MinispacedDigits(float height) => UIFont.MonospacedDigitSystemFontOfSize(height, UIFontWeight.Regular);
+        public static UIFont MinispacedDigitsLight(float height) => UIFont.MonospacedDigitSystemFontOfSize(height, UIFontWeight.Light);
     }
 }
 

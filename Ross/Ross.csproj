@@ -300,8 +300,6 @@
     <BundleResource Include="Resources\togglLogo.png" />
     <BundleResource Include="Resources\togglLogo%402x.png" />
     <BundleResource Include="Resources\togglLogo%403x.png" />
-    <BundleResource Include="Resources\Fonts\SF-UI-Text-Light.otf" />
-    <BundleResource Include="Resources\Fonts\SF-UI-Text-Regular.otf" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Info.plist" />

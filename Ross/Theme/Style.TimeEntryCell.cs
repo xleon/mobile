@@ -15,7 +15,8 @@ namespace Toggl.Ross.Theme
             public const float RunningIndicatorRadius = 9;
             public const float IconSize = 24;
 
-            private static readonly UIFont sharedFont = Font.Main(15);
+            private const float fontHeight = 15;
+            private static readonly UIFont sharedFont = Font.Main(fontHeight);
 
             public static void ContentView(UIView v)
             {
@@ -75,7 +76,7 @@ namespace Toggl.Ross.Theme
             public static void DurationLabel(UILabel v)
             {
                 v.TextAlignment = UITextAlignment.Right;
-                v.Font = sharedFont.WithMonospacedDigits();
+                v.Font = Font.MinispacedDigits(fontHeight);
                 v.TextColor = Color.OffSteel;
             }
 

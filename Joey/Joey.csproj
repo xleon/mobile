@@ -739,10 +739,6 @@
     <AndroidResource Include="Resources\drawable\ButtonGreenDisabled.xml" />
     <AndroidResource Include="Resources\drawable\ButtonGreenPressed.xml" />
     <AndroidResource Include="Resources\drawable\DropShadowVertical.xml" />
-    <AndroidResource Include="Resources\drawable-xxhdpi\SplashScreen.png" />
-    <AndroidResource Include="Resources\drawable-xhdpi\SplashScreen.png" />
-    <AndroidResource Include="Resources\drawable-mdpi\SplashScreen.png" />
-    <AndroidResource Include="Resources\drawable-hdpi\SplashScreen.png" />
     <AndroidResource Include="Resources\drawable\RedCursor.xml" />
     <AndroidResource Include="Resources\drawable\DropShadowVerticalReverse.xml" />
     <AndroidResource Include="Resources\drawable-v21\play_button_background.xml" />
@@ -819,6 +815,7 @@
     <AndroidResource Include="Resources\drawable-xhdpi\IcReportsOverflow.png" />
     <AndroidResource Include="Resources\drawable-xxhdpi\IcReportsOverflow.png" />
     <AndroidResource Include="Resources\menu\ReportsToolbarMenu.axml" />
+    <AndroidResource Include="Resources\drawable\splash_drawable.xml" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\Xamarin\Android\Xamarin.Android.CSharp.targets" />
   <ItemGroup>

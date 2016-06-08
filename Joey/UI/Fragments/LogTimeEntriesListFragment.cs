@@ -94,7 +94,6 @@ namespace Toggl.Joey.UI.Fragments
             // init viewModel
             ViewModel = new LogTimeEntriesVM(StoreManager.Singleton.AppState);
 
-            //activeEntryBinding =  this.SetBinding (()=> ViewModel.ActiveEntry).WhenSourceChanges (OnActiveEntryChanged);
             collectionBinding = this.SetBinding(() => ViewModel.Collection).WhenSourceChanges(() =>
             {
                 logAdapter = new LogTimeEntriesAdapter(recyclerView, ViewModel);
@@ -176,13 +175,19 @@ namespace Toggl.Joey.UI.Fragments
 
         public override bool OnOptionsItemSelected(IMenuItem item)
         {
+            OpenEditViewForManualEntry();
+            return base.OnOptionsItemSelected(item);
+        }
+
+        private async void OpenEditViewForManualEntry()
+        {
+            var te = await ViewModel.ManuallyCreateTimeEntry();
+
             var i = new Intent(Activity, typeof(EditTimeEntryActivity));
             i.PutStringArrayListExtra(
                 EditTimeEntryActivity.ExtraGroupedTimeEntriesGuids,
-                new List<string> { ViewModel.ActiveEntry.Data.Id.ToString()});
+                new List<string> { te.Id.ToString() });
             Activity.StartActivity(i);
-
-            return base.OnOptionsItemSelected(item);
         }
 
         // Because the viewModel needs time to be created,

@@ -171,24 +171,26 @@ namespace Toggl.Phoebe.ViewModels
 
         public Task<ITimeEntryData> ManuallyCreateTimeEntry()
         {
-            // TODO: should this be in a reducer instead?
-            var state = StoreManager.Singleton.AppState;
-            var draft = state.GetTimeEntryDraft();
+            var draft = StoreManager.Singleton.AppState.GetTimeEntryDraft();
             var now = Time.UtcNow.Truncate(TimeSpan.TicksPerSecond);
             var newEntry = TimeEntryData.Create(draft: draft, transform: x =>
             {
                 x.State = TimeEntryState.Finished;
                 x.StartTime = now;
                 x.StopTime = now;
-                x.Tags = state.Settings.UseDefaultTag ? TimeEntryData.DefaultTags : new List<string>();
+                x.Tags = StoreManager.Singleton.AppState.Settings.UseDefaultTag ? TimeEntryData.DefaultTags : new List<string>();
             });
 
             var tcs = new TaskCompletionSource<ITimeEntryData>();
 
-            RxChain.Send(new DataMsg.TimeEntryPut(newEntry), new RxChain.Continuation(s =>
+            // Save manually created entry.
+            RxChain.Send(new DataMsg.TimeEntryPut(newEntry), new RxChain.Continuation(state =>
             {
-                tcs.SetResult(StoreManager.Singleton.AppState.TimeEntries[newEntry.Id].Data);
+                tcs.SetResult(state.TimeEntries[newEntry.Id].Data);
             }));
+
+            // Set welcome message as hidden.
+            RxChain.Send(new DataMsg.UpdateSetting(nameof(SettingsState.ShowWelcome), false));
 
             return tcs.Task;
         }

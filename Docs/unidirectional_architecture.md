@@ -52,7 +52,9 @@ at the same time from another thread.
 
 ## SyncManager
 
-TODO: Sync Diagram
+The overall workflow can be seen in the following diagram:
+
+![SyncManager](Diagrams/syncmanager.mmd.png)
 
 A key component of the `SyncManager` is the **queue**. The queue is used to simplify
 the handling of messages when there's no internet connection available. Instead of

@@ -19,7 +19,7 @@ all the values that must be accessed globally are contained in a single object
 and is kept by the `StoreManager`. State updates can only be done by **reducers**
 (see below). Every time a component wants to update the `AppState` a message
 is sent to the `StoreManager` which passes the message an the current state
-to the appropiate reducer.
+to the appropriate reducer.
 
 ## Reducers
 
@@ -52,7 +52,51 @@ at the same time from another thread.
 
 ## SyncManager
 
-TODO
+TODO: Sync Diagram
+
+A key component of the `SyncManager` is the **queue**. The queue is used to simplify
+the handling of messages when there's no internet connection available. Instead of
+relying on a flag like `IsSynced` to query records which need to be synced, reducers
+can send server requests to the `SyncManager` as events happen (time entry creation,
+editing...) and forget about internet availability. The `SyncManager` will try to
+connect with Toggl server, but if that's not possible, it will store the message in
+the queue to try again in the next cycle.
+
+> Database records actually contain a field named `SyncState`. However this is mainly
+used for the UI (e.g., to indicate which entries are synced and which not) and not to
+filter the records for bulk syncing.
+
+The queue is persistent and it's implemented just as a hidden table in the same SQLite
+database used to store other offline data.
+
+As `SyncManager` operations usually involve internet connection with Toggl server,
+it can be affected by [back pressure](http://reactivex.io/documentation/operators/backpressure.html) issues:
+i.e., notifications from `StoreManager` come too quickly before the previous
+event has been dealt with. To prevent problems a [TPL ActionBlock](https://msdn.microsoft.com/en-us/library/hh228603.aspx)
+is used to buffer messages and handle them sequentially:
+
+```csharp
+var blockOptions = new ExecutionDataflowBlockOptions
+{
+    MaxDegreeOfParallelism = 1,
+    BoundedCapacity = BufferSize
+};
+var processingBlock = new ActionBlock<DataSyncMsg<AppState>> (async(DataSyncMsg<AppState> msg) =>
+{
+    await EnqueueOrSend(msg);
+}, blockOptions);
+
+StoreManager.Singleton
+.Observe()
+.Subscribe(processingBlock.AsObserver());
+```
+
+> Note that setting `MaxDegreeOfParallelism` to 1 means the messages will always
+be processed sequentially and not in parallel.
+
+> There were some conflicts to build the iOS app when adding the `TPL DataFlow`
+nuget package. Instructions to fix the problem can be found [here](https://kb.xamarin.com/customer/portal/articles/2161671-how-can-i-resolv).
+
 
 ## ViewModels
 

@@ -185,7 +185,7 @@ namespace Toggl.Joey.UI.Activities
             }
         }
 
-       private void ResetFragmentNavigation(IUserData userData)
+        private void ResetFragmentNavigation(IUserData userData)
         {
             DrawerUserName.Text = userData.Name;
             DrawerEmail.Text = userData.Email;
@@ -223,19 +223,12 @@ namespace Toggl.Joey.UI.Activities
                 return false;
 
             Fragment migrationFragment = null;
-            migrationFragment = MigrationFragment.Init(
-                oldVersion, success =>
+            migrationFragment = MigrationFragment.NewInstance(oldVersion, success =>
             {
-                //if (!success) // TODO
-
                 FragmentManager.BeginTransaction()
-                               .Detach(migrationFragment)
-                               .Commit();
-
-                ResetFragmentNavigation(userData);
+                .Detach(migrationFragment)
+                .Commit();
             });
-
-
             OpenFragment(migrationFragment);
             return true;
         }

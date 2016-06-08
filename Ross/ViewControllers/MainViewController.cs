@@ -111,7 +111,24 @@ namespace Toggl.Ross.ViewControllers
 
         private void ResetRootViewController(IUserData userData)
         {
+            if (tryMigrateDatabase(userData))
+                return;
+
             proceedToWelcomeOrLogViewController(userData);
+        }
+
+        private bool tryMigrateDatabase(IUserData userData)
+        {
+            var oldVersion = DatabaseHelper.CheckOldDb(DatabaseHelper.GetDatabaseDirectory());
+            if (oldVersion == -1)
+                return false;
+
+            SetViewControllers(new[]
+            {
+                new MigrationViewController(oldVersion, SyncSqliteDataStore.DB_VERSION)
+            }, false);
+
+            return true;
         }
 
         private void proceedToWelcomeOrLogViewController(IUserData userData)

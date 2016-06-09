@@ -306,7 +306,7 @@ namespace Toggl.Phoebe.Reactive
             },
             (ServerRequest.UploadData req) =>
             {
-                throw new NotImplementedException();
+                return DataSyncMsg.Create(state);
             }),
 
             ex =>
@@ -559,6 +559,7 @@ namespace Toggl.Phoebe.Reactive
         {
             var dataStore = ServiceContainer.Resolve<ISyncDataStore>();
             dataStore.WipeTables();
+            dataStore.ResetQueue(SyncManager.QueueId);
 
             // Clear platform settings.
             Settings.SerializedSettings = string.Empty;

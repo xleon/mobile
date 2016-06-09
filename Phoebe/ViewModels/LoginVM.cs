@@ -32,7 +32,6 @@ namespace Toggl.Phoebe.ViewModels
         {
             // Set initia state.
             AuthResult = AuthResult.None;
-            IsAuthenticated = false;
             IsAuthenticating = false;
             CurrentLoginMode = LoginMode.Login;
 
@@ -44,7 +43,6 @@ namespace Toggl.Phoebe.ViewModels
                            .SubscribeSimple(reqInfo =>
             {
                 AuthResult = reqInfo.AuthResult;
-                IsAuthenticating = reqInfo.Running.Any(x => x is ServerRequest.Authenticate);
             });
         }
 
@@ -57,8 +55,6 @@ namespace Toggl.Phoebe.ViewModels
         #region Properties for ViewModel binding
 
         public bool IsAuthenticating { get; private set; }
-
-        public bool IsAuthenticated { get; private set; }
 
         public LoginMode CurrentLoginMode { get; private set; }
 
@@ -80,8 +76,6 @@ namespace Toggl.Phoebe.ViewModels
 
         public void TryLogin(string email, string password)
         {
-            if (IsAuthenticating) return;
-
             if (CurrentLoginMode == LoginMode.Login)
             {
                 RxChain.Send(new DataMsg.ResetState()); //TODO: Ask permission to delete data, if any
@@ -95,8 +89,6 @@ namespace Toggl.Phoebe.ViewModels
 
         public void TryLoginWithGoogle(string token)
         {
-            if (IsAuthenticating) return;
-
             if (CurrentLoginMode == LoginMode.Login)
             {
                 RxChain.Send(new DataMsg.ResetState()); //TODO: Ask permission to delete data, if any
@@ -119,6 +111,10 @@ namespace Toggl.Phoebe.ViewModels
             return (pass ?? "").Length >= 6;
         }
 
+        public void SetAuthentincating(bool isAuth)
+        {
+            IsAuthenticating = isAuth;
+        }
         #endregion
     }
 }

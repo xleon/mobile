@@ -447,6 +447,7 @@
     <Compile Include="Misc\StringExtensions.cs" />
     <Compile Include="ViewControllers\MigrationViewController.cs" />
     <Compile Include="Misc\UIExtensions.cs" />
+    <Compile Include="ViewControllers\AutocompleteViewController.cs" />
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>

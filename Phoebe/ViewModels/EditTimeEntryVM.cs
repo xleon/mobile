@@ -31,44 +31,65 @@ namespace Toggl.Phoebe.ViewModels
         private RichTimeEntry previousData;
         private event EventHandler<string> DescriptionChanged;
 
-        public EditTimeEntryVM(AppState appState, Guid timeEntryId)
+        public static EditTimeEntryVM ForManualAddition(AppState appState)
         {
-            IsManual = timeEntryId == Guid.Empty;
+            return new EditTimeEntryVM(appState);
+        }
 
-            if (IsManual)
+        public static EditTimeEntryVM ForExistingTimeEntry(AppState appState, Guid timeEntryId)
+        {
+            if (timeEntryId == Guid.Empty)
             {
-                richData = new RichTimeEntry(appState.GetTimeEntryDraft(), appState);
-                UpdateView(x =>
-                {
-                    x.Tags = new List<string>(richData.Data.Tags);
-                    x.StartTime = Time.UtcNow.AddMinutes(-5);
-                    x.StopTime = Time.UtcNow;
-                    x.State = TimeEntryState.Finished;
-                });
-                previousData = new RichTimeEntry(richData.Data.With(x => x.Tags = new List<string>()), appState);
-            }
-            else
-            {
-                richData = appState.TimeEntries[timeEntryId];
-                previousData = new RichTimeEntry(richData.Data, richData.Info);
-                // TODO Rx First ugly code or patch from
-                // Unidirectional era. Why the DistinctUntilChanged doesn't
-                // work correctly? We should manage RemoteId-LocalId in
-                // a better way.
-                subscriptionState = StoreManager
-                                    .Singleton
-                                    .Observe()
-                                    .Where(x => x.State.TimeEntries.ContainsKey(timeEntryId))
-                                    .Select(x => x.State.TimeEntries[timeEntryId])
-                                    .DistinctUntilChanged(x => x.Data.RemoteId)
-                                    .ObserveOn(SynchronizationContext.Current)
-                                    .Subscribe(syncedRichData =>
-                {
-                    if (!richData.Data.RemoteId.HasValue && syncedRichData.Data.RemoteId.HasValue)
-                        richData = syncedRichData;
-                });
+                throw new Exception($"Do not create {nameof(EditTimeEntryVM)} with Guid.Empty. Use {nameof(ForManualAddition)} instead.");
             }
 
+            return new EditTimeEntryVM(appState, timeEntryId);
+        }
+
+        private EditTimeEntryVM(AppState appState)
+        {
+            IsManual = true;
+
+            richData = new RichTimeEntry(appState.GetTimeEntryDraft(), appState);
+            UpdateView(x =>
+            {
+                var now = Time.UtcNow;
+                x.Tags = new List<string>(richData.Data.Tags);
+                x.StartTime = now;
+                x.StopTime = now;
+                x.State = TimeEntryState.Finished;
+            });
+            previousData = new RichTimeEntry(richData.Data.With(x => x.Tags = new List<string>()), appState);
+
+            finishInit();
+        }
+
+        private EditTimeEntryVM(AppState appState, Guid timeEntryId)
+        {
+            richData = appState.TimeEntries[timeEntryId];
+            previousData = new RichTimeEntry(richData.Data, richData.Info);
+            // TODO Rx First ugly code or patch from
+            // Unidirectional era. Why the DistinctUntilChanged doesn't
+            // work correctly? We should manage RemoteId-LocalId in
+            // a better way.
+            subscriptionState = StoreManager
+                                .Singleton
+                                .Observe()
+                                .Where(x => x.State.TimeEntries.ContainsKey(timeEntryId))
+                                .Select(x => x.State.TimeEntries[timeEntryId])
+                                .DistinctUntilChanged(x => x.Data.RemoteId)
+                                .ObserveOn(SynchronizationContext.Current)
+                                .Subscribe(syncedRichData =>
+            {
+                if (!richData.Data.RemoteId.HasValue && syncedRichData.Data.RemoteId.HasValue)
+                    richData = syncedRichData;
+            });
+
+            finishInit();
+        }
+
+        private void finishInit()
+        {
             subscriptionTimer = Observable.Timer(TimeSpan.FromMilliseconds(1000 - Time.Now.Millisecond),
                                                  TimeSpan.FromSeconds(1))
                                 .ObserveOn(SynchronizationContext.Current)
@@ -81,7 +102,7 @@ namespace Toggl.Phoebe.ViewModels
             .ObserveOn(SynchronizationContext.Current)
             .Subscribe(async desc => await SuggestEntries(desc));
 
-            ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Edit Time Entry";
+            ServiceContainer.Resolve<ITracker>().CurrentScreen = "Edit Time Entry";
         }
 
 
@@ -106,7 +127,7 @@ namespace Toggl.Phoebe.ViewModels
         }
 
         #region viewModel State properties
-        public bool IsManual { get; private set; }
+        public bool IsManual { get; }
 
         public string Duration
         {
@@ -201,7 +222,7 @@ namespace Toggl.Phoebe.ViewModels
 
         public void ChangeTimeEntryDuration(TimeSpan newDuration)
         {
-            UpdateView(x => x.SetDuration(newDuration), nameof(Duration), nameof(StartDate), nameof(StopDate));
+            UpdateView(x => x.SetDuration(newDuration, IsManual), nameof(Duration), nameof(StartDate), nameof(StopDate));
             ServiceContainer.Resolve<ITracker> ().CurrentScreen = "Change Duration";
         }
 
@@ -261,7 +282,7 @@ namespace Toggl.Phoebe.ViewModels
             {
                 // Check start and stop times
                 var isStartStopTimeCorrect =
-                    !richData.Data.StopTime.HasValue || richData.Data.StartTime < richData.Data.StopTime.Value;
+                    !richData.Data.StopTime.HasValue || richData.Data.StartTime <= richData.Data.StopTime.Value;
 
                 if (isStartStopTimeCorrect)
                 {

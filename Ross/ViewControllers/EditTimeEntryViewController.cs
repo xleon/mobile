@@ -62,9 +62,28 @@ namespace Toggl.Ross.ViewControllers
 
         protected EditTimeEntryVM ViewModel { get; set; }
 
-        public EditTimeEntryViewController(Guid dataId)
+        public Guid WorkspaceId => ViewModel.WorkspaceId;
+        public DateTime StartDate => ViewModel.StartDate;
+        public DateTime StopDate => ViewModel.StopDate;
+
+        private EditTimeEntryViewController(EditTimeEntryVM vm)
         {
-            ViewModel = new EditTimeEntryVM(StoreManager.Singleton.AppState, dataId);
+            ViewModel = vm;
+        }
+
+        public static EditTimeEntryViewController ForManualAddition()
+        {
+            return new EditTimeEntryViewController(EditTimeEntryVM.ForManualAddition(StoreManager.Singleton.AppState));
+        }
+
+        public static EditTimeEntryViewController ForExistingEntry(Guid id)
+        {
+            if (id == Guid.Empty)
+            {
+                throw new Exception("Do not open edit view with guid.empty.");
+            }
+
+            return new EditTimeEntryViewController(EditTimeEntryVM.ForExistingTimeEntry(StoreManager.Singleton.AppState, id));
         }
 
         class TGTableView : UITableView
@@ -406,19 +425,13 @@ namespace Toggl.Ross.ViewControllers
 
         private void OnProjectButtonTouchUpInside(object sender, EventArgs e)
         {
-            var controller = new ProjectSelectionViewController(ViewModel.WorkspaceId, this);
+            var controller = new ProjectSelectionViewController(this);
             NavigationController.PushViewController(controller, true);
         }
 
         private void OnDurationButtonTouchUpInside(object sender, EventArgs e)
         {
-            // TODO: This condition is valid or not?
-            if (ViewModel.IsRunning)
-            {
-                return;
-            }
-
-            var controller = new DurationChangeViewController(ViewModel.StopDate, ViewModel.StartDate, this);
+            var controller = new DurationChangeViewController(this);
             NavigationController.PushViewController(controller, true);
         }
 

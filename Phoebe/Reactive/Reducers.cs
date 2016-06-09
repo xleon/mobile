@@ -316,7 +316,8 @@ namespace Toggl.Phoebe.Reactive
                 ctx.Put(entryData);
             });
             return DataSyncMsg.Create(updated, state.With(timeEntries: state.UpdateTimeEntries(updated),
-                                      tags: state.Update(state.Tags, updated)));
+                                      tags: state.Update(state.Tags, updated),
+                                      settings: state.Settings.With(showWelcome: false)));
         }
 
         static DataSyncMsg<AppState> TimeEntryRemove(AppState state, DataMsg msg)

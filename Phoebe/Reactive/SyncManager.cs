@@ -795,7 +795,7 @@ namespace Toggl.Phoebe.Reactive
         {
             long? res = null;
             // Check first if we already received the RemoteId in the previous messages
-            var d = remoteObjects.SingleOrDefault(x => x.Id == localId);
+            var d = remoteObjects.FirstOrDefault(x => x.Id == localId);
             if (d != null)
             {
                 res = d.RemoteId;
@@ -851,7 +851,7 @@ namespace Toggl.Phoebe.Reactive
             if (!res.HasValue)
             {
                 // Wait for state update
-                throw new RemoteIdException($"RemoteId missing: {typ.Name} - {localId}");
+                throw new RemoteIdException($"RemoteId missing for: {typ.Name}");
             }
             return res.Value;
         }

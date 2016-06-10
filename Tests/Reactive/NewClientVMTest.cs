@@ -43,12 +43,12 @@ namespace Toggl.Phoebe.Tests.Reactive
         }
 
         [Test]
-        public async Task TestSaveClient()
+        public void TestSaveClient()
         {
             var name = "MyClient";
             networkSwitcher.SetNetworkConnection(false);
 
-            IClientData client = await viewModel.SaveClientAsync(name);
+            IClientData client = viewModel.SaveClientAsync(name).Result;
 
             Assert.That(client = StoreManager.Singleton.AppState.Clients.Values.SingleOrDefault(
                                      x => x.WorkspaceId == Util.WorkspaceId && x.Name == name), Is.Not.Null);

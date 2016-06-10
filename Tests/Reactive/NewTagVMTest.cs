@@ -43,12 +43,12 @@ namespace Toggl.Phoebe.Tests.Reactive
         }
 
         [Test]
-        public async Task TestSaveTag()
+        public void TestSaveTag()
         {
             var name = "MyTag";
             networkSwitcher.SetNetworkConnection(false);
 
-            ITagData tag =  await viewModel.SaveTagAsync(name);
+            ITagData tag =  viewModel.SaveTagAsync(name).Result;
             Assert.That(tag = StoreManager.Singleton.AppState.Tags.Values.SingleOrDefault(
                                   x => x.WorkspaceId == Util.WorkspaceId && x.Name == name), Is.Not.Null);
 

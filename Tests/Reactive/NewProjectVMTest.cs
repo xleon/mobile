@@ -43,14 +43,13 @@ namespace Toggl.Phoebe.Tests.Reactive
         }
 
         [Test]
-        public async Task TestSaveProject()
+        public void TestSaveProject()
         {
             var pcolor = 2;
             var pname = "MyProject";
-            var tcs = Util.CreateTask<bool> ();
             networkSwitcher.SetNetworkConnection(false);
 
-            IProjectData project  = await viewModel.SaveProjectAsync(pname, pcolor);
+            IProjectData project  = viewModel.SaveProjectAsync(pname, pcolor).Result;
 
             Assert.That(project = StoreManager.Singleton.AppState.Projects.Values.SingleOrDefault(
                                       x => x.WorkspaceId == Util.WorkspaceId && x.Name == pname && x.Color == pcolor), Is.Not.Null);
@@ -62,7 +61,7 @@ namespace Toggl.Phoebe.Tests.Reactive
 
 
         [Test]
-        public async Task TestSetClient()
+        public void TestSetClient()
         {
             var pcolor = 5;
             var pname = "MyProject2";
@@ -71,7 +70,7 @@ namespace Toggl.Phoebe.Tests.Reactive
 
             viewModel.SetClient(client);
 
-            var projectData = await viewModel.SaveProjectAsync(pname, pcolor);
+            var projectData = viewModel.SaveProjectAsync(pname, pcolor).Result;
 
             Assert.That(StoreManager.Singleton.AppState.Projects.Values.SingleOrDefault(
                             x => x.Name == pname && x.ClientId == client.Id), Is.Not.Null);

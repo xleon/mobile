@@ -4,8 +4,6 @@
 <dict>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
-	<key>MinimumOSVersion</key>
-	<string>8.0</string>
 	<key>UIDeviceFamily</key>
 	<array>
 		<integer>1</integer>
@@ -23,7 +21,7 @@
 	<key>CFBundleIdentifier</key>
 	<string>com.toggl.timer</string>
 	<key>CFBundleShortVersionString</key>
-	<string>7.1.6</string>
+	<string>7.1.6.1</string>
 	<key>UIPrerenderedIcon</key>
 	<true/>
 	<key>XSAppIconAssets</key>
@@ -65,5 +63,7 @@
 	</array>
 	<key>CFBundleName</key>
 	<string>Toggl Timer</string>
+	<key>MinimumOSVersion</key>
+	<string>7.0</string>
 </dict>
 </plist>

@@ -11,26 +11,32 @@ namespace Toggl.Phoebe.Reactive
     {
         public class Continuation
         {
-            readonly Action<AppState, IEnumerable<ICommonData>, IEnumerable<SyncManager.QueueItem>> _testCont;
-            readonly Action<AppState> _cont;
-            public bool LocalOnly { get; private set; }
+            readonly Action<AppState, IEnumerable<ICommonData>, IEnumerable<SyncManager.QueueItem>> remoteCont;
+            readonly Action<AppState> localCont;
 
-            public Continuation(Action<AppState> cont)
+            public bool? IsConnected { get; private set; } = null;
+
+            public bool LocalOnly
             {
-                _cont = cont;
-                LocalOnly = true;
+                get { return this.localCont != null; }
             }
 
-            public Continuation(Action<AppState, IEnumerable<ICommonData>, IEnumerable<SyncManager.QueueItem>> cont)
+            public Continuation(Action<AppState> localCont)
             {
-                _testCont = cont;
-                LocalOnly = false;
+                this.localCont = localCont;
+            }
+
+            public Continuation(Action<AppState, IEnumerable<ICommonData>, IEnumerable<SyncManager.QueueItem>> remoteCont = null,
+                               bool? isConnected = null)
+            {
+                this.remoteCont = remoteCont;
+                this.IsConnected = isConnected;
             }
 
             public void Invoke(AppState state, IEnumerable<ICommonData> remoteObjects, IEnumerable<SyncManager.QueueItem> enqueuedItems) =>
-            safeInvoke(() => _testCont(state, remoteObjects, enqueuedItems));
+            safeInvoke(() => remoteCont(state, remoteObjects, enqueuedItems));
 
-            public void Invoke(AppState state) => safeInvoke(() => _cont(state));
+            public void Invoke(AppState state) => safeInvoke(() => localCont(state));
 
             private void safeInvoke(Action f)
             {

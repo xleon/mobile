@@ -174,8 +174,10 @@ namespace Toggl.Phoebe.Reactive
         {
             var remoteObjects = new List<CommonData> ();
             var enqueuedItems = new List<QueueItem> ();
-            var isConnected = networkPresence.IsNetworkPresent;
             var dataStore = ServiceContainer.Resolve<ISyncDataStore>();
+            var isConnected = syncMsg.Continuation != null && syncMsg.Continuation.IsConnected.HasValue
+                                     ? syncMsg.Continuation.IsConnected.Value
+                                     : networkPresence.IsNetworkPresent;
 
             try
             {

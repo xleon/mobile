@@ -38,7 +38,9 @@ namespace Toggl.Phoebe.Tests.Reactive
         public override void SetUp()
         {
             base.SetUp();
-            togglClient.ReceivedItems.Clear();
+
+            // Don't clean the ReceivedItems as this may conflict with tests running in parallel
+            //togglClient.ReceivedItems.Clear();
         }
 
         [Test]
@@ -46,9 +48,9 @@ namespace Toggl.Phoebe.Tests.Reactive
         {
             var tcs = Util.CreateTask<bool> ();
             var te = Util.CreateTimeEntryData(DateTime.Now);
-            networkSwitcher.SetNetworkConnection(false);
 
-            RxChain.Send(new DataMsg.TimeEntryPut(te), new RxChain.Continuation((_, sent, queued) =>
+            RxChain.Send(new DataMsg.TimeEntryPut(te),
+                         new RxChain.Continuation(isConnected: false, remoteCont: (_, sent, queued) =>
             {
                 try
                 {
@@ -71,10 +73,9 @@ namespace Toggl.Phoebe.Tests.Reactive
         {
             var tcs = Util.CreateTask<bool> ();
             var te = Util.CreateTimeEntryData(DateTime.Now);
-            networkSwitcher.SetNetworkConnection(true);
 
-            RxChain.Send(
-                new DataMsg.TimeEntryPut(te), new RxChain.Continuation((_, sent, queued) =>
+            RxChain.Send(new DataMsg.TimeEntryPut(te),
+                         new RxChain.Continuation(isConnected: true, remoteCont: (_, sent, queued) =>
             {
                 try
                 {
@@ -100,8 +101,8 @@ namespace Toggl.Phoebe.Tests.Reactive
             var te = Util.CreateTimeEntryData(DateTime.Now);
             var te2 = Util.CreateTimeEntryData(DateTime.Now + TimeSpan.FromMinutes(5));
 
-            networkSwitcher.SetNetworkConnection(false);
-            RxChain.Send(new DataMsg.TimeEntryPut(te), new RxChain.Continuation((_, sent, queued) =>
+            RxChain.Send(new DataMsg.TimeEntryPut(te),
+                         new RxChain.Continuation(isConnected: false, remoteCont: (_, sent, queued) =>
             {
                 try
                 {
@@ -118,8 +119,8 @@ namespace Toggl.Phoebe.Tests.Reactive
 
             tcs1.Task.Wait();
 
-            networkSwitcher.SetNetworkConnection(true);
-            RxChain.Send(new DataMsg.TimeEntryPut(te2), new RxChain.Continuation((_, sent, queued) =>
+            RxChain.Send(new DataMsg.TimeEntryPut(te2),
+                         new RxChain.Continuation(isConnected: true, remoteCont: (_, sent, queued) =>
             {
                 try
                 {
@@ -143,14 +144,14 @@ namespace Toggl.Phoebe.Tests.Reactive
             var tcs = Util.CreateTask<bool>();
             var te = Util.CreateTimeEntryData(DateTime.Now);
 
-            networkSwitcher.SetNetworkConnection(false);
+            RxChain.Send(new DataMsg.TimeEntryPut(te),
+                         new RxChain.Continuation(isConnected: false));
 
-            RxChain.Send(new DataMsg.TimeEntryPut(te));
+            RxChain.Send(new DataMsg.TimeEntriesRemove(te),
+                         new RxChain.Continuation(isConnected: false));
 
-            RxChain.Send(new DataMsg.TimeEntriesRemove(te));
-
-            networkSwitcher.SetNetworkConnection(true);
-            RxChain.Send(new ServerRequest.GetChanges(), new RxChain.Continuation((_, sent, queued) =>
+            RxChain.Send(new ServerRequest.GetChanges(),
+                         new RxChain.Continuation(isConnected: true, remoteCont: (_, sent, queued) =>
             {
                 try
                 {
@@ -178,12 +179,17 @@ namespace Toggl.Phoebe.Tests.Reactive
             var te1 = Util.CreateTimeEntryData(DateTime.Now.AddHours(-1));
             var te2 = Util.CreateTimeEntryData(DateTime.Now);
 
-            networkSwitcher.SetNetworkConnection(false);
-
-            RxChain.Send(new DataMsg.TimeEntryPut(te1));
-            RxChain.Send(new DataMsg.TimeEntryPut(te1.With(x => x.Description = "desc1")));
-            RxChain.Send(new DataMsg.TimeEntryPut(te2));
-            RxChain.Send(new DataMsg.TimeEntriesRemove(te1), new RxChain.Continuation((_, sent, queued) =>
+            RxChain.Send(new DataMsg.TimeEntryPut(te1),
+                         new RxChain.Continuation(isConnected: false));
+            
+            RxChain.Send(new DataMsg.TimeEntryPut(te1.With(x => x.Description = "desc1")),
+                         new RxChain.Continuation(isConnected: false));
+            
+            RxChain.Send(new DataMsg.TimeEntryPut(te2),
+                         new RxChain.Continuation(isConnected: false));
+            
+            RxChain.Send(new DataMsg.TimeEntriesRemove(te1),
+                         new RxChain.Continuation(isConnected: false, remoteCont: (_, sent, queued) =>
             {
                 try
                 {
@@ -199,8 +205,8 @@ namespace Toggl.Phoebe.Tests.Reactive
 
             tcs1.Task.Wait();
 
-            networkSwitcher.SetNetworkConnection(true);
-            RxChain.Send(new ServerRequest.GetChanges(), new RxChain.Continuation((_, sent, queued) =>
+            RxChain.Send(new ServerRequest.GetChanges(),
+                         new RxChain.Continuation(isConnected: true, remoteCont: (_, sent, queued) =>
             {
                 try
                 {
@@ -223,20 +229,23 @@ namespace Toggl.Phoebe.Tests.Reactive
         public void TestCreateNewCommonData()
         {
             // Set network as connected.
-            networkSwitcher.SetNetworkConnection(true);
             var mapper = new JsonMapper();
             var tcs = Util.CreateTask<bool> ();
             var te = Util.CreateTimeEntryData(DateTime.Now);
 
-            networkSwitcher.SetNetworkConnection(true);
-            RxChain.Send(new DataMsg.TimeEntryPut(te), new RxChain.Continuation((_, sent, queued) =>
+            RxChain.Send(new DataMsg.TimeEntryPut(te),
+                         new RxChain.Continuation(isConnected: true, remoteCont: (_, sent, queued) =>
             {
                 try
                 {
-                    var commonData = togglClient.ReceivedItems.FirstOrDefault();
+                    var commonData = togglClient.ReceivedItems.FirstOrDefault(x =>
+                    {
+                        var x2 = x as TimeEntryJson;
+                        return x2 != null && x2.Description == te.Description;
+                    });
                     var remoteTe = mapper.Map<TimeEntryData> (commonData);
 
-                    Assert.That(remoteTe.Description, Is.EqualTo(te.Description));
+                    Assert.That(remoteTe, Is.Not.Null);
                     Assert.That(remoteTe.RemoteId, Is.Not.Null);
 
                     var dataStore = ServiceContainer.Resolve<ISyncDataStore> ();

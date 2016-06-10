@@ -67,7 +67,6 @@ namespace Toggl.Phoebe.Tests.Reactive
             var pcolor = 5;
             var pname = "MyProject2";
             var client = ClientData.Create(x => x.Name = "MyClient");
-            var tcs = Util.CreateTask<bool> ();
             networkSwitcher.SetNetworkConnection(false);
 
             viewModel.SetClient(client);

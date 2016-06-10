@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using NUnit.Framework;
@@ -43,6 +44,18 @@ namespace Toggl.Phoebe.Tests.Reactive
             //togglClient.ReceivedItems.Clear();
         }
 
+        bool checkMessages(IEnumerable<ICommonData> msgs, Func<ITimeEntryData, bool> predicate)
+        {
+            foreach (var msg in msgs)
+            {
+                var x = msg as ITimeEntryData;
+                if (x != null)
+                    if (predicate(x))
+                        return true;
+            }
+            return false;
+        }
+
         [Test]
         public void TestSendMessageWithoutConnection()
         {
@@ -80,8 +93,8 @@ namespace Toggl.Phoebe.Tests.Reactive
                 try
                 {
                     // As there's connection, message should have been sent
-                    Assert.That(queued.Any(x => x.Data.Id == te.Id), Is.False);
-                    Assert.That(1, Is.EqualTo(sent.Count()));
+                    Assert.False(queued.Any(x => x.Data.Id == te.Id));
+                    Assert.True(sent.Any(x => x.Id == te.Id));
                     tcs.SetResult(true);
                 }
                 catch (Exception ex)
@@ -107,7 +120,7 @@ namespace Toggl.Phoebe.Tests.Reactive
                 try
                 {
                     // As there's no connection, message should have been enqueued
-                    Assert.That(queued.Any(x => x.Data.Id == te.Id), Is.True);
+                    Assert.True(queued.Any(x => x.Data.Id == te.Id));
                     Assert.That(0, Is.EqualTo(sent.Count()));
                     tcs1.SetResult(true);
                 }
@@ -125,7 +138,7 @@ namespace Toggl.Phoebe.Tests.Reactive
                 try
                 {
                     // As there's connection, messages should have been sent
-                    Assert.That(queued.Any(x => x.Data.Id == te.Id || x.Data.Id == te2.Id), Is.False);
+                    Assert.False(queued.Any(x => x.Data.Id == te.Id || x.Data.Id == te2.Id));
                     Assert.That(sent.Count() > 0, Is.True);
                     tcs2.SetResult(true);
                 }
@@ -213,7 +226,8 @@ namespace Toggl.Phoebe.Tests.Reactive
                     // As there's connection, queue should be empty
                     Assert.That(queued.Count(), Is.EqualTo(0));
                     // As te1 was deleted, only te2 should remain as sent
-                    Assert.That(sent.Count(), Is.EqualTo(1));
+                    Assert.False(checkMessages(sent, x => x.Description == te1.Description));
+                    Assert.True(checkMessages(sent, x => x.Description == te2.Description));
                     tcs2.SetResult(true);
                 }
                 catch (Exception ex)
@@ -230,37 +244,22 @@ namespace Toggl.Phoebe.Tests.Reactive
         {
             // Set network as connected.
             var mapper = new JsonMapper();
-            var tcs = Util.CreateTask<bool> ();
             var te = Util.CreateTimeEntryData(DateTime.Now);
 
             RxChain.Send(new DataMsg.TimeEntryPut(te),
                          new RxChain.Continuation(isConnected: true, remoteCont: (_, sent, queued) =>
             {
-                try
-                {
-                    var commonData = togglClient.ReceivedItems.FirstOrDefault(x =>
-                    {
-                        var x2 = x as TimeEntryJson;
-                        return x2 != null && x2.Description == te.Description;
-                    });
-                    var remoteTe = mapper.Map<TimeEntryData> (commonData);
+                var commonData = sent.Single();
+                var remoteTe = mapper.Map<TimeEntryData> (commonData);
 
-                    Assert.That(remoteTe, Is.Not.Null);
-                    Assert.That(remoteTe.RemoteId, Is.Not.Null);
+                Assert.That(remoteTe.Description, Is.EqualTo(te.Description));
+                Assert.That(remoteTe.RemoteId, Is.Not.Null);
 
-                    var dataStore = ServiceContainer.Resolve<ISyncDataStore> ();
-                    // Check item has been correctly saved in database
-                    Assert.That(dataStore.Table<TimeEntryData> ()
-                                .SingleOrDefault(x => x.Id == te.Id), Is.Not.Null);
-                    tcs.SetResult(true);
-                }
-                catch (Exception ex)
-                {
-                    tcs.SetException(ex);
-                }
+                var dataStore = ServiceContainer.Resolve<ISyncDataStore> ();
+                // Check item has been correctly saved in database
+                Assert.That(dataStore.Table<TimeEntryData> ()
+                            .SingleOrDefault(x => x.Id == te.Id), Is.Not.Null);
             }));
-
-            tcs.Task.Wait();
         }
     }
 }

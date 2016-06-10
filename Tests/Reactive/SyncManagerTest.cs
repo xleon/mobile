@@ -42,7 +42,7 @@ namespace Toggl.Phoebe.Tests.Reactive
         }
 
         [Test]
-        public async Task TestSendMessageWithoutConnection()
+        public void TestSendMessageWithoutConnection()
         {
             var tcs = Util.CreateTask<bool> ();
             var te = Util.CreateTimeEntryData(DateTime.Now);
@@ -63,11 +63,11 @@ namespace Toggl.Phoebe.Tests.Reactive
                 }
             }));
 
-            await tcs.Task;
+            tcs.Task.Wait();
         }
 
         [Test]
-        public async Task TestSendMessageWithConnection()
+        public void TestSendMessageWithConnection()
         {
             var tcs = Util.CreateTask<bool> ();
             var te = Util.CreateTimeEntryData(DateTime.Now);
@@ -89,11 +89,11 @@ namespace Toggl.Phoebe.Tests.Reactive
                 }
             }));
 
-            await tcs.Task;
+            tcs.Task.Wait();
         }
 
         [Test]
-        public async Task TestTrySendMessageAndReconnect()
+        public void TestTrySendMessageAndReconnect()
         {
             var tcs1 = Util.CreateTask<bool> ();
             var tcs2 = Util.CreateTask<bool> ();
@@ -116,7 +116,7 @@ namespace Toggl.Phoebe.Tests.Reactive
                 }
             }));
 
-            await tcs1.Task;
+            tcs1.Task.Wait();
 
             networkSwitcher.SetNetworkConnection(true);
             RxChain.Send(new DataMsg.TimeEntryPut(te2), new RxChain.Continuation((_, sent, queued) =>
@@ -134,11 +134,11 @@ namespace Toggl.Phoebe.Tests.Reactive
                 }
             }));
 
-            await tcs2.Task;
+            tcs2.Task.Wait();
         }
 
         [Test]
-        public async Task TestCreateEntryOfflineDeleteAndReconnect()
+        public void TestCreateEntryOfflineDeleteAndReconnect()
         {
             var tcs = Util.CreateTask<bool>();
             var te = Util.CreateTimeEntryData(DateTime.Now);
@@ -167,11 +167,11 @@ namespace Toggl.Phoebe.Tests.Reactive
                 }
             }));
 
-            await tcs.Task;
+            tcs.Task.Wait();
         }
 
         [Test]
-        public async Task TestQueueWithMultipleValues()
+        public void TestQueueWithMultipleValues()
         {
             var tcs1 = Util.CreateTask<bool>();
             var tcs2 = Util.CreateTask<bool>();
@@ -197,7 +197,7 @@ namespace Toggl.Phoebe.Tests.Reactive
                 }
             }));
 
-            await tcs1.Task;
+            tcs1.Task.Wait();
 
             networkSwitcher.SetNetworkConnection(true);
             RxChain.Send(new ServerRequest.GetChanges(), new RxChain.Continuation((_, sent, queued) =>
@@ -216,11 +216,11 @@ namespace Toggl.Phoebe.Tests.Reactive
                 }
             }));
 
-            await tcs2.Task;
+            tcs2.Task.Wait();
         }
 
         [Test]
-        public async Task TestCreateNewCommonData()
+        public void TestCreateNewCommonData()
         {
             // Set network as connected.
             networkSwitcher.SetNetworkConnection(true);
@@ -250,7 +250,8 @@ namespace Toggl.Phoebe.Tests.Reactive
                     tcs.SetException(ex);
                 }
             }));
-            await tcs.Task;
+
+            tcs.Task.Wait();
         }
     }
 }

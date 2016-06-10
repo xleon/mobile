@@ -243,7 +243,7 @@ namespace Toggl.Phoebe.Reactive
             string json = null;
             List<string> conflicting = new List<string>();
 
-            if (dataStore.TryPeekQueue(QueueId, out json))
+            if (dataStore.TryPeek(QueueId, out json))
             {
                 if (isConnected)
                 {
@@ -274,7 +274,7 @@ namespace Toggl.Phoebe.Reactive
                                 throw;
                             }
                         }
-                        while (dataStore.TryPeekQueue(QueueId, out json));
+                        while (dataStore.TryPeek(QueueId, out json));
 
                         // Put back in the queue conflicting items (if any)
                         foreach (var conflict in conflicting)

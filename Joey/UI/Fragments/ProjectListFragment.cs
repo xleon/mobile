@@ -94,7 +94,7 @@ namespace Toggl.Joey.UI.Fragments
             base.OnViewCreated(view, savedInstanceState);
             viewModel = new ProjectListVM(Phoebe.Reactive.StoreManager.Singleton.AppState, WorkspaceId);
 
-            var adapter = new ProjectListAdapter(recyclerView, viewModel.ProjectList);
+            var adapter = new ProjectListAdapter(recyclerView, viewModel);
             adapter.HandleItemSelection = OnItemSelected;
             recyclerView.SetAdapter(adapter);
 
@@ -158,7 +158,7 @@ namespace Toggl.Joey.UI.Fragments
 
             if (m is ProjectData)
             {
-                if (!((ProjectsCollectionVM.SuperProjectData)m).IsEmpty)
+                if (!(m is ProjectsCollectionVM.SuperProjectData && ((ProjectsCollectionVM.SuperProjectData)m).IsEmpty))
                 {
                     projectId = m.Id;
                 }
@@ -169,7 +169,6 @@ namespace Toggl.Joey.UI.Fragments
                 projectId = task.ProjectId;
                 taskId = task.Id;
             }
-
             // Return selected data inside the
             // intent.
             var resultIntent = new Intent();

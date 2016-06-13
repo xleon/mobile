@@ -79,7 +79,9 @@ namespace Toggl.Phoebe.ViewModels
                                 .Subscribe(syncedRichData =>
             {
                 if (!richData.Data.RemoteId.HasValue && syncedRichData.Data.RemoteId.HasValue)
-                    richData = syncedRichData;
+                {
+                    UpdateView(x => x.RemoteId = syncedRichData.Data.RemoteId);
+                }
             });
 
             finishInit();

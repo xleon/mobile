@@ -52,7 +52,14 @@ namespace Toggl.Ross.ViewControllers
                 Image.IconNav.ImageWithRenderingMode(UIImageRenderingMode.AlwaysOriginal),
                 UIBarButtonItemStyle.Plain, OnNavigationBtnPressed);
 
-            tableView = new UITableView(View.Frame, UITableViewStyle.Plain);
+
+            var heightOfTopBars = (float)(NavigationController.NavigationBar.Bounds.Height
+                                          + UIApplication.SharedApplication.StatusBarFrame.Height);
+
+            var tableFrame = View.Frame;
+            tableFrame.Height -= heightOfTopBars;
+
+            tableView = new UITableView(tableFrame, UITableViewStyle.Plain);
             Add(tableView);
 
             statusView = new StatusView

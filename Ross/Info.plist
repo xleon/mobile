@@ -64,6 +64,6 @@
 	<key>CFBundleName</key>
 	<string>Toggl Timer</string>
 	<key>MinimumOSVersion</key>
-	<string>7.1</string>
+	<string>8.0</string>
 </dict>
 </plist>

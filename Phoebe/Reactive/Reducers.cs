@@ -317,7 +317,7 @@ namespace Toggl.Phoebe.Reactive
                 // with this Id yet, be sure we create a fresh entry
                 // with state = CreatePending.
                 var existing = ctx.Connection.Table<TimeEntryData>().FirstOrDefault(x => x.Id == entryData.Id);
-                if (existing == null && existing.SyncState == SyncState.UpdatePending)
+                if (existing == null && entryData.SyncState == SyncState.UpdatePending)
                     entryData = TimeEntryData.Create(null, entryData);
 
                 // TODO: Entry sanity check

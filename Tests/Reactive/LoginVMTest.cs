@@ -37,9 +37,6 @@ namespace Toggl.Phoebe.Tests.Reactive
         public override void SetUp()
         {
             base.SetUp();
-            // TODO Rx why we need to re-define the sync context.
-            SynchronizationContext.SetSynchronizationContext(new MainThreadSynchronizationContext());
-
             var initState = Util.GetInitAppState();
             RxChain.Init(initState);
             viewModel = new LoginVM();

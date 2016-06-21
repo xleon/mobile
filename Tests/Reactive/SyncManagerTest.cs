@@ -41,6 +41,16 @@ namespace Toggl.Phoebe.Tests.Reactive
             togglClient.ReceivedItems.Clear();
         }
 
+        [TearDown]
+        public override void TearDown()
+        {
+            base.TearDown();
+            networkSwitcher.SetNetworkConnection(true);
+            var db = ServiceContainer.Resolve<ISyncDataStore> ();
+            db.WipeTables();
+            db.ResetQueue("SYNC_OUT");
+        }
+
         [Test]
         public async Task TestSendMessageWithoutConnection()
         {

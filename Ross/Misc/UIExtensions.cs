@@ -13,6 +13,13 @@ namespace Toggl.Ross
                 .ToArray(),
                 animated);
         }
+
+        public static void PopViewControllers(this UINavigationController controller, bool animated, int count)
+        {
+            var vcs = controller.ViewControllers;
+
+            controller.SetViewControllers(vcs.Take(vcs.Length - count).ToArray(), animated);
+        }
     }
 }
 

@@ -312,11 +312,20 @@ namespace Toggl.Phoebe.Reactive
                         }
                     }
                 }
+
+                // ATTENTION If the AppState doesn't contains the entry
+                // with this Id yet, be sure we create a fresh entry
+                // with state = CreatePending.
+                var existing = ctx.Connection.Table<TimeEntryData>().FirstOrDefault(x => x.Id == entryData.Id);
+                if (existing == null && entryData.SyncState == SyncState.UpdatePending)
+                    entryData = TimeEntryData.Create(null, entryData);
+
                 // TODO: Entry sanity check
                 ctx.Put(entryData);
             });
             return DataSyncMsg.Create(updated, state.With(timeEntries: state.UpdateTimeEntries(updated),
-                                      tags: state.Update(state.Tags, updated)));
+                                      tags: state.Update(state.Tags, updated),
+                                      settings: state.Settings.With(showWelcome: false)));
         }
 
         static DataSyncMsg<AppState> TimeEntryRemove(AppState state, DataMsg msg)

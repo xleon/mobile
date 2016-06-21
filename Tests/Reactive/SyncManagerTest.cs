@@ -45,10 +45,10 @@ namespace Toggl.Phoebe.Tests.Reactive
         public override void TearDown()
         {
             base.TearDown();
-            networkSwitcher.SetNetworkConnection(true);
-            var db = ServiceContainer.Resolve<ISyncDataStore> ();
-            db.WipeTables();
-            db.ResetQueue("SYNC_OUT");
+            // Reset SyncManager queue after each test.
+            // Needed to pass bitrise tests. Locally it works
+            // ok without it.
+            ServiceContainer.Resolve<ISyncDataStore> ().ResetQueue("SYNC_OUT");
         }
 
         [Test]

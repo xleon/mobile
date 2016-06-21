@@ -19,13 +19,11 @@ namespace Toggl.Phoebe.Tests.Reactive
         LoginVM viewModel;
         readonly ToggleClientMock togglClient = new ToggleClientMock();
         readonly PlatformUtils platformUtils = new PlatformUtils();
-        ISyncDataStore dataStore;
 
         public override void Init()
         {
             base.Init();
 
-            dataStore = ServiceContainer.Resolve<ISyncDataStore> ();
             ServiceContainer.RegisterScoped<IPlatformUtils> (platformUtils);
             ServiceContainer.RegisterScoped<ITogglClient> (togglClient);
             ServiceContainer.RegisterScoped<ITracker> (new TrackerMock());
@@ -47,6 +45,8 @@ namespace Toggl.Phoebe.Tests.Reactive
         {
             base.TearDown();
             viewModel.Dispose();
+            var dataStore = ServiceContainer.Resolve<ISyncDataStore> ();
+            dataStore.WipeTables();
             dataStore.Table<UserData> ().Delete(e => true);
             RxChain.Cleanup();
         }
@@ -55,6 +55,7 @@ namespace Toggl.Phoebe.Tests.Reactive
         public void TestLoginEmailPassword()
         {
             // Set state as connected.
+            var dataStore = ServiceContainer.Resolve<ISyncDataStore> ();
             networkSwitcher.SetNetworkConnection(true);
 
             viewModel.PropertyChanged += (sender, e) =>
@@ -80,6 +81,7 @@ namespace Toggl.Phoebe.Tests.Reactive
         public void TestLoginGoogleToken()
         {
             // Set state as connected.
+            var dataStore = ServiceContainer.Resolve<ISyncDataStore> ();
             networkSwitcher.SetNetworkConnection(true);
 
             viewModel.PropertyChanged += (sender, e) =>
@@ -105,6 +107,7 @@ namespace Toggl.Phoebe.Tests.Reactive
         public void TestLoginWrongEmailPassword()
         {
             // Set state as connected.
+            var dataStore = ServiceContainer.Resolve<ISyncDataStore> ();
             networkSwitcher.SetNetworkConnection(true);
             viewModel.PropertyChanged += (sender, e) =>
             {
@@ -126,6 +129,7 @@ namespace Toggl.Phoebe.Tests.Reactive
         public void TestLoginWrongGoogleToken()
         {
             // Set state as connected.
+            var dataStore = ServiceContainer.Resolve<ISyncDataStore> ();
             networkSwitcher.SetNetworkConnection(true);
             viewModel.PropertyChanged += (sender, e) =>
             {

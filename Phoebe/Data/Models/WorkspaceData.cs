@@ -96,7 +96,6 @@ namespace Toggl.Phoebe.Data.Models
 
         public bool IsAdmin { get; set; }
 
-        [Ignore]
         public bool ProjectsBillableByDefault { get; set; }
     }
 }

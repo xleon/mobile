@@ -38,11 +38,12 @@ namespace Toggl.Phoebe.Data
 
         public SyncSqliteDataStore(string dbPath, ISQLitePlatform platformInfo)
         {
-            this.cnn = this.initDatabaseConnection(dbPath, platformInfo);
-            this.queueCnn = new SQLiteConnectionWithLock(
+            cnn = InitDatabaseConnection(dbPath, platformInfo);
+            queueCnn = new SQLiteConnectionWithLock(
                 platformInfo, new SQLiteConnectionString(Path.ChangeExtension(dbPath, DatabaseHelper.QueueExtension), true));
 
             CleanOldDraftEntry();
+            EnsureNewColumnsExists();
         }
 
         public void Dispose()
@@ -51,7 +52,7 @@ namespace Toggl.Phoebe.Data
             queueCnn.Close();
         }
 
-        private SQLiteConnectionWithLock initDatabaseConnection(string dbPath, ISQLitePlatform platformInfo)
+        private SQLiteConnectionWithLock InitDatabaseConnection(string dbPath, ISQLitePlatform platformInfo)
         {
             var dbFileExisted = DatabaseHelper.FileExists(dbPath);
 
@@ -89,7 +90,16 @@ namespace Toggl.Phoebe.Data
             // TODO: temporal method to clear old draft entries from DB.
             // It should be removed in next versions.
             cnn.Table<TimeEntryData>().Delete(t => t.State == TimeEntryState.New);
-            // cnn.CreateTable<WorkspaceData>();
+        }
+
+        // temporal hack to avoid migrations for adding simple columns/fields to models
+        private void EnsureNewColumnsExists()
+        {
+            // var map = cnn.GetMapping<WorkspaceData>().Columns.Select(x => new { x.Name, x.PropertyName });
+            // var workspaces = cnn.Table<WorkspaceData>();
+            // Make sure WorkspaceData.ProjectsBillableByDefault column is added to the db
+            cnn.CreateTable<WorkspaceData>();
+            // TODO retrieve all workspaces from server and update local db
         }
 
         internal static List<Type> GetDataModels()

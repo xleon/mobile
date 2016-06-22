@@ -33,5 +33,8 @@ namespace Toggl.Phoebe.Data.Json
 
         [JsonProperty("logo_url")]
         public string LogoUrl { get; set; }
+
+        [JsonProperty("projects_billable_by_default")]
+        public bool ProjectsBillableByDefault { get; set; }
     }
 }

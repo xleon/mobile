@@ -26,6 +26,7 @@ namespace Toggl.Phoebe.Data.Models
         string LogoUrl { get; }
         bool IsAdmin { get; }
         IWorkspaceData With(Action<WorkspaceData> transform);
+        bool ProjectsBillableByDefault { get; }
     }
 
     [Table("WorkspaceModel")]
@@ -58,6 +59,7 @@ namespace Toggl.Phoebe.Data.Models
             RoundingPrecision = other.RoundingPrecision;
             LogoUrl = other.LogoUrl;
             IsAdmin = other.IsAdmin;
+            ProjectsBillableByDefault = other.ProjectsBillableByDefault;
         }
 
         public override object Clone()
@@ -93,5 +95,8 @@ namespace Toggl.Phoebe.Data.Models
         public string LogoUrl { get; set; }
 
         public bool IsAdmin { get; set; }
+
+        [Ignore]
+        public bool ProjectsBillableByDefault { get; set; }
     }
 }

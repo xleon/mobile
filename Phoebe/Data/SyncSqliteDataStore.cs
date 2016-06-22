@@ -89,6 +89,7 @@ namespace Toggl.Phoebe.Data
             // TODO: temporal method to clear old draft entries from DB.
             // It should be removed in next versions.
             cnn.Table<TimeEntryData>().Delete(t => t.State == TimeEntryState.New);
+            // cnn.CreateTable<WorkspaceData>();
         }
 
         internal static List<Type> GetDataModels()

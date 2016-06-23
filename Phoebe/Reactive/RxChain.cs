@@ -27,8 +27,10 @@ namespace Toggl.Phoebe.Reactive
                 LocalOnly = false;
             }
 
-            public void Invoke(AppState state, IEnumerable<ICommonData> remoteObjects, IEnumerable<SyncManager.QueueItem> enqueuedItems) =>
-            safeInvoke(() => _testCont(state, remoteObjects, enqueuedItems));
+            public void Invoke(AppState state, 
+                               IEnumerable<ICommonData> remoteObjects, 
+                               IEnumerable<SyncManager.QueueItem> enqueuedItems) =>
+                safeInvoke(() => _testCont(state, remoteObjects, enqueuedItems));
 
             public void Invoke(AppState state) => safeInvoke(() => _cont(state));
 
@@ -75,7 +77,7 @@ namespace Toggl.Phoebe.Reactive
         }
 
         public static void Send(ServerRequest request, Continuation cont = null) =>
-        StoreManager.Singleton.Send(new DataMsg.ServerRequest(request), cont);
+            StoreManager.Singleton.Send(new DataMsg.ServerRequest(request), cont);
 
         public static void Send(DataMsg msg, Continuation cont = null)
         {

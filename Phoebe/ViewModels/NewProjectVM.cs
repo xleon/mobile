@@ -54,6 +54,7 @@ namespace Toggl.Phoebe.ViewModels
                 x.ClientRemoteId = clientData != null ? clientData.RemoteId : null;
                 x.IsBillable = workspace.ProjectsBillableByDefault;
             });
+
             // ATTENTION  ProjectUserData is not used
             // because no admin features are implemented.
             // Just save the project and wait for the state update.

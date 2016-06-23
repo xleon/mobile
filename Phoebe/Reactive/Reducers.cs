@@ -9,7 +9,6 @@ using Toggl.Phoebe.Logging;
 using Toggl.Phoebe.Misc;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
-using System.Diagnostics;
 
 namespace Toggl.Phoebe.Reactive
 {
@@ -180,88 +179,98 @@ namespace Toggl.Phoebe.Reactive
         static DataSyncMsg<AppState> ServerResponse(AppState state, DataMsg msg)
         {
             var serverMsg = msg as DataMsg.ServerResponse;
-            return serverMsg.Data.Match(
-                       receivedData => serverMsg.Request.MatchType(
-                           (ServerRequest.CRUD _) =>
-            {
-                var reqInfo = state.RequestInfo.With(
-                                  errorInfo: null,
-                                  running: new List<ServerRequest>(),
-                                  hadErrors: false);
-                state = UpdateStateWithNewData(state, receivedData);
-                return DataSyncMsg.Create(state.With(requestInfo: reqInfo));
-            },
-            (ServerRequest.DownloadEntries req) =>
-            {
-                state = UpdateStateWithNewData(state, receivedData);
-                var reqInfo = state.RequestInfo.With(
-                                  errorInfo: null,
-                                  running: new List<ServerRequest>(),
-                                  hasMore: receivedData.OfType<TimeEntryData>().Any(),
-                                  hadErrors: false);
-                return DataSyncMsg.Create(state.With(requestInfo: reqInfo));
-            },
-            (ServerRequest.GetChanges req) =>
-            {
-                state = UpdateStateWithNewData(state, receivedData);
 
-                // Update user
-                var dataStore = ServiceContainer.Resolve<ISyncDataStore>();
-                UserData user = serverMsg.User;
-                user.Id = state.User.Id;
-                user.DefaultWorkspaceId = state.Workspaces.Values.Single(x => x.RemoteId == user.DefaultWorkspaceRemoteId).Id;
-                // TODO: OBM data that comes in user object from this changes
-                // is totally wrong. In that way, we should keep this info before
-                // before process the object.
-                user.ExperimentIncluded = state.User.ExperimentIncluded;
-                user.ExperimentNumber = state.User.ExperimentNumber;
+            return serverMsg.Data.Match(receivedData => serverMsg.Request.MatchType(
+                (ServerRequest.CRUD _) =>
+                {
+                    var reqInfo = state.RequestInfo.With(
+                                      errorInfo: null,
+                                      running: new List<ServerRequest>(),
+                                      hadErrors: false);
+                    state = UpdateStateWithNewData(state, receivedData);
+                    return DataSyncMsg.Create(state.With(requestInfo: reqInfo));
+                },
+                (ServerRequest.DownloadEntries req) =>
+                {
+                    state = UpdateStateWithNewData(state, receivedData);
+                    var reqInfo = state.RequestInfo.With(
+                                      errorInfo: null,
+                                      running: new List<ServerRequest>(),
+                                      hasMore: receivedData.OfType<TimeEntryData>().Any(),
+                                      hadErrors: false);
+                    return DataSyncMsg.Create(state.With(requestInfo: reqInfo));
+                },
+                (ServerRequest.GetChanges req) =>
+                {
+                    state = UpdateStateWithNewData(state, receivedData);
 
-                var userUpdated = (UserData)dataStore.Update(ctx => ctx.Put(user)).Single();
+                    // Update user
+                    var dataStore = ServiceContainer.Resolve<ISyncDataStore>();
+                    UserData user = serverMsg.User;
+                    user.Id = state.User.Id;
+                    user.DefaultWorkspaceId = state.Workspaces.Values.Single(x => x.RemoteId == user.DefaultWorkspaceRemoteId).Id;
+                    // TODO: OBM data that comes in user object from this changes
+                    // is totally wrong. In that way, we should keep this info before
+                    // before process the object.
+                    user.ExperimentIncluded = state.User.ExperimentIncluded;
+                    user.ExperimentNumber = state.User.ExperimentNumber;
 
-                var reqInfo = state.RequestInfo.With(
-                                  errorInfo: null,
-                                  hadErrors: false,
-                                  running: new List<ServerRequest>(),
-                                  getChangesLastRun: serverMsg.Timestamp);
+                    var userUpdated = (UserData)dataStore.Update(ctx => ctx.Put(user)).Single();
 
-                return DataSyncMsg.Create(state.With(
-                                              user: userUpdated,
-                                              requestInfo: reqInfo,
-                                              settings: state.Settings.With(getChangesLastRun: serverMsg.Timestamp)));
-            },
-            (ServerRequest.GetCurrentState req) =>
-            {
-                state = UpdateStateWithNewData(state, receivedData);
+                    var reqInfo = state.RequestInfo.With(
+                                      errorInfo: null,
+                                      hadErrors: false,
+                                      running: new List<ServerRequest>(),
+                                      getChangesLastRun: serverMsg.Timestamp);
 
-                // Update user
-                var dataStore = ServiceContainer.Resolve<ISyncDataStore>();
-                UserData user = serverMsg.User;
-                user.Id = state.User.Id;
-                user.DefaultWorkspaceId = state.Workspaces.Values.Single(x => x.RemoteId == user.DefaultWorkspaceRemoteId).Id;
-                // TODO: OBM data that comes in user object from this changes
-                // is totally wrong. In that way, we should keep this info before
-                // before process the object.
-                user.ExperimentIncluded = state.User.ExperimentIncluded;
-                user.ExperimentNumber = state.User.ExperimentNumber;
+                    return DataSyncMsg.Create(state.With(
+                                                  user: userUpdated,
+                                                  requestInfo: reqInfo,
+                                                  settings: state.Settings.With(getChangesLastRun: serverMsg.Timestamp)));
+                },
+                (ServerRequest.GetCurrentState req) =>
+                {
+                    state = UpdateStateWithNewData(state, receivedData);
 
-                var userUpdated = (UserData)dataStore.Update(ctx => ctx.Put(user)).Single();
+                    // Update user
+                    var dataStore = ServiceContainer.Resolve<ISyncDataStore>();
+                    UserData user = serverMsg.User;
+                    user.Id = state.User.Id;
+                    user.DefaultWorkspaceId = state.Workspaces.Values.Single(x => x.RemoteId == user.DefaultWorkspaceRemoteId).Id;
+                    // TODO: OBM data that comes in user object from this changes
+                    // is totally wrong. In that way, we should keep this info before
+                    // before process the object.
+                    user.ExperimentIncluded = state.User.ExperimentIncluded;
+                    user.ExperimentNumber = state.User.ExperimentNumber;
 
-                var reqInfo = state.RequestInfo.With(
-                                  errorInfo: null,
-                                  hadErrors: false,
-                                  running: new List<ServerRequest>(),
-                                  getChangesLastRun: serverMsg.Timestamp);
+                    var userUpdated = (UserData)dataStore.Update(ctx => ctx.Put(user)).Single();
 
-                return DataSyncMsg.Create(state.With(
-                                              user: userUpdated,
-                                              requestInfo: reqInfo,
-                                              settings: state.Settings.With(getChangesLastRun: serverMsg.Timestamp)));
-            },
-            (ServerRequest.Authenticate _) =>
-            {
-                // TODO RX: Right now, Authenticate responses send UserDataPut messages
-                throw new NotImplementedException();
-            }),
+                    var reqInfo = state.RequestInfo.With(
+                                      errorInfo: null,
+                                      hadErrors: false,
+                                      running: new List<ServerRequest>(),
+                                      getChangesLastRun: serverMsg.Timestamp);
+
+                    return DataSyncMsg.Create(state.With(
+                                                  user: userUpdated,
+                                                  requestInfo: reqInfo,
+                                                  settings: state.Settings.With(getChangesLastRun: serverMsg.Timestamp)));
+                },
+                (ServerRequest.Authenticate _) =>
+                {
+                    // TODO RX: Right now, Authenticate responses send UserDataPut messages
+                    throw new NotImplementedException();
+                },
+                (ServerRequest.GetWorkspaces req) =>
+                {
+                    state = UpdateStateWithNewData(state, receivedData);
+                    var reqInfo = state.RequestInfo.With(
+                                      errorInfo: null,
+                                      running: new List<ServerRequest>(),
+                                      hadErrors: false);
+                    return DataSyncMsg.Create(state.With(requestInfo: reqInfo));
+                }),
+    
             ex =>
             {
                 // TODO Rx Clean running array?

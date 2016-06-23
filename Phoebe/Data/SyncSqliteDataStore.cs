@@ -100,7 +100,7 @@ namespace Toggl.Phoebe.Data
             {
                 // If we end up here, it means the column "ProjectsBillableByDefault" does not exists but it should 
                 // Create the column
-                // cnn.CreateTable<WorkspaceData>();
+                cnn.CreateTable<WorkspaceData>();
 
                 // Even though we created the new column, local data is not in sync with the server
                 // so we need to retrieve all remote workspaces and update the locals.

@@ -8,7 +8,7 @@ namespace Toggl.Phoebe.Net
 {
     public interface ITogglClient
     {
-        #region Generic CURD methods
+        #region Generic CRUD methods
 
         Task<T> Create<T> (string authToken, T jsonObject)
         where T : CommonJson;
@@ -42,10 +42,6 @@ namespace Toggl.Phoebe.Net
         Task<List<ProjectJson>> ListWorkspaceProjects(string authToken, long workspaceId);
 
         Task<List<WorkspaceUserJson>> ListWorkspaceUsers(string authToken, long workspaceId);
-
-        Task<List<WorkspaceJson>> ListWorkspaces(string authToken);
-
-        Task<WorkspaceJson> GetWorkspace(string authToken, long id);
 
         Task<List<TaskJson>> ListWorkspaceTasks(string authToken, long workspaceId);
 

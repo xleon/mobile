@@ -13,7 +13,6 @@ using Toggl.Phoebe.ViewModels.Timer;
 using XPlatUtils;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Collections.Generic;
 
 namespace Toggl.Phoebe.ViewModels
 {
@@ -178,8 +177,8 @@ namespace Toggl.Phoebe.ViewModels
         public void RemoveTimeEntry(int index)
         {
             // TODO: Add analytic event
-            var te = Collection.ElementAt(index) as ITimeEntryHolder;
-            RxChain.Send(new DataMsg.TimeEntriesRemove(te.Entry.Data));
+            var timeEntry = Collection.ElementAt(index) as ITimeEntryHolder;
+            RxChain.Send(new DataMsg.TimeEntriesRemove(timeEntry.Entry.Data));
         }
 
         #region Extra

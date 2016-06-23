@@ -34,10 +34,8 @@ namespace Toggl.Phoebe.Data.Models
     {
         public const string TableName = "WorkspaceModel";
 
-        public static IWorkspaceData Create(Action<WorkspaceData> transform = null)
-        {
-            return CommonData.Create(transform);
-        }
+        public static IWorkspaceData Create(Action<WorkspaceData> transform = null) => 
+            CommonData.Create(transform);
 
         /// <summary>
         /// ATTENTION: This constructor should only be used by SQL and JSON serializers
@@ -64,15 +62,11 @@ namespace Toggl.Phoebe.Data.Models
             ProjectsBillableByDefault = other.ProjectsBillableByDefault;
         }
 
-        public override object Clone()
-        {
-            return new WorkspaceData(this);
-        }
+        public override object Clone() => 
+            new WorkspaceData(this);
 
-        public IWorkspaceData With(Action<WorkspaceData> transform)
-        {
-            return base.With(transform);
-        }
+        public IWorkspaceData With(Action<WorkspaceData> transform) => 
+            base.With(transform);
 
         public string Name { get; set; }
 
@@ -98,7 +92,6 @@ namespace Toggl.Phoebe.Data.Models
 
         public bool IsAdmin { get; set; }
 
-        //[Ignore]
         public bool ProjectsBillableByDefault { get; set; }
     }
 }

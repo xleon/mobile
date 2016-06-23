@@ -13,7 +13,6 @@ using Toggl.Phoebe.Helpers;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
 using System.Threading.Tasks.Dataflow;
-using System.Diagnostics;
 
 namespace Toggl.Phoebe.Reactive
 {
@@ -565,20 +564,9 @@ namespace Toggl.Phoebe.Reactive
                         request, data, mapper.Map<UserData> (changes.User), changes.Timestamp));
 
             }
-            catch (Exception exc)
+            catch (Exception ex)
             {
-                string errorMsg = string.Format("Failed to sync data since {0}", state.RequestInfo.GetChangesLastRun);
-
-                if (exc.IsNetworkFailure() || exc is TaskCanceledException)
-                {
-                    logInfo(errorMsg, exc);
-                }
-                else
-                {
-                    logWarning(errorMsg, exc);
-                }
-
-                RxChain.Send(new DataMsg.ServerResponse(request, exc));
+                HandleRequestException(request, ex, $"Failed to sync data since {state.RequestInfo.GetChangesLastRun}");
             }
         }
 
@@ -586,7 +574,7 @@ namespace Toggl.Phoebe.Reactive
         {
             try
             {
-                var workspaces = await client.ListWorkspaces(state.User.ApiToken);
+                var workspaces = await client.List<WorkspaceJson>(state.User.ApiToken);
 
                 var data = workspaces
                     .Select(mapper.Map<WorkspaceData>)
@@ -595,20 +583,9 @@ namespace Toggl.Phoebe.Reactive
 
                 RxChain.Send(new DataMsg.ServerResponse(request, data));
             }
-            catch (Exception exc)
+            catch (Exception ex)
             {
-                string errorMsg = $"Failed to fetch workspaces";
-
-                if (exc.IsNetworkFailure() || exc is TaskCanceledException)
-                {
-                    logInfo(errorMsg, exc);
-                }
-                else
-                {
-                    logWarning(errorMsg, exc);
-                }
-
-                RxChain.Send(new DataMsg.ServerResponse(request, exc));
+                HandleRequestException(request, ex, $"Failed to fetch workspaces");
             }
         }
 
@@ -692,26 +669,29 @@ namespace Toggl.Phoebe.Reactive
 
                 RxChain.Send(new DataMsg.ServerResponse(request, data));
             }
-            catch (Exception exc)
+            catch (Exception ex) 
             {
-                string errorMsg = $"Failed to fetch time entries {startDate} days up to {endDate}";
-
-                if (exc.IsNetworkFailure() || exc is TaskCanceledException)
-                {
-                    logInfo(errorMsg, exc);
-                }
-                else
-                {
-                    logWarning(errorMsg, exc);
-                }
-
-                RxChain.Send(new DataMsg.ServerResponse(request, exc));
+                HandleRequestException(request, ex, $"Failed to fetch time entries {startDate} days up to {endDate}");
             }
         }
 
         #endregion
 
         #region Utils
+
+        private void HandleRequestException(ServerRequest request, Exception ex, string errorMessage)
+        {
+            if (ex.IsNetworkFailure() || ex is TaskCanceledException)
+            {
+                logInfo(errorMessage, ex);
+            }
+            else
+            {
+                logWarning(errorMessage, ex);
+            }
+
+            RxChain.Send(new DataMsg.ServerResponse(request, ex));
+        }
 
         CommonJson PrepareForSync(ICommonData data, List<CommonData> remoteObjects, AppState state)
         {

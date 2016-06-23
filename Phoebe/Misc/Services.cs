@@ -1,5 +1,4 @@
-﻿using System;
-using Toggl.Phoebe.Helpers;
+﻿using Toggl.Phoebe.Helpers;
 using Toggl.Phoebe.Logging;
 using Toggl.Phoebe.Net;
 using XPlatUtils;

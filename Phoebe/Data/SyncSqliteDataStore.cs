@@ -5,6 +5,7 @@ using System.Linq;
 using SQLite.Net;
 using SQLite.Net.Interop;
 using Toggl.Phoebe.Data.Models;
+using Toggl.Phoebe.Reactive;
 
 namespace Toggl.Phoebe.Data
 {
@@ -92,14 +93,19 @@ namespace Toggl.Phoebe.Data
             cnn.Table<TimeEntryData>().Delete(t => t.State == TimeEntryState.New);
         }
 
-        // temporal hack to avoid migrations for adding simple columns/fields to models
+        // should this be a migration?
         private void EnsureNewColumnsExists()
         {
-            // var map = cnn.GetMapping<WorkspaceData>().Columns.Select(x => new { x.Name, x.PropertyName });
-            // var workspaces = cnn.Table<WorkspaceData>();
-            // Make sure WorkspaceData.ProjectsBillableByDefault column is added to the db
-            cnn.CreateTable<WorkspaceData>();
-            // TODO retrieve all workspaces from server and update local db
+            // Check if "ProjectsBillableByDefault" column exists
+            var tableInfo = cnn.GetTableInfo("WorkspaceModel");
+            if(tableInfo.FirstOrDefault(x => x.Name.Equals("ProjectsBillableByDefault")) == null)
+            {
+                // Create the column
+                cnn.CreateTable<WorkspaceData>();
+
+                // TODO update local workspaces from server data
+                // RxChain.Send(whatever);
+            }
         }
 
         internal static List<Type> GetDataModels()

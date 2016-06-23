@@ -654,15 +654,11 @@ namespace Toggl.Phoebe.Reactive
                            .Concat(jsonEntries.Select(mapper.Map<TimeEntryData>).Cast<CommonData> ())
                            .ToList();
 
-
                 RxChain.Send(new DataMsg.ServerResponse(request, data));
-
             }
             catch (Exception exc)
             {
-                string errorMsg = string.Format(
-                                      "Failed to fetch time entries {1} days up to {0}",
-                                      startDate, endDate);
+                string errorMsg = $"Failed to fetch time entries {startDate} days up to {endDate}";
 
                 if (exc.IsNetworkFailure() || exc is TaskCanceledException)
                 {

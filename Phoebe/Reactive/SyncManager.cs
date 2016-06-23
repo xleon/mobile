@@ -147,32 +147,27 @@ namespace Toggl.Phoebe.Reactive
 
         async Task HandleRequest(ServerRequest request, AppState state)
         {
-            if(request is ServerRequest.GetWorkspaces)
-            {
-                await GetWorkspaces(request, state);
-                return;
-            }
-
             await request.MatchType(
                 (ServerRequest.DownloadEntries _) => DownloadEntries(request, state),
                 (ServerRequest.GetChanges _) => GetChanges(request, state),
                 (ServerRequest.GetCurrentState _) => GetChanges(request, state),
                 (ServerRequest.Authenticate req) =>
-            {
-                switch (req.Operation)
                 {
-                    case ServerRequest.Authenticate.Op.Login:
-                        return LoginAsync(req.Username, req.Password);
-                    case ServerRequest.Authenticate.Op.Signup:
-                        return SignupAsync(req.Username, req.Password);
-                    case ServerRequest.Authenticate.Op.LoginWithGoogle:
-                        return LoginWithGoogleAsync(req.AccessToken);
-                    case ServerRequest.Authenticate.Op.SignupWithGoogle:
-                        return SignupWithGoogleAsync(req.AccessToken);
-                    default:
-                        throw new Exception("Unexpected Authenticate operation");
-                }
-            });
+                    switch (req.Operation)
+                    {
+                        case ServerRequest.Authenticate.Op.Login:
+                            return LoginAsync(req.Username, req.Password);
+                        case ServerRequest.Authenticate.Op.Signup:
+                            return SignupAsync(req.Username, req.Password);
+                        case ServerRequest.Authenticate.Op.LoginWithGoogle:
+                            return LoginWithGoogleAsync(req.AccessToken);
+                        case ServerRequest.Authenticate.Op.SignupWithGoogle:
+                            return SignupWithGoogleAsync(req.AccessToken);
+                        default:
+                            throw new Exception("Unexpected Authenticate operation");
+                    }
+                },
+                (ServerRequest.GetWorkspaces _) => GetWorkspaces(request, state));
         }
 
         async Task EnqueueOrSend(DataSyncMsg<AppState> syncMsg)

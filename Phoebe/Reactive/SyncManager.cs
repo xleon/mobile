@@ -109,9 +109,8 @@ namespace Toggl.Phoebe.Reactive
 
 
             StoreManager.Singleton
-            .Observe()
-            .Subscribe(processingBlock.AsObserver());
-
+                .Observe()
+                .Subscribe(processingBlock.AsObserver());
         }
 
         void logError(Exception ex, string msg = "Failed to sync")

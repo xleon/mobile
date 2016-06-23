@@ -104,7 +104,7 @@ namespace Toggl.Phoebe.Data
                 cnn.CreateTable<WorkspaceData>();
 
                 // TODO update local workspaces from server data
-                // RxChain.Send(whatever);
+                RxChain.Send(whatever);
             }
         }
 

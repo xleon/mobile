@@ -240,13 +240,8 @@ namespace Toggl.Ross
             }
         }
 
-        public static TogglWindow TogglWindow
-        {
-            get
-            {
-                return ((AppDelegate)UIApplication.SharedApplication.Delegate).window;
-            }
-        }
+        public static TogglWindow TogglWindow => 
+            ((AppDelegate)UIApplication.SharedApplication.Delegate).window;
 
         #region IPlatformUtil implementation
 

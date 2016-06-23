@@ -13,6 +13,7 @@ using Toggl.Phoebe.Helpers;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
 using System.Threading.Tasks.Dataflow;
+using System.Diagnostics;
 
 namespace Toggl.Phoebe.Reactive
 {
@@ -147,6 +148,12 @@ namespace Toggl.Phoebe.Reactive
 
         async Task HandleRequest(ServerRequest request, AppState state)
         {
+            if(request is ServerRequest.GetWorkspaces)
+            {
+                await GetWorkspaces(request, state);
+                return;
+            }
+
             await request.MatchType(
                 (ServerRequest.DownloadEntries _) => DownloadEntries(request, state),
                 (ServerRequest.GetChanges _) => GetChanges(request, state),
@@ -561,6 +568,36 @@ namespace Toggl.Phoebe.Reactive
             catch (Exception exc)
             {
                 string errorMsg = string.Format("Failed to sync data since {0}", state.RequestInfo.GetChangesLastRun);
+
+                if (exc.IsNetworkFailure() || exc is TaskCanceledException)
+                {
+                    logInfo(errorMsg, exc);
+                }
+                else
+                {
+                    logWarning(errorMsg, exc);
+                }
+
+                RxChain.Send(new DataMsg.ServerResponse(request, exc));
+            }
+        }
+
+        async Task GetWorkspaces(ServerRequest request, AppState state)
+        {
+            try
+            {
+                var workspaces = await client.ListWorkspaces(state.User.ApiToken);
+
+                var data = workspaces
+                    .Select(mapper.Map<WorkspaceData>)
+                    .Cast<CommonData>()
+                    .ToList();
+
+                RxChain.Send(new DataMsg.ServerResponse(request, data));
+            }
+            catch (Exception exc)
+            {
+                string errorMsg = $"Failed to fetch workspaces";
 
                 if (exc.IsNetworkFailure() || exc is TaskCanceledException)
                 {

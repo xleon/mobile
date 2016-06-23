@@ -78,6 +78,8 @@ namespace Toggl.Phoebe.ViewModels
             // content. This line was in the View before because
             // was an async method.
             LoadMore();
+
+            CheckWorkspaces();
         }
 
         private void ResetCollection(bool isGroupedMode)
@@ -120,6 +122,17 @@ namespace Toggl.Phoebe.ViewModels
         {
             LoadInfo = new LoadInfoType(true, true, false);
             RxChain.Send(new DataMsg.TimeEntriesLoad());
+        }
+
+        private void CheckWorkspaces()
+        {
+            var shouldUpdateWorkspaces = ServiceContainer
+                .Resolve<ISyncDataStore>()
+                .PendingTableUpdates
+                .FirstOrDefault(x => x.Equals(WorkspaceData.TableName)) != null;
+
+            if (shouldUpdateWorkspaces)
+                RxChain.Send(new ServerRequest.GetWorkspaces());
         }
 
         public void ContinueTimeEntry(int index)

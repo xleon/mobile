@@ -5,7 +5,6 @@ using System.Linq;
 using SQLite.Net;
 using SQLite.Net.Interop;
 using Toggl.Phoebe.Data.Models;
-using Toggl.Phoebe.Reactive;
 
 namespace Toggl.Phoebe.Data
 {
@@ -44,7 +43,7 @@ namespace Toggl.Phoebe.Data
                 platformInfo, new SQLiteConnectionString(Path.ChangeExtension(dbPath, DatabaseHelper.QueueExtension), true));
 
             CleanOldDraftEntry();
-            EnsureNewColumnsExists();
+            EnsureNewColumnsExist();
         }
 
         public void Dispose()
@@ -68,10 +67,7 @@ namespace Toggl.Phoebe.Data
             return connection;
         }
 
-        public int GetVersion()
-        {
-            return DatabaseHelper.GetVersion(this.cnn);
-        }
+        public int GetVersion() => DatabaseHelper.GetVersion(this.cnn);
 
         private static void CreateTables(SQLiteConnection connection)
         {
@@ -93,18 +89,23 @@ namespace Toggl.Phoebe.Data
             cnn.Table<TimeEntryData>().Delete(t => t.State == TimeEntryState.New);
         }
 
-        // should this be a migration?
-        private void EnsureNewColumnsExists()
+        public List<string> PendingTableUpdates { get; } = new List<string>();
+
+        // TODO: this should be a migration
+        private void EnsureNewColumnsExist()
         {
             // Check if "ProjectsBillableByDefault" column exists
-            var tableInfo = cnn.GetTableInfo("WorkspaceModel");
-            if(tableInfo.FirstOrDefault(x => x.Name.Equals("ProjectsBillableByDefault")) == null)
+            var tableInfo = cnn.GetTableInfo(WorkspaceData.TableName);
+            if(tableInfo.FirstOrDefault(x => x.Name.Equals(nameof(WorkspaceData.ProjectsBillableByDefault))) == null)
             {
+                // If we end up here, it means the column "ProjectsBillableByDefault" does not exists but it should 
                 // Create the column
-                cnn.CreateTable<WorkspaceData>();
+                // cnn.CreateTable<WorkspaceData>();
 
-                // TODO update local workspaces from server data
-                RxChain.Send(whatever);
+                // Even though we created the new column, local data is not in sync with the server
+                // so we need to retrieve all remote workspaces and update the locals.
+                // this will be done later on from a view initialization
+                PendingTableUpdates.Add(WorkspaceData.TableName);
             }
         }
 

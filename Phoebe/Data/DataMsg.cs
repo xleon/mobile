@@ -74,24 +74,16 @@ namespace Toggl.Phoebe.Data
             }
 
             public static ServerResponse CRUD(IEnumerable<CommonData> data) =>
-            new ServerResponse(new Data.ServerRequest.CRUD(new ICommonData[] { }), data);
+                new ServerResponse(new Data.ServerRequest.CRUD(new ICommonData[] { }), data);
         }
 
-        public sealed class ResetState : DataMsg
-        {
-        }
+        public sealed class ResetState : DataMsg { }
 
-        public sealed class InitStateAfterMigration : DataMsg
-        {
-        }
+        public sealed class InitStateAfterMigration : DataMsg { }
 
-        public sealed class TimeEntriesLoad : DataMsg
-        {
-        }
+        public sealed class TimeEntriesLoad : DataMsg { }
 
-        public sealed class TimeEntryStart : DataMsg
-        {
-        }
+        public sealed class TimeEntryStart : DataMsg { }
 
         public sealed class TimeEntryStop : DataMsg
         {
@@ -302,17 +294,13 @@ namespace Toggl.Phoebe.Data
             }
         }
 
-        public sealed class GetCurrentState : ServerRequest
-        {
-        }
+        public sealed class GetWorkspaces : ServerRequest { }
 
-        public sealed class GetChanges : ServerRequest
-        {
-        }
+        public sealed class GetCurrentState : ServerRequest {}
 
-        public sealed class DownloadEntries : ServerRequest
-        {
-        }
+        public sealed class GetChanges : ServerRequest { }
+
+        public sealed class DownloadEntries : ServerRequest { }
 
         public sealed class Authenticate : ServerRequest
         {
@@ -416,12 +404,12 @@ namespace Toggl.Phoebe.Data
         }
 
         static public DataSyncMsg<T> Create<T> (T state) =>
-        new DataSyncMsg<T> (state, new List<ServerRequest> ());
+            new DataSyncMsg<T> (state, new List<ServerRequest> ());
 
         static public DataSyncMsg<T> Create<T> (ServerRequest request, T state) =>
-        new DataSyncMsg<T> (state, new List<ServerRequest> { request });
+            new DataSyncMsg<T> (state, new List<ServerRequest> { request });
 
         static public DataSyncMsg<T> Create<T> (IEnumerable<ICommonData> syncData, T state) =>
-        new DataSyncMsg<T> (state, new List<ServerRequest> { new ServerRequest.CRUD(syncData) });
+            new DataSyncMsg<T> (state, new List<ServerRequest> { new ServerRequest.CRUD(syncData) });
     }
 }

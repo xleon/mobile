@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Json;
 
 namespace Toggl.Phoebe.Net
@@ -43,6 +42,10 @@ namespace Toggl.Phoebe.Net
         Task<List<ProjectJson>> ListWorkspaceProjects(string authToken, long workspaceId);
 
         Task<List<WorkspaceUserJson>> ListWorkspaceUsers(string authToken, long workspaceId);
+
+        Task<List<WorkspaceJson>> ListWorkspaces(string authToken);
+
+        Task<WorkspaceJson> GetWorkspace(string authToken, long id);
 
         Task<List<TaskJson>> ListWorkspaceTasks(string authToken, long workspaceId);
 

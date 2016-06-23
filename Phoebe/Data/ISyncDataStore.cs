@@ -9,6 +9,7 @@ namespace Toggl.Phoebe.Data
     {
         TableQuery<T> Table<T> () where T : CommonData, new();
         IReadOnlyList<ICommonData> Update(Action<ISyncDataStoreContext> worker);
+        List<string> PendingTableUpdates { get; }
         void WipeTables();
 
         int GetVersion();

@@ -29,9 +29,11 @@ namespace Toggl.Phoebe.Data.Models
         bool ProjectsBillableByDefault { get; }
     }
 
-    [Table("WorkspaceModel")]
+    [Table(WorkspaceData.TableName)]
     public class WorkspaceData : CommonData, IWorkspaceData
     {
+        public const string TableName = "WorkspaceModel";
+
         public static IWorkspaceData Create(Action<WorkspaceData> transform = null)
         {
             return CommonData.Create(transform);
@@ -96,7 +98,7 @@ namespace Toggl.Phoebe.Data.Models
 
         public bool IsAdmin { get; set; }
 
-        // [Ignore]
+        //[Ignore]
         public bool ProjectsBillableByDefault { get; set; }
     }
 }

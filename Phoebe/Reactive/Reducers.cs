@@ -9,6 +9,7 @@ using Toggl.Phoebe.Logging;
 using Toggl.Phoebe.Misc;
 using Toggl.Phoebe.Net;
 using XPlatUtils;
+using System.Diagnostics;
 
 namespace Toggl.Phoebe.Reactive
 {
